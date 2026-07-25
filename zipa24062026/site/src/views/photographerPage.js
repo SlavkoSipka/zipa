@@ -39,7 +39,7 @@ import imagesCount from '../assets/svg/images-count.svg';
 import Slider from "react-slick";
 import penIcon from '../assets/svg/orders-pen.svg';
 import userPhoto from '../assets/images/user.png';
-import { API_ENDPOINT } from '../constants';
+import { API_ENDPOINT, PHOTOS_ENDPOINT} from '../constants';
 
 class PhotographerPage extends Component {
     constructor(props) {
@@ -192,7 +192,7 @@ class PhotographerPage extends Component {
                                                 <Col lg="3" key={idx}>
 
                                                     <Link to={`/galerija/${Object.translate(item, 'galleryAlias', this.props.lang)}/${item._id}/${item.photoId}`}><article>
-                                                        <img src={`${API_ENDPOINT}/photos/350x/` + item.image} />
+                                                        <img src={`${PHOTOS_ENDPOINT}/photos/350x/` + item.image} />
                                                     </article>
                                                     </Link>
                                                 </Col>

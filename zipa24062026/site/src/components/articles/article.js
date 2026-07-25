@@ -8,7 +8,7 @@ import star from '../../assets/svg/star.svg';
 import fullStar from '../../assets/svg/full-star.svg';
 import imagesCount from '../../assets/svg/images-count.svg';
 import moment from 'moment';
-import { API_ENDPOINT } from '../../constants';
+import { API_ENDPOINT, PHOTOS_ENDPOINT} from '../../constants';
 
 class Article extends Component {
     constructor(props) {
@@ -28,9 +28,9 @@ class Article extends Component {
             <article className={className}>
                 <Link to={`/galerija/${this.props.alias}/${this.props._id}`}>
                     <div className="image-wrap">
-                        <img src={(this.props.bigView ? `${API_ENDPOINT}/photos/700x/` : `${API_ENDPOINT}/photos/350x/`) + this.props.image} />
+                        <img src={(this.props.bigView ? `${PHOTOS_ENDPOINT}/photos/700x/` : `${PHOTOS_ENDPOINT}/photos/350x/`) + this.props.image} />
                         <div className="full-image">
-                            <img src={(this.props.bigView ? `${API_ENDPOINT}/photos/700x/` : `${API_ENDPOINT}/photos/350x/`) + this.props.image} />
+                            <img src={(this.props.bigView ? `${PHOTOS_ENDPOINT}/photos/700x/` : `${PHOTOS_ENDPOINT}/photos/350x/`) + this.props.image} />
                         </div>
 
                     </div>

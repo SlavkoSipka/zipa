@@ -16,7 +16,7 @@ import ReactPaginate from 'react-paginate';
 import moment from 'moment';
 import ToggleSwitch from '../../../components/forms/fields/toggleCheckbox';
 import searchIcon from '../../../assets/svg/search-icon-btn.svg';
-import { API_ENDPOINT } from '../../../constants';
+import { API_ENDPOINT, PHOTOS_ENDPOINT} from '../../../constants';
 
 class GalleriesPage extends Component {
     constructor(props) {
@@ -107,7 +107,7 @@ class GalleriesPage extends Component {
                                 this.state.items && this.state.items.length && this.state.items.map((item, idx) => {
                                     return (
                                         <tr>
-                                            <td><img src={`${API_ENDPOINT}/photos/350x/` + Object.get(item, `photos[0].image`)} /></td>
+                                            <td><img src={`${PHOTOS_ENDPOINT}/photos/350x/` + Object.get(item, `photos[0].image`)} /></td>
                                             <td>{Object.translate(item, 'name', this.props.lang)}</td>
                                             <td>{item.location}</td>
 

@@ -68,7 +68,7 @@ import PreviewPage from './views/account/previewPage';
 
 import SubscribersPage from './views/account/subscribers';
 import ImportPage from './views/account/import';
-import {API_ENDPOINT} from './constants'
+import {API_ENDPOINT, PHOTOS_ENDPOINT} from './constants'
 
 
 export const routes = [
@@ -337,7 +337,7 @@ export const routes = [
     //         return {
     //             title: Object.translate(data, 'gallery.name', 'ba'),
     //             description: Object.translate(data, 'gallery.description', 'ba'),
-    //             'og:image': '${API_ENDPOINT}/photos/350x/'+ Object.get(data, 'gallery.photos[0].image')
+    //             'og:image': '${PHOTOS_ENDPOINT}/photos/350x/'+ Object.get(data, 'gallery.photos[0].image')
     //         }
     //     },
 
@@ -367,7 +367,7 @@ export const routes = [
             return {
                 title: Object.translate(data, 'gallery.name', 'ba'),
                 description: Object.translate(data, 'gallery.description', 'ba'),
-                'og:image': `${API_ENDPOINT}/photos/350x/` + Object.get(data, 'gallery.photos[0].image')
+                'og:image': `${PHOTOS_ENDPOINT}/photos/350x/` + Object.get(data, 'gallery.photos[0].image')
             }
         },
 
@@ -427,7 +427,7 @@ export const routes = [
             return {
                 title: Object.translate(data, 'gallery.name', 'ba'),
                 description: Object.translate(data, 'gallery.description', 'ba'),
-                'og:image': `${API_ENDPOINT}/photos/350x/` + Object.get(data, 'gallery.photos[0].image')
+                'og:image': `${PHOTOS_ENDPOINT}/photos/350x/` + Object.get(data, 'gallery.photos[0].image')
             }
         },
 

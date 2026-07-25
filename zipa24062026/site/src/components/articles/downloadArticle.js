@@ -9,7 +9,7 @@ import fullStar from '../../assets/svg/full-star.svg';
 import imagesCount from '../../assets/svg/images-count.svg';
 import moment from 'moment';
 import x from '../../assets/svg/download.svg';
-import { API_ENDPOINT } from '../../constants'
+import { API_ENDPOINT, PHOTOS_ENDPOINT} from '../../constants'
 
 class CartArticle extends Component {
     constructor(props) {
@@ -26,7 +26,7 @@ class CartArticle extends Component {
 
         return (
             <article className={'list-view-article cart-article'}>
-                <img src={`${API_ENDPOINT}/photos/350x/` + this.props.image} />
+                <img src={`${PHOTOS_ENDPOINT}/photos/350x/` + this.props.image} />
                 {this.props.categoryName ? <div className="category">{this.props.categoryName}</div> : null}
                 <div className="wrap">
                     <div className="info"><span>{this.props.location} | {moment.unix(this.props.published).format('DD.MM.YYYY.')}  <Isvg src={imagesCount} /> {this.props.resolution}px</span> <span className="price">${(this.props.price).formatPrice(2)}</span> </div>

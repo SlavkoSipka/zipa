@@ -1,0 +1,8 @@
+name = "zipa-photos"
+main = "src/index.js"
+compatibility_date = "2026-01-01"
+
+# Worker čita R2 bucket direktno (bez S3 API-ja i bez ključeva u kodu).
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "zipa-photos"

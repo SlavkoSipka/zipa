@@ -40,7 +40,7 @@ import {
     ViberIcon,
     WhatsappIcon,
 } from "react-share";
-import { API_ENDPOINT } from "../constants";
+import { API_ENDPOINT, PHOTOS_ENDPOINT} from "../constants";
 import download from "../assets/svg/download.svg";
 
 class DetailPage extends Component {
@@ -278,7 +278,7 @@ class DetailPage extends Component {
                         <div className={"imageContainer"}>
                             <div className={"imagesWrapper"}>
                                 <img
-                                    src={`${API_ENDPOINT}/photos/700x/${selectedImage.image}`}
+                                    src={`${PHOTOS_ENDPOINT}/photos/700x/${selectedImage.image}`}
                                     alt={selectedImage.name}
                                 />
                             </div>
@@ -891,9 +891,9 @@ class DetailPage extends Component {
                                             {/*        state: {gallery, lang: this.props.lang, isIframe: true, idx}*/}
                                             {/*    }}>*/}
                                             {/*    <article>*/}
-                                            {/*        <img src={`${API_ENDPOINT}/photos/350x/` + item.image}/>*/}
+                                            {/*        <img src={`${PHOTOS_ENDPOINT}/photos/350x/` + item.image}/>*/}
                                             {/*        <div className="zoom-image">*/}
-                                            {/*            <img src={`${API_ENDPOINT}/photos/350x/` + item.image}/>*/}
+                                            {/*            <img src={`${PHOTOS_ENDPOINT}/photos/350x/` + item.image}/>*/}
 
                                             {/*        </div>*/}
                                             {/*        <div className="zoom"><Isvg src={searchIcon}/></div>*/}
@@ -902,9 +902,9 @@ class DetailPage extends Component {
 
                                             {/*<article*/}
                                             {/*    onClick={() => this.setState({modalOpen: true, selectedImageIndex: idx})}>*/}
-                                            {/*    <img src={`${API_ENDPOINT}/photos/350x/` + item.image}/>*/}
+                                            {/*    <img src={`${PHOTOS_ENDPOINT}/photos/350x/` + item.image}/>*/}
                                             {/*    <div className="zoom-image">*/}
-                                            {/*        <img src={`${API_ENDPOINT}/photos/350x/` + item.image}/>*/}
+                                            {/*        <img src={`${PHOTOS_ENDPOINT}/photos/350x/` + item.image}/>*/}
 
                                             {/*    </div>*/}
                                             {/*    <div className="zoom"><Isvg src={searchIcon}/></div>*/}
@@ -920,11 +920,11 @@ class DetailPage extends Component {
                                                 }}
                                             >
                                                 <img
-                                                    src={`${API_ENDPOINT}/photos/350x/${item.image}`}
+                                                    src={`${PHOTOS_ENDPOINT}/photos/350x/${item.image}`}
                                                 />
                                                 <div className="zoom-image">
                                                     <img
-                                                        src={`${API_ENDPOINT}/photos/350x/${item.image}`}
+                                                        src={`${PHOTOS_ENDPOINT}/photos/350x/${item.image}`}
                                                     />
                                                 </div>
                                                 <div className="zoom">

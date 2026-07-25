@@ -31,7 +31,7 @@ import moment from 'moment';
 import FromToForm from '../../components/forms/fromToForm';
 import trashIcon from '../../assets/svg/orders-trash.svg';
 import FromToForm1 from '../../components/forms/fromToForm1';
-import {API_ENDPOINT} from '../../constants';
+import {API_ENDPOINT, PHOTOS_ENDPOINT} from '../../constants';
 import Loader from "../../components/loader";
 import {reset} from "redux-form";
 
@@ -303,7 +303,7 @@ class ProfilePage extends Component {
                                                                                         return (
                                                                                             <li>
                                                                                                 <img
-                                                                                                    src={`${API_ENDPOINT}/photos/350x/` + photo.image}/>
+                                                                                                    src={`${PHOTOS_ENDPOINT}/photos/350x/` + photo.image}/>
                                                                                                 <span
                                                                                                     className="name">{photo.name}</span>
                                                                                                 <span

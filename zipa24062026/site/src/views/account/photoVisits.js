@@ -25,7 +25,7 @@ import banner3 from '../../assets/images/banner3.png';
 import infoIcon from '../../assets/svg/account-info.svg';
 import statIcon from '../../assets/svg/stat-icon.svg';
 import { Line, Bar } from 'react-chartjs-2';
-import { API_ENDPOINT } from '../../constants';
+import { API_ENDPOINT, PHOTOS_ENDPOINT} from '../../constants';
 const data = {
     labels: ['02 Jan', '03 Jan', '04 Jan', '05 Jan', '06 Jan', '07 Jan'],
     datasets: [
@@ -130,7 +130,7 @@ class PhotoVisitsPage extends Component {
                                             return (
                                                 <Row>
                                                     <Col lg="10" className="photo-visits-name">
-                                                        <img src={`${API_ENDPOINT}/photos/350x/` + item.photo.image} />{item.photo.name}
+                                                        <img src={`${PHOTOS_ENDPOINT}/photos/350x/` + item.photo.image} />{item.photo.name}
                                                     </Col>
                                                     <Col lg="2">
                                                         {item.count}

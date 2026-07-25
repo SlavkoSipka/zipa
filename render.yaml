@@ -1,0 +1,61 @@
+# Render Blueprint — postavlja API i sajt iz ovog repozitorijuma.
+# U Render dashboardu: New → Blueprint → izaberi ovaj repo.
+# Tajne (sync: false) se unose ručno u Render UI, ne stoje u gitu.
+
+services:
+  # ---------------------------------------------------------------- API
+  - type: web
+    name: zipa-api
+    runtime: node
+    plan: free
+    region: frankfurt
+    rootDir: zipa24062026/api
+    buildCommand: npm install
+    startCommand: node app.js
+    healthCheckPath: /categories
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: DATABASE_URL          # Supabase connection string
+        sync: false
+      - key: R2_ACCOUNT_ID
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: R2_BUCKET
+        value: zipa-photos
+      - key: JWT_SECRET
+        sync: false
+      - key: ADMIN_JWT_SECRET
+        sync: false
+      - key: SMTP_HOST
+        value: mail.zipaphoto.net
+      - key: SMTP_PORT
+        value: "25"
+      - key: SMTP_USER
+        value: noreply@zipaphoto.net
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: API_ENDPOINT          # javni URL ovog servisa (posle prvog deploya)
+        sync: false
+
+  # ---------------------------------------------------------------- SAJT
+  - type: web
+    name: zipa-site
+    runtime: node
+    plan: free
+    region: frankfurt
+    rootDir: zipa24062026/site
+    # Razzle 3 na novijem Node-u traži legacy OpenSSL provider
+    buildCommand: npm install --legacy-peer-deps && rm -rf node_modules/fsevents && NODE_OPTIONS=--openssl-legacy-provider npm run build
+    # SERVER_PORT prosleđuje Render-ov runtime port (Razzle "zapeče" PORT u build)
+    startCommand: SERVER_PORT=$PORT npm run start:prod
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: RAZZLE_API_ENDPOINT     # URL zipa-api servisa
+        sync: false
+      - key: RAZZLE_PHOTOS_ENDPOINT  # URL Cloudflare Worker-a za slike
+        sync: false

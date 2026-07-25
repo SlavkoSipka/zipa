@@ -25,7 +25,7 @@ import {
     ViberIcon,
     WhatsappIcon,
 } from "react-share";
-import { API_ENDPOINT } from "../constants";
+import { API_ENDPOINT, PHOTOS_ENDPOINT} from "../constants";
 
 class PhotoPage extends Component {
     constructor(props) {
@@ -245,7 +245,7 @@ class PhotoPage extends Component {
                                         <div className="arrow-left"></div>
                                     </div>
                                 ) : null}
-                                <img src={`${API_ENDPOINT}/photos/700x/${Object.get(gallery, `photos[${this.props[0].match.params.photo}].image`)}`} />
+                                <img src={`${PHOTOS_ENDPOINT}/photos/700x/${Object.get(gallery, `photos[${this.props[0].match.params.photo}].image`)}`} />
                                 {this.state.singleImage ? (
                                     <div className="arrow-border right" onClick={this.nextImage}>
                                         <div className="arrow-right"></div>
@@ -383,9 +383,9 @@ class PhotoPage extends Component {
                                         <Col lg="3" sm="4" xs="6" key={idx}>
                                             <Link to={`/galerija/${Object.translate(gallery, "alias", this.props.lang)}/${gallery._id}/${idx}`}>
                                                 <article>
-                                                    <img src={`${API_ENDPOINT}/photos/350x/` + item.image} />
+                                                    <img src={`${PHOTOS_ENDPOINT}/photos/350x/` + item.image} />
                                                     <div className="zoom-image">
-                                                        <img src={`${API_ENDPOINT}/photos/350x/` + item.image} />
+                                                        <img src={`${PHOTOS_ENDPOINT}/photos/350x/` + item.image} />
                                                     </div>
                                                 </article>
                                             </Link>

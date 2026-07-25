@@ -22,7 +22,7 @@ import {
 import Text from './text1';
 import Textarea from './textarea';
 import Check from './check';
-import { API_ENDPOINT } from '../../../constants';
+import { API_ENDPOINT, PHOTOS_ENDPOINT} from '../../../constants';
 
 class Gallery extends Component {
     constructor(props) {
@@ -254,7 +254,7 @@ class Gallery extends Component {
 
                             <div className="image-wrap">
 
-                                <img src={this.state.files[i] && (`${API_ENDPOINT}/photos/350x/` + this.state.files[i].image)} onClick={() => this.setState({ selectedImage: JSON.parse(JSON.stringify(this.state.files[i])), selectedImageIdx: i })} />
+                                <img src={this.state.files[i] && (`${PHOTOS_ENDPOINT}/photos/350x/` + this.state.files[i].image)} onClick={() => this.setState({ selectedImage: JSON.parse(JSON.stringify(this.state.files[i])), selectedImageIdx: i })} />
                                 <div className={'delete'} onClick={() => this.removeImage(i)}>
                                     <Isvg src={deleteIcon} />
                                 </div>
@@ -400,7 +400,7 @@ class Gallery extends Component {
 
                                     </Col>
                                     <Col lg="6">
-                                        <img src={`'${API_ENDPOINT}/photos/700x/'` + this.state.selectedImage.image} />
+                                        <img src={`'${PHOTOS_ENDPOINT}/photos/700x/'` + this.state.selectedImage.image} />
                                     </Col>
                                     <Col lg="12">
                                         <Textarea label="Opis *" onChange={(e) => {

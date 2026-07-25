@@ -18,7 +18,7 @@ import trashIcon from '../../assets/svg/orders-trash.svg';
 
 import ReactPaginate from 'react-paginate';
 import moment from 'moment';
-import { API_ENDPOINT } from '../../constants';
+import { API_ENDPOINT, PHOTOS_ENDPOINT} from '../../constants';
 
 class DownloadLogs extends Component {
     constructor(props) {
@@ -148,7 +148,7 @@ class DownloadLogs extends Component {
                                                             <td>{item.transaction ? item.transaction.transaction.id : '/'}</td>
                                                             <td><Link target="_blank" to={`/galerija/${Object.translate(item, 'gallery.alias', this.props.lang)}/${item.gallery._id}`}> {Object.translate(item, 'gallery.name', this.props.lang)}</Link> <br /><Link target="_blank" to={`/galerija/${Object.translate(item, 'gallery.alias', this.props.lang)}/${item.gallery._id}/${item.photoId}`}> {Object.get(item, 'photo.name')}</Link>  </td>
                                                             <td>
-                                                                <img src={`${API_ENDPOINT}/photos/350x/` + item.gallery.photos[item.photoId].image} />
+                                                                <img src={`${PHOTOS_ENDPOINT}/photos/350x/` + item.gallery.photos[item.photoId].image} />
                                                             </td>
 
                                                             <td>{item.timestamp ? moment.unix(item.timestamp).format('DD.MM.YYYY. | HH:mm') + ' h' : null}</td>
