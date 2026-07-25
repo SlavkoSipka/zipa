@@ -1,0 +1,806 @@
+.cart-wrap{
+
+    .into-wrap{
+        position: relative;
+        //height: 969px;
+        margin-bottom: 50px;
+        padding: 180px 20px 30px 20px;
+        width: 100%;
+        /*&::before{
+            content: ' ';
+            position: absolute;
+            top: 0;
+            left: 20px;
+            right: 20px;
+            bottom: 0;
+            background-image: linear-gradient(#FFFFFF, #EEF1F6, #EBEEF5);
+            border-radius: 0  0 20px 20px;
+
+        }*/
+
+        @include mobile {
+            height: unset;
+            padding: 20px 30px;
+            margin-top: 120px;
+        }
+
+        @include small-desktop{
+            padding: 20px 30px;
+        }
+
+
+        @include tablet{
+            padding: 20px 30px;
+        }
+
+
+
+
+        .cart-info{
+            display: flex;
+            svg{
+                width: 100px;
+                height: 113px;
+                margin-right: 32px;
+                @include mobile {
+                    width: 38px;
+                    height: 43px;
+                    margin-right: 20px;
+                }
+
+                circle, path{
+                    stroke: $darkBlue;
+                    stroke-width: 1px;
+                }
+            }
+            h1 {
+                font-size: 48px;
+                font-weight: $bold;
+                color: $black;
+                margin-bottom: 2px;
+                @include mobile {
+                    font-size: 24px;
+                }
+
+            }
+            p {
+                font-size: 16px;
+                font-weight: $regular;
+                color: $darkBlue;
+                margin-bottom: 12px;
+                @include mobile {
+                    font-size: 14px;
+                }
+
+
+
+            }
+        }
+
+
+
+
+    }
+
+    .checkout-section {
+
+        .paypal-container{
+            max-width: 300px;
+            margin-bottom: 30px;
+        }
+
+        h3 {
+            font-size: 32px;
+            font-weight: $semiBold;
+            color: $black;
+            margin-bottom: 10px;
+        }
+        h4 {
+            font-size: 14px;
+            font-weight: $regular;
+            color: $black;
+            margin-bottom: 30px;
+        }
+
+        .info-box{
+            background-color: $darkBlue;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+
+            @include mobile{
+                margin-top: 50px;
+            }
+
+            @include tablet{
+                margin-top: 50px;
+            }
+
+            h6 {
+                font-size: 24px;
+                font-weight: $semiBold;
+                margin-bottom: 24px;
+                color: $white;
+            }
+
+    
+            .item{
+                display: flex;
+                align-items: flex-end;
+                justify-content: space-between;
+                margin-bottom: 10px;
+                .name {
+                    font-size: 14px;
+                    font-weight: $regular;
+                    color: $white;
+                    margin: 0;
+                }
+
+                .price{
+                    font-size: 14px;
+                    font-weight: $regular;
+                    color: $white;
+                    display: flex;
+                    align-items: flex-start;
+                    margin: 0;
+                    span {
+                        font-size: 10px;
+                    }
+                }
+            }
+            .total{
+                display: flex;
+                align-items: flex-end;
+                justify-content: space-between;
+                margin-bottom: 10px;
+                .name {
+                    font-size: 24px;
+                    font-weight: $semiBold;
+                    color: $white;
+                    margin: 0;
+                }
+
+                .price{
+                    font-size: 24px;
+                    font-weight: $semiBold;
+                    color: $white;
+                    display: flex;
+                    align-items: flex-start;
+                    margin: 0;
+                    span {
+                        font-size: 16px;
+                    }
+                }
+            }
+
+            p {
+                font-size: 12px;
+                font-weight: $regular;
+                margin-bottom: 0;
+                color: $white;
+                svg{
+                    margin-right: 10px;
+                }
+            }
+
+        }
+
+        .invoice{
+            margin-bottom: 200px;
+            background-color: $white;
+            padding: 20px 30px;
+            border-radius: 15px;
+            h6{
+                font-size: 24px;
+                font-weight: $semiBold;
+                color: $darkBlue;
+                margin-bottom: 20px;
+            }
+            .edit-account-form{
+                margin-top: 67px;
+
+                .submit-button{
+                    position: absolute;
+                    top: 60px;
+                    left: -10px;
+                    margin-bottom: 0;
+                }
+
+                .form-field-icon{
+                    margin-bottom: 30px;
+                    label{
+                        font-size: 14px;
+                        font-weight: $regular;
+                        color: $black;
+                        margin-bottom: 10px;
+                    }
+    
+                    > div {
+                        border-radius: 26px;
+                        padding: 0px 20px;
+                        border: 1px solid $bgColor; 
+                        background-color: $bgColor;
+    
+                        display: flex;
+                        align-items: center;
+                        &:hover{
+                            border: 1px solid $lightBlue;
+                        }
+    
+    
+                        input, textarea{
+                            border: 0;
+                            outline: none;
+                            width: 100%;
+                            font-size: 14px;
+                            margin-left: 11px;
+                            padding: 13px 0;
+                            background-color: $bgColor;
+                        }
+
+                        textarea{
+                            height: 150px;
+                            resize: none;
+                        }
+                    }
+    
+    
+                }
+    
+                .checkbox-wrap{
+                    margin-bottom: 20px;
+                    display: flex;
+                    align-items: center;
+                    cursor: pointer;
+                    .checkbox{
+                        border: 2px solid #DDDDDD;
+                        border-radius: 5px;
+                        width: 24px;
+                        height: 24px;
+                        margin-right: 10px;
+    
+                        &::after{
+                            content: ' ';
+                            width: 0;
+                            height: 0;
+                            background-color: $darkBlue;
+                            border-radius: 3px;
+                            transition: width 0.3s, height 0.3s;
+                        }
+    
+                    }
+    
+                    .checkbox-label{
+                        color: #7B7B93;
+                        font-size: 14px;
+                        font-weight: $light;
+                        a {
+                            color: $lightBlue;
+                        }
+                    }
+    
+                    .checked{
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+    
+                        &::after{
+                            content: ' ';
+                            width: 14px;
+                            height: 14px;
+                            background-color: $darkBlue;
+                            border-radius: 3px;
+                        }
+                    }
+                }
+    
+                .login-options{
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    margin-bottom: 36px;
+    
+                    a {
+                        color: #7B7B93;
+                        font-size: 14px;
+                        font-weight: $light;
+                    }
+                }
+    
+    
+                button {
+                    background-color: $darkBlue;
+                    transition: background-color 0.3s;
+                    color: $white;
+                    font-size: 16px;
+                    font-weight: $semiBold;
+                    border: 0;
+                    outline: none;
+                    
+                    padding: 16px 22px 16px 33px;
+                    border-radius: 124px;
+                    margin-bottom: 40px;
+    
+                    svg{
+                        margin-left: 20px;
+                    }
+    
+                    &:hover{
+                        background-color: $red;
+                        
+                    }
+                }
+    
+                .change-password-button{
+                    padding: 12px 22px 12px 22px;
+                }
+    
+                .password-settings-title{
+                    margin-top: 80px;
+                }
+    
+                .form-field-select{
+                    margin-bottom: 30px;
+    
+                    label{
+                        font-size: 14px;
+                        font-weight: $regular;
+                        color: $black;
+                        margin-bottom: 10px;
+    
+                    }
+                
+    
+                    .select-field{
+                        all: unset;
+                        border-radius: 26px;
+                        border: 1px solid #DDDDDD; 
+                        display: flex;
+                        align-items: center;
+                        &:hover{
+                            border: 1px solid $lightBlue;
+                        }
+    
+                        > a {
+                            padding: 13px 20px;
+                            width: 100%;
+                            display: flex;
+                            align-items: center;
+                            justify-content: space-between;
+                            color: $black;
+                            font-size: 14px;
+    
+                            &::after{
+                                all: unset;
+                                content: ' ';
+                                display: block;
+                                width: 10px;
+                                height: 10px;
+                                border-bottom: 2px solid $darkBlue;
+                                border-right: 2px solid $darkBlue;
+                                transform: rotate(45deg);
+                            }
+                        }
+    
+                        .dropdown-menu{
+                            max-height: 200px;
+                            overflow-y: scroll;
+                            overflow-x: hidden;
+                            button{
+                                all: unset;
+                                display: block;
+                                width: 100%;
+                                padding: 5px 15px;
+                                white-space: nowrap;
+                                &:hover{
+                                    background-color: #DDDDDD;
+                                }
+                            }
+                        }
+    
+                    }
+                }
+            }
+            .item{
+                display: flex;
+                align-items: flex-end;
+                justify-content: space-between;
+                //padding-bottom: 18px;
+                //border-bottom: 1px solid $lightGray;
+                margin-bottom: 15px;
+                .name {
+                    font-size: 18px;
+                    font-weight: $regular;
+                    color: $black;
+                    margin: 0;
+                    @include mobile{
+                        font-size: 12px;
+                    }
+                }
+
+                .price{
+                    font-size: 20px;
+                    font-weight: $semiBold;
+                    color: $black;
+                    display: flex;
+                    align-items: flex-start;
+                    margin: 0;
+                    @include mobile{
+                        font-size: 12px;
+                        min-width: 100px;
+                        margin-left: auto;
+                        text-align: right;
+                        justify-content: flex-end;
+                    }
+                    span {
+                        font-size: 16px;
+
+                    }
+                }
+            }
+
+            .fee{
+                display: flex;
+                align-items: flex-end;
+                justify-content: space-between;
+                padding: 20px 0;
+                margin-top: 20px;
+                border-bottom: 1px solid $lightGray;
+                border-top: 1px solid $lightGray;
+
+                margin-bottom: 18px;
+                .name {
+                    font-size: 14px;
+                    font-weight: $regular;
+                    color: $black;
+                    margin: 0;
+                }
+
+                .price{
+                    font-size: 16px;
+                    font-weight: $regular;
+                    color: $black;
+                    display: flex;
+                    align-items: flex-start;
+                    margin: 0;
+                    span {
+                        font-size: 10px;
+
+                    }
+                }
+            }
+            .total{
+                display: flex;
+                align-items: flex-end;
+                justify-content: flex-end;
+                padding-bottom: 18px;
+                border-bottom: 1px solid $lightGray;
+                margin-bottom: 18px;
+                .name {
+                    font-size: 24px;
+                    font-weight: $semiBold;
+                    color: $black;
+                    margin: 0;
+                    margin-right: 100px;
+                    @include mobile{
+                        font-size: 18px;
+                    }
+                }
+
+                .price{
+                    font-size: 24px;
+                    font-weight: $semiBold;
+                    color: $black;
+                    display: flex;
+                    align-items: flex-start;
+                    margin: 0;
+                    @include mobile{
+                        font-size: 18px;
+                    }
+
+                    span {
+                        font-size: 16px;
+
+                    }
+                }
+            }
+
+        }
+    }
+
+    .checkout-button{
+            background-color: $darkBlue;
+            border: 0;
+            padding: 14px 25px;
+            border-radius: 27px;
+            outline: none;
+            font-size: 14px;
+            font-weight: $semiBold;
+            color: $white;
+            margin-top: 10px;
+            transition: background-color 0.3s;
+            svg{
+                margin-left: 14px;
+                path{
+                    fill: $white;
+                }
+            }
+
+            &:hover{
+                background-color: $red;
+                color: $white;
+                svg{
+                    path{
+                        fill: $white;
+                    }
+                }
+            }
+        
+    }
+
+    .downloads-section{
+        margin-bottom: 80px;
+
+
+        .no-items{
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 57px 0 100px 0;
+            > svg {
+                margin-bottom: 40px;
+                path, circle {
+                    stroke: $darkBlue;
+                }
+
+                #Union_6 {
+                    fill: $darkBlue;
+                }
+
+            }
+
+            h6{
+              font-size: 32px;
+              font-weight: $semiBold;
+              color: $black;
+              margin-bottom: 10px; 
+              text-align: center;
+            }
+            p {
+                font-size: 16px;
+                font-weight: $regular;
+                color: $black;
+                margin-bottom: 40px;
+                text-align: center;
+            }
+
+            a {
+                text-decoration: none;
+                button{
+                    background-color: $darkBlue;
+                    font-size: 14px;
+                    font-weight: $semiBold;
+                    display: flex;
+                    align-items: center;
+                    padding: 14px 22px 14px 35px;
+                    color: $white;
+                    border-radius: 27px;
+                    border: 0;
+                    outline: none;
+                    transition: background-color  0.3s;
+                    svg{
+                        margin-left: 34px;
+                    }
+
+                    &:hover{
+                        background-color: $lightBlue;
+                    }
+
+                }
+            }
+        }
+
+        .info-box{
+            background-color: $darkBlue;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+            @include mobile{
+                margin-top: 50px;
+            }
+
+            @include tablet{
+                margin-top: 50px;
+            }
+
+            h6 {
+                font-size: 24px;
+                font-weight: $semiBold;
+                margin-bottom: 24px;
+                color: $white;
+            }
+
+    
+            .item{
+                display: flex;
+                align-items: flex-end;
+                justify-content: space-between;
+                margin-bottom: 10px;
+                .name {
+                    font-size: 14px;
+                    font-weight: $regular;
+                    color: $white;
+                    margin: 0;
+                }
+
+                .price{
+                    font-size: 14px;
+                    font-weight: $regular;
+                    color: $white;
+                    display: flex;
+                    align-items: flex-start;
+                    margin: 0;
+                    span {
+                        font-size: 10px;
+                    }
+                }
+            }
+            .total{
+                display: flex;
+                align-items: flex-end;
+                justify-content: space-between;
+                margin-bottom: 10px;
+                .name {
+                    font-size: 24px;
+                    font-weight: $semiBold;
+                    color: $white;
+                    margin: 0;
+                }
+
+                .price{
+                    font-size: 24px;
+                    font-weight: $semiBold;
+                    color: $white;
+                    display: flex;
+                    align-items: flex-start;
+                    margin: 0;
+                    span {
+                        font-size: 16px;
+                    }
+                }
+            }
+
+            p {
+                font-size: 12px;
+                font-weight: $regular;
+                margin-bottom: 0;
+                color: $white;
+                svg{
+                    margin-right: 10px;
+                }
+            }
+
+        }
+
+
+        .area{
+
+            .top{
+                align-items: center;
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 57px;
+
+                @include mobile{
+                    flex-direction: column;
+                    align-items: flex-start;
+                }
+
+                h2 {
+                    font-size: 32px;
+                    font-weight: $semiBold;
+                    color: $black;
+                    margin-bottom: 0;
+                }
+                
+                .actions{
+                    @include mobile{
+                        margin-top: 20px;
+                        display: flex;
+                        width: 100%;
+                        justify-content: space-between;
+                    }
+                }
+                
+                button{
+                    background-color: $white;
+                    color: $black;
+                    font-size: 16px;
+                    font-weight: $regular;
+                    border: 0;
+                    outline: none;
+                    padding: 8px 20px;
+                    margin-left: 20px;
+                    border-radius: 6px;
+
+                    @include mobile {
+                        margin-left: 0;
+                        font-size: 14px;
+                        
+                    }
+
+                    &:first-child{
+                        background-color: $darkBlue;
+                        color: $white;
+
+                    }
+                }
+    
+           
+            }
+
+            .articles{
+                .list-article{
+                    h6 {
+                        margin-bottom: 12px !important;
+                        font-size: 20px;
+                        line-height: 24px;
+                        min-height: unset;
+                    }
+
+                    p {
+                        font-size: 14px;
+                        color: $black;
+                        margin-top: 0;
+                        margin-bottom: 20px;
+                    }
+
+                    .quantity{
+                        background-color: $bgColor;
+                        padding: 9px 15px 8px 15px;
+                        border-radius: 10px;
+                        float: left;
+                        align-self: flex-start;
+                        button{
+                            border: 0;
+                            background-color: transparent;
+                            font-size: 16px;
+                            font-weight: $semiBold;
+                            color: $black;
+
+                        }
+
+                        input {
+                            background-color: transparent;
+                            border: 0;
+                            width: 32px;
+                            font-size: 20px;
+                            font-weight: $semiBold;
+                            color: $darkBlue;
+                            text-align: center;
+                        }
+                    }
+
+                    .bottom-wrap{
+                        justify-content: space-between;
+                        min-width: 100px;
+                        button{
+                            background-color: transparent;
+                            border: 0;
+                            outline: none;
+                        }
+                    }
+                }
+
+
+            }
+            
+        }
+    }
+
+  
+
+}

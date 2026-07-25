@@ -1,0 +1,387 @@
+.contact-wrap{
+    margin-bottom: 50px;
+    .into-wrap{
+        position: relative;
+        //height: 969px;
+        margin-bottom: 50px;
+        padding: 130px 20px 0px 20px;
+        width: 100%;
+        /*&::before{
+            content: ' ';
+            position: absolute;
+            top: 0;
+            left: 20px;
+            right: 20px;
+            bottom: 0;
+            background-image: linear-gradient(#FFFFFF, #EEF1F6, #EBEEF5);
+            border-radius: 0  0 20px 20px;
+
+        }*/
+
+        @include mobile-tablet {
+            height: unset;
+            padding: 15px 30px 20px 30px;
+            margin-bottom: 20px;
+            margin-top: 120px;
+        }
+
+        h1 {
+            font-size: 42px;
+            font-weight: $bold;
+            color: $black;
+            margin-bottom: 3px;
+            @include mobile {
+                font-size: 24px;
+            }
+        }
+
+        p {
+            font-size: 16px;
+            font-weight: $regular;
+            color: $darkBlue;
+            margin-bottom: 0;
+            @include mobile {
+                font-size: 14px;
+            }
+        }
+
+
+
+
+
+    }
+
+
+    .faq-item{
+        > div {
+            background-color: #EDEFF5;
+            padding: 15px 30px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            h6 {
+                margin-bottom: 0;
+                font-size: 18px;
+            }
+
+        }
+
+        p {
+            padding: 0 30px;
+        }
+        margin-bottom: 30px;
+    }
+
+    .faq-cat{
+        div {
+            background-color: #EDEFF5;
+            padding: 35px 20px;
+            border-radius: 6px;
+            margin-bottom: 30px;
+
+            h6 {
+                margin-bottom: 0;
+                color: $black;
+                text-align: center;
+                font-size: 18px;
+            }
+        }
+    }
+
+        .contact-info{
+            display: flex;
+            flex-direction: column;
+            
+            h3{
+                font-size: 26px;
+                font-weight: $extraBold;
+                color: #000000;
+            }
+            p{
+                margin-top: 13px;
+                margin-bottom: 23px;
+                font-size: 16px;
+                font-weight: $regular;
+                color: #112847;
+            }
+            h4{
+                font-size: 20px;
+                font-weight: $extraBold;
+                color: #000000;
+                margin-bottom: 17px;
+            }
+            hr{
+                background-color: #E4E4E4;
+                height: 1px;
+                width: 100%;
+                margin-bottom: 19px;
+            }
+            .contact-field{
+                margin-bottom: 16px;
+                display: flex;
+                .contact-field-info{
+                    display: flex;
+                    flex-direction: column;
+                    h5{
+                        font-size: 16px;
+                        font-weight: $regular;
+                        color: #000000;
+                    }
+                    h6{
+                        font-size: 16px;
+                        font-weight: $bold;
+                        color: #000000;
+                    }
+                }
+                svg{
+                    margin-right: 21px;
+                }
+            }
+        }
+    
+        .contact-form{
+            background-color: #F4F6FA;
+            border-radius: 20px;
+            padding: 30px;
+            .multicheckbox{
+                margin-bottom: 28px;
+                label{
+                    font-size: 18px;
+                    font-weight: 600;
+                    padding-left: 0;
+                }
+
+                .checkbox-wrap{
+                    display: flex;
+                    align-items: center;
+                    margin-bottom: 14px;
+                    font-size: 16px;
+                    font-weight: $medium;
+                    color: $black;
+                    cursor: pointer;
+
+                    .checkbox{
+                        min-width: 36px;
+                        width: 36px;
+                        height: 36px;
+                        background-color: $white;
+                        border-radius: 10px;
+                        margin-right: 12px;
+                        position: relative;
+                        &::after{
+                            content: ' ';
+                            display: block;
+                            position: absolute;
+                            top: 8px;
+                            left: 8px;
+                            width: 20px;
+                            height: 20px;
+                            border: 2px solid #5C3784;
+                            border-radius: 3px;
+                        }
+
+                        &.checked{
+                            &::after{
+                            height: 14px;
+                            width: 8px;
+                            left: 14px;
+                            top: 10px;
+                            border-radius: 0;
+                            border-top: 0;
+                            border-left: 0;
+                            border-bottom: 3px solid #5C3784;
+                            border-right: 3px solid #5C3784;
+                                transform: rotate(45deg);
+                            }
+                        }
+                    }
+                }
+
+            }
+            .form-field-select{
+                margin-bottom: 30px;
+
+                label{
+                    font-size: 16px;
+                    font-weight: $medium;
+                    color: #6D7587;
+                    margin-bottom: 9px;
+
+                }
+                
+
+                .select-field{
+                    all: unset;
+                    border-radius: 15px;
+                    display: flex;
+                    align-items: center;
+                    background-color: $white;
+                    height: 50px;
+
+                    > a {
+                        padding: 13px 20px;
+                        width: 100%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        color: $black;
+                        font-size: 14px;
+                        position: relative;
+                        height: 100%;
+                        &::after{
+                            all: unset;
+                            content: ' ';
+                            display: block;
+                            width: 8px;
+                            height: 8px;
+                            border-bottom: 2px solid $black;
+                            border-right: 2px solid $black;
+                            transform: rotate(45deg);
+                            position: absolute;
+                            right: 20px;
+                            top: 14px;
+                        }
+                    }
+
+                    .dropdown-menu{
+                        max-height: 200px;
+                        overflow-y: scroll;
+                        overflow-x: hidden;
+                        button{
+                            all: unset;
+                            display: block;
+                            width: 100%;
+                            padding: 5px 15px;
+                            white-space: nowrap;
+                            &:hover{
+                                background-color: #DDDDDD;
+                            }
+                        }
+                    }
+
+                }
+            }
+            
+            .form-field-icon{
+                margin-bottom: 15px;
+                label{
+                    color: #6D7587;
+                    font-weight: $medium;
+                    font-size: 16px;
+                }
+                > div {
+                    input {
+                        background-color: $white;
+                        border-radius: 15px;
+                        padding: 12px 20px;
+                        border: 0;
+                        outline: none;
+                        width: 100%;
+
+                    }
+    
+                    textarea{
+                        background-color: $white;
+                        border-radius: 15px;
+                        padding: 20px 20px;
+                        border: 0;
+                        outline: none;
+                        width: 100%;
+                    }
+                    
+                    
+                }
+
+
+            }
+
+            button{
+                border-radius: 120px;
+                background-color: $darkBlue;
+                color: $white;
+                padding: 10px 30px;
+                border: 0;
+                outline: none;
+            }
+    
+        }
+
+    .form-wrapper{
+
+        .form-field-icon{
+            margin-bottom: 28px;
+            label{
+                color: #6D7587;
+                font-weight: $medium;
+                font-size: 16px;
+            }
+            > div {
+                input {
+                    background-color: $white;
+                    border-radius: 15px;
+                    width: 100%;
+                }
+
+                textarea{
+                    background-color: $white;
+                    padding: 20px;
+                };
+            }
+        }
+    }
+
+    .section-contact{
+        margin-bottom: 100px;
+        
+        h3 {
+            font-size: 32px;
+            font-weight: $semiBold;
+            color: $black;
+            margin-bottom: 20px;
+        }
+
+        p {
+            font-size: 18px;
+            font-weight: $regular;
+            color: $black;
+            line-height: 28px;
+            margin-bottom: 100px;
+        }
+
+        .item{
+            text-align: center;
+            margin-bottom: 30px;
+            svg{
+                margin-bottom: 50px;
+            }
+            p {
+                font-size: 16px;
+                font-weight: $regular;
+                color: $black;
+                line-height: 24px;
+                margin-bottom: 40px;    
+            }
+        }
+
+        button{
+            border: 2px solid $black;
+            outline: none;
+            background-color: $white;
+            padding: 15px 40px;
+            font-size: 14px;
+            color: $black;
+            font-weight: $semiBold;
+            border-radius: 27px;
+            transition: background-color 0.3s;
+            &:hover{
+                background-color: $lightBlue;
+                border: 2px solid $lightBlue;
+                color: $white;
+            }
+        }
+    }
+
+
+
+}
+
+    

@@ -1,0 +1,34 @@
+# Tajne — NIKAD na git
+.env
+.env.local
+*.env
+!.env.example
+
+# Zavisnosti
+node_modules/
+
+# Build izlazi
+build/
+dist/
+.cache/
+
+# Generisani CSS (pravi se iz .scss preko `npm run build-css`)
+zipa24062026/site/src/App.css
+zipa24062026/site/src/**/*.css.map
+
+# Slike i fajlovi — žive na Cloudflare R2, ne u repou
+zipa24062026/api/uploads/
+zipa24062026/api/photos-store/
+
+# MongoDB dump stare baze (157 MB, već migriran u Supabase)
+zipa_db_2026/
+
+# Lokalne pomoćne stvari
+migration/venv/
+migration/__pycache__/
+*.pyc
+.DS_Store
+*.log
+
+# Claude Code lokalna podesavanja
+.claude/settings.local.json

@@ -1,0 +1,1592 @@
+const fs = require('fs');
+const ObjectID = require('../objectid');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const uuidv4 = require('uuid/v4');
+const fetch = require('node-fetch');
+const sendMail = require('../sendMail');
+
+let db;
+const dbConnect = require('../db');
+const storage = require('../storage');
+const constants = require('./constants');
+var paypal = require('paypal-rest-sdk');
+var easyimage = require('easyimage');
+
+/*paypal.configure({
+    'mode': 'sandbox', //sandbox or live
+    'client_id': 'AZ-3VdH8RS5xnC6vhj_qjfnYykku2O9dN3enY61EsBTw3Lz7rgfUbNAvgQ-zWMyPoreI3sgkJJyVeYAY',
+    'client_secret': 'EFLr7h99l92gE2EbRwJZkWtpXDUVRcJysdW7lw71b3gBaBzN2IxcGHuYLPULyBmiZIYLMXQAQOfpRHox'
+});*/
+
+let paypalEnv = new paypal.core.SandboxEnvironment('Aeo_ioibFhYvOe1C3Su14KejG9WXXngPuhQG6xZtiQKvMK_J0eCGnF6cRpV6Fij0SDoH4JIYMkIjtuT3', 'EGgd4k_Xud7U-IhivqCgP7GqRL-KZKQuprovpZCwFeCFTZMB_UWbv1hf_f2TjpoCIDA359ApI5rFqXix');
+//let paypalEnv = new paypal.core.LiveEnvironment('AU6dEOqLcGkaIx5Jn_3DZxjMf2BGPb0GI6OABJLJAv1OsBrV2L4O-4s5teSuwjcmHGOWfXTZwtmS1d8b', 'EOvHb544jH3vlpR5w70kxXaifT3RDuVgpekRoDtnnkQLyORR_sA_Cldhr93H6V6rOadoQtezYJJB-7gT'); // Live account
+let paypalClient = new paypal.core.PayPalHttpClient(paypalEnv);
+
+/*paypal.order.get("YCSMNZ5RD4NZ8", (err, order) => {
+    if (err) {
+        console.log(err)
+    } else {
+        console.log(order)
+    }
+})
+*/
+
+
+function generateAlias(str) {
+    str = str.toLowerCase();
+    str = str.replace(/ä/g, 'a');
+    str = str.replace(/ö/g, 'o');
+    str = str.replace(/ü/g, 'u');
+    str = str.replace(/ß/g, 'b');
+    str = str.replace(/č/g, 'c');
+    str = str.replace(/ć/g, 'c');
+    str = str.replace(/ž/g, 'z');
+    str = str.replace(/đ/g, 'dj');
+    str = str.replace(/š/g, 's');
+
+    str = str.replace(/[^a-zA-Z0-9]/gi, '-').toLowerCase()
+    str = str.replace(/-+/g, '-');
+
+    return str;
+}
+
+
+const userRolePermissions = {
+    'photographer': ['change-gallery', 'transactions']
+}
+
+
+dbConnect()
+    .then((conn) => {
+        db = conn;
+    })
+    .catch((e) => {
+        console.log('DB error')
+    })
+
+class UsersModule {
+    constructor(props) {
+
+    }
+
+
+    async logVisit(uid, url) {
+        await db.collection('logs').insertOne({
+            uid: uid ? ObjectID(uid) : null,
+            url: url,
+            timestamp: Math.floor(new Date().getTime() / 1000)
+        });
+        return {};
+    }
+
+    async fetchLogs(page = 0, search = null) {
+
+        let query = {};
+
+
+        if (search) {
+            query.url = new RegExp(search, 'i');
+        }
+
+        let items = await db.collection('logs').find(query).sort({ timestamp: -1 }).skip(page * 100).limit(100).toArray();
+        for (let i = 0; i < items.length; i++) {
+
+            let user = null;
+            if (items[i].uid) {
+                user = await db.collection('users').findOne({ _id: items[i].uid });
+                if (user) {
+                    items[i].user = {
+                        name: user.name,
+                        userAlias: user.userAlias
+                    }
+                }
+            }
+        }
+
+        return {
+            items: items,
+            total: Math.ceil(await db.collection('logs').find(query).count() / 100)
+        };
+    }
+
+
+    async fetchDownloads(page = 0, search = null) {
+
+        let query = {};
+
+
+        if (search) {
+            //query.url = new RegExp(search, 'i');
+        }
+
+        let items = await db.collection('downloads').find(query).sort({ timestamp: -1 }).skip(page * 20).limit(20).toArray();
+        let newArr = [];
+
+        for (let i = 0; i < items.length; i++) {
+
+            if (items[i].transactionId) {
+                let transaction = await db.collection('transactions').findOne({ _id: items[i].transactionId });
+                if (transaction) {
+                    items[i].transaction = transaction;
+                }
+            }
+
+            let user = await db.collection('users').findOne({ _id: ObjectID(items[i].uid) });
+            if (user) {
+                items[i].user = {
+                    _id: user._id,
+                    name: user.name,
+                    userAlias: user.userAlias
+                }
+            } else {
+                continue;
+            }
+
+            let gallery = await db.collection('gallery').findOne({ _id: items[i].galleryId });
+            if (gallery) {
+                items[i].gallery = gallery;
+            } else {
+                continue;
+            }
+
+            newArr.push(items[i]);
+
+        }
+
+        return {
+            items: newArr,
+            total: Math.ceil(await db.collection('downloads').find(query).count() / 20)
+        };
+    }
+
+
+    async fetchUsers(page = 0, search = null) {
+
+        let query = {};
+
+
+        if (search) {
+            query = { $or: [{ email: new RegExp(search, 'i') }, { name: new RegExp(search, 'i'), }] }
+        }
+
+        let users = await db.collection('users').find(query).skip(page * 20).limit(20).toArray();
+        return {
+            items: users,
+            total: Math.ceil(await db.collection('users').find(query).count() / 20)
+        };
+    }
+
+    checkPassword(password) {
+        var decimal = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9])(?!.*\s).{6,16}$/;
+        if (password.match(decimal))
+            return true;
+        else
+            return false;
+    }
+
+
+
+    async register(email, password, name, type) {
+        let check = await db.collection('users').find({ email: email }).count();
+        if (check) {
+            return {
+                response: { error: `E-mail adresa već postoji.` },
+                status: 500
+            }
+        }
+
+        if (!this.checkPassword(password)) {
+            return {
+                response: { error: `Lozinka mora da sadrži izmedju 6-16 karaktera, veliko slovo, broj i specijalni karakter.` },
+                status: 500
+            }
+        }
+
+
+
+
+        var salt = bcrypt.genSaltSync(10);
+        var hash = bcrypt.hashSync(password, salt);
+
+
+
+        let obj = {
+            _id: ObjectID(),
+            name: name,
+            email: email,
+            userRole: type,
+            pk: hash,
+            emailVerified: false,
+            accountEnabled: false,
+            emailVerificationCode: uuidv4(),
+            registerTimestamp: Math.floor(new Date().getTime() / 1000),
+            permissions: userRolePermissions[type],
+            userAlias: generateAlias(name)
+        }
+
+        sendMail(email, 'Verifikujte E-mail Adresu', String.format(fs.readFileSync('./emails/verify.html', 'utf-8'), email, `https://zipa.novamedia.agency/account/verify/${obj._id.toString()}/${obj.emailVerificationCode}`))
+
+        await db.collection('users').insertOne(obj);
+
+        let html = `<html>
+        <body>
+            <p>Novi korisnik se registrovao na sajt.</p>
+        </body>
+        </html>`;
+
+        sendMail('info@zipaphoto.net', 'Registracija korisnika', html);
+        sendMail('noreplay@zipaphoto.net', 'Registracija korisnika', html);
+
+
+        return {
+            response: {
+            },
+            status: 200
+        }
+    }
+
+    async verifyEmail(uid, emailVerificationCode) {
+        let check = await db.collection('users').find({ _id: ObjectID(uid) }).count();
+        if (!check) {
+            return {
+                response: { error: `User not exists` },
+                status: 500
+            }
+        }
+
+        check = await db.collection('users').find({ _id: ObjectID(uid), emailVerificationCode: emailVerificationCode }).count();
+        if (!check) {
+            return {
+                response: { error: `Wrokng verification code` },
+                status: 500
+            }
+        }
+
+
+        let user = await db.collection('users').find({ _id: ObjectID(uid) }).toArray();
+
+
+        sendMail(user[0].email, 'E-mail Adresa Verifikovana!', String.format(fs.readFileSync('./emails/verified.html', 'utf-8'), `https://zipa.novamedia.agency`))
+
+        await db.collection('users').updateOne({ _id: ObjectID(uid) }, { $set: { emailVerificationCode: null, emailVerified: true, emailVerificationTimestamp: Math.floor(new Date().getTime() / 1000) } });
+
+        let token = jwt.sign({ "id": uid }, constants.jwtSecretKey, { algorithm: 'HS256', expiresIn: '30d' });
+        return {
+            response: {
+                token: token
+            },
+            status: 200
+        };
+    }
+
+    async sendResetPasswordMail(email) {
+        let user = await db.collection('users').find({ email: email }).toArray();
+        if (!user.length) {
+            return {
+                response: { error: `User not exists` },
+                status: 500
+            }
+        }
+
+
+        let resetPasswordVerificationCode = uuidv4();
+        await db.collection('users').updateOne({ _id: user[0]._id }, { $set: { resetPasswordVerificationCode: resetPasswordVerificationCode } });
+
+        sendMail(email, 'Zaboravljena lozinka', String.format(fs.readFileSync('./emails/forgot.html', 'utf-8'), `https://zipa.novamedia.agency/reset-password/${user[0]._id.toString()}/${resetPasswordVerificationCode}`))
+        return {
+            response: { error: null },
+            status: 200
+        }
+    }
+
+    async resetPassword(uid, resetPasswordVerificationCode, newPassword, retypedPassword) {
+        let user = await db.collection('users').find({ _id: ObjectID(uid) }).toArray();
+        if (!user.length) {
+            return {
+                response: { error: `User not exists` },
+                status: 500
+            }
+        }
+
+        user = await db.collection('users').find({ _id: ObjectID(uid), resetPasswordVerificationCode: resetPasswordVerificationCode }).toArray();
+        if (!user.length) {
+            return {
+                response: { error: `Wrong verification code` },
+                status: 500
+            }
+        }
+
+        if (newPassword !== retypedPassword) {
+            return {
+                response: { error: `Passwords do not match` },
+                status: 500
+            }
+        }
+
+        var salt = bcrypt.genSaltSync(10);
+        var hash = bcrypt.hashSync(newPassword, salt);
+
+
+        await db.collection('users').updateOne({ _id: user[0]._id }, { $set: { resetPasswordVerificationCode: null, pk: hash } });
+
+        let token = jwt.sign({ "id": uid }, constants.jwtSecretKey, { algorithm: 'HS256', expiresIn: '30d' });
+        return {
+            response: {
+                token: token
+            },
+            status: 200
+        };
+
+    }
+
+
+    async login(email, password, rememberMe) {
+        let user = await db.collection('users').find({ email: email }).toArray();
+        if (!user.length) {
+            return {
+                response: {
+                    error: 'Korisnik ne postoji'
+                },
+                status: 404
+            };
+
+        } else {
+            if (!user[0].emailVerified) {
+                return {
+                    response: {
+                        error: 'E-mail adresa nije verifikovana'
+                    },
+                    status: 500
+                };
+            }
+
+            if (!user[0].accountEnabled) {
+                return {
+                    response: {
+                        error: 'Vaš nalog još uvijek čeka odobrenje administratora.'
+                    },
+                    status: 500
+                };
+            }
+
+
+            if (bcrypt.compareSync(password, user[0].pk)) {
+
+
+                let token = jwt.sign({ "id": user[0]._id }, constants.jwtSecretKey, { algorithm: 'HS256', expiresIn: rememberMe ? '30d' : '24h' });
+
+                await db.collection('users').updateOne({ _id: user[0]._id }, {
+                    $set: {
+                        lastLoginTimestamp: Math.floor(new Date().getTime() / 1000)
+                    }
+                })
+
+                return {
+                    response: {
+                        token: token
+                    },
+                    status: 200
+                };
+
+            } else {
+                return {
+                    response: {
+                        error: 'Pogrešni podaci za prijavu.'
+                    },
+                    status: 400
+                };
+            }
+        }
+    }
+
+    async editAccount(uid, data) {
+        let user = await db.collection('users').find({ _id: ObjectID(uid) }).toArray();
+        if (!user.length) {
+            return {
+                response: { error: `User not exists` },
+                status: 500
+            }
+        }
+
+        let hash;
+
+        if (data.oldPassword || data.newPassword) {
+
+            if (!bcrypt.compareSync(data.oldPassword, user[0].pk)) {
+                return {
+                    response: { error: `Pogrešna stara lozinka.` },
+                    status: 400
+                }
+
+            }
+
+            if (data.newPassword != data.newPasswordRetyped) {
+                return {
+                    response: { error: `Lozinke se ne podudaraju.` },
+                    status: 500
+                }
+            }
+
+            if (!this.checkPassword(data.newPassword)) {
+                return {
+                    response: { error: `Lozinka mora da sadrži izmedju 6-16 karaktera, veliko slovo, broj i specijalni karakter.` },
+                    status: 500
+                }
+            }
+
+
+            var salt = bcrypt.genSaltSync(10);
+            hash = bcrypt.hashSync(data.newPassword, salt);
+        }
+
+
+        let object = {
+            //name: data.name
+        }
+
+        if (data.name) {
+            object.name = data.name;
+            let userAlias = generateAlias(object.name);
+            object.userAlias = userAlias;
+
+            db.collection('gallery').updateMany({ uid: ObjectID(uid) }, {
+                $set: {
+                    userAlias: userAlias,
+                    user: object.name
+                }
+            })
+        }
+
+        if (user[0].email != data.email && data.email) {
+            object.emailVerified = false;
+            object.emailVerificationCode = uuidv4();
+            object.email = data.email;
+            sendMail(data.email, 'Verifikujte E-mail Adresu', String.format(fs.readFileSync('./emails/verify.html', 'utf-8'), data.email, `https://zipa.novamedia.agency/account/verify/${uid}/${object.emailVerificationCode}`))
+        }
+
+        if (hash) {
+            object.pk = hash;
+        }
+
+        if (data.phoneNumber) {
+            object.phoneNumber = data.phoneNumber;
+        }
+
+        if (data.businessPhoneNumber) {
+            object.businessPhoneNumber = data.businessPhoneNumber;
+        }
+        if (data.webSite) {
+            object.webSite = data.webSite;
+        }
+        if (data.skype) {
+            object.skype = data.skype;
+        }
+        if (data.twitter) {
+            object.twitter = data.twitter;
+        }
+        if (data.facebook) {
+            object.facebook = data.facebook;
+        }
+        if (data.instagram) {
+            object.instagram = data.instagram;
+        }
+        if (data.country) {
+            object.country = data.country;
+        }
+        if (data.city) {
+            object.city = data.city;
+        }
+        if (data.address) {
+            object.address = data.address;
+        }
+        if (data.profilePhoto) {
+            object.profilePhoto = data.profilePhoto;
+        }
+
+        if (data.biography) {
+            object.biography = data.biography;
+        }
+
+        await db.collection('users').updateOne({ _id: user[0]._id }, { $set: object });
+        return {
+            response: { error: null },
+            status: 200
+        }
+
+    }
+
+    async photographers() {
+        let users = await db.collection('users').find({ accountEnabled: true, userRole: 'photographer' }, { projection: { _id: 1, userAlias: 1, name: 1, profilePhoto: 1 } }).toArray();
+        for (let i = 0; i < users.length; i++) {
+            let galleries = await db.collection('gallery').find({ uid: users[i]._id, isActive: true }).toArray();
+            users[i].photosCount = 0;
+            for (let j = 0; j < galleries.length; j++) {
+                users[i].photosCount += galleries[j].photos.length;
+            }
+        }
+
+        users.sort((a, b) => b.photosCount - a.photosCount);
+        return users;
+
+    }
+
+    async photographer(alias) {
+        let user = await db.collection('users').findOne({ accountEnabled: true, userRole: 'photographer', userAlias: alias }, { projection: { _id: 1, userAlias: 1, name: 1, profilePhoto: 1, country: 1, city: 1, biography: 1, webSite: 1, instagram: 1, twitter: 1, facebook: 1, skype: 1 } });
+        if (user) {
+            let galleries = await db.collection('gallery').find({ uid: user._id, isActive: true }).toArray();
+            user.photosCount = 0;
+            user.photos = [];
+            for (let i = 0; i < galleries.length; i++) {
+                user.photosCount += galleries[i].photos.length;
+                for (let j = 0; j < galleries[i].photos.length; j++) {
+                    if (galleries[i].photos[j].visibleOnProfile) {
+                        galleries[i].photos[j].galleryAlias = galleries[i].alias;
+                        galleries[i].photos[j].photoId = j;
+                        galleries[i].photos[j]._id = galleries[i]._id;
+                        user.photos.push(galleries[i].photos[j]);
+                    }
+                }
+            }
+        }
+
+        return user;
+    }
+
+
+    async verify(uid) {
+        let user = await db.collection('users').find({ _id: ObjectID(uid) }, { projection: { _id: 1, email: 1, userAlias: 1, name: 1, permissions: 1, profilePhoto: 1, phoneNumber: 1, lastLoginTimestamp: 1, businessPhoneNumber: 1, webSite: 1, skype: 1, twitter: 1, facebook: 1, instagram: 1, country: 1, city: 1, address: 1, userRole: 1, biography: 1 } }).toArray();
+
+        if (user[0].userRole != 'photographer' && user[0].userRole != 'admin') {
+            let userResolutions = await db.collection('userResolutions').find(
+                {
+                    uid: uid,
+                    from: { $lte: Math.floor(new Date().getTime() / 1000) }, to: { $gte: Math.floor(new Date().getTime() / 1000) },
+                    $or: [
+                        {
+                            'resolution3000px': { $gt: 0 }
+                        },
+                        {
+                            'resolution1500px': { $gt: 0 }
+                        },
+                        {
+                            'resolution800px': { $gt: 0 }
+                        }
+                    ]
+                }
+            ).toArray();
+
+            user[0].freePhotos = 0;
+            if (userResolutions.length) {
+                user[0].freePhotos += userResolutions[0].resolution3000px;
+                user[0].freePhotos += userResolutions[0].resolution1500px;
+                user[0].freePhotos += userResolutions[0].resolution800px;
+            }
+        }
+
+        if (user[0].userRole == 'photographer') {
+            let count = 0;
+            let galleries = await db.collection('gallery').find({ uid: user[0]._id }).toArray();
+            for (let i = 0; i < galleries.length; i++) {
+                count += galleries[i].photos.length;
+            }
+
+            user[0].photoCount = count;
+        }
+
+
+
+        let curMonth = new Date();
+        curMonth.setHours(0, 0, 0, 0);
+        curMonth.setDate(1);
+
+
+
+        let curMonthTimestamp = Math.floor(curMonth.getTime() / 1000);
+        let currMonthDownloads = await db.collection('downloads').find({ timestamp: { $gte: curMonthTimestamp }, uid: uid }).toArray();
+
+        user[0].currMonthDownloads = 0;
+        for (let i = 0; i < currMonthDownloads.length; i++) {
+            let gallery = await db.collection('gallery').findOne({ _id: currMonthDownloads[i].galleryId });
+
+            if (gallery && gallery.price) {
+                let priceMap = {
+                    3000: 1,
+                    1500: 0.5,
+                    800: 0.15,
+                };
+
+                user[0].currMonthDownloads += (gallery.price * priceMap[currMonthDownloads[i].resolution]);
+            }
+
+        }
+
+        let downloads = await db.collection('downloads').find({ uid: uid }).toArray();
+
+        user[0].totalDownloads = 0;
+        for (let i = 0; i < downloads.length; i++) {
+            let gallery = await db.collection('gallery').findOne({ _id: downloads[i].galleryId });
+
+            if (gallery && gallery.price) {
+                let priceMap = {
+                    3000: 1,
+                    1500: 0.5,
+                    800: 0.15,
+                };
+
+                user[0].totalDownloads += (gallery.price * priceMap[downloads[i].resolution]);
+            }
+
+        }
+
+
+        return user[0]
+    }
+
+    async comment(uid, storeAlias, alias, sku, parent, comment) {
+        let product = await db.collection('products').find({ storeAlias: storeAlias, alias: alias, sku: sku }).toArray();
+        if (!product.length) {
+            return { error: 'Product not found' };
+        }
+
+        let user = await db.collection('users').find({ _id: ObjectID(uid) }).toArray();
+        if (!user.length) {
+            return { error: 'User not found' };
+        }
+
+        await db.collection('comments').insertOne({
+            uid: uid,
+            productId: product[0]._id,
+            parent: parent,
+            comment: comment,
+            status: 1,
+            timestamp: Math.floor(new Date().getTime() / 1000)
+        });
+
+        return {
+            error: null
+        }
+    }
+
+    async fetchCommentsNode(uid, product, node) {
+        let query = { productId: product, parent: node };
+
+        if (uid) {
+            query['$or'] = [{ uid: uid }, { uid: { $ne: uid }, status: 1 }];
+        } else {
+            query.status = 1;
+        }
+
+        let comments = await db.collection('comments').find(query).sort({ timestamp: 1 }).toArray();
+        for (let i = 0; i < comments.length; i++) {
+            comments[i].replies = await this.fetchCommentsNode(uid, product, comments[i]._id.toString());
+            let user = await db.collection('users').find({ _id: ObjectID(comments[i].uid) }).toArray();
+            if (user.length) {
+                comments[i].user = user[0].name ? user[0].name : user[0].email.split('@')[0];
+            }
+        }
+
+        return comments;
+    }
+
+    async comments(uid, storeAlias, alias, sku) {
+        let product = await db.collection('products').find({ storeAlias: storeAlias, alias: alias, sku: sku }).toArray();
+        if (!product.length) {
+            return { error: 'Product not found' };
+        }
+
+        return await this.fetchCommentsNode(uid, product[0]._id, null);
+    }
+
+
+
+
+
+    async rate(uid, storeAlias, alias, sku, rating, comment) {
+        let product = await db.collection('products').find({ storeAlias: storeAlias, alias: alias, sku: sku }).toArray();
+        if (!product.length) {
+            return { error: 'Product not found' };
+        }
+
+        let user = await db.collection('users').find({ _id: ObjectID(uid) }).toArray();
+        if (!user.length) {
+            return { error: 'User not found' };
+        }
+
+        let check = await db.collection('userOrders').find({ uid: uid, 'product._id': product[0]._id }).count();
+        if (!check) {
+            return { error: 'Not allowed' };
+        }
+
+        let review = await db.collection('reviews').find({ uid: uid, productId: product[0]._id }).toArray();
+        if (review.length) {
+            await db.collection('reviews').updateOne({ _id: review[0]._id }, {
+                $set: {
+                    comment: comment,
+                    rating: parseInt(rating),
+                    timestamp: Math.floor(new Date().getTime() / 1000)
+                }
+            });
+
+        } else {
+            await db.collection('reviews').insertOne({
+                uid: uid,
+                productId: product[0]._id,
+                comment: comment,
+                rating: parseInt(rating),
+                timestamp: Math.floor(new Date().getTime() / 1000)
+            });
+
+        }
+
+
+
+        let sum = 0;
+        let reviews = await db.collection('reviews').find({ productId: product[0]._id }).toArray();
+        for (let i = 0; i < reviews.length; i++) {
+            sum += reviews[i].rating;
+        }
+
+        await db.collection('products').updateOne({ _id: product[0]._id }, {
+            $set: {
+                rating: reviews.length > 0 ? sum / reviews.length : 0
+            }
+        });
+
+        return {
+            error: null
+        }
+    }
+
+    async isRatingAllowed(uid, storeAlias, alias, sku) {
+        let product = await db.collection('products').find({ storeAlias: storeAlias, alias: alias, sku: sku }).toArray();
+        if (!product.length) {
+            return { ratingAllowed: false };
+        }
+
+        let user = await db.collection('users').find({ _id: ObjectID(uid) }).toArray();
+        if (!user.length) {
+            return { ratingAllowed: false };
+        }
+
+        let check = await db.collection('userOrders').find({ uid: uid, 'product._id': product[0]._id }).count();
+        if (!check) {
+            return { ratingAllowed: false };
+        }
+
+        return { ratingAllowed: true };
+    }
+
+
+    async reviews(storeAlias, alias, sku) {
+        let product = await db.collection('products').find({ storeAlias: storeAlias, alias: alias, sku: sku }).toArray();
+        if (!product.length) {
+            return { error: 'Product not found' };
+        }
+
+        let reviews = await db.collection('reviews').find({ productId: product[0]._id }).sort({ timestamp: -1 }).toArray();
+        for (let i = 0; i < reviews.length; i++) {
+            let user = await db.collection('users').find({ _id: ObjectID(reviews[i].uid) }).toArray();
+            if (user.length) {
+                reviews[i].user = user[0].name ? user[0].name : user[0].email.split('@')[0];
+            }
+        }
+
+        return reviews;
+    }
+
+    async userReviews(uid) {
+
+        let reviews = await db.collection('reviews').find({ uid: uid }).sort({ timestamp: -1 }).toArray();
+        for (let i = 0; i < reviews.length; i++) {
+            let product = await db.collection('products').find({ _id: reviews[i].productId }).toArray();
+            if (product.length) {
+                reviews[i].productName = product[0].name;
+                reviews[i].productAlias = product[0].alias;
+            }
+        }
+
+        return reviews;
+    }
+
+
+    async deleteReview(uid, alias) {
+        let product = await db.collection('products').find({ alias: alias }).toArray();
+        if (!product.length) {
+            return { error: 'Product not found' };
+        }
+
+        let user = await db.collection('users').find({ _id: ObjectID(uid) }).toArray();
+        if (!user.length) {
+            return { error: 'User not found' };
+        }
+
+        let check = await db.collection('downloads').find({ uid: uid, productId: product[0]._id }).count();
+        if (!check) {
+            return { error: 'Not allowed' };
+        }
+
+        await db.collection('reviews').deleteOne({ uid: uid, productId: product[0]._id });
+
+        let sum = 0;
+        let reviews = await db.collection('reviews').find({ productId: product[0]._id }).toArray();
+        for (let i = 0; i < reviews.length; i++) {
+            sum += reviews[i].rating;
+        }
+
+        await db.collection('products').updateOne({ _id: product[0]._id }, {
+            $set: {
+                rating: reviews.length > 0 ? sum / reviews.length : 0
+            }
+        });
+
+
+        return { error: null }
+    }
+
+    async review(uid, alias) {
+        let product = await db.collection('products').find({ alias: alias }).toArray();
+        if (!product.length) {
+            return { error: 'Product not found' };
+        }
+
+        let user = await db.collection('users').find({ _id: ObjectID(uid) }).count();
+        if (!user) {
+            return { error: 'User not found' };
+        }
+
+
+        let res = await db.collection('reviews').find({ uid: uid, productId: product[0]._id }).toArray();
+        if (res.length) {
+            return {
+                comment: res[0].comment,
+                rating: res[0].rating
+            }
+        } else {
+            return {
+
+            }
+        }
+    }
+
+
+
+    async addToCartAfterLogin(uid, item) {
+        let product = await db.collection('products').find({ _id: ObjectID(item.productId) }).toArray();
+        if (!product.length) {
+            return { error: 'Product not found' };
+        }
+
+        let check = await db.collection('cart').find({ uid: uid, productId: product[0]._id }).count();
+        if (check) {
+            await db.collection('cart').updateOne({ uid: uid, productId: product[0]._id }, {
+                $set: {
+                    quantity: item.quantity
+                }
+            });
+        } else {
+
+            await db.collection('cart').insertOne({
+                uid: uid,
+                productId: product[0]._id,
+                timestamp: Math.floor(new Date().getTime() / 1000),
+                quantity: item.quantity
+            });
+        }
+
+        return { error: null }
+    }
+
+
+
+    async downloadGalleryImage(uid, galleryId, photoId, resolution = 3000 ) {
+
+        let gallery = await db.collection('gallery').find({ _id: ObjectID(galleryId) }).toArray();
+        if (!gallery.length) {
+            return { response: { error: 'Gallery not found' }, status: 404 };
+        }
+
+
+
+        //let resolutions = await db.collection('userResolutions').find({ uid: uid }).toArray();
+
+        if (gallery[0].uid.toString() != uid) {
+
+            let resolutions = await db.collection('userResolutions').find({ uid: uid, from: { $lte: Math.floor(new Date().getTime() / 1000) }, to: { $gte: Math.floor(new Date().getTime() / 1000) } }).toArray();
+
+            if (!resolutions.length) {
+                return { response: { error: 'Not allowed' }, status: 400 };
+            }
+
+            if (resolutions[0].categories && resolutions[0].categories.length) {
+                let found = false;
+                for (let i = 0; i < resolutions[0].categories.length; i++) {
+                    for (let j = 0; j < gallery[0].category.length; j++) {
+                        if (gallery[0].category[j] == resolutions[0].categories[i]) {
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if (found == true) {
+                        break;
+                    }
+                }
+
+                if (!found) {
+                    return { response: { error: 'Not allowed' }, status: 400 };
+
+
+                }
+
+            }
+            if (resolutions[0].photographers && resolutions[0].photographers.length) {
+                if (resolutions[0].photographers.indexOf(gallery[0].uid.toString()) == -1) {
+                    return { response: { error: 'Not allowed' }, status: 400 };
+
+                }
+            }
+
+            if (resolutions[0][`resolution${resolution}px`] <= 0) {
+                return { response: { error: 'Not allowed' }, status: 400 };
+            }
+        }
+
+
+        let check = await db.collection('downloads').find({ uid: uid, galleryId: gallery[0]._id, photoId: photoId, resolution: resolution }).count();
+        if (check) {
+            await db.collection('downloads').updateOne({ uid: uid, galleryId: gallery[0]._id, photoId: photoId, resolution: resolution }, { $set: { timestamp: Math.floor(new Date().getTime() / 1000) } });
+        } else {
+            await db.collection('downloads').insertOne({ uid: uid, photo: gallery[0].photos[photoId], galleryId: gallery[0]._id, photoId: photoId, resolution: resolution, timestamp: Math.floor(new Date().getTime() / 1000) });
+        }
+
+
+        let base64;
+        try {
+            base64 = await storage.resizedOriginalDataUri(gallery[0].photos[photoId].image, resolution);
+        } catch (e) {
+            return { response: { error: 'Original fotografije nije dostupan.' }, status: 404 };
+        }
+
+
+        let obj = {};
+        obj[`resolution${resolution}px`] = -1;
+        await db.collection('userResolutions').updateOne({ uid: uid }, { $inc: obj });
+
+        return {
+            response: { image: base64 },
+            status: 200
+        }
+    }
+
+    async downloadGalleryImageFree(uid, galleryId, photoId, resolution = 3000,) {
+
+        let gallery = await db.collection('gallery').find({ _id: ObjectID(galleryId) }).toArray();
+        if (!gallery.length) {
+            return { response: { error: 'Gallery not found' }, status: 404 };
+        }
+        let galleryPrice = gallery[0]
+        console.log('GALLERY PRICE : ', galleryPrice.price)
+        if (galleryPrice.price !== 0) {
+            return { response: { error: 'Gallery photo is not free'}, status: 500};
+        }
+
+
+
+        //let resolutions = await db.collection('userResolutions').find({ uid: uid }).toArray();
+
+        // if (gallery[0].uid.toString() != uid) {
+        //
+        //     let resolutions = await db.collection('userResolutions').find({ uid: uid, from: { $lte: Math.floor(new Date().getTime() / 1000) }, to: { $gte: Math.floor(new Date().getTime() / 1000) } }).toArray();
+        //
+        //     if (!resolutions.length) {
+        //         return { response: { error: 'Not allowed' }, status: 400 };
+        //     }
+        //
+        //     if (resolutions[0].categories && resolutions[0].categories.length) {
+        //         let found = false;
+        //         for (let i = 0; i < resolutions[0].categories.length; i++) {
+        //             for (let j = 0; j < gallery[0].category.length; j++) {
+        //                 if (gallery[0].category[j] == resolutions[0].categories[i]) {
+        //                     found = true;
+        //                     break;
+        //                 }
+        //             }
+        //
+        //             if (found == true) {
+        //                 break;
+        //             }
+        //         }
+        //
+        //         if (!found) {
+        //             return { response: { error: 'Not allowed' }, status: 400 };
+        //
+        //
+        //         }
+        //
+        //     }
+        //     if (resolutions[0].photographers && resolutions[0].photographers.length) {
+        //         if (resolutions[0].photographers.indexOf(gallery[0].uid.toString()) == -1) {
+        //             return { response: { error: 'Not allowed' }, status: 400 };
+        //
+        //         }
+        //     }
+        //
+        //     if (resolutions[0][`resolution${resolution}px`] <= 0) {
+        //         return { response: { error: 'Not allowed' }, status: 400 };
+        //     }
+        // }
+
+
+        let check = await db.collection('downloads').find({ uid: uid, galleryId: gallery[0]._id, photoId: photoId, resolution: resolution }).count();
+        if (check) {
+            await db.collection('downloads').updateOne({ uid: uid, galleryId: gallery[0]._id, photoId: photoId, resolution: resolution }, { $set: { timestamp: Math.floor(new Date().getTime() / 1000) } });
+        } else {
+            await db.collection('downloads').insertOne({ uid: uid, photo: gallery[0].photos[photoId], galleryId: gallery[0]._id, photoId: photoId, resolution: resolution, timestamp: Math.floor(new Date().getTime() / 1000) });
+        }
+
+
+        let base64;
+        try {
+            base64 = await storage.resizedOriginalDataUri(gallery[0].photos[photoId].image, resolution);
+        } catch (e) {
+            return { response: { error: 'Original fotografije nije dostupan.' }, status: 404 };
+        }
+
+
+        let obj = {};
+        obj[`resolution${resolution}px`] = -1;
+        await db.collection('userResolutions').updateOne({ uid: uid }, { $inc: obj });
+
+        return {
+            response: { image: base64 },
+            status: 200
+        }
+    }
+
+    async addToCart(uid, galleryId, photoId, resolution = 3000) {
+
+        let gallery = await db.collection('gallery').find({ _id: ObjectID(galleryId) }).toArray();
+        if (!gallery.length) {
+            return { error: 'Gallery not found' };
+        }
+
+        let check = await db.collection('cart').find({ uid: uid, galleryId: gallery[0]._id, photoId: photoId, resolution: resolution }).count();
+        if (check) {
+            return { error: 'Photo already in cart' };
+        } else {
+            await db.collection('cart').insertOne({
+                uid: uid,
+                galleryId: gallery[0]._id,
+                photoId: photoId,
+                resolution: resolution,
+                photo: gallery[0].photos[photoId],
+                timestamp: Math.floor(new Date().getTime() / 1000),
+            });
+        }
+
+        return { error: null }
+    }
+
+    async updateCart(uid, productId, quantity) {
+        let product = await db.collection('products').find({ _id: ObjectID(productId) }).toArray();
+        if (!product.length) {
+            return { error: 'Product not found' };
+        }
+
+        let check = await db.collection('cart').find({ uid: uid, productId: product[0]._id }).count();
+        if (check) {
+            await db.collection('cart').updateOne({ uid: uid, productId: product[0]._id }, {
+                $set: {
+                    quantity: parseInt(quantity)
+                }
+            });
+        }
+
+        return { error: null }
+    }
+
+
+    async removeFromCart(uid, galleryId, photoId, resolution) {
+        let gallery = await db.collection('gallery').find({ _id: ObjectID(galleryId) }).toArray();
+        if (!gallery.length) {
+            return { error: 'Gallery not found' };
+        }
+
+        let check = await db.collection('cart').find({ uid: uid, galleryId: gallery[0]._id, photoId: photoId, resolution: resolution }).count();
+        if (!check) {
+            return { error: 'Photo not found in cart' };
+        }
+
+        await db.collection('cart').deleteOne({ uid: uid, galleryId: gallery[0]._id, photoId: photoId, resolution: resolution });
+
+        return { error: null }
+    }
+
+    async emptyCart(uid) {
+        await db.collection('cart').deleteMany({ uid: uid });
+        return { error: null }
+    }
+
+    async cart(uid, localCart) {
+        let priceMap = {
+            3000: 1,
+            1500: 0.5,
+            800: 0.15,
+        };
+
+
+        let cart = [];
+        if (uid) {
+            cart = await db.collection('cart').find({ uid: uid }).toArray();
+            if (!cart.length) {
+                return [];
+            }
+        } else {
+            if (localCart && localCart.length) {
+                for (let i = 0; i < localCart.length; i++) {
+                    cart.push({ galleryId: ObjectID(localCart[i].galleryId), photoId: localCart[i].photoId, resolution: localCart[i].resolution })
+                }
+            } else {
+                return [];
+            }
+        }
+
+        let newCart = [];
+        for (let i = 0; i < cart.length; i++) {
+            let gallery = await db.collection('gallery').find({ _id: cart[i].galleryId }).toArray();
+            if (gallery.length) {
+                newCart.push({
+                    ...cart[i],
+                    ...gallery[0],
+                    cartId: cart[i]._id,
+                    price: gallery[0].price * priceMap[cart[i].resolution]
+                })
+            }
+        }
+
+        return newCart;
+
+    }
+
+
+    async calculateShipping(uid, localCart) {
+        let cart = [];
+        if (uid) {
+            cart = await db.collection('cart').find({ uid: uid }).toArray();
+            if (!cart.length) {
+                return [];
+            }
+        } else {
+            if (localCart && localCart.length) {
+                for (let i = 0; i < localCart.length; i++) {
+                    cart.push({ productId: ObjectID(localCart[i].productId), quantity: localCart[i].quantity })
+                }
+            } else {
+                return [];
+            }
+        }
+
+        let stores = {};
+
+        for (let i = 0; i < cart.length; i++) {
+            let product = await db.collection('products').find({ _id: cart[i].productId }, { projection: { _id: 1, name: 1, images: 1, price: 1, alias: 1, storeName: 1, storeAlias: 1, storeId: 1, sku: 1, shortDescription: 1, length: 1, width: 1, height: 1, weight: 1 } }).toArray();
+            product[0].quantity = cart[i].quantity;
+
+            if (!stores[product[0].storeId.toString()]) {
+                stores[product[0].storeId.toString()] = [];
+            }
+
+            stores[product[0].storeId.toString()].push(product[0]);
+        }
+
+
+        let shipping = 0;
+        console.log(cart)
+        for (var key in stores) {
+            if (stores[key]) {
+                var products = stores[key];
+                let store = await db.collection('stores').find({ _id: ObjectID(key) }).toArray();
+                let volume = 0;
+                let weight = 0;
+                for (let i = 0; i < products.length; i++) {
+                    volume += ((products[i].length / 100) * (products[i].width / 100) * (products[i].height / 100) * products[i].quantity);
+                    weight += (products[i].weight * products[i].quantity);
+                }
+
+
+                if (volume > store[0].shippingVolume && weight < store[0].shippingWeight) {
+                    shipping += (store[0].shippingPrice * Math.ceil(volume / store[0].shippingVolume));
+                } else if (volume < store[0].shippingVolume && weight > store[0].shippingWeight) {
+                    shipping += (store[0].shippingPrice * Math.ceil(weight / store[0].shippingWeight));
+                } else {
+                    let val1 = volume / store[0].shippingVolume;
+                    let val2 = weight / store[0].shippingWeight;
+                    if (val1 > val2) {
+                        shipping += (store[0].shippingPrice * Math.ceil(volume / store[0].shippingVolume));
+                    } else {
+                        shipping += (store[0].shippingPrice * Math.ceil(weight / store[0].shippingWeight));
+                    }
+                }
+
+
+            }
+        }
+
+
+        return { shipping: shipping };
+
+    }
+
+
+    async calculateShippingForStore(key, products) {
+        let shipping = 0;
+
+        let store = await db.collection('stores').find({ _id: ObjectID(key) }).toArray();
+        let volume = 0;
+        let weight = 0;
+
+        console.log(products);
+
+        for (let i = 0; i < products.length; i++) {
+            volume += ((products[i].length / 100) * (products[i].width / 100) * (products[i].height / 100) * products[i].quantity);
+            weight += (products[i].weight * products[i].quantity);
+        }
+
+
+        if (volume > store[0].shippingVolume && weight < store[0].shippingWeight) {
+            shipping += (store[0].shippingPrice * Math.ceil(volume / store[0].shippingVolume));
+        } else if (volume < store[0].shippingVolume && weight > store[0].shippingWeight) {
+            shipping += (store[0].shippingPrice * Math.ceil(weight / store[0].shippingWeight));
+        } else {
+            let val1 = volume / store[0].shippingVolume;
+            let val2 = weight / store[0].shippingWeight;
+            if (val1 > val2) {
+                shipping += (store[0].shippingPrice * Math.ceil(volume / store[0].shippingVolume));
+            } else {
+                shipping += (store[0].shippingPrice * Math.ceil(weight / store[0].shippingWeight));
+            }
+        }
+
+        console.log('shipping: ', shipping)
+
+        return shipping;
+
+    }
+
+
+
+
+    async getPaypalTransaction(orderId) {
+        return new Promise((resolve, error) => {
+            let getRequest = new paypal.v1.orders.OrdersGetRequest(orderId);
+            paypalClient.execute(getRequest).then((res) => {
+                if (res.statusCode == 200) {
+                    resolve(res.result);
+                } else {
+                    error();
+                }
+            })
+        })
+    }
+
+
+    async finishOrder(uid, orderId, items) {
+        if (orderId) {
+            let transaction = await this.getPaypalTransaction(orderId);
+            if (transaction.status != 'COMPLETED') {
+                return { error: 'Transaction not completed' };
+            }
+
+
+            let cartItems = [];
+            for (let i = 0; i < transaction.purchase_units[0].items.length; i++) {
+                let cartItem = await db.collection('cart').find({ _id: ObjectID(transaction.purchase_units[0].items[i].sku) }).toArray();
+                if (cartItem.length) {
+                    cartItems.push(cartItem[0]);
+                }
+            }
+
+
+            await db.collection('cart').deleteMany({ uid: uid });
+
+
+            let transactionId = ObjectID();
+
+            await db.collection('transactions').insertOne({
+                _id: transactionId,
+                timestamp: Math.floor(new Date().getTime() / 1000),
+                transaction: transaction,
+            })
+
+
+            for (let i = 0; i < cartItems.length; i++) {
+                let check = await db.collection('downloads').find({ uid: uid, galleryId: cartItems[i].galleryId, photoId: cartItems[i].photoId, resolution: cartItems[i].resolution }).count();
+                if (check) {
+                    await db.collection('downloads').updateOne({ uid: uid, photo: cartItems[i].photo, galleryId: cartItems[i].galleryId, photoId: cartItems[i].photoId, resolution: cartItems[i].resolution }, { $set: { timestamp: Math.floor(new Date().getTime() / 1000) } });
+                } else {
+                    await db.collection('downloads').insertOne({ transactionId: transactionId, uid: uid, photo: cartItems[i].photo, galleryId: cartItems[i].galleryId, photoId: cartItems[i].photoId, resolution: cartItems[i].resolution, timestamp: Math.floor(new Date().getTime() / 1000) });
+                }
+            }
+
+
+        }/* else {
+
+            let productsQuery = { sku: { $in: items }, price: { $in: ['0', 0, null, '0.00'] } };
+
+            let products = await db.collection('products').find(productsQuery).toArray();
+            if (uid) {
+                // empty cart
+                let cartDeleteQuery = { uid: uid, productId: { $in: [] } };
+                for (let i = 0; i < products.length; i++) {
+                    cartDeleteQuery['productId']['$in'].push(products[i]._id);
+                }
+
+                await db.collection('cart').deleteMany(cartDeleteQuery);
+            }
+
+            for (let i = 0; i < products.length; i++) {
+                let check = await db.collection('downloads').find({ uid: uid, productId: products[i]._id }).count();
+                if (check) {
+                    await db.collection('downloads').updateOne({ uid: uid, productId: products[i]._id }, { $set: { timestamp: Math.floor(new Date().getTime() / 1000) } });
+                } else {
+                    await db.collection('downloads').insertOne({ uid: uid, productId: products[i]._id, timestamp: Math.floor(new Date().getTime() / 1000) });
+                }
+            }
+
+        }*/
+
+        return { error: null }
+
+    }
+
+
+    async downloadImage(uid, downloadId) {
+        let item = await db.collection('downloads').find({ uid: uid, _id: ObjectID(downloadId) }).toArray();
+        if (!item.length) {
+            return {
+                response: {},
+                status: 404
+            }
+        }
+
+        let base64;
+        try {
+            base64 = await storage.resizedOriginalDataUri(item[0].photo.image, item[0].resolution);
+        } catch (e) {
+            return { response: { error: 'Original fotografije nije dostupan.' }, status: 404 };
+        }
+
+
+        return {
+            response: { image: base64 },
+            status: 200
+        }
+
+
+    }
+
+
+    async subscribeToNewsletter(email) {
+        if (email.indexOf('@') !== -1) {
+            await db.collection('subscribers').insertOne({
+                email: email,
+                timestamp: Math.floor(new Date().getTime() / 1000)
+            });
+            return { error: null }
+        } else {
+            return { error: true }
+
+        }
+    }
+
+    async orders(uid, page = 0, sort = null) {
+        let items = [];
+        let total = await db.collection('userOrders').find({ uid: uid }).count();
+
+        if (sort == 'null') {
+            sort = null;
+        }
+
+        let sortObj = {
+            timestamp: -1
+        };
+
+        if (sort) {
+
+            if (sort == 'title') {
+                sortObj = { 'product.name': 1 }
+            }
+
+            if (sort == 'price') {
+                sortObj = {
+                    'product.price': 1
+                }
+            }
+
+        };
+        items = await db.collection('userOrders').find({ uid: uid }).skip(page * 20).limit(20).sort(sortObj).toArray();
+
+
+        return {
+            total: total,
+            items: items
+        }
+    }
+
+    async downloads(uid, page = 0, sort = null) {
+        let items = [];
+        let total = await db.collection('downloads').find({ uid: uid }).count();
+        let downloads = [];
+
+
+        downloads = await db.collection('downloads').find({ uid: uid }).skip(page * 20).limit(20).sort({ timestamp: -1 }).toArray();
+
+        for (let i = 0; i < downloads.length; i++) {
+            let gallery = await db.collection('gallery').find({ _id: downloads[i].galleryId }).toArray();
+            if (gallery.length) {
+                items.push(
+                    {
+                        ...gallery[0],
+                        ...downloads[i]
+                    }
+                );
+            }
+        }
+
+
+
+        return {
+            total: total,
+            items: items
+        }
+    }
+
+    async userGallery(uid, page = 0) {
+        let total = await db.collection('gallery').find({ uid: ObjectID(uid) }).count();
+        let items = [];
+
+
+        items = await db.collection('gallery').find({ uid: ObjectID(uid) }).skip(page * 20).limit(20).sort({ published: -1 }).toArray();
+
+        return {
+            total: total / 20,
+            items: items
+        }
+    }
+
+
+    async photographerStatistics(uid) {
+        console.log(uid);
+        let photoVisits = await db.collection('photoVisits').find({ galleryUid: ObjectID(uid) }).toArray();
+        let res = {};
+        for (let i = 0; i < photoVisits.length; i++) {
+            if (!photoVisits[i].photo) {
+                continue;
+            }
+
+
+            if (!res[photoVisits[i].galleryId.toString() + '_' + photoVisits[i].photo.name]) {
+                res[photoVisits[i].galleryId.toString() + '_' + photoVisits[i].photo.name] = {
+                    photo: photoVisits[i].photo,
+                    count: 0
+                }
+            }
+
+            res[photoVisits[i].galleryId.toString() + '_' + photoVisits[i].photo.name].count++;
+        }
+
+        let arr = Object.values(res);
+
+        arr.sort((a, b) => b.count - a.count);
+
+        return arr;
+    }
+
+    async contact(obj) {
+        let html = `<html>
+        <body>
+            <table>
+            <tr>
+                <td>Ime</td>
+                <td>${obj.firstName} ${obj.lastName}</td>
+            </tr>
+            <tr>
+                <td>E-mail</td>
+                <td>${obj.email}</td>
+            </tr>
+            <tr>
+                <td>Poslovni telefon</td>
+                <td>${obj.bussinessPhone}</td>
+            </tr>
+            <tr>
+            <td>Država</td>
+            <td>${obj.country}</td>
+        </tr>
+
+        <tr>
+        <td>Posao</td>
+        <td>${obj.jobeRole}</td>
+    </tr>
+
+    <tr>
+    <td>Pozicija</td>
+    <td>${obj.jobLevel}</td>
+</tr>
+
+<tr>
+<td>Industrija</td>
+<td>${obj.industry}</td>
+</tr>
+
+<tr>
+<td>Kompanija</td>
+<td>${obj.company}</td>
+</tr>
+
+
+            </table>
+            <p>${obj.message}</p>
+        </body>
+        </html>`;
+
+        sendMail('info@zipaphoto.net', 'Kontakt', html);
+
+
+    }
+
+    async insertCategories() {
+        await db.collection('categories').insertOne({
+            name: { ba: 'Vijesti' },
+            position: 0,
+            isRecommended: true,
+            isVisibleOnNav: false,
+            isVisible: true
+        })
+        await db.collection('categories').insertOne({
+            name: { ba: 'Reportaže' },
+            position: 1,
+            isRecommended: false,
+            isVisibleOnNav: false,
+            isVisible: true
+        })
+        await db.collection('categories').insertOne({
+            name: { ba: 'Sport' },
+            position: 2,
+            isRecommended: true,
+            isVisibleOnNav: false,
+            isVisible: true
+        })
+        await db.collection('categories').insertOne({
+            name: { ba: 'COVID-19' },
+            position: 3,
+            isRecommended: true,
+            isVisibleOnNav: true,
+            isVisible: true
+        })
+    }
+
+
+}
+
+module.exports = UsersModule;

@@ -1,0 +1,193 @@
+.blog-wrap{
+
+    .into-wrap{
+        position: relative;
+        //height: 380px;
+        margin-top: 130px;
+        margin-bottom: 50px;
+        padding: 40px 0 30px 0;
+
+        &::before{
+            content: ' ';
+            position: absolute;
+            top: 0;
+            left: 20px;
+            right: 20px;
+            bottom: 0;
+            background-color: $lightBlue;
+            border-radius: 20px;
+
+        }
+        @include mobile {
+            height: unset;
+            padding: 15px 30px 20px 30px;
+            margin-bottom: 20px;
+            margin-top: 120px;
+        }
+
+
+
+        .row{
+            align-items: flex-end;
+        }
+    
+        h1 {
+            font-size: 48px;
+            font-weight: $bold;
+            color: $black;
+            margin-bottom: 2px;
+            @include mobile {
+                font-size: 24px;
+            }
+        }
+        p {
+            font-size: 16px;
+            font-weight: $regular;
+            color: $darkBlue;
+            margin-bottom: 0;
+            @include mobile {
+                font-size: 14px;
+            }
+
+        }
+
+        .categories{
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            @include mobile {
+                display: none;
+            }
+            a {
+                color: $black;
+                font-size: 14px;
+                font-weight: $semiBold;
+            }
+
+            .active{
+                text-decoration: underline;
+            }
+        }
+
+       
+
+
+       
+
+
+
+    }
+
+    .section-blog-articles{
+        .blog-articles{
+
+            article{
+                img {
+                    height: 248px;
+                    object-fit: cover;
+                }
+                .wrap{
+                    > div {
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        margin-bottom: 10px;
+                    }
+
+                    .description{
+                        font-size: 16px;
+                        color: $black;
+                    }
+                }
+            }
+
+            
+            > div {
+
+                
+
+                &:nth-child(1){
+                    article{
+                        margin-bottom: 80px;
+                        img {
+                            height: 380px;
+                        }
+                    }
+                }
+                &:nth-child(2){
+                    article{
+                        margin-bottom: 80px;
+                        img {
+                            height: 380px;
+                        }
+                    }
+                }
+
+            }
+            
+        
+        }
+    }
+
+    .blog-detail{
+        margin-bottom: 80px;
+
+        .latest-articles{
+            @include mobile{
+                margin-top: 50px;
+            }
+            h3{
+                color: $darkBlue;
+                font-size: 32px;
+                font-weight: $semiBold;
+                margin-bottom: 21px;
+                @include mobile{
+                    font-size: 26px;
+                    text-align: center;
+                }
+            }
+        }
+
+        .into{
+            h2 {
+                font-size: 52px;
+                font-weight: $semiBold;
+                color: $black;
+                margin-bottom: 17px;
+                @include mobile{
+                    font-size: 26px;
+                }
+            }
+
+            .category{
+                color: $darkBlue;
+                font-size: 14px;
+                font-weight: $semiBold;
+                margin-bottom: 0;
+            }
+            .date{
+                color: $gray;
+                font-size: 14px;
+                font-weight: $regular;
+                margin-bottom: 40px;
+            }
+        }
+
+        .image{
+            width: 100%;
+            border-radius: 10px;
+        }
+
+        .content{
+            margin-top: 47px;
+            p {
+                font-size: 18px;
+                font-weight: $regular;
+                color: $black;
+                line-height: 28px;
+            }
+        }
+    }
+
+
+}

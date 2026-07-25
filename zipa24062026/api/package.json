@@ -1,0 +1,38 @@
+{
+  "name": "showroom-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node app.js"
+  },
+  "author": "Milan Stanojevic",
+  "license": "ISC",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1095.0",
+    "archiver": "^4.0.2",
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^1.19.0",
+    "compression": "^1.7.4",
+    "cors": "^2.8.5",
+    "dotenv": "^17.4.2",
+    "dynamic-watermark": "^1.0.0",
+    "easyimage": "^3.1.1",
+    "exiftool-vendored": "^11.5.0",
+    "express": "^4.17.1",
+    "express-fileupload": "^1.1.6",
+    "fix-utf8": "^1.1.1",
+    "get-exif": "^1.0.3",
+    "jsonwebtoken": "^8.5.1",
+    "node-fetch": "^2.6.0",
+    "nodemailer": "^6.3.1",
+    "paypal-rest-sdk": "2.0.0-rc.1",
+    "pg": "^8.11.0",
+    "piexifjs": "^1.0.6",
+    "sharp": "^0.35.3",
+    "utf8": "^3.0.0",
+    "uuid": "^3.3.3",
+    "webp-converter": "^2.2.3"
+  }
+}

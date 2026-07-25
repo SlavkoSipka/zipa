@@ -1,0 +1,277 @@
+.stores-wrap{
+    .into-wrap{
+        position: relative;
+        //height: 380px;
+        margin-top: 130px;
+        margin-bottom: 50px;
+        padding: 40px 0 30px 0;
+
+        &::before{
+            content: ' ';
+            position: absolute;
+            top: 0;
+            left: 20px;
+            right: 20px;
+            bottom: 0;
+            background-color: $lightBlue;
+            border-radius: 20px;
+
+        }
+
+
+        @include mobile {
+            height: unset;
+            padding: 20px 30px;
+            margin-top: 80px;
+        }
+
+        @include small-desktop{
+            padding: 20px 30px;
+        }
+
+
+        @include tablet{
+            padding: 20px 30px;
+        }
+
+
+        h1 {
+            font-size: 42px;
+            font-weight: $bold;
+            color: $black;
+            margin-bottom: 6px;
+            @include mobile {
+                font-size: 24px;
+                margin-bottom: 2px;
+            }
+        }
+
+        h2 {
+            font-size: 26px;
+            font-weight: $semiBold;
+            color: $darkBlue;
+            margin-bottom: 36px;
+            @include mobile {
+                font-size: 14px;
+                font-weight: $medium;
+            }
+        }
+
+        .scroll-down{
+            border: 0;
+            outline: none;
+            background-color: transparent;
+            margin-top: 0;
+            position: relative;
+            @include mobile {
+                display: none;
+            }
+
+            @include tablet{
+                display: none;
+            }
+
+            -webkit-animation-name: scroll-down-animation; /* Safari 4.0 - 8.0 */
+            -webkit-animation-duration: 0.7s; /* Safari 4.0 - 8.0 */
+            animation-name: scroll-down-animation;
+            animation-duration: 0.7s;
+            animation-iteration-count: infinite;
+            animation-timing-function: ease-in-out;
+        
+        
+            /* Safari 4.0 - 8.0 */
+            @-webkit-keyframes scroll-down-animation {
+                0% {top: 0px}
+                50% {top: 10px}
+                100% {top: 0px}
+            }
+            
+            /* Standard syntax */
+            @keyframes scroll-down-animation {
+                0% {top: 0px}
+                50% {top: 10px}
+                100% {top: 0px}
+            }
+
+        }
+
+        h5 {
+            font-size: 26px;
+            font-weight: $semiBold;
+            color: $black;
+            margin-bottom: 14px;
+            margin-left: 20px;
+            @include mobile {
+                display: none;
+            }
+        }
+
+        .search-wrap{
+            display: flex;
+            width: 100%;
+            background-color: $white;
+            border-radius: 30px;
+            padding: 5px 5px 5px 20px;
+            margin-bottom: 20px;
+            @include mobile {
+                margin-bottom: 0px;
+            }
+            input{
+                width: 100%;
+                border: 0;
+                outline: none;
+                @include mobile {
+                    font-size: 12px;
+                }
+            }
+
+            .dropdown{
+                > button{
+                    background-color: transparent;
+                    color: $black;
+                    font-size: 14px;
+                    font-weight: $regular;
+                    border: 0;
+                    box-shadow: none !important;
+                    display: flex;
+                    height: 100%;
+                    
+                    &::after{
+                        all: unset;
+                        content: ' ';
+                        display: block;
+                        width: 10px;
+                        height: 10px;
+                        border-left: 2px solid $gray;
+                        border-bottom: 2px solid $gray;
+                        transform: rotate(-45deg);
+                        margin-left: 80px;
+                    }
+                }
+            }
+
+            .button{
+                margin-left: 30px;
+                background-color: $red;
+                color: $white;
+                border: 0;
+                outline: none;
+                display: flex;
+                align-items: center;
+                border-radius: 25px;
+                padding: 14px 38px 14px 50px;
+                transition: background-color 0.3s;
+                &:hover{
+                    background-color: $darkBlue;
+                }
+
+                @include mobile {
+                    padding: 11px 20px;
+                    font-size: 12px;
+                }
+
+                svg{
+                    margin-left: 16px;
+                    @include mobile {
+                        width: 18px;
+                        margin-left: 14px;
+                    }
+                }
+            }
+        }
+
+        .count{
+            display: flex;
+            font-size: 14px;
+            color: $black;
+            margin-left: 20px;
+            @include mobile {
+                display: none;
+            }
+            span{
+                font-weight: $semiBold;
+                margin-right: 8px;
+            }
+            
+        }
+
+
+
+    }
+
+
+    .stores-section{
+        h3 {
+            font-size: 32px;
+            margin-bottom: 27px;
+            font-weight: $regular;
+
+            span{
+                font-weight: $semiBold;
+            }
+            margin-bottom: 16px;
+        }
+
+        .letters{
+            display: flex;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            button{
+                background-color: $white;
+                border: 0;
+                color: $black;
+                font-size: 18px;
+                font-weight: $semiBold;
+                margin-right: 10px;
+                border-radius: 4px;
+                padding: 5px 14px;
+                transition: background-color 0.3s;
+                margin-bottom: 10px;
+                &:hover, &.active{
+                    background-color: $darkBlue;
+                    color: $white;
+                }
+            }
+        }
+        a {
+            text-decoration: none;
+        }
+
+        .store-item{
+            background-color: $white;
+            border-radius: 15px;
+            padding: 10px;
+            display: flex;
+            margin-bottom: 20px;
+            img {
+                width: 105px;
+                height: 70px;
+                border-radius: 10px;
+                object-fit: cover;
+            }
+
+            > div {
+                margin-left: 20px;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;;
+                h6 {
+                    color: $black;
+                    font-size: 20px;
+                    font-weight: $medium;
+                    margin-bottom: 2px;
+                }
+                p{
+                    color: $gray;
+                    font-size: 14px;
+                    margin-bottom: 0;
+                }
+            }
+        }
+
+    }
+
+
+
+
+}

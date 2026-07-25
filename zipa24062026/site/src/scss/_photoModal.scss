@@ -1,0 +1,298 @@
+@mixin mobile {
+    @media only screen and (max-width: 1024px) {
+        @content;
+    }
+}
+
+@mixin minToMobile {
+    @media only screen and (min-width: 578px) {
+        @content;
+    }
+}
+
+.displayNone {
+    display: none;
+}
+
+.customWidth {
+    min-width: 95% !important;
+    @include mobile {
+        min-width: 100% !important;
+        min-height: 100% !important;
+        margin: 0;
+    }
+}
+
+.customPaddingModal {
+    padding: 0 !important;
+}
+
+.photoModalCloseButton {
+    background-color: transparent;
+    border: 1px solid black;
+    border-radius: 50%;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.imageContainer {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* 2 equal columns */
+    grid-template-rows: repeat(2, auto); /* 2 rows */
+    gap: 10px; /* Adjust spacing between grid items */
+    row-gap: 30px;
+    width: 100%; /* Optional: Set the container's width */
+    @include mobile {
+        grid-template-columns: repeat(1, 1fr); // 3 equal columns for mobile
+        grid-template-rows: auto; // Single row
+    }
+}
+
+.imagesWrapper {
+    grid-column: 1; /* Place in the first column */
+    grid-row: 1; /* Place in the first row */
+    @include mobile {
+        grid-column: 1; // Place in the first column for mobile
+        grid-row: 1;    // Ensure all items stay in the same row
+    }
+}
+.navigationWrapperMobile {
+    @include mobile {
+        grid-column: 1; // Place in the first column for mobile
+        grid-row: 2;    // Ensure all items stay in the same row
+        display: flex;
+        justify-content: space-between;
+        padding: 0 1rem !important;
+        button {
+            background-color: transparent;
+            padding: 10px 20px;
+        }
+    }
+}
+.imagesButtons {
+    grid-column: 2; /* Place in the second column */
+    grid-row: 1; /* Place in the first row */
+    @include mobile {
+        grid-column: 1; // Place in the second column for mobile
+        grid-row: 3;    // Ensure all items stay in the same row
+        padding: 0 1rem !important;
+    }
+}
+.imagesDescription {
+    grid-column: 1 / span 2; /* Span both columns */
+    grid-row: 2; /* Take up the entire second row */
+    height: 100%; /* Optional: Ensures it occupies full space */
+    @include mobile {
+        grid-column: 1; // Place in the third column for mobile
+        grid-row: 4;    // Ensure all items stay in the same row
+        padding: 0 1rem !important;
+    }
+}
+
+.headerContent {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 40px;
+}
+
+.navigationWrapper {
+    display: flex;
+    gap: 20px;
+
+    button {
+        background: transparent;
+        border: 1px solid black;
+        font-size: 30px;
+        padding: 5px 15px;
+        cursor: pointer;
+
+        &:hover {
+            color: blue;
+        }
+    }
+}
+
+.titleWrapper {
+    h1,
+    p {
+        padding: 0;
+        margin: 0;
+    }
+}
+
+.imagesWrapper {
+    width: 100%;
+    height: 100%;
+    img {
+        // height: 467px;
+        // width: 700px;
+        // aspect-ratio: 16/9;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+}
+
+.imagesButtons {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    box-sizing: border-box;
+    justify-content: center;
+    padding: 20px;
+    @include mobile {
+        padding: 0;
+    }
+
+    @include mobile {
+        gap: 10px;
+    }
+
+    div {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+
+        @include mobile {
+            flex-direction: column;
+            gap: 10px;
+
+            button {
+                align-items: center;
+
+                span {
+                    font-size: 12px;
+                }
+            }
+        }
+    }
+
+    .downloadingButtonAndText {
+        display: flex;
+        justify-content: center;
+
+        @include mobile {
+            flex-wrap: wrap;
+        }
+
+        .original-not-found {
+            max-width: 445px;
+            text-align: center;
+            border: 1px solid red;
+            margin: 0;
+        }
+
+        .download-btn {
+            background-color: #3c59b9;
+            border-radius: 10px;
+            padding: 13px;
+            width: 100%;
+            font-size: 14px;
+            font-weight: 500;
+            color: #ffffff;
+            border: 0;
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 20px;
+
+            &:hover {
+                border: unset;
+            }
+        }
+    }
+
+    .buyPhoto {
+        background-color: #3c59b9;
+        border-radius: 10px;
+        padding: 13px;
+        width: 100%;
+        font-size: 14px;
+        font-weight: 500;
+        color: #ffffff;
+        border: 0;
+        align-items: center;
+
+        &:hover {
+            border: none;
+        }
+
+        &:focus {
+            outline: none;
+        }
+    }
+
+    button {
+        border-radius: 10px;
+        background-color: #edeff5;
+        border: 2px solid #edeff5;
+        outline: none;
+        text-align: left;
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        padding: 8px 10px;
+
+        @include mobile {
+            padding: 4px 5px;
+
+            span {
+                font-size: 14px;
+            }
+        }
+
+        &:hover {
+            border: 2px solid #3c59b9;
+        }
+
+        &:focus {
+            outline: none;
+        }
+    }
+
+    .active {
+        border: 2px solid #3c59b9;
+    }
+}
+
+.imagesDescriptionWrapper {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* 2 equal columns */
+    grid-template-rows: repeat(2, auto); /* 2 rows */
+    gap: 10px; /* Adjust spacing between grid items */
+    width: 100%; /* Optional: Set the container's width */
+    @include mobile {
+        grid-template-columns: repeat(1, 1fr); // 3 equal columns for mobile
+        grid-template-rows: auto; // Single row
+    }
+}
+
+.descriptionHeader {
+    grid-column: 1 / span 2; /* Span both columns */
+    grid-row: 1; /* Take up the entire second row */
+    height: 100%; /* Optional: Ensures it occupies full space */
+    @include mobile {
+        grid-column: 1; // Place in the first column for mobile
+        grid-row: 1;    // Ensure all items stay in the same row
+    }
+}
+.descriptionLeft {
+    grid-column: 1; /* Place in the second column */
+    grid-row: 2; /* Place in the first row */
+    @include mobile {
+        grid-column: 1; // Place in the second column for mobile
+        grid-row: 2;    // Ensure all items stay in the same row
+    }
+}
+.descriptionRight {
+    grid-column: 2; /* Place in the first column */
+    grid-row: 2; /* Place in the first row */
+    text-align: end;
+    @include mobile {
+        grid-column: 1; // Place in the third column for mobile
+        grid-row: 3;    // Ensure all items stay in the same row
+        text-align: start;
+    }
+}
