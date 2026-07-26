@@ -14,21 +14,25 @@ Redosled je bitan: **Worker → API → sajt**, jer svaki sledeći korak traži 
 
 ---
 
-## 1. Cloudflare Worker (slike)
+## 1. Cloudflare Worker (slike) — ✅ URAĐENO
 
-```bash
-cd photos-worker
-npx wrangler login       # otvara browser — uloguj se na Cloudflare
-npx wrangler deploy
+Postavljen je na:
+
+```
+https://zipa-photos.zipa-photo-agency.workers.dev
 ```
 
-Zapiši URL koji ispiše, npr. `https://zipa-photos.tvoj-nalog.workers.dev`.
-
-Provera:
+Ponovni deploy posle izmena koda:
 ```bash
-curl -I https://<worker-url>/photos/350x/admin/20130203_Ljubacevo-zima_01_9d9a165d9585d43ba2b5ee2c24f43483.jpg
+cd photos-worker && npx wrangler deploy
 ```
-Treba `HTTP/2 200` i `content-type: image/jpeg`.
+
+Provereno da radi kako treba:
+- `/photos/350x/...` i `/photos/700x/...` → 200, `image/jpeg`, keširano godinu dana
+- `/photos/originals/...`, `/originals/...`, `..` obilaznice → 404
+
+> Novi `workers.dev` poddomen prvih par minuta vraća SSL grešku dok se izdaje
+> sertifikat — to prođe samo od sebe.
 
 ---
 
@@ -76,7 +80,7 @@ Provera: `https://<api-url>/categories` treba da vrati JSON sa kategorijama.
    | Key | Vrednost |
    |---|---|
    | `RAZZLE_API_ENDPOINT` | URL API-ja iz koraka 2 |
-   | `RAZZLE_PHOTOS_ENDPOINT` | URL Worker-a iz koraka 1 |
+   | `RAZZLE_PHOTOS_ENDPOINT` | `https://zipa-photos.zipa-photo-agency.workers.dev` |
    | `NODE_VERSION` | `20` |
 
 4. Deploy → to je link koji šalješ klijentu.
