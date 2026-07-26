@@ -32,3 +32,6 @@ migration/__pycache__/
 
 # Claude Code lokalna podesavanja
 .claude/settings.local.json
+
+# Wrangler lokalni kes
+.wrangler/
