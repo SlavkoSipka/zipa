@@ -58,6 +58,10 @@ Provereno da radi kako treba:
    | `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASSWORD` | iz .env |
    | `NODE_VERSION` | `20` |
 
+   > ⚠️ **`PORT` NE prenositi iz `.env`.** Port zadaje Render; ako se postavi ručno,
+   > server sluša na pogrešnom portu i sve rute vraćaju 404 uz zaglavlje
+   > `x-render-routing: no-server`.
+
 4. Deploy → dobiješ URL, npr. `https://zipa-api.onrender.com`
 5. Vrati se u Environment i dodaj `API_ENDPOINT` = taj URL → Save (ponovo se deployuje)
 
