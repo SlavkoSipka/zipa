@@ -518,12 +518,21 @@ class UsersModule {
 
     async photographers() {
         let users = await db.collection('users').find({ accountEnabled: true, userRole: 'photographer' }, { projection: { _id: 1, userAlias: 1, name: 1, profilePhoto: 1 } }).toArray();
+
+        // Broj fotografija se računa u bazi — učitavanje svih galerija sa
+        // `photos` nizovima (kod najplodnijih fotografa 150k+ fotografija)
+        // bi bez potrebe povuklo stotine megabajta.
+        let counts = await db.query(`
+            select "uid", coalesce(sum(jsonb_array_length(photos)), 0)::int as cnt
+              from gallery
+             where "isActive" is true and photos is not null
+             group by "uid"
+        `);
+        let byUid = {};
+        for (let row of counts.rows) byUid[row.uid] = row.cnt;
+
         for (let i = 0; i < users.length; i++) {
-            let galleries = await db.collection('gallery').find({ uid: users[i]._id, isActive: true }).toArray();
-            users[i].photosCount = 0;
-            for (let j = 0; j < galleries.length; j++) {
-                users[i].photosCount += galleries[j].photos.length;
-            }
+            users[i].photosCount = byUid[users[i]._id] || 0;
         }
 
         users.sort((a, b) => b.photosCount - a.photosCount);
@@ -534,20 +543,29 @@ class UsersModule {
     async photographer(alias) {
         let user = await db.collection('users').findOne({ accountEnabled: true, userRole: 'photographer', userAlias: alias }, { projection: { _id: 1, userAlias: 1, name: 1, profilePhoto: 1, country: 1, city: 1, biography: 1, webSite: 1, instagram: 1, twitter: 1, facebook: 1, skype: 1 } });
         if (user) {
-            let galleries = await db.collection('gallery').find({ uid: user._id, isActive: true }).toArray();
-            user.photosCount = 0;
-            user.photos = [];
-            for (let i = 0; i < galleries.length; i++) {
-                user.photosCount += galleries[i].photos.length;
-                for (let j = 0; j < galleries[i].photos.length; j++) {
-                    if (galleries[i].photos[j].visibleOnProfile) {
-                        galleries[i].photos[j].galleryAlias = galleries[i].alias;
-                        galleries[i].photos[j].photoId = j;
-                        galleries[i].photos[j]._id = galleries[i]._id;
-                        user.photos.push(galleries[i].photos[j]);
-                    }
-                }
-            }
+            // I broj fotografija i izdvojene fotografije se dobijaju iz baze,
+            // umesto učitavanja svih galerija fotografa u memoriju.
+            let total = await db.query(
+                `select coalesce(sum(jsonb_array_length(photos)), 0)::int as cnt
+                   from gallery where "uid" = $1 and "isActive" is true and photos is not null`,
+                [user._id]
+            );
+            user.photosCount = total.rows[0].cnt;
+
+            let featured = await db.query(
+                `select g."_id", g.alias, p.value as photo, (p.ordinality - 1)::int as photo_id
+                   from gallery g,
+                        jsonb_array_elements(g.photos) with ordinality p(value, ordinality)
+                  where g."uid" = $1 and g."isActive" is true
+                    and (p.value->>'visibleOnProfile') in ('true', 't')`,
+                [user._id]
+            );
+            user.photos = featured.rows.map((row) => ({
+                ...row.photo,
+                galleryAlias: row.alias,
+                photoId: row.photo_id,
+                _id: row._id,
+            }));
         }
 
         return user;
@@ -585,13 +603,13 @@ class UsersModule {
         }
 
         if (user[0].userRole == 'photographer') {
-            let count = 0;
-            let galleries = await db.collection('gallery').find({ uid: user[0]._id }).toArray();
-            for (let i = 0; i < galleries.length; i++) {
-                count += galleries[i].photos.length;
-            }
-
-            user[0].photoCount = count;
+            // Brojanje u bazi umesto učitavanja svih galerija sa `photos`.
+            let res = await db.query(
+                `select coalesce(sum(jsonb_array_length(photos)), 0)::int as cnt
+                   from gallery where "uid" = $1 and photos is not null`,
+                [user[0]._id]
+            );
+            user[0].photoCount = res.rows[0].cnt;
         }
 
 

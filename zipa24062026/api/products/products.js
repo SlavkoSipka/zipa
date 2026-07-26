@@ -1062,15 +1062,17 @@ class ProductsModule {
 
 
     async setPhotosCountToCategories() {
-        let categories = await db.collection('categories').find({}).toArray();
-        for (let i = 0; i < categories.length; i++) {
-            let count = 0;
-            let galleries = await db.collection('gallery').find({ category: { $in: [categories[i]._id.toString()] } }, { projection: { photos: 1 } }).toArray();
-            for (let j = 0; j < galleries.length; j++) {
-                count += (galleries[j].photos ? galleries[j].photos.length : 0);
-            }
-            await db.collection('categories').updateOne({ _id: categories[i]._id }, { $set: { photosCount: count } });
-        }
+        // Jednim upitom, jer bi učitavanje `photos` nizova za svih 9.965 galerija
+        // (200k+ fotografija) samo radi brojanja pojelo memoriju servera.
+        await db.query(`
+            update categories c
+               set "photosCount" = coalesce((
+                     select sum(jsonb_array_length(g.photos))
+                       from gallery g
+                      where g.category @> array[c."_id"]
+                        and g.photos is not null
+                   ), 0)
+        `);
     }
 
     createRegexPattern(input) {

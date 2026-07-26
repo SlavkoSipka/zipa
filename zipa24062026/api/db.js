@@ -278,6 +278,37 @@ function applyProjection(doc, projection) {
     return out;
 }
 
+/**
+ * Lista kolona za SELECT na osnovu Mongo projekcije.
+ *
+ * Bitno za pamćenje: `gallery.photos` ume da bude ogroman jsonb niz, pa
+ * `SELECT *` na 9.965 galerija povuče stotine megabajta i obori proces.
+ * Kada kod traži samo npr. `{location: 1}`, ovde se u SQL šalju baš te kolone.
+ *
+ * Podržana je samo "inclusion" projekcija ({polje: 1}), jer je jedino takva
+ * i u upotrebi; kod bilo čega drugog vraća `*` i projekcija se svede na JS.
+ */
+function buildSelectList(table, projection) {
+    if (!projection) return '*';
+    const keys = Object.keys(projection);
+    if (!keys.length) return '*';
+    if (isDocTable(table)) return '*'; // doc tabele: sve je u jednoj jsonb koloni
+
+    const included = keys.filter((k) => k !== '_id' && projection[k]);
+    if (!included.length) return '*';
+    // ako je bilo koje polje isključeno ({photos: 0}) — ne diramo SELECT
+    if (keys.some((k) => k !== '_id' && !projection[k])) return '*';
+
+    const cols = tableColumns[table] || {};
+    const wanted = new Set(['_id']);
+    for (const k of included) {
+        const base = k.split('.')[0]; // "photo.name" -> "photo"
+        if (!cols[base]) return '*';  // nepoznata kolona — bezbednije uzeti sve
+        wanted.add(base);
+    }
+    return [...wanted].map((c) => `"${c}"`).join(', ');
+}
+
 // ---------------------------------------------------------------------------
 // Cursor
 // ---------------------------------------------------------------------------
@@ -301,7 +332,8 @@ class Cursor {
         const p = new SqlParams();
         const where = buildWhere(this.table, this.query, p);
         const orderBy = buildOrderBy(this.table, this._sort);
-        let sql = `SELECT * FROM "${this.table}" WHERE ${where} ${orderBy}`;
+        const selectList = buildSelectList(this.table, this.options.projection);
+        let sql = `SELECT ${selectList} FROM "${this.table}" WHERE ${where} ${orderBy}`;
         if (this._limit !== null) sql += ` LIMIT ${parseInt(this._limit, 10)}`;
         if (this._skip) sql += ` OFFSET ${parseInt(this._skip, 10)}`;
         const res = await pool.query(sql, p.values);
@@ -735,6 +767,16 @@ class Collection {
 // ---------------------------------------------------------------------------
 const dbShim = {
     collection(name) { return new Collection(name); },
+
+    /**
+     * Direktan SQL — za agregacije koje bi kroz Mongo-stil upite značile
+     * učitavanje ogromnih `photos` nizova u memoriju samo da bi se prebrojali.
+     * Koristi se na par mesta (brojanje fotografija po fotografu/kategoriji).
+     */
+    async query(sql, params) {
+        await ready;
+        return pool.query(sql, params);
+    },
 };
 
 const ready = loadSchema().catch((e) => {
