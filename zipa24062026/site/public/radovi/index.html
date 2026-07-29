@@ -88,8 +88,8 @@
   .progress-pct { font-size: 15px; font-weight: 700; color: var(--brand); font-variant-numeric: tabular-nums; }
   .bar { height: 9px; background: var(--line-2); border-radius: 99px; overflow: hidden; display: flex; }
   .bar i { display: block; height: 100%; }
-  .bar .done { width: 35%; background: var(--green); }
-  .bar .now { width: 5%; background: var(--amber); }
+  .bar .done { width: 45%; background: var(--green); }
+  .bar .now { width: 0%; background: var(--amber); }
   .legend { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 13px; font-size: 13px; color: var(--ink-2); }
   .legend span { display: inline-flex; align-items: center; gap: 7px; }
   .dot { width: 9px; height: 9px; border-radius: 3px; flex-shrink: 0; }
@@ -169,13 +169,13 @@
   <div class="progress-card">
     <div class="progress-head">
       <h2>Ukupan napredak</h2>
-      <span class="progress-pct">35% završeno</span>
+      <span class="progress-pct">45% završeno</span>
     </div>
     <div class="bar"><i class="done"></i><i class="now"></i></div>
     <div class="legend">
-      <span><i class="dot g"></i> Završeno — 14 stavki</span>
-      <span><i class="dot a"></i> U toku — 2 stavke</span>
-      <span><i class="dot n"></i> Predstoji — 24 stavke</span>
+      <span><i class="dot g"></i> Završeno — 18 stavki</span>
+      <span><i class="dot a"></i> U toku — nema</span>
+      <span><i class="dot n"></i> Predstoji — 22 stavke</span>
     </div>
   </div>
 
@@ -207,16 +207,16 @@
     </div>
   </details>
 
-  <h2>U toku — smetnje u svakodnevnom radu</h2>
-  <div class="note warn">
-    <strong>Ovo su stvari koje vam oduzimaju vreme pri svakom postavljanju galerije.</strong> Zato ih rešavamo prve — najveći su dobitak za najmanje uloženog vremena.
+  <h2>Završeno — smetnje u svakodnevnom radu</h2>
+  <div class="note">
+    <strong>Cela prva faza je završena.</strong> Ovo su bile stvari koje su vam oduzimale vreme pri svakom postavljanju galerije. Sve je provereno na testnom sajtu.
   </div>
 
   <details class="group" open>
     <summary>
       <span class="chev">▶</span>
       <span class="gtitle">Faza 1 — postavljanje fotografija i cene</span>
-      <span class="gcount">3 završeno · 2 u toku · 2 predstoji</span>
+      <span class="gcount">7 / 7 &nbsp;✓</span>
     </summary>
     <div class="gbody">
       <ul class="items">
@@ -224,9 +224,9 @@
         <li><span class="mark now">●</span><span class="itxt"><b>Izbor naslovne fotografije galerije</b><p>Sada je naslovna uvek prva postavljena, pa morate da je ubacite pre ostalih. Dodajemo dugme „postavi kao naslovnu" na svakoj fotografiji.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
         <li><span class="mark done">✓</span><span class="itxt"><b>Cena se upisuje u podešavanjima</b><p>Rešeno. U Podešavanjima sajta sada postoji polje <i>Cijena fotografije (KM)</i> — trenutno je postavljeno na 50 KM i primenjuje se na svaku novu galeriju. Ranije objavljene galerije zadržavaju cenu koja je uz njih upisana.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
         <li><span class="mark done">✓</span><span class="itxt"><b>Vreme poslednjeg logovanja</b><p>Rešeno. Profil sada prikazuje kada ste bili ulogovani <i>pre ovog puta</i>, a ne trenutnu prijavu. Podatak počinje da se beleži od sada, pa će se pri sledećoj prijavi videti današnji datum.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
-        <li><span class="mark">✓</span><span class="itxt"><b>Broj fotografa i ukupan broj fotografija</b><p>Podatak nedostaje, iako postoji u bazi. Vraćamo ga na profil i na naslovnu.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
-        <li><span class="mark">✓</span><span class="itxt"><b>Polje za tekst u Najavama</b><p>Prestalo je da radi jer licenca za uređivač teksta nije registrovana na vaš domen — na vašem snimku ekrana se vidi to upozorenje. Rešavamo zamenom uređivača.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
-        <li><span class="mark">✓</span><span class="itxt"><b>Izdvojene fotografije na profilu fotografa</b><p>Ovde postoji nesporazum koji treba raščistiti. Vi ste tražili da fotograf sam izdvoji svoje najbolje fotografije za profil; napravljeno je nešto drugo — spisak najgledanijih po statistici. Zato vam i deluje netačno. Mogućnost da fotograf sam bira već postoji u sistemu, samo nije prikazana na pravom mestu.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
+        <li><span class="mark done">✓</span><span class="itxt"><b>Broj fotografa i ukupan broj fotografija</b><p>Rešeno. Podaci su zapravo stizali ispravno, ali je učitavanje statistike trajalo 17 sekundi — a dok traje, prikazivala se nula, pa je delovalo kao da podataka nema. Ubrzali smo je na 2 sekunde, a dok se učitava sada stoji crtica umesto nule.</p><p><b>Usput rešeno:</b> spisak fotografa je sada poređan po broju postavljenih fotografija, kako ste tražili u delu o statistici.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
+        <li><span class="mark done">✓</span><span class="itxt"><b>Polje za tekst u Najavama</b><p>Rešeno. Uređivač teksta se povlačio sa servisa proizvođača, koji zahteva registrovan domen i plaćenu licencu — otud upozorenje na vašem snimku ekrana. Sada se učitava sa vašeg servera i radi bez ograničenja. Ista ispravka važi i za Stranice, FAQ i Newsletter, gde se koristi isti uređivač.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
+        <li><span class="mark done">✓</span><span class="itxt"><b>Izdvojene fotografije na profilu fotografa</b><p>Razjašnjeno. Radi se o dve različite stvari koje su nosile slično ime. Mogućnost da fotograf sam izdvoji fotografije <b>postoji i radi</b> — prekidač <i>„Izdvojena na profilu"</i> pri uređivanju pojedinačne fotografije, a izabrane se prikazuju na javnom profilu pod „Izdvojeno od fotografa". Sekcija „Najgledanije fotografije" na vašem nalogu je statistika pregleda, nešto sasvim drugo. Dodali smo objašnjenje i link ka javnom profilu, da ubuduće ne bude zabune.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
       </ul>
     </div>
   </details>
@@ -254,7 +254,7 @@
     <summary>
       <span class="chev">▶</span>
       <span class="gtitle">Faza 3 — statistike i izveštaji</span>
-      <span class="gcount">9 stavki</span>
+      <span class="gcount">1 završeno · 8 predstoji</span>
     </summary>
     <div class="gbody">
       <p class="gnote">Na više mesta ste primetili da brojevi ne deluju tačno. Prvo proveravamo da li se uopšte ispravno mere, pa tek onda doterujemo prikaz — nema svrhe lepo prikazivati pogrešan podatak.</p>
@@ -262,7 +262,7 @@
         <li><span class="mark">✓</span><span class="itxt"><b>Statistika poseta se ne učitava</b><p>Vrti se u krug, kao na vašem snimku ekrana. Sličan problem smo već otklonili pri prelasku na novi server.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
         <li><span class="mark">✓</span><span class="itxt"><b>Provera brojanja klikova na banere</b><p>Utvrdićemo da li se broji svaki klik ili jedan po posetiocu, i šta je onih 22 klika bez naziva. Pravilo brojanja ćemo jasno napisati u samom izveštaju.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
         <li><span class="mark">✓</span><span class="itxt"><b>Statistika galerija — sličice i sortiranje</b><p>Male fotografije se ne prikazuju, a redosled nije od najgledanije. Oboje se sređuje.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
-        <li><span class="mark">✓</span><span class="itxt"><b>Statistika fotografa — sortiranje</b><p>Poređano po broju postavljenih fotografija, kako ste tražili.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
+        <li><span class="mark done">✓</span><span class="itxt"><b>Statistika fotografa — sortiranje</b><p>Rešeno zajedno sa ubrzanjem statistike: spisak je poređan od najviše postavljenih fotografija.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
         <li><span class="mark">✓</span><span class="itxt"><b>Statistike od početka rada sajta</b><p>Tražili ste uvid od postavljanja sajta do danas, posebno za posete. Podaci postoje u bazi — treba ih učiniti dostupnim kroz izveštaje.</p></span><span class="badge b-new">NOVO</span></li>
         <li><span class="mark">✓</span><span class="itxt"><b>Logovi: period, 1000 redova, izvoz u PDF</b><p>Datum i vreme u istom redu da više stane, izbor perioda i izvoz celog meseca u PDF — umesto listanja strana jedna po jedna.</p></span><span class="badge b-new">NOVO</span></li>
         <li><span class="mark">✓</span><span class="itxt"><b>Pregled ko se od korisnika prijavljivao</b><p>Odvojen spisak prijava bez administratorskih naloga, da vidite ko od registrovanih korisnika ulazi na sajt.</p></span><span class="badge b-new">NOVO</span></li>
