@@ -463,7 +463,11 @@ class form extends React.Component {
 
 // Decorate with redux-form
 form = reduxForm({
-    form: 'galleryForm' // a unique identifier for this form
+    form: 'galleryForm', // a unique identifier for this form
+    // Podešavanja (npr. cijena) stižu asinhrono — forma ih pokupi kad stignu,
+    // ali zadržava sve što je korisnik u međuvremenu unio.
+    enableReinitialize: true,
+    keepDirtyOnReinitialize: true
 })(form)
 
 

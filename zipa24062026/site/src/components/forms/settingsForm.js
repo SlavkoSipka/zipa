@@ -280,6 +280,12 @@ class form extends React.Component {
                         ></Field>
 
                         <Field
+                            name="defaultPhotoPrice"
+                            component={renderTextField}
+                            label="Cijena fotografije (KM)"
+                        ></Field>
+
+                        <Field
                             name="phoneNumber"
                             validate={[required]}
                             component={renderTextField}

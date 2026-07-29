@@ -25,6 +25,7 @@ create table if not exists users (
     "emailVerificationCode"          text,
     "emailVerificationTimestamp"     bigint,
     "registerTimestamp"              bigint,
+    "previousLoginTimestamp"         bigint,   -- prijava pre trenutne (za prikaz na profilu)
     "skype"                          text,
     "facebook"                       text,
     "instagram"                      text,
@@ -238,6 +239,7 @@ create table if not exists settings (
     "logoText"         text,
     "email"            text,
     "infoblock"        jsonb,
+    "defaultPhotoPrice" numeric,   -- podrazumevana cena nove galerije (KM)
     "enableInfoBlocks" boolean default true,
     "showSlider"       boolean default true,
     "showBanner"       boolean default true

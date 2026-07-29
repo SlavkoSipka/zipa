@@ -94,16 +94,22 @@ class Gallery extends Component {
     }
 
     removeImage(idx) {
-        console.log(idx);
+        // `imagesLayout` čuva redosled prikaza kao indekse u nizu `files`.
+        // Zato se pri brisanju iz njega izbacuje obrisani indeks, a svi veći
+        // se pomeraju za jedno mesto — inače bi pokazivali na pogrešnu (ili
+        // nepostojeću) fotografiju.
+        let files = this.state.files.filter((item, i) => i !== idx);
+        let _uploading = this.state._uploading.filter((item, i) => i !== idx);
+        let imagesLayout = this.state.imagesLayout
+            .filter((position) => position !== idx)
+            .map((position) => (position > idx ? position - 1 : position));
 
-        console.log('removeImage');
-        let files = this.state.files.slice(0, idx).concat(this.state.files.slice(idx + 1, this.state.files.length))
-        let imagesLayout = this.state.imagesLayout.slice(0, idx).concat(this.state.imagesLayout.slice(idx + 1, this.state.imagesLayout.length))
-        let _uploading = this.state._uploading.slice(0, idx).concat(this.state._uploading.slice(idx + 1, this.state._uploading.length))
         this.setState({
             files: files,
             imagesLayout: imagesLayout,
             _uploading: _uploading
+        }, () => {
+            this.props.onChange(this.state.imagesLayout.map((position) => this.state.files[position]));
         });
     }
 
@@ -133,10 +139,15 @@ class Gallery extends Component {
             imagesUploaded: 0
         }, () => {
 
+            // Mesto na koje se nadovezuju nove fotografije. Bez ovoga se pri
+            // svakom sledećem dodavanju kretalo od nule, pa su se u galeriji
+            // ponavljale prve fotografije umesto da se dodaju nove.
+            const startIndex = this.state.files.length;
+
             for (let i = 0; i < imageFiles.length; i++) {
                 let formData = new FormData();
                 formData.append('file', imageFiles[i]);
-                let name = this.state.files.length + i;
+                let name = startIndex + i;
 
                 this.props.uploadHandler(formData, (img) => {
 
@@ -183,7 +194,7 @@ class Gallery extends Component {
 
 
                 images.push(null);
-                imagesLayout.push(i);
+                imagesLayout.push(startIndex + i);
                 _uploading.push(true);
             }
 

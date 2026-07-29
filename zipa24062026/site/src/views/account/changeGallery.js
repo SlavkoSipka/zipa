@@ -32,7 +32,9 @@ class ChangeGallery extends Component {
             initialValues = {
                 description: { ba: `\n\n(ZIPAPHOTO/${this.props.uData.name})`, en: `\n\n(ZIPAPHOTO ${this.props.uData.name})` },
                 isActive: true,
-                price: 20,
+                // Cijena se uzima iz Podešavanja sajta, da se ne mijenja ručno
+                // pri svakoj galeriji.
+                price: props.settings && props.settings.defaultPhotoPrice ? props.settings.defaultPhotoPrice : 20,
                 date: Math.floor(new Date().getTime() / 1000)
             }
 
@@ -107,6 +109,17 @@ class ChangeGallery extends Component {
             }
         })
 
+    }
+
+    componentDidUpdate(prevProps) {
+        // Podešavanja se učitavaju asinhrono; ako stignu nakon što je forma
+        // već prikazana, upisujemo cijenu iz podešavanja na novu galeriju.
+        if (this.props[0].match.params.id !== 'new') return;
+        const price = this.props.settings && this.props.settings.defaultPhotoPrice;
+        const prevPrice = prevProps.settings && prevProps.settings.defaultPhotoPrice;
+        if (price && price !== prevPrice && this.state.initialValues) {
+            this.setState({ initialValues: { ...this.state.initialValues, price: price } });
+        }
     }
 
     render() {

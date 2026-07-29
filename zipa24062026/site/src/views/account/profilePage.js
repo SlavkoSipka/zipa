@@ -352,7 +352,7 @@ class ProfilePage extends Component {
                                             </h6>
                                             <ul>
                                                 <li>
-                                                    <span>{'Vrijeme poslednjeg logovanja:'.translate(this.props.lang)}</span><span>{moment.unix(this.props.uData.lastLoginTimestamp).format('DD.MM.YYYY HH:mm')} h</span>
+                                                    <span>{'Vrijeme poslednjeg logovanja:'.translate(this.props.lang)}</span><span>{this.props.uData.previousLoginTimestamp ? moment.unix(this.props.uData.previousLoginTimestamp).format('DD.MM.YYYY HH:mm') + ' h' : '-'}</span>
                                                 </li>
                                                 <li>
                                                     <span>{'Na našem servisu imate:'.translate(this.props.lang)}</span><span>{this.props.uData && this.props.uData.photoCount} {'fotografija'.translate(this.props.lang)}</span>
@@ -416,7 +416,7 @@ class ProfilePage extends Component {
                                                     </h6>
                                                     <ul>
                                                         <li>
-                                                            <span>{'Vrijeme poslednjeg logovanja:'.translate(this.props.lang)}</span><span>{moment.unix(this.props.uData.lastLoginTimestamp).format('DD.MM.YYYY HH:mm')} h</span>
+                                                            <span>{'Vrijeme poslednjeg logovanja:'.translate(this.props.lang)}</span><span>{this.props.uData.previousLoginTimestamp ? moment.unix(this.props.uData.previousLoginTimestamp).format('DD.MM.YYYY HH:mm') + ' h' : '-'}</span>
                                                         </li>
                                                         <li>
                                                             <span>{'Možete besplatno preuzeti:'.translate(this.props.lang)}</span><span>{this.props.uData.freePhotos} {'fotografija'.translate(this.props.lang)}</span>
@@ -471,7 +471,7 @@ class ProfilePage extends Component {
                                                 </h6>
                                                 <ul>
                                                     <li>
-                                                        <span>{'Vrijeme poslednjeg logovanja:'.translate(this.props.lang)}</span><span>{moment.unix(this.props.uData.lastLoginTimestamp).format('DD.MM.YYYY HH:mm')} h</span>
+                                                        <span>{'Vrijeme poslednjeg logovanja:'.translate(this.props.lang)}</span><span>{this.props.uData.previousLoginTimestamp ? moment.unix(this.props.uData.previousLoginTimestamp).format('DD.MM.YYYY HH:mm') + ' h' : '-'}</span>
                                                     </li>
                                                     <li>
                                                         <span>{'Na servisu imate:'.translate(this.props.lang)}</span><span> {this.state.adminStatistics.photosCount} {'fotografija'.translate(this.props.lang)}</span>

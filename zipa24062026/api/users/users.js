@@ -376,8 +376,11 @@ class UsersModule {
 
                 let token = jwt.sign({ "id": user[0]._id }, constants.jwtSecretKey, { algorithm: 'HS256', expiresIn: rememberMe ? '30d' : '24h' });
 
+                // Vreme prethodne prijave se čuva pre upisa nove, da bi korisnik
+                // na profilu video kada je bio ulogovan pre ovog puta.
                 await db.collection('users').updateOne({ _id: user[0]._id }, {
                     $set: {
+                        previousLoginTimestamp: user[0].lastLoginTimestamp ? user[0].lastLoginTimestamp : null,
                         lastLoginTimestamp: Math.floor(new Date().getTime() / 1000)
                     }
                 })
@@ -573,7 +576,7 @@ class UsersModule {
 
 
     async verify(uid) {
-        let user = await db.collection('users').find({ _id: ObjectID(uid) }, { projection: { _id: 1, email: 1, userAlias: 1, name: 1, permissions: 1, profilePhoto: 1, phoneNumber: 1, lastLoginTimestamp: 1, businessPhoneNumber: 1, webSite: 1, skype: 1, twitter: 1, facebook: 1, instagram: 1, country: 1, city: 1, address: 1, userRole: 1, biography: 1 } }).toArray();
+        let user = await db.collection('users').find({ _id: ObjectID(uid) }, { projection: { _id: 1, email: 1, userAlias: 1, name: 1, permissions: 1, profilePhoto: 1, phoneNumber: 1, lastLoginTimestamp: 1, previousLoginTimestamp: 1, businessPhoneNumber: 1, webSite: 1, skype: 1, twitter: 1, facebook: 1, instagram: 1, country: 1, city: 1, address: 1, userRole: 1, biography: 1 } }).toArray();
 
         if (user[0].userRole != 'photographer' && user[0].userRole != 'admin') {
             let userResolutions = await db.collection('userResolutions').find(
