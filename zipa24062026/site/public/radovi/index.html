@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>ZIPA PHOTO — pregled radova na sajtu</title>
+<link rel="icon" href="/favicon.ico">
+</head>
+<body>
+<style>
+  :root {
+    --bg: #ffffff;
+    --surface: #ffffff;
+    --surface-2: #f5f6f9;
+    --ink: #1a1d29;
+    --ink-2: #545a6b;
+    --ink-3: #868c9c;
+    --line: #e6e8ef;
+    --line-2: #d3d7e2;
+    --brand: #2f3fb5;
+    --brand-soft: #eceffb;
+    --red: #d8323f;
+    --red-soft: #fdeff0;
+    --green: #1c7a52;
+    --green-soft: #eaf6f0;
+    --amber: #8f6413;
+    --amber-soft: #fdf5e7;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1117; --surface: #171a23; --surface-2: #1e222d;
+      --ink: #edeff5; --ink-2: #aeb4c4; --ink-3: #7f8697;
+      --line: #262b38; --line-2: #343b4b;
+      --brand: #93a4ee; --brand-soft: #1a2038;
+      --red: #f28a92; --red-soft: #2b1a1d;
+      --green: #74c8a0; --green-soft: #14261d;
+      --amber: #ddb267; --amber-soft: #292317;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f1117; --surface: #171a23; --surface-2: #1e222d;
+    --ink: #edeff5; --ink-2: #aeb4c4; --ink-3: #7f8697;
+    --line: #262b38; --line-2: #343b4b;
+    --brand: #93a4ee; --brand-soft: #1a2038;
+    --red: #f28a92; --red-soft: #2b1a1d;
+    --green: #74c8a0; --green-soft: #14261d;
+    --amber: #ddb267; --amber-soft: #292317;
+  }
+  :root[data-theme="light"] {
+    --bg: #ffffff; --surface: #ffffff; --surface-2: #f5f6f9;
+    --ink: #1a1d29; --ink-2: #545a6b; --ink-3: #868c9c;
+    --line: #e6e8ef; --line-2: #d3d7e2;
+    --brand: #2f3fb5; --brand-soft: #eceffb;
+    --red: #d8323f; --red-soft: #fdeff0;
+    --green: #1c7a52; --green-soft: #eaf6f0;
+    --amber: #8f6413; --amber-soft: #fdf5e7;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 16px; line-height: 1.62; -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 0 20px 90px; }
+
+  /* zaglavlje u duhu sajta */
+  .topbar {
+    border-bottom: 1px solid var(--line); padding: 18px 0 16px; margin-bottom: 38px;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  }
+  .brandmark { display: flex; align-items: baseline; gap: 10px; }
+  .brandmark .z { font-size: 21px; font-weight: 800; letter-spacing: -.03em; color: var(--brand); }
+  .brandmark .sub { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; }
+  .updated { font-size: 13px; color: var(--ink-3); }
+
+  h1 { font-size: clamp(27px, 4.6vw, 38px); line-height: 1.14; letter-spacing: -.025em; margin: 0 0 14px; text-wrap: balance; }
+  .lede { font-size: 17px; color: var(--ink-2); margin: 0 0 30px; max-width: 68ch; }
+
+  /* napredak */
+  .progress-card {
+    background: var(--surface-2); border: 1px solid var(--line);
+    border-radius: 12px; padding: 22px 24px; margin-bottom: 44px;
+  }
+  .progress-head { display: flex; justify-content: space-between; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
+  .progress-head h2 { font-size: 16px; font-weight: 650; margin: 0; letter-spacing: -.01em; text-transform: none; color: var(--ink); border: none; padding: 0; }
+  .progress-pct { font-size: 15px; font-weight: 700; color: var(--brand); font-variant-numeric: tabular-nums; }
+  .bar { height: 9px; background: var(--line-2); border-radius: 99px; overflow: hidden; display: flex; }
+  .bar i { display: block; height: 100%; }
+  .bar .done { width: 26%; background: var(--green); }
+  .bar .now { width: 6%; background: var(--amber); }
+  .legend { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 13px; font-size: 13px; color: var(--ink-2); }
+  .legend span { display: inline-flex; align-items: center; gap: 7px; }
+  .dot { width: 9px; height: 9px; border-radius: 3px; flex-shrink: 0; }
+  .dot.g { background: var(--green); } .dot.a { background: var(--amber); } .dot.n { background: var(--line-2); }
+
+  h2 {
+    font-size: 12px; letter-spacing: .13em; text-transform: uppercase; color: var(--ink-3);
+    font-weight: 700; margin: 52px 0 16px; padding-bottom: 9px; border-bottom: 1px solid var(--line);
+  }
+
+  .group { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 16px; overflow: hidden; }
+  .group > summary {
+    list-style: none; cursor: pointer; padding: 17px 20px;
+    display: flex; align-items: center; gap: 13px; flex-wrap: wrap;
+  }
+  .group > summary::-webkit-details-marker { display: none; }
+  .group > summary:hover { background: var(--surface-2); }
+  .group > summary:focus-visible { outline: 2px solid var(--brand); outline-offset: -2px; }
+  .chev { color: var(--ink-3); font-size: 13px; transition: transform .18s ease; flex-shrink: 0; }
+  .group[open] .chev { transform: rotate(90deg); }
+  .gtitle { font-size: 17px; font-weight: 640; letter-spacing: -.012em; flex: 1; min-width: 190px; }
+  .gcount { font-size: 13px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+  .gbody { padding: 4px 20px 20px; border-top: 1px solid var(--line); }
+  .gnote { font-size: 14.5px; color: var(--ink-2); margin: 15px 0 4px; max-width: 70ch; }
+
+  ul.items { list-style: none; padding: 0; margin: 12px 0 0; }
+  ul.items li {
+    display: flex; gap: 13px; padding: 13px 0; border-bottom: 1px solid var(--line); align-items: flex-start;
+  }
+  ul.items li:last-child { border-bottom: none; }
+  .mark {
+    width: 21px; height: 21px; border-radius: 6px; flex-shrink: 0; margin-top: 2px;
+    display: grid; place-items: center; font-size: 12px; font-weight: 800;
+    border: 1.5px solid var(--line-2); color: transparent;
+  }
+  .mark.done { background: var(--green); border-color: var(--green); color: #fff; }
+  .mark.now { background: var(--amber-soft); border-color: var(--amber); color: var(--amber); }
+  .itxt { flex: 1; min-width: 0; }
+  .itxt b { font-weight: 630; font-size: 15.5px; display: block; letter-spacing: -.008em; }
+  .itxt p { margin: 3px 0 0; font-size: 14.5px; color: var(--ink-2); }
+  .badge {
+    font-size: 11px; font-weight: 700; letter-spacing: .03em; padding: 3px 8px;
+    border-radius: 5px; white-space: nowrap; flex-shrink: 0; margin-top: 2px;
+  }
+  .b-fix { background: var(--red-soft); color: var(--red); }
+  .b-new { background: var(--brand-soft); color: var(--brand); }
+  .b-des { background: var(--amber-soft); color: var(--amber); }
+
+  .note {
+    border-left: 3px solid var(--brand); background: var(--brand-soft);
+    padding: 15px 18px; border-radius: 0 10px 10px 0; margin: 22px 0;
+    font-size: 15px; color: var(--ink-2);
+  }
+  .note strong { color: var(--ink); }
+  .note.warn { border-left-color: var(--amber); background: var(--amber-soft); }
+
+  ol.q { padding-left: 22px; margin: 0; }
+  ol.q li { margin-bottom: 14px; font-size: 15.5px; color: var(--ink-2); max-width: 70ch; }
+  ol.q li b { color: var(--ink); font-weight: 640; }
+
+  footer { margin-top: 56px; padding-top: 22px; border-top: 1px solid var(--line); font-size: 14.5px; color: var(--ink-3); }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <div class="topbar">
+    <div class="brandmark">
+      <span class="z">ZIPA PHOTO</span>
+      <span class="sub">radovi na sajtu</span>
+    </div>
+    <span class="updated">Ažurirano 27. jula 2026.</span>
+  </div>
+
+  <h1>Pregled radova na sajtu zipaphoto.net</h1>
+  <p class="lede">Na osnovu vašeg dokumenta i pregleda postojećeg sajta, izdvojili smo 40 konkretnih stavki i podelili ih u faze. Ova stranica se ažurira kako radovi napreduju, pa u svakom trenutku možete videti dokle smo stigli.</p>
+
+  <div class="progress-card">
+    <div class="progress-head">
+      <h2>Ukupan napredak</h2>
+      <span class="progress-pct">26% završeno</span>
+    </div>
+    <div class="bar"><i class="done"></i><i class="now"></i></div>
+    <div class="legend">
+      <span><i class="dot g"></i> Završeno — 11 stavki</span>
+      <span><i class="dot a"></i> U toku — 2 stavke</span>
+      <span><i class="dot n"></i> Predstoji — 27 stavki</span>
+    </div>
+  </div>
+
+  <h2>Završeno — temelj sajta</h2>
+  <div class="note">
+    <strong>Ovo je već urađeno i radi.</strong> Pre nego što smo krenuli na izmene koje ste tražili, morali smo da rešimo osnovu: sajt je prebačen na novu bazu podataka i novi hosting, a svih 202.411 fotografija na Cloudflare mrežu. Time su usput rešene i tri stvari iz vašeg dokumenta.
+  </div>
+
+  <details class="group" open>
+    <summary>
+      <span class="chev">▶</span>
+      <span class="gtitle">Baza, hosting i fotografije</span>
+      <span class="gcount">11 / 11</span>
+    </summary>
+    <div class="gbody">
+      <ul class="items">
+        <li><span class="mark done">✓</span><span class="itxt"><b>Nova baza podataka</b><p>Svih 9.965 galerija, 202.411 fotografija i 122 korisnička naloga preneto bez ijednog izgubljenog podatka. Provereno upoređivanjem svakog zapisa.</p></span></li>
+        <li><span class="mark done">✓</span><span class="itxt"><b>Fotografije na Cloudflare mreži</b><p>Svih 123 GB. Fotografije se sada učitavaju sa servera najbližeg posetiocu — i iz Banjaluke i iz inostranstva jednako brzo.</p></span></li>
+        <li><span class="mark done">✓</span><span class="itxt"><b>Rešen problem sa 200 GB prostora</b><p>Pominjali ste da vam originali zauzimaju previše mesta na serveru. Sada su na Cloudflare skladištu — bez ograničenja prostora, uz mesečni trošak od oko 3 KM.</p></span></li>
+        <li><span class="mark done">✓</span><span class="itxt"><b>Zaštita originala</b><p>Pregledne fotografije sa vodenim žigom su javno dostupne, dok se originali u punoj rezoluciji ne mogu preuzeti nikako osim kroz sajt, uz proveru pretplate. Testirali smo sve načine zaobilaženja.</p></span></li>
+        <li><span class="mark done">✓</span><span class="itxt"><b>Novi hosting</b><p>Pominjali ste da vam Hetzner ističe krajem godine. Sajt je sada na infrastrukturi koja se plaća mesečno i može se proširiti kad zatreba.</p></span></li>
+        <li><span class="mark done">✓</span><span class="itxt"><b>Pretraga prepoznaje kvačice</b><p>Kucanje „reportaza" nalazi „Reportaža", „kosarka" nalazi „KOŠARKA" — bez obzira na tastaturu.</p></span></li>
+        <li><span class="mark done">✓</span><span class="itxt"><b>Tolerancija na greške u kucanju</b><p>Ako se omakne slovo, pretraga i dalje nalazi traženo.</p></span></li>
+        <li><span class="mark done">✓</span><span class="itxt"><b>Ubrzana pretraga</b><p>Rezultati stižu za manje od sekunde, i kad se pretražuje po svih 202.411 fotografija.</p></span></li>
+        <li><span class="mark done">✓</span><span class="itxt"><b>Otklonjeno rušenje sajta</b><p>Pregled po gradovima je obarao server. Uzrok je bio u načinu na koji su se podaci učitavali; sada radi za manje od sekunde.</p></span></li>
+        <li><span class="mark done">✓</span><span class="itxt"><b>Ispravljeni brojači fotografija po kategorijama</b><p>Brojevi uz kategorije se sada računaju tačno i osvežavaju sami.</p></span></li>
+        <li><span class="mark done">✓</span><span class="itxt"><b>Testni sajt za pregled</b><p>Radna verzija je postavljena na privremenu adresu, da možete pratiti izmene pre nego što odu na zipaphoto.net.</p></span></li>
+      </ul>
+    </div>
+  </details>
+
+  <h2>U toku — smetnje u svakodnevnom radu</h2>
+  <div class="note warn">
+    <strong>Ovo su stvari koje vam oduzimaju vreme pri svakom postavljanju galerije.</strong> Zato ih rešavamo prve — najveći su dobitak za najmanje uloženog vremena.
+  </div>
+
+  <details class="group" open>
+    <summary>
+      <span class="chev">▶</span>
+      <span class="gtitle">Faza 1 — postavljanje fotografija i cene</span>
+      <span class="gcount">2 u toku · 5 predstoji</span>
+    </summary>
+    <div class="gbody">
+      <ul class="items">
+        <li><span class="mark now">●</span><span class="itxt"><b>Naknadno dodavanje fotografija u galeriju</b><p>Problem koji opisujete od početka. Utvrdili smo tačan uzrok: kad se drugi put dodaju fotografije, sajt pogrešno pamti njihov redosled, pa umesto novih ponovo upiše prve. Zato je delovalo da „ne dozvoljava". Ispravka je jednostavna.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
+        <li><span class="mark now">●</span><span class="itxt"><b>Izbor naslovne fotografije galerije</b><p>Sada je naslovna uvek prva postavljena, pa morate da je ubacite pre ostalih. Dodajemo dugme „postavi kao naslovnu" na svakoj fotografiji.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
+        <li><span class="mark">✓</span><span class="itxt"><b>Cena se upisuje u podešavanjima</b><p>Cena od 20 KM je bila upisana u samom kodu sajta, pa ste je ručno menjali na 50 KM pri svakoj galeriji. Prebacujemo je u Podešavanja sajta, gde ćete je moći promeniti kad god poželite.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
+        <li><span class="mark">✓</span><span class="itxt"><b>Vreme poslednjeg logovanja</b><p>Sada prikazuje trenutnu prijavu umesto prethodne. Ispravljamo da pokazuje kad ste bili ulogovani pre ovog puta.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
+        <li><span class="mark">✓</span><span class="itxt"><b>Broj fotografa i ukupan broj fotografija</b><p>Podatak nedostaje, iako postoji u bazi. Vraćamo ga na profil i na naslovnu.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
+        <li><span class="mark">✓</span><span class="itxt"><b>Polje za tekst u Najavama</b><p>Prestalo je da radi jer licenca za uređivač teksta nije registrovana na vaš domen — na vašem snimku ekrana se vidi to upozorenje. Rešavamo zamenom uređivača.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
+        <li><span class="mark">✓</span><span class="itxt"><b>Izdvojene fotografije na profilu fotografa</b><p>Ovde postoji nesporazum koji treba raščistiti. Vi ste tražili da fotograf sam izdvoji svoje najbolje fotografije za profil; napravljeno je nešto drugo — spisak najgledanijih po statistici. Zato vam i deluje netačno. Mogućnost da fotograf sam bira već postoji u sistemu, samo nije prikazana na pravom mestu.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
+      </ul>
+    </div>
+  </details>
+
+  <h2>Predstoji</h2>
+
+  <details class="group">
+    <summary>
+      <span class="chev">▶</span>
+      <span class="gtitle">Faza 2 — pretraga i ključne reči</span>
+      <span class="gcount">4 stavke</span>
+    </summary>
+    <div class="gbody">
+      <p class="gnote">Za foto-servis je pretraga najvažnija stvar — urednik nema vremena da lista kategorije. Osnova je već postavljena, ostaje ono što ste tražili oko tagova.</p>
+      <ul class="items">
+        <li><span class="mark">✓</span><span class="itxt"><b>Ključne reči po pojedinačnoj fotografiji</b><p>Sada tagovi postoje samo za celu galeriju. Uvodimo ih i po fotografiji — ime i prezime, kratko objašnjenje — pa kad neko ukuca „Nikšić" dobija baš tu fotografiju, a ne celu galeriju.</p></span><span class="badge b-new">NOVO</span></li>
+        <li><span class="mark">✓</span><span class="itxt"><b>Preuzimanje ključnih reči iz FotoStation-a</b><p>Reči koje već upisujete u programu automatski se prenose na sajt, bez ponovnog kucanja.</p></span><span class="badge b-new">NOVO</span></li>
+        <li><span class="mark">✓</span><span class="itxt"><b>Pretraga po tačnom datumu</b><p>Sada za 1.5.2024. morate kucati raspon od 30.4. do 2.5. Ispravljamo računanje granica dana.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
+        <li><span class="mark">✓</span><span class="itxt"><b>Brza pretraga uz izbor prikaza</b><p>Predlozi dok kucate, i izbor da li se rezultati prikazuju kao galerije ili kao pojedinačne fotografije — kako ste i tražili.</p></span><span class="badge b-new">NOVO</span></li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="group">
+    <summary>
+      <span class="chev">▶</span>
+      <span class="gtitle">Faza 3 — statistike i izveštaji</span>
+      <span class="gcount">9 stavki</span>
+    </summary>
+    <div class="gbody">
+      <p class="gnote">Na više mesta ste primetili da brojevi ne deluju tačno. Prvo proveravamo da li se uopšte ispravno mere, pa tek onda doterujemo prikaz — nema svrhe lepo prikazivati pogrešan podatak.</p>
+      <ul class="items">
+        <li><span class="mark">✓</span><span class="itxt"><b>Statistika poseta se ne učitava</b><p>Vrti se u krug, kao na vašem snimku ekrana. Sličan problem smo već otklonili pri prelasku na novi server.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
+        <li><span class="mark">✓</span><span class="itxt"><b>Provera brojanja klikova na banere</b><p>Utvrdićemo da li se broji svaki klik ili jedan po posetiocu, i šta je onih 22 klika bez naziva. Pravilo brojanja ćemo jasno napisati u samom izveštaju.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
+        <li><span class="mark">✓</span><span class="itxt"><b>Statistika galerija — sličice i sortiranje</b><p>Male fotografije se ne prikazuju, a redosled nije od najgledanije. Oboje se sređuje.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
+        <li><span class="mark">✓</span><span class="itxt"><b>Statistika fotografa — sortiranje</b><p>Poređano po broju postavljenih fotografija, kako ste tražili.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
+        <li><span class="mark">✓</span><span class="itxt"><b>Statistike od početka rada sajta</b><p>Tražili ste uvid od postavljanja sajta do danas, posebno za posete. Podaci postoje u bazi — treba ih učiniti dostupnim kroz izveštaje.</p></span><span class="badge b-new">NOVO</span></li>
+        <li><span class="mark">✓</span><span class="itxt"><b>Logovi: period, 1000 redova, izvoz u PDF</b><p>Datum i vreme u istom redu da više stane, izbor perioda i izvoz celog meseca u PDF — umesto listanja strana jedna po jedna.</p></span><span class="badge b-new">NOVO</span></li>
+        <li><span class="mark">✓</span><span class="itxt"><b>Pregled ko se od korisnika prijavljivao</b><p>Odvojen spisak prijava bez administratorskih naloga, da vidite ko od registrovanih korisnika ulazi na sajt.</p></span><span class="badge b-new">NOVO</span></li>
+        <li><span class="mark">✓</span><span class="itxt"><b>Istorija prijava — vreme, mesto</b><p>Pitali ste šta je pametno beležiti. Predlažemo datum, vreme i grad iz kog je prijava — dovoljno da primetite neuobičajeno korišćenje, a da ne prikupljamo više podataka nego što je dozvoljeno.</p></span><span class="badge b-new">NOVO</span></li>
+        <li><span class="mark">✓</span><span class="itxt"><b>Detaljniji pregled preuzimanja</b><p>Da se jasno vidi da li je fotografija uzeta kroz pretplatu, kupovinu ili je preuzeo sam autor — kako ste imali ranije.</p></span><span class="badge b-new">NOVO</span></li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="group">
+    <summary>
+      <span class="chev">▶</span>
+      <span class="gtitle">Faza 4 — naslovna strana i prikaz galerija</span>
+      <span class="gcount">7 stavki</span>
+    </summary>
+    <div class="gbody">
+      <p class="gnote">Pogledali smo sva tri sajta koja ste naveli kao uzor — Pixsell, AP Newsroom i EPA Images — kao i raspored na SPC.rs koji ste predložili. Sve tri agencije koriste mozaik velikih fotografija sa podacima ispod. Ovo je najveći deo posla i tu ćemo vam pokazati predloge pre izrade.</p>
+      <ul class="items">
+        <li><span class="mark">✓</span><span class="itxt"><b>Nova naslovna strana</b><p>Veće fotografije u mozaiku, sa mogućnošću da se podesi koliko ih se prikazuje — 5, 7 ili 9, zavisno od toga koliko je događaja bilo.</p></span><span class="badge b-des">IZGLED</span></li>
+        <li><span class="mark">✓</span><span class="itxt"><b>Uklanjanje bočnih traka za banere</b><p>Leva i desna traka su sada nevidljive a zauzimaju prostor. Taj prostor ide fotografijama, kako ste tražili.</p></span><span class="badge b-des">IZGLED</span></li>
+        <li><span class="mark">✓</span><span class="itxt"><b>Izbor kategorija za naslovnu</b><p>Da sami birate koje se kategorije prikazuju na naslovnoj, kojim redom i koliko galerija iz svake.</p></span><span class="badge b-new">NOVO</span></li>
+        <li><span class="mark">✓</span><span class="itxt"><b>Nova oznaka „Izdvojeno"</b><p>Uz postojeće Osnovne, Preporučene i Specijal.</p></span><span class="badge b-new">NOVO</span></li>
+        <li><span class="mark">✓</span><span class="itxt"><b>Novi prikaz fotografije u galeriji</b><p>Prozor sa fotografijom i cenama koji ste izdvojili na kraju dokumenta — potpuno nov izgled, i na računaru i na telefonu.</p></span><span class="badge b-des">IZGLED</span></li>
+        <li><span class="mark">✓</span><span class="itxt"><b>Baneri — veličine i pozicije</b><p>Dve do tri unapred zadate veličine, sa jasnim izborom gde se koja prikazuje.</p></span><span class="badge b-new">NOVO</span></li>
+        <li><span class="mark">✓</span><span class="itxt"><b>Više načina prikaza za Foto specijal</b><p>Dva-tri rasporeda za posebne grupe, da naslovna ne bude jednolična.</p></span><span class="badge b-des">IZGLED</span></li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="group">
+    <summary>
+      <span class="chev">▶</span>
+      <span class="gtitle">Faza 5 — telefon i tablet</span>
+      <span class="gcount">3 stavke</span>
+    </summary>
+    <div class="gbody">
+      <p class="gnote">Ovo ste posebno naglasili. Radimo zajedno sa fazom 4 — nema smisla dva puta praviti isti ekran.</p>
+      <ul class="items">
+        <li><span class="mark">✓</span><span class="itxt"><b>Sve radnje dostupne sa telefona</b><p>Pretraga, pregled galerija i postavljanje fotografija — sve prilagođeno telefonu i tabletu.</p></span><span class="badge b-des">IZGLED</span></li>
+        <li><span class="mark">✓</span><span class="itxt"><b>Baneri prilagođeni telefonu</b><p>Predlažemo posebne dimenzije za telefon, umesto smanjivanja postojećih — tako ostaju čitljivi.</p></span><span class="badge b-new">NOVO</span></li>
+        <li><span class="mark">✓</span><span class="itxt"><b>Iskačuća reklama na telefonu</b><p>Uključuje se po potrebi iz administracije.</p></span><span class="badge b-new">NOVO</span></li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="group">
+    <summary>
+      <span class="chev">▶</span>
+      <span class="gtitle">Faza 6 — štampa i čuvanje u PDF</span>
+      <span class="gcount">3 stavke</span>
+    </summary>
+    <div class="gbody">
+      <ul class="items">
+        <li><span class="mark">✓</span><span class="itxt"><b>Čist prikaz za štampu</b><p>Bez trake za pretragu, ikona društvenih mreža i banera. Galerija ide odmah ispod logotipa agencije, naslov ostaje.</p></span><span class="badge b-new">NOVO</span></li>
+        <li><span class="mark">✓</span><span class="itxt"><b>Izbor formata papira</b><p>A4, A3 i ostali standardni formati.</p></span><span class="badge b-new">NOVO</span></li>
+        <li><span class="mark">✓</span><span class="itxt"><b>Tri do četiri fotografije po redu</b><p>I treći način prikaza galerija da se štampa isto kao prvi.</p></span><span class="badge b-new">NOVO</span></li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="group">
+    <summary>
+      <span class="chev">▶</span>
+      <span class="gtitle">Faza 7 — obaveštenja, newsletter i mreže</span>
+      <span class="gcount">4 stavke</span>
+    </summary>
+    <div class="gbody">
+      <ul class="items">
+        <li><span class="mark">✓</span><span class="itxt"><b>Newsletter koji radi</b><p>Izbor 5, 7 ili 9 galerija, logotip agencije, uvodni tekst i obavezno dugme za odjavu. Šalje se preko servisa koji obezbeđuje da pošta stigne u sanduče, a ne u nepoželjnu poštu.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
+        <li><span class="mark">✓</span><span class="itxt"><b>Automatsko obaveštenje pri objavi galerije</b><p>Kvačica pri objavljivanju — i obaveštenje odlazi na spisak koji vi odredite. Sve po pravilima, da nas nijedan servis ne blokira.</p></span><span class="badge b-new">NOVO</span></li>
+        <li><span class="mark">✓</span><span class="itxt"><b>Deljenje na društvene mreže</b><p>Pominjali ste blokiran nalog na X-u i hakovan Instagram. Postavljamo objavljivanje tako da bude u skladu sa pravilima mreža — to je najčešći razlog blokiranja kad se objavljuju samo linkovi.</p></span><span class="badge b-new">NOVO</span></li>
+        <li><span class="mark">✓</span><span class="itxt"><b>Video sekcija</b><p>Odvojili smo je kao posebnu celinu — traži drugačije skladištenje, obradu i zaštitu nego fotografije. Predlažemo da se radi nakon što sajt bude sređen.</p></span><span class="badge b-new">NOVO</span></li>
+      </ul>
+    </div>
+  </details>
+
+  <h2>Pitanja za vas</h2>
+  <div class="note warn">
+    Na ova pitanja nam treba vaš odgovor pre nego što krenemo u odgovarajuće faze.
+  </div>
+  <ol class="q">
+    <li><b>Cena postojećih galerija.</b> Kada uvedemo polje za cenu u podešavanjima, da li starije galerije zadržavaju cenu od 20 KM, ili sve prelaze na 50 KM?</li>
+    <li><b>Izgled naslovne strane.</b> Koji od tri navedena sajta vam je najbliži — Pixsell, AP ili EPA? Prilično se razlikuju po pristupu, pa nam vaš izbor usmerava predlog. Ako nemate favorita, pripremićemo dva predloga za pregled.</li>
+    <li><b>Ključne reči iz vašeg programa.</b> Da li u FotoStation-u (ili drugom programu kroz koji postavljate fotografije) popunjavate polje <i>Keywords</i>, i od kada? Ako te reči već upisujete, postoji mogućnost da su sačuvane u samim fotografijama — pa bismo ih izvukli za celu arhivu umesto da se unose iznova.</li>
+    <li><b>Video.</b> Kako da postupimo sa video materijalima — da to ostavimo za kraj, nakon što sajt bude sređen? Po obimu je to zasebna celina, pa nam recite da li da ga uvrstimo u plan sada ili kasnije.</li>
+  </ol>
+
+  <footer>
+    Stranica se ažurira kako radovi napreduju. Za svako pitanje ili dopunu — javite se.
+  </footer>
+</div>
+
+</body>
+</html>
