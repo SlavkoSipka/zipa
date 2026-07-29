@@ -82,6 +82,41 @@ class Admin {
 
     }
 
+    /**
+     * Broj postavljenih galerija i fotografija po fotografu, poređano od
+     * najviše postavljenih.
+     *
+     * Radi se jednim upitom nad bazom: kroz Mongo-stil agregaciju bi se za
+     * svakog fotografa učitale sve njegove galerije zajedno sa `photos`
+     * nizovima (kod najplodnijih preko 150.000 fotografija) samo da bi se
+     * prebrojale — zbog toga je statistika ranije znala da traje minutima.
+     *
+     * @param {number} [from] početak perioda (unix), opciono
+     * @param {number} [to]   kraj perioda (unix), opciono
+     */
+    async photographerUploadStats(from = null, to = null) {
+        const params = [];
+        let periodCondition = '';
+        if (from !== null && to !== null) {
+            params.push(from, to);
+            periodCondition = ' and g."published" >= $1 and g."published" < $2';
+        }
+
+        const result = await db.query(`
+            select u."_id", u."userAlias", u."name",
+                   count(g."_id")::int as "uploadedGalleryCount",
+                   coalesce(sum(jsonb_array_length(g."photos")), 0)::int as "uploadedPhotosCount"
+              from users u
+              left join gallery g
+                     on g."uid" = u."_id" and g."photos" is not null${periodCondition}
+             where u."userRole" = 'photographer'
+             group by u."_id", u."userAlias", u."name"
+             order by "uploadedPhotosCount" desc, u."name" asc
+        `, params);
+
+        return result.rows;
+    }
+
     async bannerClick(url) {
         await db.collection('bannerClicks').insertOne({ url: url, timestamp: Math.floor(new Date().getTime() / 1000) });
         return;
@@ -189,26 +224,7 @@ class Admin {
             }
         }
 
-        let photographers = await db.collection('users').aggregate([
-            { $match: { userRole: 'photographer' } },
-            {
-                $lookup: {
-                    from: 'gallery',
-                    localField: '_id',
-                    foreignField: 'uid',
-                    as: 'galleries'
-                }
-            },
-            {
-                $project: {
-                    userAlias: 1,
-                    name: 1,
-                    uploadedGalleryCount: { $size: "$galleries" },
-                    uploadedPhotosCount: { $sum: { $map: { input: "$galleries", as: "gallery", in: { $size: "$$gallery.photos" } } } }
-                }
-            }
-        ]).toArray();
-        res.photographers = photographers;
+        res.photographers = await this.photographerUploadStats();
 
         if (from && to) {
             let bannerClicks = await db.collection('bannerClicks').aggregate([
@@ -355,39 +371,7 @@ class Admin {
             }
         }
 
-        let photoPipeline = [
-            { $match: { userRole: 'photographer' } },
-            {
-                $lookup: {
-                    from: 'gallery',
-                    let: { userId: '$_id' },
-                    pipeline: [
-                        {
-                            $match: {
-                                $expr: {
-                                    $and: [
-                                        { $eq: ['$uid', '$$userId'] },
-                                        { $gte: ['$published', startTimestamp] },
-                                        { $lt: ['$published', endTimestamp] }
-                                    ]
-                                }
-                            }
-                        }
-                    ],
-                    as: 'galleries'
-                }
-            },
-            {
-                $project: {
-                    userAlias: 1,
-                    name: 1,
-                    uploadedGalleryCount: { $size: "$galleries" },
-                    uploadedPhotosCount: { $sum: { $map: { input: "$galleries", as: "gallery", in: { $size: "$$gallery.photos" } } } }
-                }
-            }
-        ];
-        let photographers = await db.collection('users').aggregate(photoPipeline).toArray();
-        res.photographers = photographers;
+        res.photographers = await this.photographerUploadStats(startTimestamp, endTimestamp);
 
         if (from && to) {
             let bannerClicks = await db.collection('bannerClicks').aggregate([
@@ -526,39 +510,7 @@ class Admin {
             }
         }
 
-        let photoPipeline = [
-            { $match: { userRole: 'photographer' } },
-            {
-                $lookup: {
-                    from: 'gallery',
-                    let: { userId: '$_id' },
-                    pipeline: [
-                        {
-                            $match: {
-                                $expr: {
-                                    $and: [
-                                        { $eq: ['$uid', '$$userId'] },
-                                        { $gte: ['$published', startTimestamp] },
-                                        { $lt: ['$published', endTimestamp] }
-                                    ]
-                                }
-                            }
-                        }
-                    ],
-                    as: 'galleries'
-                }
-            },
-            {
-                $project: {
-                    userAlias: 1,
-                    name: 1,
-                    uploadedGalleryCount: { $size: "$galleries" },
-                    uploadedPhotosCount: { $sum: { $map: { input: "$galleries", as: "gallery", in: { $size: "$$gallery.photos" } } } }
-                }
-            }
-        ];
-        let photographers = await db.collection('users').aggregate(photoPipeline).toArray();
-        res.photographers = photographers;
+        res.photographers = await this.photographerUploadStats(startTimestamp, endTimestamp);
 
         if (from && to) {
             let bannerClicks = await db.collection('bannerClicks').aggregate([

@@ -2202,3 +2202,14 @@
 
 
 }
+// objašnjenje ispod naslova sekcije (npr. "Najgledanije fotografije")
+.section-hint {
+    font-size: 13px;
+    line-height: 1.5;
+    color: #7c828f;
+    margin: -4px 0 14px;
+    max-width: 70ch;
+
+    b { color: #545a6b; font-weight: 600; }
+    a { color: #2f3fb5; text-decoration: underline; }
+}

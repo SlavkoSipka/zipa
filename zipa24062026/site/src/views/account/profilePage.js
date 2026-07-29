@@ -70,6 +70,9 @@ class ProfilePage extends Component {
         this.state = {
             ...props.initialData,
             announcements: [],
+            // statistika se dovlači nakon montiranja; do tada se u prikazu
+            // vide crtice umesto nula
+            loadingData: true,
             adminStatistics: {
                 photosCount: 0,
                 photographersCount: 0,
@@ -88,6 +91,15 @@ class ProfilePage extends Component {
             photographerStatistics: []
 
         };
+    }
+
+    /**
+     * Statistika stiže sa zakašnjenjem od nekoliko sekundi, pa se do tada
+     * prikazuje crtica umesto nule — inače deluje kao da podaci nedostaju.
+     */
+    stat = (value, suffix = '') => {
+        if (this.state.loadingData || value === undefined || value === null) return '—';
+        return `${value}${suffix}`;
     }
 
     adminStatistics = () => {
@@ -366,6 +378,19 @@ class ProfilePage extends Component {
 
                                         <div className="photos">
                                             <h6>{'Najgledanije fotografije'.translate(this.props.lang)}</h6>
+                                            {/*
+                                              * Ovo je statistika pregleda, a ne izbor fotografa. Fotografije
+                                              * koje se prikazuju na javnom profilu biraju se prekidačem
+                                              * "Izdvojena na profilu" pri uređivanju pojedinačne fotografije.
+                                              */}
+                                            <p className="section-hint">
+                                                {'Prikaz prema broju pregleda. Fotografije koje želite da prikažete na svom javnom profilu birate prekidačem'.translate(this.props.lang)}
+                                                {' '}<b>{'Izdvojena na profilu'.translate(this.props.lang)}</b>{' '}
+                                                {'pri uređivanju fotografije u galeriji.'.translate(this.props.lang)}
+                                                {this.props.uData && this.props.uData.userAlias ?
+                                                    <span> <Link to={`/fotograf/${this.props.uData.userAlias}`}>{'Pogledajte svoj javni profil'.translate(this.props.lang)}</Link>.</span>
+                                                    : null}
+                                            </p>
                                             <ul>
                                                 {
                                                     this.state.photographerStatistics?.map((item, idx) => {
@@ -474,10 +499,10 @@ class ProfilePage extends Component {
                                                         <span>{'Vrijeme poslednjeg logovanja:'.translate(this.props.lang)}</span><span>{this.props.uData.previousLoginTimestamp ? moment.unix(this.props.uData.previousLoginTimestamp).format('DD.MM.YYYY HH:mm') + ' h' : '-'}</span>
                                                     </li>
                                                     <li>
-                                                        <span>{'Na servisu imate:'.translate(this.props.lang)}</span><span> {this.state.adminStatistics.photosCount} {'fotografija'.translate(this.props.lang)}</span>
+                                                        <span>{'Na servisu imate:'.translate(this.props.lang)}</span><span> {this.stat(this.state.adminStatistics.photosCount)} {'fotografija'.translate(this.props.lang)}</span>
                                                     </li>
                                                     <li>
-                                                        <span>{'Ukupno fotografa:'.translate(this.props.lang)}</span><span>{this.state.adminStatistics.photographersCount} </span>
+                                                        <span>{'Ukupno fotografa:'.translate(this.props.lang)}</span><span>{this.stat(this.state.adminStatistics.photographersCount)} </span>
                                                     </li>
 
                                                 </ul>
@@ -491,7 +516,7 @@ class ProfilePage extends Component {
                                                     <div className="block">
                                                         <div>
                                                             <h6>Promet danas</h6>
-                                                            <h3>{this.state.adminStatistics.todayEarnings} KM</h3>
+                                                            <h3>{this.stat(this.state.adminStatistics.todayEarnings, ' KM')}</h3>
                                                         </div>
                                                         <Isvg src={statIcon}/>
                                                     </div>
@@ -501,7 +526,7 @@ class ProfilePage extends Component {
                                                     <div className="block">
                                                         <div>
                                                             <h6>Mjesečni promet</h6>
-                                                            <h3>{this.state.adminStatistics.currentMonthEarnings} KM</h3>
+                                                            <h3>{this.stat(this.state.adminStatistics.currentMonthEarnings, ' KM')}</h3>
                                                         </div>
                                                         <Isvg src={statIcon}/>
                                                     </div>
@@ -511,7 +536,7 @@ class ProfilePage extends Component {
                                                     <div className="block">
                                                         <div>
                                                             <h6>Ukupno preuzeto fotografija</h6>
-                                                            <h3>{this.state.adminStatistics.totalDownloads}</h3>
+                                                            <h3>{this.stat(this.state.adminStatistics.totalDownloads)}</h3>
                                                         </div>
                                                         <Isvg src={statIcon}/>
                                                     </div>
