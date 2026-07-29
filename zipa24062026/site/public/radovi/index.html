@@ -88,8 +88,8 @@
   .progress-pct { font-size: 15px; font-weight: 700; color: var(--brand); font-variant-numeric: tabular-nums; }
   .bar { height: 9px; background: var(--line-2); border-radius: 99px; overflow: hidden; display: flex; }
   .bar i { display: block; height: 100%; }
-  .bar .done { width: 26%; background: var(--green); }
-  .bar .now { width: 6%; background: var(--amber); }
+  .bar .done { width: 35%; background: var(--green); }
+  .bar .now { width: 5%; background: var(--amber); }
   .legend { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 13px; font-size: 13px; color: var(--ink-2); }
   .legend span { display: inline-flex; align-items: center; gap: 7px; }
   .dot { width: 9px; height: 9px; border-radius: 3px; flex-shrink: 0; }
@@ -160,7 +160,7 @@
       <span class="z">ZIPA PHOTO</span>
       <span class="sub">radovi na sajtu</span>
     </div>
-    <span class="updated">Ažurirano 27. jula 2026.</span>
+    <span class="updated">Ažurirano 29. jula 2026.</span>
   </div>
 
   <h1>Pregled radova na sajtu zipaphoto.net</h1>
@@ -169,13 +169,13 @@
   <div class="progress-card">
     <div class="progress-head">
       <h2>Ukupan napredak</h2>
-      <span class="progress-pct">26% završeno</span>
+      <span class="progress-pct">35% završeno</span>
     </div>
     <div class="bar"><i class="done"></i><i class="now"></i></div>
     <div class="legend">
-      <span><i class="dot g"></i> Završeno — 11 stavki</span>
+      <span><i class="dot g"></i> Završeno — 14 stavki</span>
       <span><i class="dot a"></i> U toku — 2 stavke</span>
-      <span><i class="dot n"></i> Predstoji — 27 stavki</span>
+      <span><i class="dot n"></i> Predstoji — 24 stavke</span>
     </div>
   </div>
 
@@ -216,14 +216,14 @@
     <summary>
       <span class="chev">▶</span>
       <span class="gtitle">Faza 1 — postavljanje fotografija i cene</span>
-      <span class="gcount">2 u toku · 5 predstoji</span>
+      <span class="gcount">3 završeno · 2 u toku · 2 predstoji</span>
     </summary>
     <div class="gbody">
       <ul class="items">
-        <li><span class="mark now">●</span><span class="itxt"><b>Naknadno dodavanje fotografija u galeriju</b><p>Problem koji opisujete od početka. Utvrdili smo tačan uzrok: kad se drugi put dodaju fotografije, sajt pogrešno pamti njihov redosled, pa umesto novih ponovo upiše prve. Zato je delovalo da „ne dozvoljava". Ispravka je jednostavna.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
+        <li><span class="mark done">✓</span><span class="itxt"><b>Naknadno dodavanje fotografija u galeriju</b><p>Rešeno. Uzrok: pri drugom dodavanju sajt je redosled računao od početka umesto od kraja postojećih, pa je umesto novih fotografija ponovo upisivao prve. Sada se nove uredno nadovezuju, koliko god puta dodavali.</p><p><b>Usput otkriveno i rešeno:</b> brisanje pojedinačne fotografije iz galerije uklanjalo je pogrešnu i ostavljalo prazno mesto — isti uzrok, ispravljeno zajedno.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
         <li><span class="mark now">●</span><span class="itxt"><b>Izbor naslovne fotografije galerije</b><p>Sada je naslovna uvek prva postavljena, pa morate da je ubacite pre ostalih. Dodajemo dugme „postavi kao naslovnu" na svakoj fotografiji.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
-        <li><span class="mark">✓</span><span class="itxt"><b>Cena se upisuje u podešavanjima</b><p>Cena od 20 KM je bila upisana u samom kodu sajta, pa ste je ručno menjali na 50 KM pri svakoj galeriji. Prebacujemo je u Podešavanja sajta, gde ćete je moći promeniti kad god poželite.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
-        <li><span class="mark">✓</span><span class="itxt"><b>Vreme poslednjeg logovanja</b><p>Sada prikazuje trenutnu prijavu umesto prethodne. Ispravljamo da pokazuje kad ste bili ulogovani pre ovog puta.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
+        <li><span class="mark done">✓</span><span class="itxt"><b>Cena se upisuje u podešavanjima</b><p>Rešeno. U Podešavanjima sajta sada postoji polje <i>Cijena fotografije (KM)</i> — trenutno je postavljeno na 50 KM i primenjuje se na svaku novu galeriju. Ranije objavljene galerije zadržavaju cenu koja je uz njih upisana.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
+        <li><span class="mark done">✓</span><span class="itxt"><b>Vreme poslednjeg logovanja</b><p>Rešeno. Profil sada prikazuje kada ste bili ulogovani <i>pre ovog puta</i>, a ne trenutnu prijavu. Podatak počinje da se beleži od sada, pa će se pri sledećoj prijavi videti današnji datum.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
         <li><span class="mark">✓</span><span class="itxt"><b>Broj fotografa i ukupan broj fotografija</b><p>Podatak nedostaje, iako postoji u bazi. Vraćamo ga na profil i na naslovnu.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
         <li><span class="mark">✓</span><span class="itxt"><b>Polje za tekst u Najavama</b><p>Prestalo je da radi jer licenca za uređivač teksta nije registrovana na vaš domen — na vašem snimku ekrana se vidi to upozorenje. Rešavamo zamenom uređivača.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
         <li><span class="mark">✓</span><span class="itxt"><b>Izdvojene fotografije na profilu fotografa</b><p>Ovde postoji nesporazum koji treba raščistiti. Vi ste tražili da fotograf sam izdvoji svoje najbolje fotografije za profil; napravljeno je nešto drugo — spisak najgledanijih po statistici. Zato vam i deluje netačno. Mogućnost da fotograf sam bira već postoji u sistemu, samo nije prikazana na pravom mestu.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
