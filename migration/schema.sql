@@ -159,6 +159,7 @@ create table if not exists banners (
 create table if not exists "bannerClicks" (
     "_id"       text primary key,
     "url"       text,
+    "bannerId"  text,      -- koji je baner kliknut (adresa ume da se menja)
     "timestamp" bigint
 );
 
@@ -254,6 +255,19 @@ create table if not exists "gallerySettings" (
     "status"    boolean
 );
 create index if not exists gallerysettings_uid_idx on "gallerySettings" ("uid");
+
+
+-- ============ loginHistory ============
+-- Evidencija prijava: ko se od registrovanih korisnika i kada prijavljivao.
+create table if not exists "loginHistory" (
+    "_id"       text primary key,
+    "uid"       text,
+    "timestamp" bigint,
+    "ip"        text,
+    "userAgent" text
+);
+create index if not exists loginhistory_ts_idx  on "loginHistory" ("timestamp" desc);
+create index if not exists loginhistory_uid_idx on "loginHistory" ("uid");
 
 -- ============ RLS ============
 -- Uključujemo RLS na svim tabelama; pristup ide preko service_role ključa (backend/API),

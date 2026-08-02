@@ -80,33 +80,132 @@ class UsersModule {
         return {};
     }
 
-    async fetchLogs(page = 0, search = null) {
+    /**
+     * Evidencija prijava na sajt.
+     *
+     * Prikazuje ko se od registrovanih korisnika prijavljivao i kada.
+     * Administratorski nalozi se podrazumevano izostavljaju, jer je klijentu
+     * bitno da vidi korisnike, a ne sopstvene prijave.
+     *
+     * @param {number} page     strana (od nule)
+     * @param {object} options  { from, to, perPage, includeAdmins }
+     */
+    async fetchLoginHistory(page = 0, options = {}) {
+        const perPage = Math.min(parseInt(options.perPage, 10) || 100, 1000);
+        const uslovi = [];
+        const params = [];
 
-        let query = {};
-
-
-        if (search) {
-            query.url = new RegExp(search, 'i');
+        if (options.from) {
+            params.push(parseInt(options.from, 10));
+            uslovi.push(`h."timestamp" >= $${params.length}`);
+        }
+        if (options.to) {
+            params.push(parseInt(options.to, 10));
+            uslovi.push(`h."timestamp" <= $${params.length}`);
+        }
+        if (!options.includeAdmins) {
+            uslovi.push(`coalesce(u."userRole", '') <> 'admin'`);
         }
 
-        let items = await db.collection('logs').find(query).sort({ timestamp: -1 }).skip(page * 100).limit(100).toArray();
-        for (let i = 0; i < items.length; i++) {
+        const where = uslovi.length ? `where ${uslovi.join(' and ')}` : '';
 
-            let user = null;
-            if (items[i].uid) {
-                user = await db.collection('users').findOne({ _id: items[i].uid });
-                if (user) {
-                    items[i].user = {
-                        name: user.name,
-                        userAlias: user.userAlias
-                    }
-                }
-            }
-        }
+        const ukupno = await db.query(`
+            select count(*)::int as c
+              from "loginHistory" h
+              left join users u on u."_id" = h."uid"
+              ${where}
+        `, params);
+
+        const items = await db.query(`
+            select h."_id", h."timestamp", h."ip", h."userAgent",
+                   u."_id" as user_id, u."name" as user_name,
+                   u."email" as user_email, u."userRole" as user_role
+              from "loginHistory" h
+              left join users u on u."_id" = h."uid"
+              ${where}
+             order by h."timestamp" desc
+             limit ${perPage} offset ${parseInt(page, 10) * perPage}
+        `, params);
 
         return {
-            items: items,
-            total: Math.ceil(await db.collection('logs').find(query).count() / 100)
+            items: items.rows.map((r) => ({
+                _id: r._id,
+                timestamp: r.timestamp,
+                ip: r.ip,
+                userAgent: r.userAgent,
+                user: r.user_id ? {
+                    _id: r.user_id, name: r.user_name,
+                    email: r.user_email, userRole: r.user_role
+                } : null
+            })),
+            total: Math.ceil(ukupno.rows[0].c / perPage),
+            totalItems: ukupno.rows[0].c
+        };
+    }
+
+    /**
+     * Evidencija otvaranja stranica.
+     *
+     * Podržava izbor perioda i broja redova po strani, da bi se izveštaj za
+     * ceo mesec mogao odštampati odjednom umesto listanja strane po stranu.
+     * Podaci o korisnicima se dovlače u istom upitu — ranije se za svaki red
+     * išlo u bazu posebno, pa je strana od sto redova značila sto upita.
+     *
+     * @param {number} page      strana (od nule)
+     * @param {string} search    deo adrese stranice
+     * @param {object} options   { from, to, perPage, onlyUsers }
+     */
+    async fetchLogs(page = 0, search = null, options = {}) {
+        const perPage = Math.min(parseInt(options.perPage, 10) || 100, 1000);
+        const uslovi = [];
+        const params = [];
+
+        if (search) {
+            params.push(search);
+            uslovi.push(`l."doc"->>'url' ~* $${params.length}`);
+        }
+        if (options.from) {
+            params.push(parseInt(options.from, 10));
+            uslovi.push(`(l."doc"->>'timestamp')::bigint >= $${params.length}`);
+        }
+        if (options.to) {
+            params.push(parseInt(options.to, 10));
+            uslovi.push(`(l."doc"->>'timestamp')::bigint <= $${params.length}`);
+        }
+        // samo prijavljeni korisnici — da se vidi ko od registrovanih koristi sajt
+        if (options.onlyUsers) {
+            uslovi.push(`l."doc"->>'uid' is not null`);
+        }
+
+        const where = uslovi.length ? `where ${uslovi.join(' and ')}` : '';
+
+        const ukupno = await db.query(`select count(*)::int as c from logs l ${where}`, params);
+        const total = ukupno.rows[0].c;
+
+        const items = await db.query(`
+            select l."_id",
+                   l."doc"->>'url' as url,
+                   (l."doc"->>'timestamp')::bigint as timestamp,
+                   l."doc"->>'uid' as uid,
+                   u."name" as user_name,
+                   u."userAlias" as user_alias
+              from logs l
+              left join users u on u."_id" = l."doc"->>'uid'
+              ${where}
+             order by (l."doc"->>'timestamp')::bigint desc nulls last
+             limit ${perPage} offset ${parseInt(page, 10) * perPage}
+        `, params);
+
+        return {
+            items: items.rows.map((r) => ({
+                _id: r._id,
+                url: r.url,
+                timestamp: r.timestamp,
+                uid: r.uid,
+                user: r.user_name ? { name: r.user_name, userAlias: r.user_alias } : null
+            })),
+            total: Math.ceil(total / perPage),
+            totalItems: total
         };
     }
 
@@ -341,7 +440,7 @@ class UsersModule {
     }
 
 
-    async login(email, password, rememberMe) {
+    async login(email, password, rememberMe, prijava = {}) {
         let user = await db.collection('users').find({ email: email }).toArray();
         if (!user.length) {
             return {
@@ -383,6 +482,15 @@ class UsersModule {
                         previousLoginTimestamp: user[0].lastLoginTimestamp ? user[0].lastLoginTimestamp : null,
                         lastLoginTimestamp: Math.floor(new Date().getTime() / 1000)
                     }
+                })
+
+                // Zapis o prijavi — da se u administraciji vidi ko od
+                // registrovanih korisnika i kada koristi servis.
+                await db.collection('loginHistory').insertOne({
+                    uid: user[0]._id,
+                    timestamp: Math.floor(new Date().getTime() / 1000),
+                    ip: prijava.ip || null,
+                    userAgent: prijava.userAgent || null
                 })
 
                 return {

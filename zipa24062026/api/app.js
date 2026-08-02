@@ -159,7 +159,15 @@ app.post('/user/register', async (req, res) => {
 });
 
 app.post('/user/login', async (req, res) => {
-    let response = await usersModule.login(req.body.email, req.body.password, req.body.rememberMe);
+    // adresa se beleži uz prijavu; iza posrednika (Render, Cloudflare)
+    // stvarna adresa posetioca stiže u zaglavlju x-forwarded-for
+    const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim()
+        || req.socket.remoteAddress || null;
+
+    let response = await usersModule.login(req.body.email, req.body.password, req.body.rememberMe, {
+        ip: ip,
+        userAgent: req.headers['user-agent'] || null
+    });
     res.status(response.status).send(response.response);
 });
 
@@ -632,8 +640,22 @@ app.post('/checkout/finish', permissionMiddleware(), async (req, res) => {
 app.post('/log', userCheck, async (req, res) => {
     res.send(await usersModule.logVisit(res.locals.uid, req.body.url));
 });
+app.post('/login-history', permissionMiddleware('*'), async (req, res) => {
+    res.send(await usersModule.fetchLoginHistory(req.body.page, {
+        from: req.body.from,
+        to: req.body.to,
+        perPage: req.body.perPage,
+        includeAdmins: req.body.includeAdmins
+    }));
+});
+
 app.post('/logs', permissionMiddleware('*'), async (req, res) => {
-    res.send(await usersModule.fetchLogs(req.body.page, req.body.search));
+    res.send(await usersModule.fetchLogs(req.body.page, req.body.search, {
+        from: req.body.from,
+        to: req.body.to,
+        perPage: req.body.perPage,
+        onlyUsers: req.body.onlyUsers
+    }));
 });
 app.post('/downloads', permissionMiddleware('*'), async (req, res) => {
     res.send(await usersModule.fetchDownloads(req.body.page, req.body.search));
