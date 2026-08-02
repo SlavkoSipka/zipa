@@ -210,52 +210,104 @@ class UsersModule {
     }
 
 
-    async fetchDownloads(page = 0, search = null) {
-
-        let query = {};
-
+    /**
+     * Pregled preuzimanja fotografija.
+     *
+     * Uz svako preuzimanje prikazuje se na koji je način fotografija uzeta:
+     *   kupovina  — plaćena karticom (postoji broj transakcije)
+     *   autor     — fotograf je preuzeo sopstvenu fotografiju
+     *   besplatno — galerija je bez cene
+     *   pretplata — potrošen kredit iz pretplate
+     *
+     * Za starija preuzimanja način se izvodi iz podataka, a od sada se
+     * upisuje uz sam zapis.
+     *
+     * Podaci o korisniku, galeriji i transakciji dovlače se u istom upitu;
+     * ranije su za svaki red išla tri zasebna upita u bazu.
+     *
+     * @param {number} page    strana (od nule)
+     * @param {string} search  ime korisnika ili naziv galerije
+     * @param {object} options { from, to, perPage, type }
+     */
+    async fetchDownloads(page = 0, search = null, options = {}) {
+        const perPage = Math.min(parseInt(options.perPage, 10) || 20, 500);
+        const uslovi = ['u."_id" is not null', 'g."_id" is not null'];
+        const params = [];
 
         if (search) {
-            //query.url = new RegExp(search, 'i');
+            params.push(search);
+            uslovi.push(`(u."name" ~* $${params.length} or g."name"->>'ba' ~* $${params.length} or u."email" ~* $${params.length})`);
+        }
+        if (options.from) {
+            params.push(parseInt(options.from, 10));
+            uslovi.push(`d."timestamp" >= $${params.length}`);
+        }
+        if (options.to) {
+            params.push(parseInt(options.to, 10));
+            uslovi.push(`d."timestamp" <= $${params.length}`);
         }
 
-        let items = await db.collection('downloads').find(query).sort({ timestamp: -1 }).skip(page * 20).limit(20).toArray();
-        let newArr = [];
+        // način preuzimanja — isti izraz se koristi i za filter i za prikaz
+        const nacin = `
+            case
+              when d."transactionId" is not null then 'kupovina'
+              when d."uid" = g."uid"              then 'autor'
+              when coalesce(g."price", 0) = 0     then 'besplatno'
+              else 'pretplata'
+            end`;
 
-        for (let i = 0; i < items.length; i++) {
-
-            if (items[i].transactionId) {
-                let transaction = await db.collection('transactions').findOne({ _id: items[i].transactionId });
-                if (transaction) {
-                    items[i].transaction = transaction;
-                }
-            }
-
-            let user = await db.collection('users').findOne({ _id: ObjectID(items[i].uid) });
-            if (user) {
-                items[i].user = {
-                    _id: user._id,
-                    name: user.name,
-                    userAlias: user.userAlias
-                }
-            } else {
-                continue;
-            }
-
-            let gallery = await db.collection('gallery').findOne({ _id: items[i].galleryId });
-            if (gallery) {
-                items[i].gallery = gallery;
-            } else {
-                continue;
-            }
-
-            newArr.push(items[i]);
-
+        if (options.type) {
+            params.push(options.type);
+            uslovi.push(`${nacin} = $${params.length}`);
         }
+
+        const where = `where ${uslovi.join(' and ')}`;
+
+        const ukupno = await db.query(`
+            select count(*)::int as c
+              from downloads d
+              left join users u   on u."_id" = d."uid"
+              left join gallery g on g."_id" = d."galleryId"
+              ${where}
+        `, params);
+
+        const items = await db.query(`
+            select d."_id", d."timestamp", d."resolution", d."photoId",
+                   d."photo", d."transactionId", d."galleryId",
+                   ${nacin} as "downloadType",
+                   u."_id" as user_id, u."name" as user_name,
+                   u."userAlias" as user_alias, u."email" as user_email,
+                   g."name" as gallery_name, g."alias" as gallery_alias,
+                   g."price" as gallery_price, g."photos" as gallery_photos,
+                   t."transaction" as transaction_data
+              from downloads d
+              left join users u        on u."_id" = d."uid"
+              left join gallery g      on g."_id" = d."galleryId"
+              left join transactions t on t."_id" = d."transactionId"
+              ${where}
+             order by d."timestamp" desc nulls last
+             limit ${perPage} offset ${parseInt(page, 10) * perPage}
+        `, params);
 
         return {
-            items: newArr,
-            total: Math.ceil(await db.collection('downloads').find(query).count() / 20)
+            items: items.rows.map((r) => ({
+                _id: r._id,
+                timestamp: r.timestamp,
+                resolution: r.resolution,
+                photoId: r.photoId,
+                photo: r.photo,
+                transactionId: r.transactionId,
+                galleryId: r.galleryId,
+                downloadType: r.downloadType,
+                transaction: r.transaction_data ? { transaction: r.transaction_data } : undefined,
+                user: { _id: r.user_id, name: r.user_name, userAlias: r.user_alias, email: r.user_email },
+                gallery: {
+                    _id: r.galleryId, name: r.gallery_name, alias: r.gallery_alias,
+                    price: r.gallery_price, photos: r.gallery_photos
+                }
+            })),
+            total: Math.ceil(ukupno.rows[0].c / perPage),
+            totalItems: ukupno.rows[0].c
         };
     }
 

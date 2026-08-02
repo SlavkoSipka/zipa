@@ -17,3 +17,6 @@
 @import "scss/photoModal.scss";
 
 @import 'scss/global.scss';
+
+// izgled pri stampi / cuvanju u PDF — mora poslednji, da nadjaca ostale
+@import 'scss/print.scss';

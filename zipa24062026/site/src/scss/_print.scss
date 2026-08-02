@@ -1,0 +1,127 @@
+/*
+ * Izgled pri štampi i čuvanju u PDF.
+ *
+ * Na papir ide samo ono što je sadržaj: logotip agencije, naslov galerije,
+ * podaci i fotografije. Traka za pretragu, ikone društvenih mreža, baneri,
+ * navigacija i dugmad se izostavljaju — oni na papiru samo zauzimaju mesto.
+ *
+ * Format se podešava u prozoru za štampu (A4, A3…); ovde je zadat A4 kao
+ * podrazumevani, sa marginama koje ostavljaju mesta za zaglavlje.
+ */
+
+@page {
+    size: A4;
+    margin: 12mm 10mm;
+}
+
+@media print {
+
+    /* --- ono što ne ide na papir --- */
+    .detail-search,
+    .search-wrap,
+    .share-actions,
+    .share-desc,
+    .section-banners,
+    .banners,
+    .banner,
+    .left-banner,
+    .right-banner,
+    .acc-buttons,
+    .download-btn,
+    .zoom,
+    .zoom-image,
+    .paginate,
+    .pagination,
+    nav,
+    footer,
+    .footer,
+    .newsletter,
+    .header-navigation,
+    .filters,
+    button:not(.keep-on-print) {
+        display: none !important;
+    }
+
+    /* --- osnovno --- */
+    body {
+        background: #fff;
+        color: #000;
+        font-size: 11pt;
+    }
+
+    a {
+        color: #000;
+        text-decoration: none;
+    }
+
+    /* galerija počinje odmah ispod logotipa, bez praznog prostora */
+    .into-wrap,
+    .section-detail,
+    .section-category {
+        padding-top: 0 !important;
+        margin-top: 0 !important;
+    }
+
+    .page-top-wrapper ul {   /* putanja "Početna / Profil / …" */
+        display: none;
+    }
+
+    /*
+     * Zaglavlje sa pretragom nosi i naslov "Pregled galerija", koji na papiru
+     * nema svrhu — naslov same galerije stoji niže. Sklanja se samo ono
+     * zaglavlje koje sadrži pretragu, da se ne dira sadržaj drugih stranica
+     * (pomoć, najave, kontakt) koje koriste isti okvir.
+     */
+    .into-wrap:has(.detail-search),
+    .into-wrap:has(.search-wrap) {
+        display: none !important;
+    }
+
+    /* naslov galerije ostaje, malo zbijeniji nego na ekranu */
+    h1, h2 {
+        font-size: 16pt;
+        margin: 0 0 6pt;
+        page-break-after: avoid;
+    }
+
+    .description {
+        font-size: 10pt;
+        line-height: 1.4;
+        margin-bottom: 8pt;
+    }
+
+    /* --- fotografije: tri u redu, bez preseka preko strane --- */
+    .detail-wrap .row > [class*="col-"],
+    .category-wrap .row > [class*="col-"] {
+        width: 33.333% !important;
+        max-width: 33.333% !important;
+        flex: 0 0 33.333% !important;
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+
+    /* četvrti prikaz (najsitnije sličice) — četiri u redu */
+    .grid-view-4 .row > [class*="col-"] {
+        width: 25% !important;
+        max-width: 25% !important;
+        flex: 0 0 25% !important;
+    }
+
+    img {
+        max-width: 100%;
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+
+    article,
+    .image,
+    .gallery-item {
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+
+    /* treći prikaz galerija da se štampa kao prvi — sa sličicom i podacima */
+    .list-view article {
+        display: block !important;
+    }
+}

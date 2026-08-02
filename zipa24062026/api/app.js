@@ -658,7 +658,12 @@ app.post('/logs', permissionMiddleware('*'), async (req, res) => {
     }));
 });
 app.post('/downloads', permissionMiddleware('*'), async (req, res) => {
-    res.send(await usersModule.fetchDownloads(req.body.page, req.body.search));
+    res.send(await usersModule.fetchDownloads(req.body.page, req.body.search, {
+        from: req.body.from,
+        to: req.body.to,
+        perPage: req.body.perPage,
+        type: req.body.type
+    }));
 });
 app.post('/create-backup', permissionMiddleware('*'), async (req, res) => {
     res.send(await adminModule.downloadBackup(parseInt(req.body.from), parseInt(req.body.to)));
