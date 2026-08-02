@@ -117,9 +117,79 @@ class Admin {
         return result.rows;
     }
 
-    async bannerClick(url) {
-        await db.collection('bannerClicks').insertOne({ url: url, timestamp: Math.floor(new Date().getTime() / 1000) });
+    async bannerClick(url, bannerId = null) {
+        await db.collection('bannerClicks').insertOne({
+            url: url,
+            bannerId: bannerId,
+            timestamp: Math.floor(new Date().getTime() / 1000)
+        });
         return;
+    }
+
+    /**
+     * Pregledi fotografija po galerijama za zadati period.
+     *
+     * Vraća galerije poređane od najgledanije, a unutar svake fotografije
+     * takođe od najgledanije. Uz svaku fotografiju ide i putanja do slike,
+     * da bi se u izveštaju videla sličica — ranije je nedostajala, pa su
+     * u tabeli stajali prazni okviri. Naziv galerije se uzima iz same
+     * galerije; ranije se čitao sa pogrešnog mesta pa je ostajao prazan.
+     */
+    async galleryVisitStats(from, to) {
+        const result = await db.query(`
+            with pregledi as (
+                select v."doc"->>'galleryId'      as gallery_id,
+                       v."doc"->'photo'->>'name'  as photo_name,
+                       v."doc"->'photo'->>'image' as photo_image,
+                       count(*)::int              as visits
+                  from "photoVisits" v
+                 where (v."doc"->>'timestamp')::bigint between $1 and $2
+                   and v."doc"->>'galleryId' is not null
+                 group by 1, 2, 3
+            )
+            select p.gallery_id as "_id",
+                   coalesce(g."name"->>'ba', g."name"->>'en') as name,
+                   sum(p.visits)::int as visits,
+                   jsonb_agg(
+                       jsonb_build_object('name', p.photo_name, 'image', p.photo_image, 'visits', p.visits)
+                       order by p.visits desc
+                   ) as photos
+              from pregledi p
+              left join gallery g on g."_id" = p.gallery_id
+             group by p.gallery_id, g."name"
+             order by visits desc
+        `, [from, to]);
+
+        return result.rows;
+    }
+
+    /**
+     * Klikovi na banere za zadati period.
+     *
+     * Ista adresa je beležena u više oblika — sa i bez `www`, sa `http` i
+     * `https`, sa završnom kosom crtom i bez nje — pa se jedan te isti baner
+     * pojavljivao kao nekoliko zasebnih stavki sa manjim brojem klikova.
+     * Zato se adrese ovde svode na isti oblik i sabiraju.
+     *
+     * Broji se svaki klik (ne jedinstveni posetilac), jer se posetilac ne
+     * beleži. Klikovi na banere bez linka grupišu se posebno.
+     */
+    async bannerClickStats(from, to) {
+        const result = await db.query(`
+            select case
+                     when coalesce(nullif(trim("url"), ''), '') = '' then '(baner bez linka)'
+                     else regexp_replace(
+                            regexp_replace(lower(trim("url")), '^(https?://)?(www\\.)?', ''),
+                            '/+$', '')
+                   end as url,
+                   count(*)::int as count
+              from "bannerClicks"
+             where "timestamp" >= $1 and "timestamp" <= $2
+             group by 1
+             order by count desc
+        `, [from, to]);
+
+        return result.rows;
     }
 
     async statistics(from = null, to = null) {
@@ -227,11 +297,7 @@ class Admin {
         res.photographers = await this.photographerUploadStats();
 
         if (from && to) {
-            let bannerClicks = await db.collection('bannerClicks').aggregate([
-                { $match: { timestamp: { $gte: from, $lte: to } } },
-                { $group: { _id: "$url", count: { $sum: 1 } } }
-            ]).toArray();
-            res.bannerClicks = bannerClicks.map(item => ({ url: item._id, count: item.count }));
+            res.bannerClicks = await this.bannerClickStats(from, to);
         }
 
         if (!startTimestamp || !endTimestamp) {
@@ -241,32 +307,7 @@ class Admin {
             endTimestamp = Math.floor(Date.now() / 1000);
         }
 
-        let galleryVisits = await db.collection('photoVisits').aggregate([
-            { $match: { timestamp: { $gte: startTimestamp, $lte: endTimestamp } } },
-            { $group: { _id: { galleryId: "$galleryId", photo: "$photo" }, count: { $sum: 1 } } },
-            {
-                $group: {
-                    _id: "$_id.galleryId",
-                    name: { $first: "$_id.name" },
-                    visits: { $sum: "$count" },
-                    photos: {
-                        $push: {
-                            name: "$_id.photo.name",
-                            visits: "$count"
-                        }
-                    }
-                }
-            }
-        ]).toArray();
-
-        res.galleryVisits = galleryVisits.map(item => ({
-            _id: item._id,
-            name: item.name,
-            visits: item.visits,
-            photos: item.photos
-        }));
-
-        res.galleryVisits.sort((a, b) => b.visits - a.visits);
+        res.galleryVisits = await this.galleryVisitStats(startTimestamp, endTimestamp);
 
         return res;
     }
@@ -374,38 +415,10 @@ class Admin {
         res.photographers = await this.photographerUploadStats(startTimestamp, endTimestamp);
 
         if (from && to) {
-            let bannerClicks = await db.collection('bannerClicks').aggregate([
-                { $match: { timestamp: { $gte: from, $lte: to } } },
-                { $group: { _id: "$url", count: { $sum: 1 } } }
-            ]).toArray();
-            res.bannerClicks = bannerClicks.map(item => ({ url: item._id, count: item.count }));
+            res.bannerClicks = await this.bannerClickStats(from, to);
         }
 
-        let galleryVisits = await db.collection('photoVisits').aggregate([
-            { $match: { timestamp: { $gte: startTimestamp, $lte: endTimestamp } } },
-            { $group: { _id: { galleryId: "$galleryId", photo: "$photo" }, count: { $sum: 1 } } },
-            {
-                $group: {
-                    _id: "$_id.galleryId",
-                    name: { $first: "$_id.name" },
-                    visits: { $sum: "$count" },
-                    photos: {
-                        $push: {
-                            name: "$_id.photo.name",
-                            visits: "$count"
-                        }
-                    }
-                }
-            }
-        ]).toArray();
-        res.galleryVisits = galleryVisits.map(item => ({
-            _id: item._id,
-            name: item.name,
-            visits: item.visits,
-            photos: item.photos
-        }));
-
-        res.galleryVisits.sort((a, b) => b.visits - a.visits);
+        res.galleryVisits = await this.galleryVisitStats(startTimestamp, endTimestamp);
 
         return res;
     }
@@ -513,38 +526,10 @@ class Admin {
         res.photographers = await this.photographerUploadStats(startTimestamp, endTimestamp);
 
         if (from && to) {
-            let bannerClicks = await db.collection('bannerClicks').aggregate([
-                { $match: { timestamp: { $gte: from, $lte: to } } },
-                { $group: { _id: "$url", count: { $sum: 1 } } }
-            ]).toArray();
-            res.bannerClicks = bannerClicks.map(item => ({ url: item._id, count: item.count }));
+            res.bannerClicks = await this.bannerClickStats(from, to);
         }
 
-        let galleryVisits = await db.collection('photoVisits').aggregate([
-            { $match: { timestamp: { $gte: startTimestamp, $lte: endTimestamp } } },
-            { $group: { _id: { galleryId: "$galleryId", photo: "$photo" }, count: { $sum: 1 } } },
-            {
-                $group: {
-                    _id: "$_id.galleryId",
-                    name: { $first: "$_id.name" },
-                    visits: { $sum: "$count" },
-                    photos: {
-                        $push: {
-                            name: "$_id.photo.name",
-                            visits: "$count"
-                        }
-                    }
-                }
-            }
-        ]).toArray();
-        res.galleryVisits = galleryVisits.map(item => ({
-            _id: item._id,
-            name: item.name,
-            visits: item.visits,
-            photos: item.photos
-        }));
-
-        res.galleryVisits.sort((a, b) => b.visits - a.visits);
+        res.galleryVisits = await this.galleryVisitStats(startTimestamp, endTimestamp);
         console.log('RESPONSE : ', res)
 
         return res;

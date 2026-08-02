@@ -382,7 +382,7 @@ app.get('/banners', async (req, res) => {
 });
 
 app.post('/banner/click', async (req, res) => {
-    let result = await adminModule.bannerClick(req.body.url);
+    let result = await adminModule.bannerClick(req.body.url, req.body.bannerId);
     res.status(200).send({});
 });
 
