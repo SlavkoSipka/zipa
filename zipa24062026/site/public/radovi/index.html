@@ -88,7 +88,7 @@
   .progress-pct { font-size: 15px; font-weight: 700; color: var(--brand); font-variant-numeric: tabular-nums; }
   .bar { height: 9px; background: var(--line-2); border-radius: 99px; overflow: hidden; display: flex; }
   .bar i { display: block; height: 100%; }
-  .bar .done { width: 50%; background: var(--green); }
+  .bar .done { width: 58%; background: var(--green); }
   .bar .now { width: 0%; background: var(--amber); }
   .legend { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 13px; font-size: 13px; color: var(--ink-2); }
   .legend span { display: inline-flex; align-items: center; gap: 7px; }
@@ -169,13 +169,13 @@
   <div class="progress-card">
     <div class="progress-head">
       <h2>Ukupan napredak</h2>
-      <span class="progress-pct">50% završeno</span>
+      <span class="progress-pct">58% završeno</span>
     </div>
     <div class="bar"><i class="done"></i><i class="now"></i></div>
     <div class="legend">
-      <span><i class="dot g"></i> Završeno — 20 stavki</span>
+      <span><i class="dot g"></i> Završeno — 23 stavke</span>
       <span><i class="dot a"></i> U toku — nema</span>
-      <span><i class="dot n"></i> Predstoji — 20 stavki</span>
+      <span><i class="dot n"></i> Predstoji — 17 stavki</span>
     </div>
   </div>
 
@@ -254,14 +254,14 @@
     <summary>
       <span class="chev">▶</span>
       <span class="gtitle">Faza 3 — statistike i izveštaji</span>
-      <span class="gcount">1 završeno · 8 predstoji</span>
+      <span class="gcount">4 završeno · 5 predstoji</span>
     </summary>
     <div class="gbody">
       <p class="gnote">Na više mesta ste primetili da brojevi ne deluju tačno. Prvo proveravamo da li se uopšte ispravno mere, pa tek onda doterujemo prikaz — nema svrhe lepo prikazivati pogrešan podatak.</p>
       <ul class="items">
-        <li><span class="mark">✓</span><span class="itxt"><b>Statistika poseta se ne učitava</b><p>Vrti se u krug, kao na vašem snimku ekrana. Sličan problem smo već otklonili pri prelasku na novi server.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
-        <li><span class="mark">✓</span><span class="itxt"><b>Provera brojanja klikova na banere</b><p>Utvrdićemo da li se broji svaki klik ili jedan po posetiocu, i šta je onih 22 klika bez naziva. Pravilo brojanja ćemo jasno napisati u samom izveštaju.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
-        <li><span class="mark">✓</span><span class="itxt"><b>Statistika galerija — sličice i sortiranje</b><p>Male fotografije se ne prikazuju, a redosled nije od najgledanije. Oboje se sređuje.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
+        <li><span class="mark done">✓</span><span class="itxt"><b>Statistika poseta se ne učitava</b><p>Rešeno — učitava se za oko sekundu. Isti uzrok kao kod ostalih izveštaja: previše podataka se povlačilo odjednom.</p><p><b>Važno:</b> pri pregledu baze utvrdili smo da evidencija poseta i pregleda fotografija <b>nije bila u bazi koju smo dobili</b> od dosadašnjeg izvođača — u prenosu su stigle galerije, korisnici, kategorije i klikovi na banere, ali ne i istorija poseta. Beleženje radi od sada; ako želite i ranije podatke, treba ih zatražiti od dosadašnjeg izvođača.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
+        <li><span class="mark done">✓</span><span class="itxt"><b>Provera brojanja klikova na banere</b><p>Bili ste u pravu — brojevi su zaista bili manji nego stvarno stanje. Uzrok: ista adresa je beležena u više oblika (sa <i>www</i> i bez, sa <i>http</i> i <i>https</i>, sa kosom crtom na kraju), pa se jedan isti baner delio na nekoliko stavki. Primer: video baner je pokazivao 121 klik, a stvarno ih je <b>241</b>.</p><p>Onaj red bez naziva su klikovi na banere koji nemaju upisan link — ima ih 336 i sada su jasno označeni.</p><p><b>Pravilo brojanja:</b> broji se svaki klik, a ne jedan po posetiocu. Od sada se uz klik beleži i koji je tačno baner u pitanju, pa će izveštaj biti precizan bez obzira na oblik adrese.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
+        <li><span class="mark done">✓</span><span class="itxt"><b>Statistika galerija — sličice i sortiranje</b><p>Rešeno. Sličice su bile prazne jer se podatak o slici uopšte nije slao u izveštaj, a naziv galerije se čitao sa pogrešnog mesta pa je ostajao prazan. Sada se vide i sličica i naziv, a fotografije unutar galerije poređane su od najgledanije.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
         <li><span class="mark done">✓</span><span class="itxt"><b>Statistika fotografa — sortiranje</b><p>Rešeno zajedno sa ubrzanjem statistike: spisak je poređan od najviše postavljenih fotografija.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
         <li><span class="mark">✓</span><span class="itxt"><b>Statistike od početka rada sajta</b><p>Tražili ste uvid od postavljanja sajta do danas, posebno za posete. Podaci postoje u bazi — treba ih učiniti dostupnim kroz izveštaje.</p></span><span class="badge b-new">NOVO</span></li>
         <li><span class="mark">✓</span><span class="itxt"><b>Logovi: period, 1000 redova, izvoz u PDF</b><p>Datum i vreme u istom redu da više stane, izbor perioda i izvoz celog meseca u PDF — umesto listanja strana jedna po jedna.</p></span><span class="badge b-new">NOVO</span></li>
