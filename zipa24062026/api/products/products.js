@@ -24,6 +24,50 @@ dbConnect()
     })
 
 
+/**
+ * Ključne reči iz metapodataka fotografije svodi na uredan niz.
+ *
+ * FotoStation ih upisuje kao IPTC `Keywords`, a neki programi kao XMP
+ * `Subject`; u zavisnosti od programa stižu kao niz ili kao jedan tekst
+ * razdvojen zarezima ili tačkom-zarezom.
+ */
+function normalizeKeywords(value) {
+    if (!value) return [];
+
+    const lista = Array.isArray(value) ? value : String(value).split(/[,;]/);
+
+    const ociscene = lista
+        .map((rec) => String(rec).trim())
+        .filter((rec) => rec.length > 0);
+
+    // izbaci ponovljene, bez obzira na velika/mala slova
+    const videne = new Set();
+    return ociscene.filter((rec) => {
+        const kljuc = rec.toLowerCase();
+        if (videne.has(kljuc)) return false;
+        videne.add(kljuc);
+        return true;
+    });
+}
+
+/**
+ * Naziv aparata iz metapodataka.
+ *
+ * Model najčešće već sadrži proizvođača ("Canon EOS 20D"), pa bi prosto
+ * spajanje dalo "Canon Canon EOS 20D".
+ */
+function formatCamera(make, model) {
+    const proizvodjac = (make || '').trim();
+    const model_ = (model || '').trim();
+
+    if (!model_) return proizvodjac || null;
+    if (!proizvodjac) return model_;
+
+    return model_.toLowerCase().startsWith(proizvodjac.toLowerCase())
+        ? model_
+        : `${proizvodjac} ${model_}`;
+}
+
 function generateAlias(str) {
     str = str.toLowerCase();
     str = str.replace(/ä/g, 'a');
@@ -185,7 +229,19 @@ class ProductsModule {
                 author: exifTags.Credit,
                 description: exifTags.Description,
                 date: exifTags.DateTimeOriginal ? Math.floor(new Date(exifTags.DateTimeOriginal.year, exifTags.DateTimeOriginal.month - 1, exifTags.DateTimeOriginal.day, exifTags.DateTimeOriginal.hour, exifTags.DateTimeOriginal.minute, exifTags.DateTimeOriginal.second, exifTags.DateTimeOriginal.millisecond).getTime() / 1000) : null,
-                galleryName: exifTags.ObjectName ? exifTags.ObjectName.replace(/Ä/g, 'č').replace(/Ä‘/g, 'đ').replace(/Ä‡/g, 'ć').replace(/ÄŒ/g, 'Č') : null
+                galleryName: exifTags.ObjectName ? exifTags.ObjectName.replace(/Ä/g, 'č').replace(/Ä‘/g, 'đ').replace(/Ä‡/g, 'ć').replace(/ÄŒ/g, 'Č') : null,
+
+                // Ključne reči koje je fotograf upisao u FotoStation-u (polje Keywords).
+                // Preuzimaju se automatski da se ne bi kucale ponovo na sajtu.
+                keywords: normalizeKeywords(exifTags.Keywords || exifTags.Subject),
+
+                // Podaci o snimku — za prikaz na stranici fotografije.
+                camera: formatCamera(exifTags.Make, exifTags.Model),
+                lens: exifTags.LensModel || exifTags.Lens || null,
+                iso: exifTags.ISO || null,
+                aperture: exifTags.FNumber ? `f/${exifTags.FNumber}` : null,
+                shutterSpeed: exifTags.ExposureTime ? String(exifTags.ExposureTime) : null,
+                focalLength: exifTags.FocalLength ? String(exifTags.FocalLength) : null
             });
         } catch (e) {
             console.error('Upload error:', e);
@@ -1097,17 +1153,6 @@ class ProductsModule {
             [`alias.${lang}`]: { $ne: '' }
         };
     
-        if (query['date-from'] && query['date-to'] && query['date-from'] === query['date-to']) {
-            const fromDate = new Date(query['date-from'] * 1000);
-            const toDate = new Date(query['date-to'] * 1000);
-
-            fromDate.setHours(0, 1, 0, 0);
-            toDate.setHours(23, 59, 59, 999);
-
-            query['date-from'] = Math.floor(fromDate.getTime() / 1000);
-            query['date-to'] = Math.floor(toDate.getTime() / 1000);
-        }
-
         if (query.photographer) {
             galleryQuery.userAlias = query.photographer;
         }
@@ -1158,22 +1203,28 @@ class ProductsModule {
             galleryQuery.location = new RegExp(query.city, 'i');
         }
 
-        if (query['date-from'] && !query['date-to']) {
-            galleryQuery.date = { $gte: parseInt(query['date-from']) };
-        } else if (query['date-to'] && !query['date-from']) {
-            galleryQuery.date = { $lte: parseInt(query['date-to']) };
-        } else if (query['date-to'] && query['date-from']) {
-            galleryQuery.date = {
-                $gte: parseInt(query['date-from']),
-                $lte: parseFloat(query['date-to'])
-            };
+        /*
+         * Pretraga po datumu fotografisanja.
+         *
+         * Korisnik bira datum, ne vreme, pa opseg mora da obuhvati ceo dan.
+         * Ranije je početak pomeran na 00:01, zbog čega je ispadala svaka
+         * galerija zabeležena tačno u ponoć — a takvih je oko petine arhive.
+         * Zato se za izabran jedan dan opseg proširuje na punih 24 sata.
+         */
+        const DAN_U_SEKUNDAMA = 24 * 60 * 60;
+        let dateFrom = query['date-from'] ? parseInt(query['date-from']) : null;
+        let dateTo = query['date-to'] ? parseInt(query['date-to']) : null;
+
+        if (dateFrom !== null && dateTo !== null && dateTo <= dateFrom) {
+            dateTo = dateFrom + DAN_U_SEKUNDAMA - 1;
         }
 
-        if (query['date-from'] && query['date-to']) {
-            galleryQuery.date = {
-                $gte: parseInt(query['date-from']),
-                $lte: parseInt(query['date-to'])
-            }
+        if (dateFrom !== null && dateTo !== null) {
+            galleryQuery.date = { $gte: dateFrom, $lte: dateTo };
+        } else if (dateFrom !== null) {
+            galleryQuery.date = { $gte: dateFrom };
+        } else if (dateTo !== null) {
+            galleryQuery.date = { $lte: dateTo };
         }
         if (uid && query.subscription && query.subscription == 'true') {
             const userResolutions = await db.collection('userResolutions').find({
