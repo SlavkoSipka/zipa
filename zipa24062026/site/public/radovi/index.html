@@ -88,7 +88,7 @@
   .progress-pct { font-size: 15px; font-weight: 700; color: var(--brand); font-variant-numeric: tabular-nums; }
   .bar { height: 9px; background: var(--line-2); border-radius: 99px; overflow: hidden; display: flex; }
   .bar i { display: block; height: 100%; }
-  .bar .done { width: 65%; background: var(--green); }
+  .bar .done { width: 75%; background: var(--green); }
   .bar .now { width: 0%; background: var(--amber); }
   .legend { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 13px; font-size: 13px; color: var(--ink-2); }
   .legend span { display: inline-flex; align-items: center; gap: 7px; }
@@ -169,13 +169,13 @@
   <div class="progress-card">
     <div class="progress-head">
       <h2>Ukupan napredak</h2>
-      <span class="progress-pct">65% završeno</span>
+      <span class="progress-pct">75% završeno</span>
     </div>
     <div class="bar"><i class="done"></i><i class="now"></i></div>
     <div class="legend">
-      <span><i class="dot g"></i> Završeno — 26 stavki</span>
+      <span><i class="dot g"></i> Završeno — 30 stavki</span>
       <span><i class="dot a"></i> U toku — nema</span>
-      <span><i class="dot n"></i> Predstoji — 14 stavki</span>
+      <span><i class="dot n"></i> Predstoji — 10 stavki</span>
     </div>
   </div>
 
@@ -254,7 +254,7 @@
     <summary>
       <span class="chev">▶</span>
       <span class="gtitle">Faza 3 — statistike i izveštaji</span>
-      <span class="gcount">7 završeno · 2 predstoji</span>
+      <span class="gcount">8 završeno · 1 predstoji</span>
     </summary>
     <div class="gbody">
       <p class="gnote">Na više mesta ste primetili da brojevi ne deluju tačno. Prvo proveravamo da li se uopšte ispravno mere, pa tek onda doterujemo prikaz — nema svrhe lepo prikazivati pogrešan podatak.</p>
@@ -267,7 +267,7 @@
         <li><span class="mark done">✓</span><span class="itxt"><b>Logovi: period, više redova, izvoz</b><p>Urađeno. Sada birate period (od–do) i koliko redova želite po strani — do 1000 odjednom, umesto dosadašnjih 100. Dodat je i filter <i>samo prijavljeni korisnici</i>. Datum i vreme su već bili u istoj koloni.</p><p>Uz to je pregled i osetno brži: podaci o korisnicima se dovlače zajedno sa zapisima, dok se ranije za svaki red posebno išlo u bazu.</p></span><span class="badge b-new">NOVO</span></li>
         <li><span class="mark done">✓</span><span class="itxt"><b>Pregled ko se od korisnika prijavljivao</b><p>Urađeno. Vodi se evidencija prijava, a administratorski nalozi se izostavljaju iz pregleda — baš kako ste tražili, da se vidi ko od registrovanih korisnika zaista ulazi na sajt, i onda kada ne postavlja fotografije.</p></span><span class="badge b-new">NOVO</span></li>
         <li><span class="mark done">✓</span><span class="itxt"><b>Istorija prijava — vreme i mesto</b><p>Urađeno. Uz svaku prijavu beleži se datum i vreme, adresa sa koje je izvršena i vrsta uređaja. To je dovoljno da primetite neuobičajeno korišćenje — na primer da jedan nalog koristi više ljudi sa različitih mesta — a da se ne prikuplja više podataka nego što je potrebno.</p></span><span class="badge b-new">NOVO</span></li>
-        <li><span class="mark">✓</span><span class="itxt"><b>Detaljniji pregled preuzimanja</b><p>Da se jasno vidi da li je fotografija uzeta kroz pretplatu, kupovinu ili je preuzeo sam autor — kako ste imali ranije.</p></span><span class="badge b-new">NOVO</span></li>
+        <li><span class="mark done">✓</span><span class="itxt"><b>Detaljniji pregled preuzimanja</b><p>Urađeno. Uz svako preuzimanje sada stoji način: <i>kupovina</i> (plaćeno karticom), <i>autor</i> (fotograf preuzeo svoju fotografiju), <i>besplatno</i> ili <i>pretplata</i>. Način se izvodi iz podataka, pa važi i za ranija preuzimanja — provereno na svim postojećim zapisima.</p><p>Dodati su i filteri: po načinu, po periodu i pretraga po imenu korisnika ili nazivu galerije. Usput je ispravljeno i brojanje strana, koje je ranije bilo pogrešno kada neki zapis nije imao korisnika.</p></span><span class="badge b-new">NOVO</span></li>
       </ul>
     </div>
   </details>
@@ -296,7 +296,7 @@
     <summary>
       <span class="chev">▶</span>
       <span class="gtitle">Faza 5 — telefon i tablet</span>
-      <span class="gcount">3 stavke</span>
+      <span class="gcount">3 / 3 &nbsp;✓</span>
     </summary>
     <div class="gbody">
       <p class="gnote">Ovo ste posebno naglasili. Radimo zajedno sa fazom 4 — nema smisla dva puta praviti isti ekran.</p>
@@ -312,13 +312,13 @@
     <summary>
       <span class="chev">▶</span>
       <span class="gtitle">Faza 6 — štampa i čuvanje u PDF</span>
-      <span class="gcount">3 stavke</span>
+      <span class="gcount">3 / 3 &nbsp;✓</span>
     </summary>
     <div class="gbody">
       <ul class="items">
-        <li><span class="mark">✓</span><span class="itxt"><b>Čist prikaz za štampu</b><p>Bez trake za pretragu, ikona društvenih mreža i banera. Galerija ide odmah ispod logotipa agencije, naslov ostaje.</p></span><span class="badge b-new">NOVO</span></li>
-        <li><span class="mark">✓</span><span class="itxt"><b>Izbor formata papira</b><p>A4, A3 i ostali standardni formati.</p></span><span class="badge b-new">NOVO</span></li>
-        <li><span class="mark">✓</span><span class="itxt"><b>Tri do četiri fotografije po redu</b><p>I treći način prikaza galerija da se štampa isto kao prvi.</p></span><span class="badge b-new">NOVO</span></li>
+        <li><span class="mark done">✓</span><span class="itxt"><b>Čist prikaz za štampu</b><p>Urađeno. Pri štampi i čuvanju u PDF izostavljaju se traka za pretragu, ikone društvenih mreža, baneri, navigacija i podnožje sa prijavom na newsletter. Na papir ide logotip, naslov galerije, opis i fotografije.</p></span><span class="badge b-new">NOVO</span></li>
+        <li><span class="mark done">✓</span><span class="itxt"><b>Izbor formata papira</b><p>Urađeno. Podrazumevani format je A4 sa urednim marginama; u prozoru za štampu možete izabrati i A3 ili drugi format.</p></span><span class="badge b-new">NOVO</span></li>
+        <li><span class="mark done">✓</span><span class="itxt"><b>Tri do četiri fotografije po redu</b><p>Urađeno — tri fotografije u redu, odnosno četiri u najsitnijem prikazu. Uz to fotografije se više ne seku na prelazu između strana.</p></span><span class="badge b-new">NOVO</span></li>
       </ul>
     </div>
   </details>
