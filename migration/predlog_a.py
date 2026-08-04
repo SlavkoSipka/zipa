@@ -1,11 +1,33 @@
-<!DOCTYPE html>
-<html lang="sr">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex, nofollow">
-<title>ZIPA PHOTO — predlog naslovne A</title>
-<style>
+"""
+Predlog naslovne strane — verno po uzoru na pixsell.hr.
+
+Ključno iz analize njihove stranice:
+  · belo zaglavlje: meni lijevo, logotip u sredini, „Prijavi se" kao pilula desno
+  · uska traka pretrage preko zatamnjene fotografije (oko 180 px)
+  · fotografije bez razmaka, tri u redu, preko cijele širine ekrana
+  · ogromni bijeli naslovi preko fotografija (60 px, debljina 800)
+  · svijetlosiva pozadina #F4F5F7
+"""
+import json, datetime, html, urllib.parse, os
+
+CDN = 'https://zipa-photos.zipa-photo-agency.workers.dev/photos'
+podaci = json.load(open('podaci.json', encoding='utf-8'))
+G, K = podaci['galerije'], podaci['kategorije']
+
+
+def slika(p, v='700x'):
+    return f"{CDN}/{v}/{urllib.parse.quote(p)}"
+
+
+def datum(ts):
+    return datetime.datetime.fromtimestamp(ts).strftime('%d.%m.%Y.') if ts else ''
+
+
+def e(t):
+    return html.escape(t or '')
+
+
+STIL = """
 *,*::before,*::after{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:#F4F5F7;color:#111318;
@@ -130,10 +152,13 @@ img{display:block;width:100%;height:100%;object-fit:cover}
   .kategorija{aspect-ratio:16/9}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
-</style>
-</head>
-<body>
+"""
 
+LUPA = ('<svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">'
+        '<circle cx="11" cy="11" r="7"/><path d="M20 20l-4.2-4.2"/></svg>')
+
+d = '<div class="sitno">'
+telo = f"""
 <div class="napomena">
   <b>Predlog izgleda naslovne strane</b> — po uzoru na pixsell.hr, sa fotografijama iz vaše arhive
   <a href="/radovi/">nazad na pregled radova</a>
@@ -153,10 +178,10 @@ img{display:block;width:100%;height:100%;object-fit:cover}
 </header>
 
 <section class="pretraga-traka">
-  <img src="https://zipa-photos.zipa-photo-agency.workers.dev/photos/700x/borislav-zdrinja/20260518_Dodik%20Karan%20boracke%20organizacije_001_ZIPAPHOTO_Borislav%20Zdrinja.jpg" alt="">
+  <img src="{slika(G[1]['slika'])}" alt="">
   <div class="pretraga-polje">
     <input placeholder="Pretražite arhivu od 202.411 fotografija…">
-    <div class="lupa"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4.2-4.2"/></svg></div>
+    <div class="lupa">{LUPA}</div>
   </div>
 </section>
 
@@ -166,79 +191,21 @@ img{display:block;width:100%;height:100%;object-fit:cover}
 </div>
 
 <div class="mozaik">
-  <a class="plocica sira" href="#">
-    <img src="https://zipa-photos.zipa-photo-agency.workers.dev/photos/700x/borislav-zdrinja/20260518_100god%20FK%20Borac%20Banja%20Luka_000_ZIPAPHOTO_Borislav%20Zdrinja.JPG" alt="">
+"""
+
+for i, g in enumerate(G[:9]):
+    sira = ' sira' if i == 0 else ''
+    telo += f"""  <a class="plocica{sira}" href="#">
+    <img src="{slika(g['slika'], '700x')}" alt="">
     <div class="tekst">
-      <span class="oznaka">Sport</span>
-      <h3>100 GODINA FK BORAC BANJA LUKA</h3>
-      <div class="sitno"><span>Banja Luka</span><span>18.05.2026.</span><span>156 fotografija</span></div>
+      <span class="oznaka">{e(g['kategorija'] or 'Foto')}</span>
+      <h3>{e(g['naziv'])}</h3>
+      {d}<span>{e(g['lokacija'] or 'Banja Luka')}</span><span>{datum(g['datum'])}</span><span>{g['brojFotki']} fotografija</span></div>
     </div>
   </a>
-  <a class="plocica" href="#">
-    <img src="https://zipa-photos.zipa-photo-agency.workers.dev/photos/700x/borislav-zdrinja/20260518_Dodik%20Karan%20boracke%20organizacije_001_ZIPAPHOTO_Borislav%20Zdrinja.jpg" alt="">
-    <div class="tekst">
-      <span class="oznaka">Vijesti</span>
-      <h3>KARAN: SASTANAK SA BORAČKIM ORGANIZACIJAMA</h3>
-      <div class="sitno"><span>Banja Luka</span><span>18.05.2026.</span><span>47 fotografija</span></div>
-    </div>
-  </a>
-  <a class="plocica" href="#">
-    <img src="https://zipa-photos.zipa-photo-agency.workers.dev/photos/700x/borislav-zdrinja/20260518_vencanje_001_ZIPAPHOTO_Borislav%20Zdrinja.jpg" alt="">
-    <div class="tekst">
-      <span class="oznaka">Okom kamere / svakodnevni život</span>
-      <h3>PONEDELJAK DAN ZA VENČANJE</h3>
-      <div class="sitno"><span>Banja Luka</span><span>18.05.2026.</span><span>6 fotografija</span></div>
-    </div>
-  </a>
-  <a class="plocica" href="#">
-    <img src="https://zipa-photos.zipa-photo-agency.workers.dev/photos/700x/borislav-zdrinja/20260517_Cenrtalni%20spomenik%20borcima_000_ZIPAPHOTO_Borislav%20Zdrinja.JPG" alt="">
-    <div class="tekst">
-      <span class="oznaka">Vijesti</span>
-      <h3>PORTRETI POGINULIH BORACA I SVJEDOČANSTVA PORODICA</h3>
-      <div class="sitno"><span>Banja Luka</span><span>17.05.2026.</span><span>30 fotografija</span></div>
-    </div>
-  </a>
-  <a class="plocica" href="#">
-    <img src="https://zipa-photos.zipa-photo-agency.workers.dev/photos/700x/borislav-zdrinja/20260515_Fakultet%20Muzicke%20umetnosti_ZIPAPHOTO_Borislav%20Zdrinja_01.jpg" alt="">
-    <div class="tekst">
-      <span class="oznaka">Reportaža</span>
-      <h3>FAKULTET MUZICKE UMETNOSTI</h3>
-      <div class="sitno"><span>Beograd, Srbija</span><span>15.05.2026.</span><span>5 fotografija</span></div>
-    </div>
-  </a>
-  <a class="plocica" href="#">
-    <img src="https://zipa-photos.zipa-photo-agency.workers.dev/photos/700x/borislav-zdrinja/20260515_Park%20Milutina%20Milankovica_ZIPAPHOTO_Borislav%20Zdrinja_06.jpg" alt="">
-    <div class="tekst">
-      <span class="oznaka">Reportaža</span>
-      <h3>PARK MILUTINA MILANKOVIĆA</h3>
-      <div class="sitno"><span>Beograd, Srbija</span><span>15.05.2026.</span><span>13 fotografija</span></div>
-    </div>
-  </a>
-  <a class="plocica" href="#">
-    <img src="https://zipa-photos.zipa-photo-agency.workers.dev/photos/700x/borislav-zdrinja/20260515_Park%20Manjez_ZIPAPHOTO_Borislav%20Zdrinja_01.jpg" alt="">
-    <div class="tekst">
-      <span class="oznaka">Reportaža</span>
-      <h3>PARK MANJEŽ</h3>
-      <div class="sitno"><span>Beograd, Srbija</span><span>15.05.2026.</span><span>13 fotografija</span></div>
-    </div>
-  </a>
-  <a class="plocica" href="#">
-    <img src="https://zipa-photos.zipa-photo-agency.workers.dev/photos/700x/borislav-zdrinja/20260515_Park%20Hajduk%20Veljkov%20venac_ZIPAPHOTO_Borislav%20Zdrinja_01.jpg" alt="">
-    <div class="tekst">
-      <span class="oznaka">Reportaža</span>
-      <h3>PARK HAJDUK VELJKOV VENAC</h3>
-      <div class="sitno"><span>Beograd, Srbija</span><span>15.05.2026.</span><span>10 fotografija</span></div>
-    </div>
-  </a>
-  <a class="plocica" href="#">
-    <img src="https://zipa-photos.zipa-photo-agency.workers.dev/photos/700x/borislav-zdrinja/20260515_Spomenik%20Stefanu%20Nemanji_ZIPAPHOTO_Borislav%20Zdrinja_01.jpg" alt="">
-    <div class="tekst">
-      <span class="oznaka">Reportaža</span>
-      <h3>SPOMENIK STEFANU NEMANJI</h3>
-      <div class="sitno"><span>Beograd, Srbija</span><span>15.05.2026.</span><span>14 fotografija</span></div>
-    </div>
-  </a>
-</div>
+"""
+
+telo += """</div>
 
 <div class="odjeljak-vrh">
   <h2>Izdvojene kategorije</h2>
@@ -246,35 +213,21 @@ img{display:block;width:100%;height:100%;object-fit:cover}
 </div>
 
 <div class="kategorije">
-  <a class="kategorija" href="#">
-    <img src="https://zipa-photos.zipa-photo-agency.workers.dev/photos/700x/borislav-zdrinja/20260113_Centralni%20spomenik%20borcima%20Srpske_000_ZIPAPHOTO_Borislav%20Zdrinja.jpg" alt="">
+"""
+
+for k in K[:4]:
+    if not k['galerije']:
+        continue
+    telo += f"""  <a class="kategorija" href="#">
+    <img src="{slika(k['galerije'][0]['slika'], '700x')}" alt="">
     <div class="naziv">
-      <h3>Dan Republike Srpske</h3>
-      <span class="broj">5.788 fotografija</span>
+      <h3>{e(k['naziv'])}</h3>
+      <span class="broj">{k['broj']:,} fotografija</span>
     </div>
   </a>
-  <a class="kategorija" href="#">
-    <img src="https://zipa-photos.zipa-photo-agency.workers.dev/photos/700x/borislav-zdrinja/20051129_Izbor%20sportiste%20Srpske_01_ZIPAPHOTO_Borislav%20Zdrinja.JPG" alt="">
-    <div class="naziv">
-      <h3>FOTO SPECIJAL 2005</h3>
-      <span class="broj">5.047 fotografija</span>
-    </div>
-  </a>
-  <a class="kategorija" href="#">
-    <img src="https://zipa-photos.zipa-photo-agency.workers.dev/photos/700x/borislav-zdrinja/20260518_Dodik%20Karan%20boracke%20organizacije_001_ZIPAPHOTO_Borislav%20Zdrinja.jpg" alt="">
-    <div class="naziv">
-      <h3>Vijesti</h3>
-      <span class="broj">44.987 fotografija</span>
-    </div>
-  </a>
-  <a class="kategorija" href="#">
-    <img src="https://zipa-photos.zipa-photo-agency.workers.dev/photos/700x/borislav-zdrinja/20260410_Tulipani%20Banja%20Luka_00_ZIPAPHOTO_Borislav%20Zdrinja.jpg" alt="">
-    <div class="naziv">
-      <h3>Stock photos</h3>
-      <span class="broj">6.931 fotografija</span>
-    </div>
-  </a>
-</div>
+""".replace(',', '.')
+
+telo += """</div>
 
 <footer class="podnozje">
   <div class="sadrzaj">
@@ -292,6 +245,24 @@ img{display:block;width:100%;height:100%;object-fit:cover}
     </div>
   </div>
 </footer>
+"""
 
+stranica = f"""<!DOCTYPE html>
+<html lang="sr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>ZIPA PHOTO — predlog naslovne A</title>
+<style>{STIL}</style>
+</head>
+<body>
+{telo}
 </body>
 </html>
+"""
+
+izlaz = '/Users/Apple/Downloads/zipa/zipa24062026/site/public/radovi/predlog-a'
+os.makedirs(izlaz, exist_ok=True)
+open(f'{izlaz}/index.html', 'w', encoding='utf-8').write(stranica)
+print('predlog A prerađen —', len(stranica), 'znakova')
