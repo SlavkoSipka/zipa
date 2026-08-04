@@ -205,7 +205,7 @@ class PhotoPage extends Component {
                                     <div>Fotograf: {Object.get(gallery, "user")}</div>
                                     <div>
                                         {Object.get(gallery, "location")} | {moment.unix(Object.get(gallery, "date")).format("DD.MM.YYYY.")}
-                                        <Isvg src={imagesCount} /> {gallery.photos && gallery.photos.length}
+                                        <Isvg src={imagesCount} /> {gallery.photosCount !== undefined ? gallery.photosCount : (gallery.photos && gallery.photos.length)}
                                     </div>
                                 </div>
                             </Col>

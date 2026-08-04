@@ -160,7 +160,7 @@ class DownloadsPage extends Component {
                                                                 shortDescription={Object.translate(article, 'description', this.props.lang)}
                                                                 alias={Object.translate(article, 'alias', this.props.lang)}
                                                                 userAlias={article.userAlias}
-                                                                imagesCount={article.photos && article.photos.length}
+                                                                imagesCount={article.photosCount !== undefined ? article.photosCount : (article.photos && article.photos.length)}
                                                                 location={article.location}
                                                                 resolution={article.resolution}
                                                                 price={article.price}

@@ -435,7 +435,7 @@ class HomePage extends Component {
                 {
                     this.state.homeCategories && this.state.homeCategories.map((item, idx) => {
 
-                        if (item.photos && item.photos.length)
+                        if (item.photosCount !== undefined ? item.photosCount : (item.photos && item.photos.length))
                             return (
                                 <>
                                     <section className="section-articles">
@@ -461,7 +461,7 @@ class HomePage extends Component {
                                                                     shortDescription={Object.translate(article, 'description', this.props.lang)}
                                                                     alias={Object.translate(article, 'alias', this.props.lang)}
                                                                     userAlias={article.userAlias}
-                                                                    imagesCount={article.photos && article.photos.length}
+                                                                    imagesCount={article.photosCount !== undefined ? article.photosCount : (article.photos && article.photos.length)}
                                                                     location={article.location}
                                                                     published={article.date}
                                                                     homeArticle

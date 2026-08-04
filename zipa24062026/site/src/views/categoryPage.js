@@ -389,14 +389,15 @@ class CategoryPage extends Component {
                                                             <Col lg="7" className="sort">
                                                                 <span>{'Broj stavki po stranici:'.translate(this.props.lang)}</span>
                                                                 <ul>
+                                                                    {/* 36 je podrazumevani prikaz — koliko je snimaka imao film */}
                                                                     <li className={!params.ipp ? "active" : null}><Link
                                                                         to={this.props[0].location.pathname + this.generateSearchLink('ipp', null)}>
-                                                                        <button>24</button>
+                                                                        <button>36</button>
                                                                     </Link></li>
-                                                                    <li className={params.ipp === '36' ? "active" : null}>
+                                                                    <li className={params.ipp === '24' ? "active" : null}>
                                                                         <Link
-                                                                            to={this.props[0].location.pathname + this.generateSearchLink('ipp', '36')}>
-                                                                            <button>36</button>
+                                                                            to={this.props[0].location.pathname + this.generateSearchLink('ipp', '24')}>
+                                                                            <button>24</button>
                                                                         </Link></li>
                                                                     <li className={params.ipp === '48' ? "active" : null}>
                                                                         <Link
@@ -451,7 +452,7 @@ class CategoryPage extends Component {
                                                                                 shortDescription={Object.translate(article, 'description', this.props.lang)}
                                                                                 alias={Object.translate(article, 'alias', this.props.lang)}
                                                                                 userAlias={article.userAlias}
-                                                                                imagesCount={article.photos && article.photos.length}
+                                                                                imagesCount={article.photosCount !== undefined ? article.photosCount : (article.photos && article.photos.length)}
                                                                                 location={article.location}
                                                                                 published={article.date}
                                                                                 homeArticle

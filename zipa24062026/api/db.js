@@ -300,13 +300,37 @@ function buildSelectList(table, projection) {
     if (keys.some((k) => k !== '_id' && !projection[k])) return '*';
 
     const cols = tableColumns[table] || {};
-    const wanted = new Set(['_id']);
+    const wanted = new Map(); // kolona -> SQL izraz
+    wanted.set('_id', '"_id"');
+
     for (const k of included) {
         const base = k.split('.')[0]; // "photo.name" -> "photo"
         if (!cols[base]) return '*';  // nepoznata kolona — bezbednije uzeti sve
-        wanted.add(base);
+
+        const spec = projection[k];
+
+        /*
+         * `{ photos: { $slice: N } }` vraća samo prvih N elemenata niza.
+         *
+         * Za spiskove galerija je dovoljna naslovna fotografija, a cela lista
+         * ume da bude ogromna — kod dvesta galerija po strani to je bilo preko
+         * deset megabajta i trinaest sekundi čekanja.
+         */
+        if (spec && typeof spec === 'object' && typeof spec.$slice === 'number') {
+            if (cols[base] !== 'jsonb') return '*';
+            const n = Math.max(0, parseInt(spec.$slice, 10));
+            wanted.set(base, `(
+                select coalesce(jsonb_agg(e.value order by e.ordinality), '[]'::jsonb)
+                  from jsonb_array_elements("${base}") with ordinality e(value, ordinality)
+                 where e.ordinality <= ${n}
+            ) as "${base}"`);
+            continue;
+        }
+
+        wanted.set(base, `"${base}"`);
     }
-    return [...wanted].map((c) => `"${c}"`).join(', ');
+
+    return [...wanted.values()].join(', ');
 }
 
 // ---------------------------------------------------------------------------

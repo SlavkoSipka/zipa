@@ -1280,16 +1280,42 @@ class ProductsModule {
             }
         }
 
-        const ipp = query.ipp ? Math.min(parseInt(query.ipp), 200) : 24;
+        // podrazumevano 36 po strani (dogovoreno sa klijentom)
+        const ipp = query.ipp ? Math.min(parseInt(query.ipp), 200) : 36;
         const page = query.page ? parseInt(query.page) : 0;
 
         const totalCount = await db.collection('gallery').countDocuments(galleryQuery);
+        /*
+         * Za spisak galerija je dovoljna naslovna fotografija — cela lista
+         * fotografija se ne šalje. Kod dvesta galerija po strani to je ranije
+         * značilo preko deset megabajta i oko trinaest sekundi čekanja.
+         * Ukupan broj fotografija se dohvata zasebno, jednim laganim upitom.
+         */
         const items = await db.collection('gallery')
-            .find(galleryQuery)
+            .find(galleryQuery, {
+                projection: {
+                    name: 1, description: 1, alias: 1, category: 1, categoryName: 1,
+                    location: 1, user: 1, userAlias: 1, uid: 1, price: 1,
+                    date: 1, published: 1, isActive: 1, keywords: 1,
+                    orientationPortrait: 1, orientationHorizontal: 1,
+                    photos: { $slice: 1 }
+                }
+            })
             .skip(ipp * page)
             .limit(ipp)
             .sort({ date: -1 })
             .toArray();
+
+        if (items.length) {
+            const brojevi = await db.query(
+                `select "_id", jsonb_array_length(coalesce("photos", '[]'::jsonb))::int as n
+                   from gallery where "_id" = any($1)`,
+                [items.map((g) => g._id)]
+            );
+            const poId = {};
+            for (const red of brojevi.rows) poId[red._id] = red.n;
+            for (const g of items) g.photosCount = poId[g._id] || 0;
+        }
 
         return {
             total: Math.ceil(totalCount / ipp),

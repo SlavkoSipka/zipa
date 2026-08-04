@@ -381,14 +381,31 @@ class UsersModule {
 
         await db.collection('users').insertOne(obj);
 
-        let html = `<html>
-        <body>
-            <p>Novi korisnik se registrovao na sajt.</p>
-        </body>
-        </html>`;
+        // Obaveštenje agenciji — sa podacima potrebnim za odobrenje naloga.
+        // Ranije je stizala samo rečenica da se neko registrovao, bez ijednog
+        // podatka, pa se moralo tražiti u administraciji ko je to.
+        const nazivTipa = {
+            photographer: 'Fotograf',
+            agency: 'Agencija',
+            legalPerson: 'Pravno lice',
+            physicalPerson: 'Fizičko lice'
+        }[type] || type || 'nije naznačen';
 
-        sendMail('info@zipaphoto.net', 'Registracija korisnika', html);
-        sendMail('noreplay@zipaphoto.net', 'Registracija korisnika', html);
+        let html = `<html><body style="font-family: Arial, sans-serif; color:#1a1d29">
+            <h2 style="margin:0 0 14px">Nova registracija na sajtu</h2>
+            <table cellpadding="6" style="border-collapse:collapse;font-size:14px">
+                <tr><td><b>Ime i prezime</b></td><td>${name || '-'}</td></tr>
+                <tr><td><b>E-mail</b></td><td>${email}</td></tr>
+                <tr><td><b>Tip naloga</b></td><td>${nazivTipa}</td></tr>
+                <tr><td><b>Vrijeme</b></td><td>${new Date().toLocaleString('sr-RS')}</td></tr>
+            </table>
+            <p style="margin-top:18px;font-size:14px">
+                Nalog čeka odobrenje. Otvorite
+                <a href="${SITE_URL}/account/users">spisak korisnika</a> da biste ga odobrili.
+            </p>
+        </body></html>`;
+
+        sendMail('info@zipaphoto.net', `Nova registracija — ${nazivTipa}: ${name || email}`, html);
 
 
         return {
