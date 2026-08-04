@@ -40,6 +40,7 @@ import {
     ViberIcon,
     WhatsappIcon,
 } from "react-share";
+import PriceInquiry from '../components/priceInquiry';
 import { API_ENDPOINT, PHOTOS_ENDPOINT} from "../constants";
 import download from "../assets/svg/download.svg";
 
@@ -307,6 +308,19 @@ class DetailPage extends Component {
                                 </button>
                             </div>
                             <div className={"imagesButtons"}>
+                                {/*
+                                  * Arhivske galerije nemaju fiksnu cijenu — umjesto
+                                  * iznosa i dugmeta za kupovinu nudi se slanje upita.
+                                  */}
+                                {galleryContent.priceOnRequest ? (
+                                    <PriceInquiry
+                                        lang={this.props.lang}
+                                        galleryId={galleryContent._id}
+                                        photoId={selectedImageIndex}
+                                        resolution={this.state.resolution}
+                                    />
+                                ) : (
+                                <>
                                 <div>
                                     {selectedImage.width >= 1500 ? (
                                         <button
@@ -493,6 +507,8 @@ class DetailPage extends Component {
                                     )}
                                     <a ref={(node) => (this.aTag = node)}></a>
                                 </div>
+                                </>
+                                )}
                             </div>
                             <div className={"imagesDescription"}>
                                 <p

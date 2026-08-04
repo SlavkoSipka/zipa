@@ -10,6 +10,7 @@ let db;
 const dbConnect = require('../db');
 const storage = require('../storage');
 const constants = require('./constants');
+const { SITE_URL } = require('../constants');
 var paypal = require('paypal-rest-sdk');
 var easyimage = require('easyimage');
 
@@ -376,7 +377,7 @@ class UsersModule {
             userAlias: generateAlias(name)
         }
 
-        sendMail(email, 'Verifikujte E-mail Adresu', String.format(fs.readFileSync('./emails/verify.html', 'utf-8'), email, `https://zipa.novamedia.agency/account/verify/${obj._id.toString()}/${obj.emailVerificationCode}`))
+        sendMail(email, 'Verifikujte E-mail Adresu', String.format(fs.readFileSync('./emails/verify.html', 'utf-8'), email, `${SITE_URL}/account/verify/${obj._id.toString()}/${obj.emailVerificationCode}`))
 
         await db.collection('users').insertOne(obj);
 
@@ -418,7 +419,7 @@ class UsersModule {
         let user = await db.collection('users').find({ _id: ObjectID(uid) }).toArray();
 
 
-        sendMail(user[0].email, 'E-mail Adresa Verifikovana!', String.format(fs.readFileSync('./emails/verified.html', 'utf-8'), `https://zipa.novamedia.agency`))
+        sendMail(user[0].email, 'E-mail Adresa Verifikovana!', String.format(fs.readFileSync('./emails/verified.html', 'utf-8'), `${SITE_URL}`))
 
         await db.collection('users').updateOne({ _id: ObjectID(uid) }, { $set: { emailVerificationCode: null, emailVerified: true, emailVerificationTimestamp: Math.floor(new Date().getTime() / 1000) } });
 
@@ -444,7 +445,7 @@ class UsersModule {
         let resetPasswordVerificationCode = uuidv4();
         await db.collection('users').updateOne({ _id: user[0]._id }, { $set: { resetPasswordVerificationCode: resetPasswordVerificationCode } });
 
-        sendMail(email, 'Zaboravljena lozinka', String.format(fs.readFileSync('./emails/forgot.html', 'utf-8'), `https://zipa.novamedia.agency/reset-password/${user[0]._id.toString()}/${resetPasswordVerificationCode}`))
+        sendMail(email, 'Zaboravljena lozinka', String.format(fs.readFileSync('./emails/forgot.html', 'utf-8'), `${SITE_URL}/reset-password/${user[0]._id.toString()}/${resetPasswordVerificationCode}`))
         return {
             response: { error: null },
             status: 200
@@ -625,7 +626,7 @@ class UsersModule {
             object.emailVerified = false;
             object.emailVerificationCode = uuidv4();
             object.email = data.email;
-            sendMail(data.email, 'Verifikujte E-mail Adresu', String.format(fs.readFileSync('./emails/verify.html', 'utf-8'), data.email, `https://zipa.novamedia.agency/account/verify/${uid}/${object.emailVerificationCode}`))
+            sendMail(data.email, 'Verifikujte E-mail Adresu', String.format(fs.readFileSync('./emails/verify.html', 'utf-8'), data.email, `${SITE_URL}/account/verify/${uid}/${object.emailVerificationCode}`))
         }
 
         if (hash) {
@@ -1682,6 +1683,55 @@ class UsersModule {
         arr.sort((a, b) => b.count - a.count);
 
         return arr;
+    }
+
+    /**
+     * Upit za cenu arhivske fotografije.
+     *
+     * Za starije galerije se cena ne prikazuje; kupac ostavlja svoju adresu,
+     * a agenciji stiže poruka sa podacima o tome koja je fotografija u
+     * pitanju, da bi mogla da odgovori ponudom.
+     */
+    async priceInquiry(obj) {
+        const email = (obj.email || '').trim();
+        if (email.indexOf('@') === -1) {
+            return { response: { error: 'Unesite ispravnu e-mail adresu.' }, status: 400 };
+        }
+
+        const gallery = await db.collection('gallery').findOne({ _id: ObjectID(obj.galleryId) });
+        if (!gallery) {
+            return { response: { error: 'Galerija nije pronađena.' }, status: 404 };
+        }
+
+        const photoIndex = parseInt(obj.photoId, 10);
+        const photo = (gallery.photos && gallery.photos[photoIndex]) || null;
+        const naziv = (gallery.name && (gallery.name.ba || gallery.name.en)) || '';
+        const link = `${SITE_URL}/galerija/${gallery.alias && gallery.alias.ba}/${gallery._id}`;
+
+        const html = `<html><body style="font-family: Arial, sans-serif; color:#1a1d29">
+            <h2 style="margin:0 0 14px">Upit za cenu fotografije</h2>
+            <table cellpadding="6" style="border-collapse:collapse;font-size:14px">
+                <tr><td><b>E-mail kupca</b></td><td>${email}</td></tr>
+                <tr><td><b>Galerija</b></td><td>${naziv}</td></tr>
+                <tr><td><b>Fotografija</b></td><td>${photo ? (photo.name || photo.image) : 'nije naznačena'}</td></tr>
+                <tr><td><b>Datum snimka</b></td><td>${gallery.date ? new Date(gallery.date * 1000).toLocaleDateString('sr-RS') : '-'}</td></tr>
+                <tr><td><b>Rezolucija</b></td><td>${obj.resolution ? obj.resolution + ' px' : 'nije naznačena'}</td></tr>
+                <tr><td><b>Link</b></td><td><a href="${link}">${link}</a></td></tr>
+            </table>
+            ${obj.message ? `<p style="margin-top:14px"><b>Poruka kupca:</b><br>${String(obj.message).slice(0, 1000)}</p>` : ''}
+            <p style="margin-top:18px;color:#7c828f;font-size:13px">Odgovorite direktno na adresu kupca.</p>
+        </body></html>`;
+
+        sendMail('info@zipaphoto.net', `Upit za cenu — ${naziv}`, html);
+
+        // potvrda kupcu da je upit primljen
+        sendMail(email, 'Vaš upit je primljen — ZIPA PHOTO', `<html><body style="font-family: Arial, sans-serif; color:#1a1d29">
+            <p>Poštovani,</p>
+            <p>primili smo Vaš upit za fotografiju <b>${naziv}</b>. Javićemo Vam se sa ponudom u najkraćem roku.</p>
+            <p style="margin-top:18px">Srdačan pozdrav,<br><b>ZIPA PHOTO AGENCY</b></p>
+        </body></html>`);
+
+        return { response: { error: null }, status: 200 };
     }
 
     async contact(obj) {

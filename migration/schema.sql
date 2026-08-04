@@ -241,6 +241,7 @@ create table if not exists settings (
     "email"            text,
     "infoblock"        jsonb,
     "defaultPhotoPrice" numeric,   -- podrazumevana cena nove galerije (KM)
+    "priceOnRequestBefore" bigint, -- galerije starije od ovog datuma idu "na upit"
     "enableInfoBlocks" boolean default true,
     "showSlider"       boolean default true,
     "showBanner"       boolean default true
@@ -268,6 +269,16 @@ create table if not exists "loginHistory" (
 );
 create index if not exists loginhistory_ts_idx  on "loginHistory" ("timestamp" desc);
 create index if not exists loginhistory_uid_idx on "loginHistory" ("uid");
+
+
+-- ============ priceBackup ============
+-- Rezervna kopija cena galerija, snimljena pre grupne izmene cenovnika.
+create table if not exists "priceBackup" (
+    "galleryId" text,
+    "price"     numeric,
+    "backupAt"  bigint,
+    primary key ("galleryId", "backupAt")
+);
 
 -- ============ RLS ============
 -- Uključujemo RLS na svim tabelama; pristup ide preko service_role ključa (backend/API),

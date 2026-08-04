@@ -693,6 +693,11 @@ app.post('/admin/exportVisitsPerDay', async (req, res) => {
     // res.send(await adminModule.statistics(req.body.from, req.body.to));
 });
 
+app.post('/price-inquiry', async (req, res) => {
+    let result = await usersModule.priceInquiry(req.body);
+    res.status(result.status).send(result.response);
+});
+
 app.post('/contact', async (req, res) => {
     await usersModule.contact(req.body);
     res.status(200).send({});

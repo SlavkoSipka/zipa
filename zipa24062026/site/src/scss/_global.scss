@@ -4048,3 +4048,66 @@ footer {
     height: 24px;;
   }
 }
+
+// Upit za cijenu — prikazuje se umjesto iznosa kod arhivskih fotografija
+.price-inquiry {
+    background: #F4F5F9;
+    border-radius: 10px;
+    padding: 18px 20px;
+
+    h4 {
+        font-size: 16px;
+        font-weight: 600;
+        margin: 0 0 6px;
+        color: #2F3FB5;
+    }
+
+    p {
+        font-size: 13.5px;
+        line-height: 1.5;
+        color: #545A6B;
+        margin: 0 0 14px;
+    }
+
+    input,
+    textarea {
+        width: 100%;
+        border: 1px solid #D3D7E2;
+        border-radius: 8px;
+        padding: 10px 12px;
+        font-size: 14px;
+        margin-bottom: 10px;
+        font-family: inherit;
+
+        &:focus {
+            outline: 2px solid #2F3FB5;
+            outline-offset: -1px;
+        }
+    }
+
+    .inquiry-btn {
+        width: 100%;
+        background: #2F3FB5;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 12px 16px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+
+        &:hover { background: #26339A; }
+        &:disabled { opacity: .6; cursor: default; }
+    }
+
+    .inquiry-error {
+        color: #D8323F;
+        font-size: 13px;
+        margin: 0 0 10px;
+    }
+
+    &.price-inquiry-done {
+        background: #EAF6F0;
+        h4 { color: #1C7A52; }
+    }
+}

@@ -758,6 +758,25 @@ class ProductsModule {
         }
     }
 
+    /**
+     * Da li se za galeriju cena dobija na upit.
+     *
+     * Fiksna cena važi samo za novije galerije; za starije se šalje upit i
+     * agencija odgovara ponudom, jer arhivska fotografija nema jedinstvenu
+     * cenu. Granica se podešava u Podešavanjima sajta.
+     */
+    async isPriceOnRequest(gallery) {
+        if (!gallery || !gallery.date) return false;
+        // besplatne galerije ostaju besplatne bez obzira na starost
+        if (!gallery.price) return false;
+
+        const settings = await db.collection('settings').find({}).toArray();
+        const granica = settings.length ? settings[0].priceOnRequestBefore : null;
+        if (!granica) return false;
+
+        return gallery.date < granica;
+    }
+
     async getGallery(lang = 'ba', alias, id) {
 
         let query = { _id: ObjectID(id) };
@@ -783,6 +802,12 @@ class ProductsModule {
                 for (let i = 0; i < photos.length; i++) {
                     photos[i].originalIsOnServer = flags[i];
                 }
+
+                // Starije galerije nemaju fiksnu cenu — za njih se šalje upit,
+                // a agencija odgovara ponudom. Granica se podešava u
+                // Podešavanjima sajta.
+                product[0].priceOnRequest = await this.isPriceOnRequest(product[0]);
+
                 return { response: product[0], status: 200 }
             } else {
                 return { response: { error: 'not found' }, status: 404 }
