@@ -88,7 +88,7 @@
   .progress-pct { font-size: 15px; font-weight: 700; color: var(--brand); font-variant-numeric: tabular-nums; }
   .bar { height: 9px; background: var(--line-2); border-radius: 99px; overflow: hidden; display: flex; }
   .bar i { display: block; height: 100%; }
-  .bar .done { width: 75%; background: var(--green); }
+  .bar .done { width: 80%; background: var(--green); }
   .bar .now { width: 0%; background: var(--amber); }
   .legend { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 13px; font-size: 13px; color: var(--ink-2); }
   .legend span { display: inline-flex; align-items: center; gap: 7px; }
@@ -160,22 +160,22 @@
       <span class="z">ZIPA PHOTO</span>
       <span class="sub">radovi na sajtu</span>
     </div>
-    <span class="updated">Ažurirano 30. jula 2026.</span>
+    <span class="updated">Ažurirano 5. avgusta 2026.</span>
   </div>
 
   <h1>Pregled radova na sajtu zipaphoto.net</h1>
-  <p class="lede">Na osnovu vašeg dokumenta i pregleda postojećeg sajta, izdvojili smo 40 konkretnih stavki i podelili ih u faze. Ova stranica se ažurira kako radovi napreduju, pa u svakom trenutku možete videti dokle smo stigli.</p>
+  <p class="lede">Na osnovu vašeg dokumenta i pregleda postojećeg sajta, izdvojili smo 45 konkretnih stavki i podelili ih u faze. Ova stranica se ažurira kako radovi napreduju, pa u svakom trenutku možete videti dokle smo stigli.</p>
 
   <div class="progress-card">
     <div class="progress-head">
       <h2>Ukupan napredak</h2>
-      <span class="progress-pct">75% završeno</span>
+      <span class="progress-pct">80% završeno</span>
     </div>
     <div class="bar"><i class="done"></i><i class="now"></i></div>
     <div class="legend">
-      <span><i class="dot g"></i> Završeno — 30 stavki</span>
+      <span><i class="dot g"></i> Završeno — 36 stavki</span>
       <span><i class="dot a"></i> U toku — nema</span>
-      <span><i class="dot n"></i> Predstoji — 10 stavki</span>
+      <span><i class="dot n"></i> Predstoji — 9 stavki</span>
     </div>
   </div>
 
@@ -227,6 +227,34 @@
         <li><span class="mark done">✓</span><span class="itxt"><b>Broj fotografa i ukupan broj fotografija</b><p>Rešeno. Podaci su zapravo stizali ispravno, ali je učitavanje statistike trajalo 17 sekundi — a dok traje, prikazivala se nula, pa je delovalo kao da podataka nema. Ubrzali smo je na 2 sekunde, a dok se učitava sada stoji crtica umesto nule.</p><p><b>Usput rešeno:</b> spisak fotografa je sada poređan po broju postavljenih fotografija, kako ste tražili u delu o statistici.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
         <li><span class="mark done">✓</span><span class="itxt"><b>Polje za tekst u Najavama</b><p>Rešeno. Uređivač teksta se povlačio sa servisa proizvođača, koji zahteva registrovan domen i plaćenu licencu — otud upozorenje na vašem snimku ekrana. Sada se učitava sa vašeg servera i radi bez ograničenja. Ista ispravka važi i za Stranice, FAQ i Newsletter, gde se koristi isti uređivač.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
         <li><span class="mark done">✓</span><span class="itxt"><b>Izdvojene fotografije na profilu fotografa</b><p>Razjašnjeno. Radi se o dve različite stvari koje su nosile slično ime. Mogućnost da fotograf sam izdvoji fotografije <b>postoji i radi</b> — prekidač <i>„Izdvojena na profilu"</i> pri uređivanju pojedinačne fotografije, a izabrane se prikazuju na javnom profilu pod „Izdvojeno od fotografa". Sekcija „Najgledanije fotografije" na vašem nalogu je statistika pregleda, nešto sasvim drugo. Dodali smo objašnjenje i link ka javnom profilu, da ubuduće ne bude zabune.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
+      </ul>
+    </div>
+  </details>
+
+  <h2>Završeno — iz vašeg posljednjeg dopisa</h2>
+  <div class="note">
+    <strong>Ovo su stavke koje ste naveli u posljednjem odgovoru.</strong> Sve je urađeno i provjereno na testnom sajtu.
+  </div>
+
+  <details class="group" open>
+    <summary>
+      <span class="chev">▶</span>
+      <span class="gtitle">Cjenovnik, upit za cijenu, registracija i brzina</span>
+      <span class="gcount">6 / 6 &nbsp;✓</span>
+    </summary>
+    <div class="gbody">
+      <ul class="items">
+        <li><span class="mark done">✓</span><span class="itxt"><b>Nova cijena na svim galerijama</b><p>Sve galerije koje su bile na 20 KM i 50 KM prebačene su na cijenu iz Podešavanja — ukupno <b>7.926 galerija</b>. Posebne cijene (300, 150, 100 KM) i besplatne galerije ostale su netaknute, kako ste tražili.</p><p>Prije izmjene napravljena je rezervna kopija svih 9.965 cijena, pa se izmjena može vratiti ako zatreba.</p></span><span class="badge b-new">NOVO</span></li>
+
+        <li><span class="mark done">✓</span><span class="itxt"><b>Cijena na upit za arhivske fotografije</b><p>Galerije starije od 2. avgusta 2024. nemaju fiksnu cijenu. Umjesto iznosa i dugmeta za kupovinu, kupac vidi poruku da je fotografija iz arhive i dugme <i>„Pošalji upit za cijenu"</i> — ostavi svoju e-mail adresu i po želji poruku.</p><p>Vama stiže obavještenje sa svim podacima: koja fotografija, iz koje galerije, kog datuma, u kojoj rezoluciji i link ka galeriji — da možete odmah odgovoriti ponudom. Kupac dobija potvrdu da je upit primljen.</p><p>Granica se podešava u Podešavanjima sajta, pa je možete pomjeriti kad poželite.</p></span><span class="badge b-new">NOVO</span></li>
+
+        <li><span class="mark done">✓</span><span class="itxt"><b>Obavještenje o novoj registraciji</b><p>Do sada je stizala samo rečenica da se neko registrovao. Sada obavještenje sadrži <b>ime i prezime, e-mail adresu, tip naloga i vrijeme</b>, uz link ka spisku korisnika za odobrenje.</p><p>Korisnik i dalje dobija mejl dobrodošlice; u njemu smo ispravili slova sa kvačicama i jednu grešku u kucanju.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
+
+        <li><span class="mark done">✓</span><span class="itxt"><b>Prikaz galerija znatno ubrzan</b><p>Pitali ste šta mislimo o brzini pri većem broju stavki. Izmjerili smo i našli uzrok: za svaku galeriju se slao spisak <b>svih</b> fotografija, iako je za karticu dovoljna naslovna. Sada se šalje samo ona:</p><p style="font-family:ui-monospace,monospace;font-size:13px;line-height:1.7">36 stavki: 0,7 s → <b>0,39 s</b><br>96 stavki: 5,7 s → <b>0,38 s</b><br>200 stavki: <b>13 s → 0,47 s</b></p><p>Dakle i 200 po strani je sada brzo — nema potrebe da se ograničavate.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
+
+        <li><span class="mark done">✓</span><span class="itxt"><b>36 kao podrazumijevani prikaz</b><p>Prihvatili smo Vaš prijedlog — 36 je sada podrazumijevani broj po strani (koliko je snimaka imao film), a 24, 48, 96 i 200 ostaju kao izbor.</p></span><span class="badge b-new">NOVO</span></li>
+
+        <li><span class="mark done">✓</span><span class="itxt"><b>Ispravljeni linkovi u mejlovima</b><p>Otkriveno usput: svi mejlovi — verifikacija naloga i promjena lozinke — slali su linkove na staru adresu sajta. Adresa je sada podesiva, pa će linkovi biti ispravni i kada pređemo na zipaphoto.net.</p></span><span class="badge b-fix">ISPRAVKA</span></li>
       </ul>
     </div>
   </details>
@@ -339,15 +367,15 @@
     </div>
   </details>
 
-  <h2>Pitanja za vas</h2>
-  <div class="note warn">
-    Na ova pitanja nam treba vaš odgovor pre nego što krenemo u odgovarajuće faze.
+  <h2>Dogovoreno</h2>
+  <div class="note">
+    Na osnovu Vaših odgovora usaglasili smo sljedeće, pa nam više ništa ne blokira rad:
   </div>
   <ol class="q">
-    <li><b>Cena postojećih galerija.</b> Kada uvedemo polje za cenu u podešavanjima, da li starije galerije zadržavaju cenu od 20 KM, ili sve prelaze na 50 KM?</li>
-    <li><b>Izgled naslovne strane.</b> Koji od tri navedena sajta vam je najbliži — Pixsell, AP ili EPA? Prilično se razlikuju po pristupu, pa nam vaš izbor usmerava predlog. Ako nemate favorita, pripremićemo dva predloga za pregled.</li>
-    <li><b>Ključne reči iz vašeg programa.</b> Da li u FotoStation-u (ili drugom programu kroz koji postavljate fotografije) popunjavate polje <i>Keywords</i>, i od kada? Ako te reči već upisujete, postoji mogućnost da su sačuvane u samim fotografijama — pa bismo ih izvukli za celu arhivu umesto da se unose iznova.</li>
-    <li><b>Video.</b> Kako da postupimo sa video materijalima — da to ostavimo za kraj, nakon što sajt bude sređen? Po obimu je to zasebna celina, pa nam recite da li da ga uvrstimo u plan sada ili kasnije.</li>
+    <li><b>Naslovna strana.</b> Idemo u pravcu SPC-a ili Pixsell-a za naslovnu, dok raspored galerija, kategorija i pretrage pratimo prema AP-u. Predloge ćemo Vam pokazati prije izrade.</li>
+    <li><b>Ključne riječi.</b> Potvrdili ste da se polje <i>Keywords</i> u FotoStation-u nije popunjavalo — to se poklapa sa našom provjerom arhive. Sajt je već spreman: čim počnete da ih unosite, riječi se same prenose.</li>
+    <li><b>Video.</b> Ide na kraju, i to bez postavljanja na naš server — povlačiće se sa Vašeg YouTube kanala i prikazivati kao dodatna objava. Time je taj dio posla znatno jednostavniji nego što smo prvobitno procijenili.</li>
+    <li><b>Stranica „Pomoć".</b> Zabilježeno — radimo je zajedno sa redizajnom naslovne i glavnog menija.</li>
   </ol>
 
   <footer>
