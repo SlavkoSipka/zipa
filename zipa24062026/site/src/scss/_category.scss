@@ -743,11 +743,18 @@
                 span{
                 font-size: 16px;
                 font-weight: $regular;
-                color: $black;  
+                color: $black;
                 margin-right: 0;
+                // Prekidač prikaza uzeo je deo reda, pa se natpis prelamao
+                // u tri reda umesto da ostane u jednom.
+                white-space: nowrap;
 
 
                 @include small-desktop{
+                    display: none;
+                }
+
+                @media (max-width: 1600px) {
                     display: none;
                 }
                 }
@@ -791,6 +798,89 @@
                         }
                     }
 
+                }
+
+                /*
+                 * Izbor prikaza: cele galerije ili pojedinačne fotografije.
+                 * Stoji levo od izbora broja stavki, pa ima svoj razmak.
+                 */
+                ul.view-switch {
+                    margin-right: 22px;
+
+                    li a button {
+                        margin-left: 6px;
+                        padding: 7px 14px;
+                        white-space: nowrap;
+                    }
+                }
+            }
+        }
+
+        /*
+         * Rezultati pretrage prikazani kao pojedinačne fotografije.
+         * Sličica zadržava odnos stranica, opis ide ispod.
+         */
+        .photo-results {
+            .photo-result {
+                display: block;
+                text-decoration: none;
+                margin-bottom: 26px;
+
+                .photo-result-image {
+                    position: relative;
+                    padding-top: 66.6%;
+                    overflow: hidden;
+                    border-radius: 6px;
+                    background-color: #EDEFF5;
+
+                    img {
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        object-fit: cover;
+                        transition: transform .35s ease;
+                    }
+                }
+
+                &:hover .photo-result-image img {
+                    transform: scale(1.05);
+                }
+
+                .photo-result-info {
+                    padding-top: 10px;
+
+                    h4 {
+                        font-size: 14px;
+                        font-weight: $semiBold;
+                        color: $black;
+                        line-height: 1.35;
+                        margin: 0 0 5px;
+
+                        // Duži opisi se skraćuju na dva reda, da kartice ostanu poravnate.
+                        display: -webkit-box;
+                        -webkit-line-clamp: 2;
+                        -webkit-box-orient: vertical;
+                        overflow: hidden;
+                    }
+
+                    p {
+                        font-size: 12px;
+                        font-weight: $light;
+                        color: #6B7280;
+                        margin: 0;
+                        // Grad, datum i autor staju u jedan red; ime fotografa
+                        // ume da bude dugačko pa se višak skraćuje.
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+
+                        span:not(:last-child)::after {
+                            content: '·';
+                            margin: 0 6px;
+                        }
+                    }
                 }
             }
         }

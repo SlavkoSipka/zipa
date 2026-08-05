@@ -26,7 +26,7 @@ import imagesCount from '../assets/svg/images-count.svg';
 import ba from '../assets/images/basr.png';
 import en from '../assets/images/en.png';
 import filterIcon from '../assets/svg/filters.svg';
-
+import PretragaSaPrijedlozima from './pretragaSaPrijedlozima';
 
 class Header extends Component {
     constructor(props) {
@@ -47,6 +47,12 @@ class Header extends Component {
         if (typeof window !== 'undefined')
             window.removeEventListener('scroll', this.listenToScroll)
     }
+
+    pokreniPretragu = (pojam) => {
+        const q = (pojam !== undefined ? pojam : this.state.search) || '';
+        this.setState({search: q});
+        this.props[0].history.push(`/galerije${q ? `?search=${encodeURIComponent(q)}` : ''}`);
+    };
 
     listenToScroll = () => {
         const yScroll =
@@ -156,17 +162,14 @@ class Header extends Component {
                                 dangerouslySetInnerHTML={{__html: this.props.settings.logoText}}></span> </Link>
 
                             <Isvg src={this.props.settings.logo}/>
-                            <input type="text" value={this.state.search}
-                                   onChange={(e) => this.setState({search: e.target.value})} onKeyUp={(e) => {
-                                if (e.keyCode == 13) {
-                                    e.preventDefault();
-                                    this.props[0].history.push(`/galerije${this.state.search ? `?search=${encodeURIComponent(this.state.search)}` : ''}`)
-                                }
-                            }}
 
+                            <PretragaSaPrijedlozima
+                                value={this.state.search}
+                                onChange={(v) => this.setState({search: v})}
+                                onSearch={this.pokreniPretragu}
                             />
 
-                            <button className="search">
+                            <button className="search" onClick={() => this.pokreniPretragu()}>
                                 <Isvg src={search}/>
                             </button>
 

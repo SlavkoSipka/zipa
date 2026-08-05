@@ -203,6 +203,8 @@
             border-radius: 33px;
             padding: 10px 10px 10px 10px;
             margin-bottom: 15px;
+            // Uporište za padajuću listu predloga, koja lebdi ispod polja.
+            position: relative;
 
             input{
                 width: 100%;

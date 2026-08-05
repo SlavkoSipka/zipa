@@ -18,6 +18,7 @@ const SERIJA = 100;
 
 (async () => {
     const k = await pool.connect();
+    await k.query('set default_transaction_read_only = off');
     await k.query('set statement_timeout = 0');
 
     const { rows: sve } = await k.query('select "_id" from gallery order by "_id"');
@@ -32,11 +33,8 @@ const SERIJA = 100;
         await k.query('begin');
         await k.query('delete from photo_index where "galleryId" = any($1)', [grupa]);
         await k.query(
-            `insert into photo_index (
-                 "galleryId", idx, image, name, description, author, location, date, keywords,
-                 "galleryName", "galleryAlias", "categoryId", "categoryName",
-                 "userAlias", "userName", price, "isActive", search_document, own_document
-             )
+            `insert into photo_index
+                 ("galleryId", idx, image, name, location, date, "isActive", tsv)
              select r.* from gallery g, photo_index_rows(g) r where g."_id" = any($1)`,
             [grupa]
         );
@@ -53,14 +51,22 @@ const SERIJA = 100;
         }
     }
 
+    // Indeksi se prave tek sada — nad punom tabelom je brže nego održavati ih
+    // kroz 202.411 pojedinačnih upisa.
+    console.log('pravim indekse…');
+    await k.query('create index if not exists photo_index_fts_idx on photo_index using gin (tsv)');
+    await k.query('create index if not exists photo_index_date_idx on photo_index (date desc nulls last)');
+    await k.query('create index if not exists photo_index_gallery_idx on photo_index ("galleryId")');
+
+    await k.query('analyze photo_index');
+
     const { rows } = await k.query(
-        `select count(*) as ukupno,
-                count(*) filter (where own_document is not null and own_document <> '') as sa_svojim
+        `select count(*) as fotografija,
+                pg_size_pretty(pg_total_relation_size('photo_index')) as tabela_sa_indeksima,
+                pg_size_pretty(pg_database_size(current_database())) as cela_baza
            from photo_index`
     );
     console.table(rows);
-
-    await k.query('analyze photo_index');
     k.release();
     await pool.end();
     console.log('gotovo');

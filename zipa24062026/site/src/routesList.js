@@ -268,7 +268,16 @@ export const routes = [
                 }
 
 
-                return fetchFunction(`${API_ENDPOINT}/gallery/search/${lang}`, {
+                /*
+                 * Prikaz „pojedinačne fotografije" traži po fotografijama, a ne
+                 * po galerijama — na „Nikšić" se dobija baš ta fotografija, a
+                 * ne ceo događaj od dvesta snimaka.
+                 */
+                const putanja = query && query.view === 'photos'
+                    ? `${API_ENDPOINT}/photos/search`
+                    : `${API_ENDPOINT}/gallery/search/${lang}`;
+
+                return fetchFunction(putanja, {
                     method: 'POST',
                     headers: {
                         'content-type': 'application/json',
@@ -313,7 +322,16 @@ export const routes = [
                 }
 
 
-                return fetchFunction(`${API_ENDPOINT}/gallery/search/${lang}`, {
+                /*
+                 * Prikaz „pojedinačne fotografije" traži po fotografijama, a ne
+                 * po galerijama — na „Nikšić" se dobija baš ta fotografija, a
+                 * ne ceo događaj od dvesta snimaka.
+                 */
+                const putanja = query && query.view === 'photos'
+                    ? `${API_ENDPOINT}/photos/search`
+                    : `${API_ENDPOINT}/gallery/search/${lang}`;
+
+                return fetchFunction(putanja, {
                     method: 'POST',
                     headers: {
                         'content-type': 'application/json',

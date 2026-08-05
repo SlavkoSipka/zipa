@@ -44,7 +44,7 @@ import Check from '../components/forms/fields/check';
 import Select from '../components/forms/fields/select';
 import ReactPaginate from 'react-paginate';
 import Autotext from '../components/forms/fields/autoText1';
-import {API_ENDPOINT} from '../constants';
+import {API_ENDPOINT, PHOTOS_ENDPOINT} from '../constants';
 
 class CategoryPage extends Component {
     constructor(props) {
@@ -59,6 +59,13 @@ class CategoryPage extends Component {
             displayStyle: 'grid',
             showForms: false
         };
+    }
+
+    // Datum snimanja uz fotografiju u rezultatima pretrage.
+    formatDate(sekunde) {
+        if (!sekunde) return '';
+        const d = new Date(sekunde * 1000);
+        return `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${d.getFullYear()}.`;
     }
 
     componentDidMount() {
@@ -387,6 +394,23 @@ class CategoryPage extends Component {
                                                                 }
                                                             </Col>
                                                             <Col lg="7" className="sort">
+                                                                {/*
+                                                                  * Izbor da li se rezultati prikazuju kao galerije
+                                                                  * ili kao pojedinačne fotografije.
+                                                                  */}
+                                                                <ul className="view-switch">
+                                                                    <li className={params.view !== 'photos' ? 'active' : null}>
+                                                                        <Link to={this.props[0].location.pathname + this.generateSearchLink('view', null)}>
+                                                                            <button>{'Galerije'.translate(this.props.lang)}</button>
+                                                                        </Link>
+                                                                    </li>
+                                                                    <li className={params.view === 'photos' ? 'active' : null}>
+                                                                        <Link to={this.props[0].location.pathname + this.generateSearchLink('view', 'photos')}>
+                                                                            <button>{'Fotografije'.translate(this.props.lang)}</button>
+                                                                        </Link>
+                                                                    </li>
+                                                                </ul>
+
                                                                 <span>{'Broj stavki po stranici:'.translate(this.props.lang)}</span>
                                                                 <ul>
                                                                     {/* 36 je podrazumevani prikaz — koliko je snimaka imao film */}
@@ -437,6 +461,40 @@ class CategoryPage extends Component {
                                                         </Row>
 
 
+                                                        {/*
+                                                          * Rezultati kao pojedinačne fotografije. Klik vodi na
+                                                          * galeriju kojoj fotografija pripada, na njeno mesto.
+                                                          */}
+                                                        {params.view === 'photos' ?
+                                                            <Row className="articles photo-results">
+                                                                {this.state.items && this.state.items.map((foto, idx) => {
+                                                                    const podaci = foto.foto || {};
+                                                                    return (
+                                                                        <Col lg="3" md="4" xs="6" key={idx}>
+                                                                            <Link
+                                                                                className="photo-result"
+                                                                                to={`/galerija/${foto.userAlias}/${foto.galleryAlias}/${foto.galleryId}?photo=${foto.idx}`}>
+                                                                                <div className="photo-result-image">
+                                                                                    <img
+                                                                                        src={`${PHOTOS_ENDPOINT}/photos/350x/${foto.image}`}
+                                                                                        alt={podaci.description || foto.name}/>
+                                                                                </div>
+                                                                                <div className="photo-result-info">
+                                                                                    <h4>{podaci.description || foto.galleryName}</h4>
+                                                                                    <p>
+                                                                                        {foto.location ? <span>{foto.location}</span> : null}
+                                                                                        {foto.date ?
+                                                                                            <span>{this.formatDate(foto.date)}</span> : null}
+                                                                                        {podaci.author ?
+                                                                                            <span>{podaci.author}</span> : null}
+                                                                                    </p>
+                                                                                </div>
+                                                                            </Link>
+                                                                        </Col>
+                                                                    )
+                                                                })}
+                                                            </Row>
+                                                            :
                                                         <Row className="articles">
                                                             {
                                                                 this.state.items && this.state.items.map((article, idx) => {
@@ -466,6 +524,7 @@ class CategoryPage extends Component {
 
 
                                                         </Row>
+                                                        }
 
                                                         <Row>
                                                             <Col lg="12">

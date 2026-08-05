@@ -1198,36 +1198,51 @@ class ProductsModule {
         let poredak = `p.date desc nulls last, p."galleryId", p.idx`;
 
         if (query.search && query.search.trim()) {
-            par.push(query.search.trim());
-            const i = par.length;
-            // Puni tekst nađe cele reči i rangira po relevantnosti; ako ništa
-            // ne vrati (nedovršena reč, slovna greška), pada na podniz.
-            uslovi.push(`(
-                p.tsv @@ plainto_tsquery('simple', unaccent(lower($${i})))
-                or p.search_document like '%' || unaccent(lower($${i})) || '%'
-            )`);
-
             /*
-             * Ispred idu fotografije kojima pojam stoji u sopstvenom opisu ili
-             * ključnim rečima, pa tek onda one koje se poklapaju samo preko
-             * podataka cele galerije. Bez ovoga bi prva strana rezultata bila
-             * dvadesetak fotografija istog događaja, jer se sve poklapaju
-             * podjednako a razlikuju se samo po datumu.
+             * Poslednja reč se traži i kao početak reči, da bi pretraga radila
+             * dok se još kuca („niksi" nalazi „Nikšić"). Ostale reči se traže
+             * cele. Znaci koji imaju značenje u upitu se uklanjaju.
              */
-            poredak = `
-                (case when p.own_document like '%' || unaccent(lower($${i})) || '%'
-                      then 0 else 1 end),
-                p.date desc nulls last, p."galleryId", p.idx`;
-        }
+            const rijeci = query.search.trim().toLowerCase()
+                .replace(/[&|!():*'"\\]/g, ' ')
+                .split(/\s+/).filter(Boolean);
 
-        if (query.keywords) {
-            par.push(query.keywords.split(',').map((k) => k.trim()).filter(Boolean));
-            uslovi.push(`p.keywords ?| $${par.length}::text[]`);
+            if (rijeci.length) {
+                const upit = rijeci
+                    .map((r, n) => (n === rijeci.length - 1 ? `${r}:*` : r))
+                    .join(' & ');
+
+                par.push(upit);
+                const i = par.length;
+                uslovi.push(`p.tsv @@ to_tsquery('simple', unaccent($${i}))`);
+
+                /*
+                 * Ispred idu fotografije kojima pojam stoji u sopstvenom opisu
+                 * ili ključnim rečima, pa tek onda one koje se poklapaju samo
+                 * preko podataka cele galerije. Bez ovoga bi prva strana bila
+                 * dvadesetak fotografija istog događaja, jer se sve poklapaju
+                 * podjednako a razlikuju se samo po datumu.
+                 *
+                 * Težine su {D, C, B, A}: „A" su podaci fotografije, „B" je
+                 * kontekst galerije — otud desetostruka razlika.
+                 */
+                poredak = `
+                    ts_rank('{0.1, 0.1, 0.1, 1.0}'::float4[], p.tsv,
+                            to_tsquery('simple', unaccent($${i}))) desc,
+                    p.date desc nulls last, p."galleryId", p.idx`;
+            }
         }
 
         if (query.photographer) {
             par.push(query.photographer);
-            uslovi.push(`p."userAlias" = $${par.length}`);
+            uslovi.push(`g."userAlias" = $${par.length}`);
+        }
+
+        // Ključne reči su za sada popunjene samo na nivou galerije; kad se
+        // popune i po fotografiji, nalaze se kroz `tsv` iznad.
+        if (query.keywords) {
+            par.push(query.keywords.split(',').map((k) => k.trim()).filter(Boolean));
+            uslovi.push(`(g.keywords->'ba') ?| $${par.length}::text[]`);
         }
 
         if (query.city) {
@@ -1253,15 +1268,26 @@ class ProductsModule {
          * niko ne lista dalje od nekoliko strana — dobija se „preko 10.000".
          */
         const GRANICA = 10000;
+
+        /*
+         * Podaci galerije (naziv, cena, kategorija) se ne drže uz svaku
+         * fotografiju — to bi značilo dvesta puta isti tekst po galeriji.
+         * Spajaju se ovde, za onih tridesetak redova koji se prikazuju.
+         */
+        const IZVOR = `from photo_index p join gallery g on g."_id" = p."galleryId"`;
+
         const [ukupno, redovi] = await Promise.all([
             db.query(`select count(*)::int as n from (
-                        select 1 from photo_index p where ${gdje} limit ${GRANICA}
+                        select 1 ${IZVOR} where ${gdje} limit ${GRANICA}
                       ) x`, par),
             db.query(
-                `select p."galleryId", p.idx, p.image, p.name, p.description, p.author,
-                        p.location, p.date, p.keywords, p."galleryName", p."galleryAlias",
-                        p."categoryName", p."userAlias", p."userName", p.price
-                   from photo_index p
+                `select p."galleryId", p.idx, p.image, p.name, p.location, p.date,
+                        g.name->>'ba'          as "galleryName",
+                        g.alias->>'ba'         as "galleryAlias",
+                        g."categoryName"->>'ba' as "categoryName",
+                        g."userAlias", g."user" as "userName", g.price,
+                        g.photos->p.idx        as foto
+                   ${IZVOR}
                   where ${gdje}
                   order by ${poredak}
                   limit ${ipp} offset ${ipp * page}`, par),

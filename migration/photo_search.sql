@@ -1,122 +1,98 @@
--- ZIPA — pretraga po POJEDINAČNOJ fotografiji
+-- ZIPA — pretraga po POJEDINAČNOJ fotografiji (štedljiva verzija)
 --
--- Do sada se pretraživala samo galerija: ako neko ukuca „Nikšić", dobijao je
--- celu galeriju od dve stotine fotografija, pa je morao sam da traži onu pravu.
--- Fotografije žive u jsonb nizu `gallery.photos`, nad kojim se ne može napraviti
--- upotrebljiv indeks — svaki upit bi razmotavao 202.411 zapisa.
+-- Do sada se pretraživala samo galerija: na „Nikšić" se dobijao ceo događaj od
+-- dvesta fotografija, pa se prava tražila ručno. Fotografije žive u jsonb nizu
+-- `gallery.photos`, nad kojim se ne može napraviti upotrebljiv indeks.
 --
--- Zato se pravi ravna tabela `photo_index`: jedan red po fotografiji, sa svojim
--- tekstom za pretragu i indeksima. Tabelu održava okidač na `gallery`, pa se
--- nikada ne popunjava ručno i ne može da se raziđe sa stanjem galerija.
+-- Prva verzija ove tabele čuvala je pun tekst za pretragu, i to dvaput, plus
+-- trigram indekse — narasla je na 689 MB i oborila bazu u read-only. Ovde se
+-- tekst NE čuva: drži se samo `tsvector`, a naziv galerije, cena i kategorija
+-- se uzimaju spajanjem na `gallery` za onih 36 redova koji se prikazuju.
+--
+-- Posledica: nema tolerancije na slovne greške (za to je trebao trigram indeks
+-- od 123 MB). Nedovršena reč i dalje radi, preko prefiksa u punom tekstu.
 
--- ── Tabela ────────────────────────────────────────────────────────────────
 drop table if exists photo_index cascade;
 
 create table photo_index (
-    "galleryId"     text    not null,
-    idx             int     not null,          -- pozicija u nizu gallery.photos
-    image           text,                      -- putanja do fajla (ključ na R2)
-    name            text,
-    description     text,
-    author          text,
-    location        text,
-    date            bigint,
-    keywords        jsonb   default '[]'::jsonb,
+    "galleryId" text    not null,
+    idx         int     not null,   -- pozicija u nizu gallery.photos
 
-    -- prepisano sa galerije, da prikaz rezultata ne mora nazad u `gallery`
-    "galleryName"   text,
-    "galleryAlias"  text,
-    "categoryId"    text[],
-    "categoryName"  text,
-    "userAlias"     text,
-    "userName"      text,
-    price           numeric,
-    "isActive"      boolean default true,
+    -- Samo ono što treba za sličicu u rezultatima. Ostalo se spaja iz galerije,
+    -- jer bi vađenje iz `photos` niza čitalo ceo niz zbog jednog elementa.
+    image       text,
+    name        text,
+    location    text,
+    date        bigint,
+    "isActive"  boolean default true,
 
-    search_document text,
-
-    -- Vektor za pretragu stoji u svojoj koloni, a ne kao izraz u indeksu.
-    -- Kad je indeks na izrazu, upit mora da ga ponovi slovo u slovo da bi bio
-    -- upotrebljen — inače Postgres tiho pređe na čitanje cele tabele.
-    tsv tsvector generated always as
-        (to_tsvector('simple', coalesce(search_document,''))) stored,
+    /*
+     * Tekst za pretragu se ne čuva, samo njegov vektor — i to jedan.
+     *
+     * Prva verzija je držala dva vektora: jedan sa svime, drugi samo sa
+     * podacima fotografije, da bi se poklapanje na fotografiji rangiralo
+     * ispred poklapanja preko cele galerije. Ta dva su se skoro poklapala
+     * (144 MB i 125 MB) — isti sadržaj upisan dvaput.
+     *
+     * Umesto toga: jedan vektor, ali označen. Podaci fotografije nose oznaku
+     * „A", kontekst galerije oznaku „B", pa `ts_rank` sa različitim težinama
+     * daje isti redosled bez druge kolone.
+     */
+    tsv         tsvector,
 
     primary key ("galleryId", idx)
 );
 
 -- ── Građenje redova za jednu galeriju ─────────────────────────────────────
 -- Ključne reči fotografije nadopunjuju se ključnim rečima galerije: fotograf
--- retko kuca isto dvaput, a pretraga treba da nađe fotografiju i po onome što
--- je upisano za ceo događaj.
-create or replace function photo_index_rows(g gallery)
+-- retko kuca isto dvaput, a fotografija treba da se nađe i po onome što je
+-- upisano za ceo događaj.
+drop function if exists photo_index_insert(gallery);
+drop function if exists photo_index_rows(gallery);
+
+create function photo_index_rows(g gallery)
 returns table (
-    "galleryId"    text,
-    idx            int,
-    image          text,
-    name           text,
-    description    text,
-    author         text,
-    location       text,
-    date           bigint,
-    keywords       jsonb,
-    "galleryName"  text,
-    "galleryAlias" text,
-    "categoryId"   text[],
-    "categoryName" text,
-    "userAlias"    text,
-    "userName"     text,
-    price          numeric,
-    "isActive"     boolean,
-    search_document text
+    "galleryId" text,
+    idx         int,
+    image       text,
+    name        text,
+    location    text,
+    date        bigint,
+    "isActive"  boolean,
+    tsv         tsvector
 ) language sql stable as $$
   select
       g."_id",
       (ph.ordinality - 1)::int,
       ph.value->>'image',
       ph.value->>'name',
-      ph.value->>'description',
-      ph.value->>'author',
       ph.value->>'location',
       nullif(ph.value->>'date','')::bigint,
-      case when jsonb_typeof(ph.value->'keywords') = 'array'
-           then ph.value->'keywords' else '[]'::jsonb end,
-
-      g.name->>'ba',
-      g.alias->>'ba',
-      g.category,
-      g."categoryName"->>'ba',
-      g."userAlias",
-      g."user",
-      g.price,
       coalesce(g."isActive", true),
 
-      unaccent(lower(concat_ws(' ',
-          ph.value->>'name',
-          ph.value->>'description',
-          ph.value->>'author',
-          ph.value->>'location',
+      -- „A" = upisano na samoj fotografiji, „B" = kontekst cele galerije.
+      setweight(to_tsvector('simple', unaccent(lower(concat_ws(' ',
+          ph.value->>'name', ph.value->>'description',
+          ph.value->>'author', ph.value->>'location',
           (select string_agg(v,' ') from jsonb_array_elements_text(
               case when jsonb_typeof(ph.value->'keywords') = 'array'
-                   then ph.value->'keywords' else '[]'::jsonb end) v),
-          -- kontekst galerije
+                   then ph.value->'keywords' else '[]'::jsonb end) v)
+      )))), 'A')
+      ||
+      setweight(to_tsvector('simple', unaccent(lower(concat_ws(' ',
           g.name->>'ba', g.name->>'en',
           g.location, g."user", g."categoryName"->>'ba',
           (select string_agg(v,' ') from jsonb_array_elements_text(
               coalesce(g.keywords->'ba','[]'::jsonb)) v),
           (select string_agg(v,' ') from jsonb_array_elements_text(
               coalesce(g.keywords->'en','[]'::jsonb)) v)
-      )))
+      )))), 'B')
   from jsonb_array_elements(coalesce(g.photos,'[]'::jsonb)) with ordinality ph(value, ordinality);
 $$;
 
--- Kolone se navode poimence: `tsv` se računa sam i u njega se ne sme upisivati.
-create or replace function photo_index_insert(g gallery)
+create function photo_index_insert(g gallery)
 returns void language sql as $$
-  insert into photo_index (
-      "galleryId", idx, image, name, description, author, location, date, keywords,
-      "galleryName", "galleryAlias", "categoryId", "categoryName",
-      "userAlias", "userName", price, "isActive", search_document
-  )
+  insert into photo_index ("galleryId", idx, image, name, location, date, "isActive", tsv)
   select * from photo_index_rows(g);
 $$;
 
@@ -148,14 +124,10 @@ for each row
 when (
     old.photos             is distinct from new.photos
     or old.name            is distinct from new.name
-    or old.alias           is distinct from new.alias
     or old.keywords        is distinct from new.keywords
     or old.location        is distinct from new.location
     or old."user"          is distinct from new."user"
-    or old."userAlias"     is distinct from new."userAlias"
-    or old.category        is distinct from new.category
     or old."categoryName"  is distinct from new."categoryName"
-    or old.price           is distinct from new.price
     or old."isActive"      is distinct from new."isActive"
 )
 execute function photo_index_sync();
@@ -165,31 +137,8 @@ create trigger gallery_photo_index_ad
 after delete on gallery
 for each row execute function photo_index_sync();
 
--- ── Prvo punjenje ─────────────────────────────────────────────────────────
-insert into photo_index (
-    "galleryId", idx, image, name, description, author, location, date, keywords,
-    "galleryName", "galleryAlias", "categoryId", "categoryName",
-    "userAlias", "userName", price, "isActive", search_document
-)
-select r.* from gallery g, photo_index_rows(g) r;
+-- Popunjava se iz `popuni_photo_index.js`, u serijama — jedan upit nad svih
+-- 202.411 fotografija Supabase prekine po isteku vremena.
 
--- ── Indeksi (posle punjenja — brže je) ────────────────────────────────────
-create index if not exists photo_index_fts_idx
-    on photo_index using gin (tsv);
-
-create index if not exists photo_index_trgm_idx
-    on photo_index using gin (search_document gin_trgm_ops);
-
-create index if not exists photo_index_date_idx
-    on photo_index (date desc nulls last);
-
-create index if not exists photo_index_keywords_idx
-    on photo_index using gin (keywords);
-
-create index if not exists photo_index_gallery_idx
-    on photo_index ("galleryId");
-
-create index if not exists photo_index_category_idx
-    on photo_index using gin ("categoryId");
-
-analyze photo_index;
+-- ── Indeksi ───────────────────────────────────────────────────────────────
+-- Prave se tek posle punjenja, u istoj skripti.

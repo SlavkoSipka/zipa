@@ -37,6 +37,7 @@ import searchIcon from '../assets/svg/search-icon-btn.svg';
 import picture from '../assets/svg/picture-icon.svg';
 import infoIcon from '../assets/svg/account-info.svg';
 import {API_ENDPOINT} from '../constants';
+import PretragaSaPrijedlozima from '../components/pretragaSaPrijedlozima';
 
 class HomePage extends Component {
     constructor(props) {
@@ -55,6 +56,16 @@ class HomePage extends Component {
             ...props.initialData
         };
     }
+
+    // Vodi na spisak galerija sa upisanim pojmom; zove se i sa dugmeta i iz
+    // padajuće liste predloga.
+    pokreniPretragu = (pojam) => {
+        const q = (pojam !== undefined ? pojam : this.state.search) || '';
+        this.setState({search: q});
+        this.props[0].history.push(
+            `/galerije${this.state.searchBreadcrumb ? this.state.searchBreadcrumb : ''}${q ? `?search=${encodeURIComponent(q)}` : ''}`
+        );
+    };
 
     componentDidMount() {
 
@@ -233,18 +244,14 @@ class HomePage extends Component {
                                         </Col>
                                         <Col lg={{size: 12}} className="search-container">
                                             <div className="search-wrap">
-                                                <input type="text"
-                                                       placeholder={'Unesite pojam za pretragu'.translate(this.props.lang)}
-                                                       value={this.state.search}
-                                                       onChange={(e) => this.setState({search: e.target.value})}
-                                                       onKeyUp={(e) => {
-                                                           if (e.keyCode == 13) {
-                                                               e.preventDefault();
-                                                               this.props[0].history.push(`/galerije${this.state.searchBreadcrumb ? this.state.searchBreadcrumb : ''}${this.state.search ? `?search=${encodeURIComponent(this.state.search)}` : ''}`)
-                                                           }
-                                                       }}/>
+                                                <PretragaSaPrijedlozima
+                                                    value={this.state.search}
+                                                    placeholder={'Unesite pojam za pretragu'.translate(this.props.lang)}
+                                                    onChange={(v) => this.setState({search: v})}
+                                                    onSearch={this.pokreniPretragu}
+                                                />
                                                 <button className="button"
-                                                        onClick={() => this.props[0].history.push(`/galerije${this.state.searchBreadcrumb ? this.state.searchBreadcrumb : ''}${this.state.search ? `?search=${encodeURIComponent(this.state.search)}` : ''}`)}>
+                                                        onClick={() => this.pokreniPretragu()}>
                                                     <Isvg src={searchIcon}/> PRETRAŽI
                                                 </button>
 

@@ -4111,3 +4111,63 @@ footer {
         h4 { color: #1C7A52; }
     }
 }
+
+/*
+ * Predlozi dok se kuca u polju za pretragu.
+ *
+ * Ista lista se koristi na naslovnoj i u zaglavlju, pa se oslanja na to da
+ * roditelj ima `position: relative` — lebdi ispod polja i ne pomera raspored.
+ */
+ul.prijedlozi {
+    position: absolute;
+    top: calc(100% - 4px);
+    left: 0;
+    right: 0;
+    z-index: 60;
+    list-style: none;
+    margin: 6px 0 0;
+    padding: 6px 0;
+    background-color: #fff;
+    border-radius: 14px;
+    box-shadow: 0 12px 34px rgba(17, 19, 24, .16);
+    max-height: 340px;
+    overflow-y: auto;
+
+    li {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 9px 22px;
+        cursor: pointer;
+        transition: background-color .12s;
+
+        .tekst {
+            font-size: 15px;
+            color: $black;
+            // Dugi nazivi galerija se skraćuju umesto da lome listu.
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .vrsta {
+            font-size: 11px;
+            color: #8b909c;
+            white-space: nowrap;
+            text-transform: lowercase;
+        }
+
+        &:hover,
+        &.oznaceni {
+            background-color: #F4F6FA;
+        }
+    }
+}
+
+// U zaglavlju polje pretrage stoji uz logotip; lista se ravna po njemu.
+header .logo {
+    ul.prijedlozi {
+        top: 100%;
+    }
+}
