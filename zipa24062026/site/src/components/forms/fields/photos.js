@@ -423,6 +423,28 @@ class Gallery extends Component {
                                         }} value={this.state.selectedImage.description} />
                                     </Col>
 
+                                    {/*
+                                      * Ključne reči ove fotografije. Ako su upisane u FotoStation-u,
+                                      * preuzimaju se pri postavljanju i ovde su već popunjene.
+                                      * Po njima se traži baš ova fotografija, a ne cela galerija.
+                                      */}
+                                    <Col lg="12">
+                                        <Text label="Ključne riječi (odvojene zarezom)" onChange={(e) => {
+                                            let selectedImage = this.state.selectedImage;
+                                            selectedImage.keywords = (e || '')
+                                                .split(',')
+                                                .map((rec) => rec.trim())
+                                                .filter((rec) => rec.length);
+                                            this.setState({
+                                                selectedImage: selectedImage
+                                            })
+                                        }} value={
+                                            Array.isArray(this.state.selectedImage.keywords)
+                                                ? this.state.selectedImage.keywords.join(', ')
+                                                : (this.state.selectedImage.keywords || '')
+                                        } />
+                                    </Col>
+
                                     <Col lg="12" className="buttons">
                                         <button type="button" onClick={() => {
                                             let files = this.state.files;

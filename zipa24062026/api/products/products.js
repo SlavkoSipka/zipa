@@ -820,8 +820,18 @@ class ProductsModule {
     }
 
 
+    // Kao i na naslovnoj: prikazuje se sedam galerija sa po jednom fotografijom,
+    // pa nema razloga slati cele nizove.
     async fethcNewestGalleries() {
-        let items = await db.collection('gallery').find({ isActive: true, userDisabled: { $ne: true } }).limit(7).sort({ published: -1 }).toArray();
+        let items = await db.collection('gallery')
+            .find({ isActive: true, userDisabled: { $ne: true } }, {
+                projection: {
+                    name: 1, alias: 1, description: 1, category: 1, categoryName: 1,
+                    location: 1, user: 1, userAlias: 1, price: 1, date: 1, published: 1,
+                    photos: { $slice: 1 }
+                }
+            })
+            .limit(7).sort({ published: -1 }).toArray();
         for (let i = 0; i < items.length; i++) {
             if (!items[i].category || (items[i].category && !items[i].category.length)) {
                 continue;
@@ -1103,10 +1113,24 @@ class ProductsModule {
         return items;
     }
 
+    /*
+     * Naslovna strana. Za svaku kategoriju treba tri galerije, a od svake samo
+     * naslovna fotografija — pa se ostatak niza ne dovlači. Bez ovoga je odgovor
+     * bio oko 750 KB po posetiocu, jer galerija zna da ima i preko dvesta
+     * fotografija, a sve su išle preko mreže da bi se prikazala jedna.
+     */
     async fetchHomeCategories() {
         let categories = await db.collection('categories').find({ isVisible: true, isVisibleOnHome: true }).sort({ position: 1 }).toArray();
         for (let i = 0; i < categories.length; i++) {
-            categories[i].photos = await db.collection('gallery').find({ isActive: true, category: { $in: [categories[i]._id.toString()] } }).limit(3).sort({ published: -1 }).toArray();
+            categories[i].photos = await db.collection('gallery')
+                .find({ isActive: true, category: { $in: [categories[i]._id.toString()] } }, {
+                    projection: {
+                        name: 1, alias: 1, description: 1, category: 1, categoryName: 1,
+                        location: 1, user: 1, userAlias: 1, price: 1, date: 1, published: 1,
+                        photos: { $slice: 1 }
+                    }
+                })
+                .limit(3).sort({ published: -1 }).toArray();
         }
 
         return categories;
@@ -1154,6 +1178,161 @@ class ProductsModule {
                         and g.photos is not null
                    ), 0)
         `);
+    }
+
+    /*
+     * Pretraga po POJEDINAČNOJ fotografiji.
+     *
+     * Do sada je pretraga vraćala samo galerije: na „Nikšić" se dobijao ceo
+     * događaj od dvesta fotografija, pa se prava tražila ručno. Ovde se traži
+     * po tabeli `photo_index` — jedan red po fotografiji, sa svojim ključnim
+     * rečima, opisom, autorom i lokacijom, i sa kontekstom galerije uz to.
+     *
+     * Tabelu održava okidač u bazi, pa je uvek u koraku sa galerijama.
+     */
+    async searchPhotos(query = {}) {
+        const uslovi = [`p."isActive"`];
+        const par = [];
+
+        // Redosled rezultata. Bez pojma pretrage — najnovije prvo.
+        let poredak = `p.date desc nulls last, p."galleryId", p.idx`;
+
+        if (query.search && query.search.trim()) {
+            par.push(query.search.trim());
+            const i = par.length;
+            // Puni tekst nađe cele reči i rangira po relevantnosti; ako ništa
+            // ne vrati (nedovršena reč, slovna greška), pada na podniz.
+            uslovi.push(`(
+                p.tsv @@ plainto_tsquery('simple', unaccent(lower($${i})))
+                or p.search_document like '%' || unaccent(lower($${i})) || '%'
+            )`);
+
+            /*
+             * Ispred idu fotografije kojima pojam stoji u sopstvenom opisu ili
+             * ključnim rečima, pa tek onda one koje se poklapaju samo preko
+             * podataka cele galerije. Bez ovoga bi prva strana rezultata bila
+             * dvadesetak fotografija istog događaja, jer se sve poklapaju
+             * podjednako a razlikuju se samo po datumu.
+             */
+            poredak = `
+                (case when p.own_document like '%' || unaccent(lower($${i})) || '%'
+                      then 0 else 1 end),
+                p.date desc nulls last, p."galleryId", p.idx`;
+        }
+
+        if (query.keywords) {
+            par.push(query.keywords.split(',').map((k) => k.trim()).filter(Boolean));
+            uslovi.push(`p.keywords ?| $${par.length}::text[]`);
+        }
+
+        if (query.photographer) {
+            par.push(query.photographer);
+            uslovi.push(`p."userAlias" = $${par.length}`);
+        }
+
+        if (query.city) {
+            par.push(query.city);
+            uslovi.push(`unaccent(lower(coalesce(p.location,''))) like '%' || unaccent(lower($${par.length})) || '%'`);
+        }
+
+        // Isti opseg kao kod galerija: izabran jedan dan pokriva punih 24 sata.
+        const DAN = 24 * 60 * 60;
+        let od = query['date-from'] ? parseInt(query['date-from']) : null;
+        let doo = query['date-to'] ? parseInt(query['date-to']) : null;
+        if (od !== null && doo !== null && doo <= od) doo = od + DAN - 1;
+        if (od !== null) { par.push(od); uslovi.push(`p.date >= $${par.length}`); }
+        if (doo !== null) { par.push(doo); uslovi.push(`p.date <= $${par.length}`); }
+
+        const gdje = uslovi.join(' and ');
+        const ipp = query.ipp ? Math.min(parseInt(query.ipp), 200) : 36;
+        const page = query.page ? parseInt(query.page) : 0;
+
+        /*
+         * Broj rezultata se ograničava na deset hiljada. Tačno prebrojavanje
+         * kod čestih pojmova znači prolazak kroz desetine hiljada redova, a
+         * niko ne lista dalje od nekoliko strana — dobija se „preko 10.000".
+         */
+        const GRANICA = 10000;
+        const [ukupno, redovi] = await Promise.all([
+            db.query(`select count(*)::int as n from (
+                        select 1 from photo_index p where ${gdje} limit ${GRANICA}
+                      ) x`, par),
+            db.query(
+                `select p."galleryId", p.idx, p.image, p.name, p.description, p.author,
+                        p.location, p.date, p.keywords, p."galleryName", p."galleryAlias",
+                        p."categoryName", p."userAlias", p."userName", p.price
+                   from photo_index p
+                  where ${gdje}
+                  order by ${poredak}
+                  limit ${ipp} offset ${ipp * page}`, par),
+        ]);
+
+        const n = ukupno.rows[0].n;
+        return {
+            items: redovi.rows,
+            count: n,
+            countCapped: n >= GRANICA,
+            total: Math.ceil(n / ipp),
+        };
+    }
+
+    /*
+     * Predlozi dok se kuca. Vuku se iz onoga što u arhivi zaista postoji —
+     * ključnih reči, naziva galerija, lokacija i imena fotografa — pa korisnik
+     * ne pogađa termine. Prazan unos ne pokreće upit.
+     */
+    async searchSuggestions(pojam) {
+        const q = (pojam || '').trim();
+        if (q.length < 2) return [];
+
+        /*
+         * Isti pojam je u arhivi upisivan i velikim i malim slovima („Nikola
+         * Tesla" i „NIKOLA TESLA"), pa se grupiše bez obzira na veličinu slova
+         * i uzima jedan oblik — inače se ista reč u padajućoj listi ponavlja.
+         */
+        const rez = await db.query(
+            `
+            with unos as (select unaccent(lower($1)) as q)
+            (
+                -- ključne reči galerija (jedini popunjeni skup ključnih reči)
+                select min(kw) as tekst, 'kljucna-rec' as vrsta, count(*) as koliko
+                  from gallery g, unos,
+                       jsonb_array_elements_text(coalesce(g.keywords->'ba','[]'::jsonb)) kw
+                 where g."isActive" and unaccent(lower(kw)) like unos.q || '%'
+                 group by unaccent(lower(kw))
+                 order by koliko desc
+                 limit 6
+            ) union all (
+                select min(g.location), 'grad', count(*)
+                  from gallery g, unos
+                 where g."isActive" and g.location is not null and g.location <> ''
+                   and unaccent(lower(g.location)) like unos.q || '%'
+                 group by unaccent(lower(g.location))
+                 order by count(*) desc
+                 limit 4
+            ) union all (
+                select min(g."user"), 'fotograf', count(*)
+                  from gallery g, unos
+                 where g."isActive" and g."user" is not null and g."user" <> ''
+                   and unaccent(lower(g."user")) like '%' || unos.q || '%'
+                 group by unaccent(lower(g."user"))
+                 order by count(*) desc
+                 limit 3
+            ) union all (
+                select min(g.name->>'ba'), 'galerija', count(*)
+                  from gallery g, unos
+                 where g."isActive" and unaccent(lower(g.name->>'ba')) like '%' || unos.q || '%'
+                 group by unaccent(lower(g.name->>'ba'))
+                 order by count(*) desc
+                 limit 6
+            )
+            `,
+            [q]
+        );
+
+        return rez.rows
+            .filter((r) => r.tekst)
+            .map((r) => ({ tekst: r.tekst, vrsta: r.vrsta }));
     }
 
     createRegexPattern(input) {

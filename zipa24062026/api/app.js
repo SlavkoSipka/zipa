@@ -571,6 +571,16 @@ app.post('/gallery/search/:lang', userCheck, async (req, res) => {
     res.send(await productsModule.gallery(res.locals.uid, req.params.lang, req.body.query));
 });
 
+// Pretraga koja vraća pojedinačne fotografije umesto celih galerija.
+app.post('/photos/search', userCheck, async (req, res) => {
+    res.send(await productsModule.searchPhotos(req.body.query || {}));
+});
+
+// Predlozi dok se kuca u polju za pretragu.
+app.get('/search/suggest', async (req, res) => {
+    res.send(await productsModule.searchSuggestions(req.query.q));
+});
+
 app.post('/users/all', permissionMiddleware('*'), async (req, res) => {
     let result = await usersModule.fetchUsers(req.body.page, req.body.search);
     res.send(result);
