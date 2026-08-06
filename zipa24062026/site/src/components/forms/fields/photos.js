@@ -445,6 +445,22 @@ class Gallery extends Component {
                                         } />
                                     </Col>
 
+                                    {/*
+                                      * Skriveni tekst — FotoStation polje „Local Caption".
+                                      * Traži se po njemu kao i po opisu, ali ga posetilac
+                                      * nigde ne vidi. Za imena ljudi sa fotografije, radne
+                                      * nazive i slično.
+                                      */}
+                                    <Col lg="12">
+                                        <Textarea label="Skriveni tekst za pretragu (ne prikazuje se na sajtu)" onChange={(e) => {
+                                            let selectedImage = this.state.selectedImage;
+                                            selectedImage.localCaption = e;
+                                            this.setState({
+                                                selectedImage: selectedImage
+                                            })
+                                        }} value={this.state.selectedImage.localCaption || ''} />
+                                    </Col>
+
                                     <Col lg="12" className="buttons">
                                         <button type="button" onClick={() => {
                                             let files = this.state.files;

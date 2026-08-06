@@ -235,6 +235,16 @@ class ProductsModule {
                 // Preuzimaju se automatski da se ne bi kucale ponovo na sajtu.
                 keywords: normalizeKeywords(exifTags.Keywords || exifTags.Subject),
 
+                /*
+                 * Skriveni tekst za pretragu — FotoStation polje `Local Caption`.
+                 *
+                 * Ulazi u pretragu ravnopravno sa opisom, ali se posetiocu nigde
+                 * ne prikazuje. Služi za ono što pomaže pronalaženju a ne bi lepo
+                 * stajalo u opisu: imena ljudi na fotografiji, radni nazivi,
+                 * drugačiji nazivi istog mesta.
+                 */
+                localCaption: exifTags.LocalCaption || null,
+
                 // Podaci o snimku — za prikaz na stranici fotografije.
                 camera: formatCamera(exifTags.Make, exifTags.Model),
                 lens: exifTags.LensModel || exifTags.Lens || null,
@@ -801,6 +811,11 @@ class ProductsModule {
                 let flags = await Promise.all(photos.map((p) => storage.originalExists(p.image)));
                 for (let i = 0; i < photos.length; i++) {
                     photos[i].originalIsOnServer = flags[i];
+
+                    // Skriveni tekst ostaje u bazi i u pretrazi, ali se ne šalje
+                    // pregledaču — inače bi se video u izvornom kodu stranice.
+                    // Administracija ga čita preko zaštićenih ruta.
+                    delete photos[i].localCaption;
                 }
 
                 // Starije galerije nemaju fiksnu cenu — za njih se šalje upit,

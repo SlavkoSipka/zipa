@@ -71,9 +71,13 @@ returns table (
       coalesce(g."isActive", true),
 
       -- „A" = upisano na samoj fotografiji, „B" = kontekst cele galerije.
+      --
+      -- `localCaption` je skriveni tekst: ulazi u pretragu kao i opis, ali se
+      -- nigde ne prikazuje. Zato stoji ovde, a ne u kolonama iznad.
       setweight(to_tsvector('simple', unaccent(lower(concat_ws(' ',
           ph.value->>'name', ph.value->>'description',
           ph.value->>'author', ph.value->>'location',
+          ph.value->>'localCaption',
           (select string_agg(v,' ') from jsonb_array_elements_text(
               case when jsonb_typeof(ph.value->'keywords') = 'array'
                    then ph.value->'keywords' else '[]'::jsonb end) v)
