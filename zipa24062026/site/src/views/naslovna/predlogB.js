@@ -29,8 +29,19 @@ const datum = (vreme) => {
 
 class PredlogB extends Component {
 
-    /* Kartica galerije. `krupna` se koristi u naslovnom bloku. */
-    kartica(g, kljuc, krupna = false) {
+    /*
+     * Kartica galerije, u dva oblika:
+     *
+     *   'preko'  — natpis leži na fotografiji, sa zatamnjenjem odozdo;
+     *              koristi se u naslovnom bloku i u izdvojenom
+     *   'ispod'  — natpis je ispod fotografije, u beloj kartici;
+     *              koristi se u redovima po kategorijama
+     *
+     * Podela je iz predloga koji je klijent poslao: naslovni deo nosi
+     * krupne fotografije preko kojih ide tekst, a niže se čitljivost
+     * postiže belom karticom ispod snimka.
+     */
+    kartica(g, kljuc, oblik = 'ispod', velicina = 'mala') {
         if (!g) return null;
 
         const lang = this.props.lang;
@@ -38,27 +49,48 @@ class PredlogB extends Component {
         const alias = Object.translate(g, 'alias', lang);
         const slika = g.photos && g.photos[0] && g.photos[0].image;
         const broj = g.photosCount !== undefined ? g.photosCount : (g.photos && g.photos.length);
+        const kategorija = g.categoryName ? Object.translate(g, 'categoryName', lang) : null;
+
+        const podaci = (
+            <p className="meta">
+                {g.location ? <span>{g.location}</span> : null}
+                <span>{datum(g.date)}</span>
+                {broj ? <span>{broj} {'fotografija'.translate(lang)}</span> : null}
+                {g.user ? <span>{g.user}</span> : null}
+            </p>
+        );
 
         return (
             <Link
                 key={kljuc}
                 to={`/galerija/${g.userAlias}/${alias}/${g._id}`}
-                className={krupna ? 'kartica krupna' : 'kartica'}
+                className={`kartica ${oblik} ${velicina}`}
             >
                 <div className="slika">
-                    {slika ? <img src={slikaUrl(slika, krupna ? '700x' : '350x')} alt={naziv} loading="lazy" /> : null}
-                    {g.categoryName ? (
-                        <span className="znacka">{Object.translate(g, 'categoryName', lang)}</span>
+                    {slika ? (
+                        <img
+                            src={slikaUrl(slika, velicina === 'mala' ? '350x' : '700x')}
+                            alt={naziv}
+                            loading="lazy"
+                        />
+                    ) : null}
+
+                    {kategorija ? <span className="znacka">{kategorija}</span> : null}
+
+                    {oblik === 'preko' ? (
+                        <div className="preko-teksta">
+                            <h4>{naziv}</h4>
+                            {podaci}
+                        </div>
                     ) : null}
                 </div>
-                <div className="telo">
-                    <h4>{naziv}</h4>
-                    <p className="meta">
-                        {g.location ? <span>{g.location}</span> : null}
-                        <span>{datum(g.date)}</span>
-                        {broj ? <span>{broj} {'fotografija'.translate(lang)}</span> : null}
-                    </p>
-                </div>
+
+                {oblik === 'ispod' ? (
+                    <div className="telo">
+                        <h4>{naziv}</h4>
+                        {podaci}
+                    </div>
+                ) : null}
             </Link>
         );
     }
@@ -73,8 +105,8 @@ class PredlogB extends Component {
             .slice()
             .sort((a, b) => (a.position || 0) - (b.position || 0));
 
-        // Naslovni blok: pet najnovijih galerija — dve krupnije, tri ispod.
-        const najnovije = (this.props.latest || []).slice(0, 5);
+        // Naslovni blok: šest najnovijih — jedna krupna, dve uz nju, tri ispod.
+        const najnovije = (this.props.latest || []).slice(0, 6);
 
         return (
             <div className="naslovna-b">
@@ -100,11 +132,19 @@ class PredlogB extends Component {
                             <Link to="/galerije">{'Sve galerije'.translate(lang)} &rarr;</Link>
                         </div>
 
-                        <div className="mreza-naslovna">
-                            {najnovije.slice(0, 2).map((g, i) => this.kartica(g, `k${i}`, true))}
+                        {/* Jedna krupna levo, dve uz nju desno — pa tri ispod,
+                            iste veličine kao one dve. Sve staje na ekran. */}
+                        <div className="blok-naslovni">
+                            <div className="glavna">
+                                {this.kartica(najnovije[0], 'g0', 'preko', 'velika')}
+                            </div>
+                            <div className="uz-glavnu">
+                                {najnovije.slice(1, 3).map((g, i) => this.kartica(g, `u${i}`, 'preko'))}
+                            </div>
                         </div>
-                        <div className="mreza-naslovna tri">
-                            {najnovije.slice(2, 5).map((g, i) => this.kartica(g, `m${i}`))}
+
+                        <div className="blok-tri">
+                            {najnovije.slice(3, 6).map((g, i) => this.kartica(g, `t${i}`, 'preko'))}
                         </div>
                     </Container>
                 </section>
@@ -118,8 +158,10 @@ class PredlogB extends Component {
                             <div className="naslov-odeljka veliki">
                                 <h3>{(podesavanja.izdvojenoNaslov || 'Izdvajamo').translate(lang)}</h3>
                             </div>
+                            {/* Dve u redu, dva reda — sa naglašenim natpisom
+                                preko fotografije, po uzoru koji ste poslali. */}
                             <div className="mreza-izdvojeno">
-                                {this.props.izdvojeno.slice(0, 4).map((g, i) => this.kartica(g, `i${i}`, true))}
+                                {this.props.izdvojeno.slice(0, 4).map((g, i) => this.kartica(g, `i${i}`, 'preko', 'velika'))}
                             </div>
                         </Container>
                     </section>
