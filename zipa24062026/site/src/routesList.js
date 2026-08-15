@@ -68,10 +68,36 @@ import PreviewPage from './views/account/previewPage';
 
 import SubscribersPage from './views/account/subscribers';
 import ImportPage from './views/account/import';
+import VideoPage from './views/videoPage';
 import {API_ENDPOINT, PHOTOS_ENDPOINT} from './constants'
 
 
 export const routes = [
+    {
+        // Snimci sa YouTube kanala agencije. Postoji zasebna strana da stavka
+        // „VIDEO" u meniju ne bi vodila u prazno.
+        path: "/video",
+        component: VideoPage,
+        exact: true,
+        generateSeoTags: (data) => {
+            return {
+                title: 'Video',
+                description: 'Snimci ZIPA PHOTO agencije'
+            }
+        },
+        loadData: [
+            (fetchFunction, match) => {
+                return fetchFunction(`${API_ENDPOINT}/videos/all`, {
+                    method: 'GET',
+                    headers: {
+                        'content-type': 'application/json'
+                    },
+                }).then(res => res.json()).then((result) => {
+                    return { videos: result };
+                })
+            },
+        ]
+    },
     {
         path: "/",
         component: HomePage,

@@ -38,6 +38,7 @@ import picture from '../assets/svg/picture-icon.svg';
 import infoIcon from '../assets/svg/account-info.svg';
 import {API_ENDPOINT} from '../constants';
 import PretragaSaPrijedlozima from '../components/pretragaSaPrijedlozima';
+import PredlogA from './naslovna/predlogA';
 import PredlogB from './naslovna/predlogB';
 
 class HomePage extends Component {
@@ -165,12 +166,14 @@ class HomePage extends Component {
 
     render() {
 
-        // Izabrani izgled naslovne. Predlozi A i C se tek izrađuju, pa dok ne
-        // budu gotovi ostaje trenutni — bolje nego prazna strana.
+        // Izabrani izgled naslovne. Predlog C se tek izrađuje, pa dok ne bude
+        // gotov ostaje trenutni — bolje nego prazna strana.
         const izgled = this.izabraniIzgled();
-        if (izgled === 'b') {
+
+        if (izgled === 'a' || izgled === 'b') {
+            const Izgled = izgled === 'a' ? PredlogA : PredlogB;
             return (
-                <PredlogB
+                <Izgled
                     lang={this.props.lang}
                     settings={this.props.settings}
                     homeCategories={this.state.homeCategories}

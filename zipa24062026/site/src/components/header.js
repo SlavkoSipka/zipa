@@ -95,6 +95,9 @@ class Header extends Component {
         // jezik, cenovnik i prijava — krupnije i zbijenije, kako je traženo.
         const plavaTraka = this.props.settings && this.props.settings.homepageLayout === 'b';
 
+        // U predlogu A meni je preoblikovan po vrsti sadržaja.
+        const meniA = this.props.settings && this.props.settings.homepageLayout === 'a';
+
         return (
             <header
                 className={
@@ -292,10 +295,24 @@ class Header extends Component {
                              className={`navigation ${this.props.uData && this.props.uData.userRole == 'photographer' ? 'photographer-nav' : ''} ${this.props.uData && this.props.uData.userRole == 'agency' ? 'agency-nav' : ''}`}>
                             {this.props[0].location.pathname.indexOf('/account') == -1 && (!this.props.uData || (this.props.uData && this.props.uData.userRole != 'photographer') /*|| (this.props.uData && this.props.uData.userRole == 'photographer' && this.props.uData.permissions.indexOf('*') !== -1)*/) ?
 
-                                <ul>
+                                <ul className={meniA ? 'meni-a' : null}>
+                                    {/* U predlogu A meni je preoblikovan po vrsti
+                                        sadržaja — fotografija, video i dron —
+                                        kako je predloženo u nacrtu. */}
+                                    {meniA ? [
+                                        <li key="foto" className={this.props[0].location.pathname == '/galerije' ? 'istaknuto active' : 'istaknuto'}>
+                                            <Link to='/galerije'>{'PHOTO'.translate(this.props.lang)}</Link></li>,
+                                        <li key="video" className="istaknuto">
+                                            <Link to='/video'>{'VIDEO'.translate(this.props.lang)}</Link></li>,
+                                        <li key="dron" className="istaknuto">
+                                            <Link to='/galerije?search=dron'>{'DRON'.translate(this.props.lang)}</Link></li>
+                                    ] : null}
+
                                     <li className={this.props[0].location.pathname == '/' ? "active" : null}><Link
                                         to='/'>{'Početna'.translate(this.props.lang)}</Link></li>
-                                    <li><Link to='/galerije'>{'Galerije'.translate(this.props.lang)}</Link></li>
+                                    {!meniA ?
+                                        <li><Link to='/galerije'>{'Galerije'.translate(this.props.lang)}</Link></li>
+                                        : null}
 
                                     <li className="hide-on-mobile">
                                         <UncontrolledDropdown>

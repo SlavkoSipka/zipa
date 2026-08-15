@@ -874,7 +874,9 @@ class ProductsModule {
                     photos: { $slice: 1 }
                 }
             })
-            .limit(7).sort({ published: -1 }).toArray();
+            // Devet je dovoljno i za mozaik tri sa tri u predlogu A; prikazi
+            // uzimaju onoliko koliko im treba.
+            .limit(9).sort({ published: -1 }).toArray();
 
         // Projekcija iznad šalje samo prvu fotografiju, pa se stvaran broj mora
         // dovući posebno — inače bi uz svaku galeriju pisalo „1 fotografija".
