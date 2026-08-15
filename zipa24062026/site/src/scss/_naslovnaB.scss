@@ -1,0 +1,234 @@
+/*
+ * Naslovna strana — predlog B.
+ *
+ * Raspored po dopisu klijenta: naslovni blok od dve krupnije i tri manje
+ * galerije, pa odeljci po kategorijama sa pet galerija u redu. Razmaci su
+ * namerno vidni, da se susedne fotografije jasno razdvajaju.
+ */
+
+.naslovna-b {
+
+    $razmak: 18px;
+
+    // Zaglavlje sajta lebdi preko sadržaja, pa se prvi odeljak mora spustiti
+    // ispod njega — isti razmak koji koristi i postojeća naslovna.
+    padding-top: 160px;
+
+    @include mobile-tablet { padding-top: 130px; }
+
+    // ── zajednička kartica galerije ──────────────────────────────────────
+    .kartica {
+        display: block;
+        color: inherit;
+        text-decoration: none;
+
+        .slika {
+            position: relative;
+            width: 100%;
+            padding-top: 66.6%;              // uspravan odnos, kao i drugde
+            overflow: hidden;
+            border-radius: 10px;
+            background-color: #EEF1F6;
+
+            img {
+                position: absolute;
+                top: 0; left: 0;
+                width: 100%; height: 100%;
+                object-fit: cover;
+                transition: transform 0.35s ease;
+            }
+
+            .znacka {
+                position: absolute;
+                left: 10px; top: 10px;
+                background-color: rgba(26, 35, 64, 0.86);
+                color: $white;
+                font-size: 11px;
+                font-weight: $medium;
+                padding: 4px 9px;
+                border-radius: 4px;
+            }
+        }
+
+        &:hover .slika img { transform: scale(1.045); }
+
+        .telo {
+            padding: 10px 2px 0;
+
+            h4 {
+                font-size: 15px;
+                font-weight: $semiBold;
+                color: $black;
+                line-height: 1.32;
+                margin: 0 0 5px;
+
+                // najviše dva reda, ostalo se skraćuje — da kartice u redu
+                // ostanu iste visine
+                display: -webkit-box;
+                -webkit-line-clamp: 2;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+            }
+
+            .meta {
+                font-size: 12px;
+                font-weight: $light;
+                color: #6B7280;
+                margin: 0;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+
+                span:not(:last-child)::after {
+                    content: '·';
+                    margin: 0 6px;
+                }
+            }
+        }
+
+        // krupna kartica u naslovnom bloku
+        &.krupna {
+            .slika { padding-top: 60%; }
+            .telo h4 { font-size: 20px; }
+            .telo .meta { font-size: 13px; }
+        }
+    }
+
+    // ── odeljci ──────────────────────────────────────────────────────────
+    .odeljak {
+        margin-bottom: 42px;
+
+        @include mobile { margin-bottom: 30px; }
+
+        .naslov-odeljka {
+            display: flex;
+            align-items: baseline;
+            gap: 14px;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid $darkBlue;
+
+            h3 {
+                font-size: 22px;
+                font-weight: $semiBold;
+                color: $black;
+                margin: 0;
+
+                @include mobile { font-size: 18px; }
+            }
+
+            .broj {
+                font-size: 13px;
+                color: #6B7280;
+                font-weight: $light;
+            }
+
+            a {
+                margin-left: auto;
+                font-size: 14px;
+                color: $blue;
+                white-space: nowrap;
+            }
+
+            // naglašeniji naslov za izdvojeno
+            &.veliki {
+                border-bottom-width: 3px;
+                h3 {
+                    font-size: 28px;
+                    text-transform: uppercase;
+                    letter-spacing: -0.01em;
+                    @include mobile { font-size: 21px; }
+                }
+            }
+        }
+    }
+
+    // ── naslovni blok: dve krupne, pa tri manje ──────────────────────────
+    .mreza-naslovna {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: $razmak;
+        margin-bottom: $razmak;
+
+        &.tri { grid-template-columns: repeat(3, 1fr); }
+
+        @include mobile-tablet { grid-template-columns: repeat(2, 1fr); }
+        @include mobile {
+            grid-template-columns: 1fr;
+            &.tri { grid-template-columns: 1fr; }
+        }
+    }
+
+    // ── izdvojeno: dve u redu, dva reda ──────────────────────────────────
+    .mreza-izdvojeno {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 26px;                            // vidno razdvojene, kako je traženo
+
+        @include mobile { grid-template-columns: 1fr; }
+    }
+
+    // ── kategorije: pet u redu ───────────────────────────────────────────
+    .mreza-pet {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: $razmak;
+
+        @include mobile-tablet { grid-template-columns: repeat(3, 1fr); }
+        @include mobile { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    // ── reklama: širina stalna, visina slobodna ──────────────────────────
+    .mesto-reklame {
+        display: flex;
+        justify-content: center;
+        gap: $razmak;
+        flex-wrap: wrap;
+
+        a { display: block; max-width: 980px; width: 100%; }
+
+        img {
+            display: block;
+            width: 100%;
+            max-width: 980px;
+            height: auto;                     // visina po potrebi
+            border-radius: 8px;
+        }
+    }
+
+    // ── video ────────────────────────────────────────────────────────────
+    .mreza-video {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: $razmak;
+
+        @include mobile-tablet { grid-template-columns: repeat(2, 1fr); }
+        @include mobile { grid-template-columns: 1fr; }
+
+        .slika .igraj {
+            position: absolute;
+            left: 50%; top: 50%;
+            transform: translate(-50%, -50%);
+            width: 48px; height: 48px;
+            display: flex; align-items: center; justify-content: center;
+            background-color: rgba(0, 0, 0, 0.55);
+            color: $white;
+            border-radius: 50%;
+            font-size: 17px;
+            padding-left: 3px;
+        }
+    }
+
+    .alert {
+        background-color: $red;
+        border-radius: 15px;
+        color: $white;
+        font-size: 16px;
+        font-weight: $medium;
+        margin-bottom: 21px;
+        padding: 12px 18px;
+        display: flex;
+        align-items: center;
+        svg { margin-right: 20px; }
+    }
+}

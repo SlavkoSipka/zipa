@@ -185,6 +185,24 @@ const renderToggleField = ({
     )
 
 
+const renderSelectField = ({
+    input,
+    placeholder,
+    label,
+    meta: { touched, error },
+    children
+}) => (
+
+        <Select
+            placeholder={placeholder}
+            label={label}
+            errorText={touched && error}
+            error={touched && error}
+            {...input}
+        >{children}</Select>
+    )
+
+
 const renderImageField = ({
     input,
     label,
@@ -264,6 +282,37 @@ class form extends React.Component {
                         ></Field>
 
 
+                    </Col>
+
+                    <Col lg="12">
+                        <div className="spacer-t"></div>
+                    </Col>
+
+                    {/*
+                      * Izgled naslovne strane. Sva tri predloga postoje uporedo
+                      * u sajtu, a ovde se bira koji vide posetioci — pa se izbor
+                      * može promeniti kad god, bez izmene u kodu.
+                      */}
+                    <Col lg="6">
+                        <Field
+                            name="homepageLayout"
+                            component={renderSelectField}
+                            label="Izgled naslovne strane"
+                            placeholder="Trenutni izgled"
+                        >
+                            <option value="trenutni">Trenutni izgled</option>
+                            <option value="a">Predlog A — po uzoru na Pixsell</option>
+                            <option value="b">Predlog B — po uzoru na AP</option>
+                            <option value="c">Predlog C — novi</option>
+                        </Field>
+                    </Col>
+
+                    <Col lg="6">
+                        <Field
+                            name="homepageLayoutPreview"
+                            component={renderCheckField}
+                            label="Novi izgled vidim samo ja (dok je uključeno, posetioci vide trenutni)"
+                        ></Field>
                     </Col>
 
                     <Col lg="12">

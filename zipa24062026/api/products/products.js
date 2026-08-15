@@ -875,6 +875,20 @@ class ProductsModule {
                 }
             })
             .limit(7).sort({ published: -1 }).toArray();
+
+        // Projekcija iznad šalje samo prvu fotografiju, pa se stvaran broj mora
+        // dovući posebno — inače bi uz svaku galeriju pisalo „1 fotografija".
+        if (items.length) {
+            const brojevi = await db.query(
+                `select "_id", jsonb_array_length(coalesce("photos", '[]'::jsonb))::int as n
+                   from gallery where "_id" = any($1)`,
+                [items.map((g) => g._id)]
+            );
+            const poId = {};
+            for (const red of brojevi.rows) poId[red._id] = red.n;
+            for (const g of items) g.photosCount = poId[g._id] || 0;
+        }
+
         for (let i = 0; i < items.length; i++) {
             if (!items[i].category || (items[i].category && !items[i].category.length)) {
                 continue;
@@ -1173,7 +1187,23 @@ class ProductsModule {
                         photos: { $slice: 1 }
                     }
                 })
-                .limit(3).sort({ published: -1 }).toArray();
+                // Deset je dovoljno i za dva reda po pet, koliko predlog B
+                // dopušta po kategoriji; prikaz uzima onoliko koliko mu treba.
+                .limit(10).sort({ published: -1 }).toArray();
+        }
+
+        // Kao i kod najnovijih: projekcija šalje samo prvu fotografiju, pa se
+        // stvaran broj dovlači posebno, jednim upitom za sve galerije odjednom.
+        const sveGalerije = categories.reduce((zbir, k) => zbir.concat(k.photos || []), []);
+        if (sveGalerije.length) {
+            const brojevi = await db.query(
+                `select "_id", jsonb_array_length(coalesce("photos", '[]'::jsonb))::int as n
+                   from gallery where "_id" = any($1)`,
+                [sveGalerije.map((g) => g._id)]
+            );
+            const poId = {};
+            for (const red of brojevi.rows) poId[red._id] = red.n;
+            for (const g of sveGalerije) g.photosCount = poId[g._id] || 0;
         }
 
         return categories;

@@ -38,6 +38,7 @@ import picture from '../assets/svg/picture-icon.svg';
 import infoIcon from '../assets/svg/account-info.svg';
 import {API_ENDPOINT} from '../constants';
 import PretragaSaPrijedlozima from '../components/pretragaSaPrijedlozima';
+import PredlogB from './naslovna/predlogB';
 
 class HomePage extends Component {
     constructor(props) {
@@ -138,8 +139,51 @@ class HomePage extends Component {
         this.setState({activeIndex: newIndex});
     }
 
+    /*
+     * Koji izgled naslovne se prikazuje.
+     *
+     * Bira se u Podešavanjima sajta. Dok je uključeno „vidim samo ja", novi
+     * izgled vide isključivo administratori, a posetioci i dalje dobijaju
+     * trenutni — da se izgled može pogledati na pravom sajtu, sa pravim
+     * fotografijama, pre nego što se pusti u javnost.
+     */
+    izabraniIzgled() {
+        const podesavanja = this.props.settings || {};
+        const izgled = podesavanja.homepageLayout || 'trenutni';
+
+        if (izgled === 'trenutni') return 'trenutni';
+
+        if (podesavanja.homepageLayoutPreview) {
+            const u = this.props.uData;
+            const jesamAdmin = u && u.permissions && u.permissions.indexOf('*') !== -1;
+            if (!jesamAdmin) return 'trenutni';
+        }
+
+        return izgled;
+    }
+
 
     render() {
+
+        // Izabrani izgled naslovne. Predlozi A i C se tek izrađuju, pa dok ne
+        // budu gotovi ostaje trenutni — bolje nego prazna strana.
+        const izgled = this.izabraniIzgled();
+        if (izgled === 'b') {
+            return (
+                <PredlogB
+                    lang={this.props.lang}
+                    settings={this.props.settings}
+                    homeCategories={this.state.homeCategories}
+                    latest={this.state.latest}
+                    izdvojeno={this.state.izdvojeno}
+                    announcements={this.state.announcements}
+                    banners={this.props.banners}
+                    videos={this.state.videos}
+                    bannerClick={this.props.bannerClick}
+                />
+            );
+        }
+
         const {activeIndex} = this.state;
         const slides = this.state.slides.map((item, idx) => {
             return (
