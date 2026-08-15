@@ -171,7 +171,8 @@ class PredlogB extends Component {
                     Pet galerija u redu; koliko redova ima kategorija zadaje
                     se u administraciji (jedan ili dva).                    */}
                 {kategorije.map((k, idx) => {
-                    const redova = k.homeRows === 2 ? 2 : 1;
+                    // Iz obrasca stiže kao tekst („1" ili „2"), iz baze kao broj.
+                    const redova = Number(k.homeRows) === 2 ? 2 : 1;
                     const galerije = (k.photos || []).slice(0, redova * 5);
                     if (!galerije.length) return null;
 

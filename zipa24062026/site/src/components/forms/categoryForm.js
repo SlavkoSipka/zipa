@@ -149,6 +149,23 @@ const renderMultiCheckboxField = ({
         >{children}</MultiCheckbox>
     )
 
+const renderSelectField = ({
+    input,
+    placeholder,
+    label,
+    meta: { touched, error },
+    children
+}) => (
+
+        <Select
+            placeholder={placeholder}
+            label={label}
+            errorText={touched && error}
+            error={touched && error}
+            {...input}
+        >{children}</Select>
+    )
+
 const renderCheckField = ({
     input,
     placeholder,
@@ -255,6 +272,20 @@ class form extends React.Component {
                             component={renderTextField}
                             label={'Pozicija'.translate(this.props.lang)}
                         ></Field>
+
+                        {/*
+                          * Koliko redova galerija ova kategorija zauzima na
+                          * naslovnoj. Jedan red je pet galerija, dva reda deset.
+                          */}
+                        <Field
+                            name="homeRows"
+                            component={renderSelectField}
+                            label={'Redova na početnoj'.translate(this.props.lang)}
+                            placeholder={'Jedan red (5 galerija)'.translate(this.props.lang)}
+                        >
+                            <option value="1">{'Jedan red (5 galerija)'.translate(this.props.lang)}</option>
+                            <option value="2">{'Dva reda (10 galerija)'.translate(this.props.lang)}</option>
+                        </Field>
 
 
                     </Col>

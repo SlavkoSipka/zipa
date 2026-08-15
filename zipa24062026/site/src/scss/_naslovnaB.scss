@@ -6,16 +6,89 @@
  * namerno vidni, da se susedne fotografije jasno razdvajaju.
  */
 
+/* ── gornja plava traka (predlog B) ──────────────────────────────────────
+ * Levo naziv agencije, desno jezik, cenovnik i prijava. Traženo je da desni
+ * deo bude malo krupniji i sa manjim razmakom nego što je bio.
+ */
+header .traka-vrh {
+    background-color: $darkBlue;
+    color: $white;
+
+    .traka-sadrzaj {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        height: 34px;
+    }
+
+    .naziv {
+        font-size: 12px;
+        font-weight: $medium;
+        letter-spacing: 0.02em;
+        color: rgba(255, 255, 255, 0.92);
+        white-space: nowrap;
+    }
+
+    .veze {
+        display: flex;
+        align-items: center;
+        gap: 14px;                       // zbijenije nego ostatak zaglavlja
+
+        a, .jezik {
+            font-size: 12.5px;           // malo krupnije, kako je traženo
+            font-weight: $semiBold;
+            letter-spacing: 0.03em;
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+            background: none;
+            border: 0;
+            padding: 0;
+            white-space: nowrap;
+            transition: color 0.2s;
+
+            &:hover { color: $white; }
+        }
+
+        .jezik.izabran { color: $white; text-decoration: underline; }
+    }
+
+    @include mobile {
+        .naziv { display: none; }
+        .traka-sadrzaj { justify-content: flex-end; height: 30px; }
+        .veze { gap: 11px; a, .jezik { font-size: 11px; } }
+    }
+}
+
+/* Natpis u predlogu B: „ZIPA" crveno, „PHOTO" plavo — obrnuto od nacrta,
+ * kako je traženo („zamijeniti boje").
+ *
+ * Selektor mora da sadrži i `.logo` i `.desktop-logo`, jer ga inače nadjačava
+ * postojeće pravilo `header .logo .desktop-logo > span`. */
+header .logo .desktop-logo.logo-b > .natpis-b {
+    font-size: 23px;
+    font-weight: $bold;
+    letter-spacing: -0.03em;
+    color: $red;
+
+    em {
+        font-style: normal;
+        color: $darkBlue;
+    }
+
+    @include mobile { font-size: 18px; }
+}
+
 .naslovna-b {
 
     $razmak: 18px;
 
     // Zaglavlje sajta lebdi preko sadržaja, pa se prvi odeljak spušta tačno
-    // ispod njega. Razmak je odmeren tako da naslovni blok (krupna galerija,
-    // dve uz nju i tri ispod) stane na ekran bez pomeranja — kako je traženo.
-    padding-top: 132px;
+    // ispod njega. U predlogu B zaglavlju je dodata i plava traka od 34
+    // tačke, pa je razmak za toliko veći.
+    padding-top: 166px;
 
-    @include mobile-tablet { padding-top: 124px; }
+    @include mobile-tablet { padding-top: 154px; }
 
     // ── kartica galerije ─────────────────────────────────────────────────
     .kartica {
@@ -116,6 +189,31 @@
             }
         }
 
+        // Na niskim ekranima se natpis stišava, da ne pojede fotografiju.
+        @media (max-height: 820px) {
+            &.preko .preko-teksta {
+                padding: 26px 13px 11px;
+                h4 { font-size: 14px; -webkit-line-clamp: 2; }
+                .meta { font-size: 11px; }
+            }
+            &.preko.velika .preko-teksta {
+                padding: 44px 20px 16px;
+                h4 { font-size: 20px; }
+                .meta { font-size: 12px; }
+            }
+        }
+
+        @media (max-height: 680px) {
+            &.preko .preko-teksta {
+                padding: 22px 11px 9px;
+                h4 { font-size: 12.5px; -webkit-line-clamp: 1; }
+                .meta { font-size: 10.5px; }
+            }
+            &.preko.velika .preko-teksta {
+                h4 { font-size: 17px; }
+            }
+        }
+
         /* ── oblik „ispod": bela kartica sa natpisom ispod snimka ──────── */
         &.ispod {
             background-color: $white;
@@ -210,30 +308,51 @@
         }
     }
 
-    // ── naslovni blok: jedna krupna levo, dve desno, tri ispod ───────────
+    /* ── naslovni blok: jedna krupna levo, dve desno, tri ispod ───────────
+     *
+     * Visine se računaju iz visine ekrana, a ne zadaju u tačkama — traženo je
+     * da ceo blok bude vidljiv bez pomeranja, a ekrani se razlikuju od niskih
+     * prenosnih (768) do stonih (1080 i više).
+     *
+     * Od visine ekrana se oduzima zaglavlje, naslov odeljka i razmaci; ostatak
+     * se deli na krupni deo i donji red u odnosu 64:36. Granice sprečavaju da
+     * fotografije postanu sitne na vrlo niskim ekranima, odnosno preterano
+     * krupne na visokim.
+     */
+    $raspolozivo: calc(100vh - 266px);
+
     .blok-naslovni {
         display: grid;
         grid-template-columns: 2fr 1fr;      // krupna zauzima dve trećine
         gap: $razmak;
         margin-bottom: $razmak;
 
+        height: clamp(260px, calc(#{$raspolozivo} * 0.64), 470px);
+
         .glavna,
         .glavna .kartica { height: 100%; }
 
-        // dve manje, jedna ispod druge, ukupno iste visine kao krupna
+        // Unutar naslovnog bloka visinu diktira mreža, pa se ne ide preko
+        // odnosa stranica — fotografija se prilagođava isecanjem. Selektori
+        // moraju da nose i `.preko` i `.velika`, inače ih nadjačavaju
+        // pravila iznad koja zadaju odnos stranica.
+        .kartica.preko .slika,
+        .kartica.preko.velika .slika { padding-top: 0; height: 100%; }
+
         .uz-glavnu {
             display: grid;
             grid-template-rows: 1fr 1fr;
             gap: $razmak;
 
             .kartica { height: 100%; }
-            .kartica .slika { padding-top: 0; height: 100%; }
         }
 
         @include mobile {
             grid-template-columns: 1fr;
+            height: auto;
+            .kartica.preko .slika,
+            .kartica.preko.velika .slika { padding-top: 66.6%; height: auto; }
             .uz-glavnu { grid-template-rows: auto auto; }
-            .uz-glavnu .kartica .slika { padding-top: 66.6%; height: auto; }
         }
     }
 
@@ -243,7 +362,16 @@
         grid-template-columns: repeat(3, 1fr);
         gap: $razmak;
 
-        @include mobile { grid-template-columns: 1fr; }
+        height: clamp(140px, calc(#{$raspolozivo} * 0.36), 250px);
+
+        .kartica { height: 100%; }
+        .kartica.preko .slika { padding-top: 0; height: 100%; }
+
+        @include mobile {
+            grid-template-columns: 1fr;
+            height: auto;
+            .kartica.preko .slika { padding-top: 66.6%; height: auto; }
+        }
     }
 
     // ── izdvojeno: dve u redu, dva reda ──────────────────────────────────

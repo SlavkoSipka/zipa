@@ -91,9 +91,43 @@ class Header extends Component {
 
     render() {
 
+        // Gornja plava traka pripada predlogu B. Levo naziv agencije, desno
+        // jezik, cenovnik i prijava — krupnije i zbijenije, kako je traženo.
+        const plavaTraka = this.props.settings && this.props.settings.homepageLayout === 'b';
+
         return (
             <header
-                className={this.state.yScroll > 20 && this.state.scrollHeader ? 'scroll-header' : this.state.yScroll < 20 ? '' : 'hide-header'}>
+                className={
+                    (this.state.yScroll > 20 && this.state.scrollHeader ? 'scroll-header' : this.state.yScroll < 20 ? '' : 'hide-header')
+                    + (plavaTraka ? ' sa-trakom' : '')
+                }>
+
+                {plavaTraka ?
+                    <div className="traka-vrh">
+                        <Container>
+                            <div className="traka-sadrzaj">
+                                <span className="naziv">ZIPA AGENCY &ndash; Banja Luka</span>
+                                <div className="veze">
+                                    <button
+                                        className={this.props.lang === 'ba' ? 'jezik izabran' : 'jezik'}
+                                        onClick={this.setLangBa}>BA</button>
+                                    <button
+                                        className={this.props.lang === 'en' ? 'jezik izabran' : 'jezik'}
+                                        onClick={this.setLangEn}>EN</button>
+                                    <Link to="/page/cjenovnik">{'CJENOVNIK'.translate(this.props.lang)}</Link>
+                                    {this.props.uData ?
+                                        <Link to="/account/profile">{'NALOG'.translate(this.props.lang)}</Link>
+                                        :
+                                        <>
+                                            <Link to="/register">{'REGISTRUJ SE'.translate(this.props.lang)}</Link>
+                                            <Link to="/login">{'PRIJAVI SE'.translate(this.props.lang)}</Link>
+                                        </>
+                                    }
+                                </div>
+                            </div>
+                        </Container>
+                    </div>
+                    : null}
 
                 {
                     this.props.uData && this.props.uData.userRole == 'photographer' && this.props.uData.permissions.indexOf('*') === -1 && (this.props[0].location.pathname.indexOf('/contact') == -1 && this.props[0].location.pathname.indexOf('/account') == -1 && this.props[0].location.pathname.indexOf('/page') == -1 && this.props[0].location.pathname.indexOf('/galerija') == -1) ?
@@ -158,8 +192,17 @@ class Header extends Component {
                             </button>
                         </Col>
                         <Col lg="4" xs="8" sm="4" className="logo">
-                            <Link to='/' className="desktop-logo"><Isvg src={this.props.settings.logo}/> <span
-                                dangerouslySetInnerHTML={{__html: this.props.settings.logoText}}></span> </Link>
+                            {plavaTraka ?
+                                /* U predlogu B natpis je razdvojen na dva dela sa
+                                   zamenjenim bojama, kako je traženo. */
+                                <Link to='/' className="desktop-logo logo-b">
+                                    <Isvg src={this.props.settings.logo}/>
+                                    <span className="natpis-b">ZIPA<em>PHOTO</em></span>
+                                </Link>
+                                :
+                                <Link to='/' className="desktop-logo"><Isvg src={this.props.settings.logo}/> <span
+                                    dangerouslySetInnerHTML={{__html: this.props.settings.logoText}}></span> </Link>
+                            }
 
                             <Isvg src={this.props.settings.logo}/>
 
