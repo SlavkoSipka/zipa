@@ -317,6 +317,52 @@ app.delete('/slides/delete/:id', permissionMiddleware('*'), async (req, res) => 
 });
 
 
+// Izdvojeno na naslovnoj — javno se vraćaju samo uključene stavke.
+app.get('/featured/all', async (req, res) => {
+    res.send(await adminModule.allFeatured(true));
+});
+
+app.get('/featured/admin/all', permissionMiddleware('*'), async (req, res) => {
+    res.send(await adminModule.allFeatured(false));
+});
+
+app.post('/featured/update/:id', permissionMiddleware('*'), async (req, res) => {
+    let result = await adminModule.updateFeatured(req.params.id, req.body);
+    res.status(result.status).send(result.response);
+});
+
+app.get('/featured/get/:id', permissionMiddleware('*'), async (req, res) => {
+    res.send(await adminModule.fetchFeatured(req.params.id));
+});
+
+app.delete('/featured/delete/:id', permissionMiddleware('*'), async (req, res) => {
+    res.send(await adminModule.deleteFeatured(req.params.id));
+});
+
+
+// Video odeljak — snimci se povlače sa YouTube kanala agencije.
+app.get('/videos/all', async (req, res) => {
+    res.send(await adminModule.allVideos(true));
+});
+
+app.get('/videos/admin/all', permissionMiddleware('*'), async (req, res) => {
+    res.send(await adminModule.allVideos(false));
+});
+
+app.post('/videos/update/:id', permissionMiddleware('*'), async (req, res) => {
+    let result = await adminModule.updateVideo(req.params.id, req.body);
+    res.status(result.status).send(result.response);
+});
+
+app.get('/videos/get/:id', permissionMiddleware('*'), async (req, res) => {
+    res.send(await adminModule.fetchVideo(req.params.id));
+});
+
+app.delete('/videos/delete/:id', permissionMiddleware('*'), async (req, res) => {
+    res.send(await adminModule.deleteVideo(req.params.id));
+});
+
+
 app.get('/faqCategories/all', async (req, res) => {
     res.send(await adminModule.allFaqCategories());
 });

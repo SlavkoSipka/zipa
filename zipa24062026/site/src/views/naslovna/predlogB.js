@@ -156,12 +156,26 @@ class PredlogB extends Component {
                     <section className="odeljak izdvojeno">
                         <Container>
                             <div className="naslov-odeljka veliki">
-                                <h3>{(podesavanja.izdvojenoNaslov || 'Izdvajamo').translate(lang)}</h3>
+                                <h3>{podesavanja.izdvojenoNaslov || 'Izdvajamo'}</h3>
                             </div>
-                            {/* Dve u redu, dva reda — sa naglašenim natpisom
-                                preko fotografije, po uzoru koji ste poslali. */}
+
+                            {/* Dve u redu, dva reda. Naslov i fotografija se
+                                biraju ručno u administraciji, a klik vodi na
+                                galeriju ili kategoriju koju ste odredili. */}
                             <div className="mreza-izdvojeno">
-                                {this.props.izdvojeno.slice(0, 4).map((g, i) => this.kartica(g, `i${i}`, 'preko', 'velika'))}
+                                {this.props.izdvojeno.slice(0, 4).map((s, i) => {
+                                    const naslov = Object.translate(s, 'title', lang) || '';
+                                    return (
+                                        <Link key={i} to={s.link || '/galerije'} className="izdvojena">
+                                            <div className="slika">
+                                                {s.image ? <img src={s.image} alt={naslov} loading="lazy" /> : null}
+                                                <div className="preko-teksta">
+                                                    <h4>{naslov}</h4>
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    );
+                                })}
                             </div>
                         </Container>
                     </section>
@@ -225,15 +239,20 @@ class PredlogB extends Component {
                                 <h3>{'Video'.translate(lang)}</h3>
                             </div>
                             <div className="mreza-video">
-                                {this.props.videos.slice(0, 4).map((v, i) => (
-                                    <a key={i} href={v.link} target="_blank" rel="noopener noreferrer" className="kartica">
-                                        <div className="slika">
-                                            <img src={v.thumbnail} alt={v.title} loading="lazy" />
-                                            <span className="igraj">▶</span>
-                                        </div>
-                                        <div className="telo"><h4>{v.title}</h4></div>
-                                    </a>
-                                ))}
+                                {this.props.videos.slice(0, 4).map((v, i) => {
+                                    // Naslov stiže u oba jezika, pa se mora prevesti
+                                    // pre ispisa — inače React dobije objekat.
+                                    const naslovVidea = Object.translate(v, 'title', lang) || '';
+                                    return (
+                                        <a key={i} href={v.link} target="_blank" rel="noopener noreferrer" className="kartica">
+                                            <div className="slika">
+                                                {v.thumbnail ? <img src={v.thumbnail} alt={naslovVidea} loading="lazy" /> : null}
+                                                <span className="igraj">▶</span>
+                                            </div>
+                                            <div className="telo"><h4>{naslovVidea}</h4></div>
+                                        </a>
+                                    );
+                                })}
                             </div>
                         </Container>
                     </section>

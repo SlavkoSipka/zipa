@@ -764,6 +764,100 @@ class Admin {
     }
 
 
+    /* ── Izdvojeno na naslovnoj ───────────────────────────────────────────
+     *
+     * Odeljak „Izdvajamo": naslov i fotografija se biraju ručno, a klik vodi
+     * na galeriju ili kategoriju koju agencija odredi. Zato ovo nije izvedeno
+     * iz galerija nego se vodi zasebno, kao i slajdovi.
+     */
+    async fetchFeatured(id) {
+        let red = await db.collection('featured').find({ _id: ObjectID(id) }).toArray();
+        return red.length ? red[0] : {};
+    }
+
+    async updateFeatured(id, data) {
+        const obj = data;
+        const polja = {
+            title: obj.title,
+            image: obj.image,
+            link: obj.link,
+            position: obj.position ? parseInt(obj.position) : 0,
+            isActive: obj.isActive === undefined ? true : !!obj.isActive
+        };
+
+        if (id == 'new') {
+            await db.collection('featured').insertOne(
+                Object.assign({}, polja, { published: Math.floor(new Date().getTime() / 1000) })
+            );
+        } else {
+            await db.collection('featured').updateOne({ _id: ObjectID(id) }, { $set: polja });
+        }
+
+        return { response: {}, status: 200 };
+    }
+
+    // Za naslovnu — samo uključene stavke, redom koji je zadat.
+    async allFeatured(samoAktivne = false) {
+        const uslov = samoAktivne ? { isActive: true } : {};
+        return await db.collection('featured').find(uslov).sort({ position: 1 }).toArray();
+    }
+
+    async deleteFeatured(id) {
+        await db.collection('featured').deleteOne({ _id: ObjectID(id) });
+        return { response: {}, status: 200 };
+    }
+
+
+    /* ── Video odeljak ────────────────────────────────────────────────────
+     *
+     * Snimci se ne postavljaju na naš server nego se povlače sa YouTube
+     * kanala agencije — tako je dogovoreno. Ovde se čuva samo adresa i
+     * naslov; sličicu YouTube nudi sam, pa se ne mora postavljati.
+     */
+    async fetchVideo(id) {
+        let red = await db.collection('videos').find({ _id: ObjectID(id) }).toArray();
+        return red.length ? red[0] : {};
+    }
+
+    // Iz adrese izvlači oznaku snimka, pa iz nje sličicu.
+    slicicaSaYouTube(link) {
+        if (!link) return null;
+        const m = String(link).match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([A-Za-z0-9_-]{11})/);
+        return m ? `https://i.ytimg.com/vi/${m[1]}/hqdefault.jpg` : null;
+    }
+
+    async updateVideo(id, data) {
+        const obj = data;
+        const polja = {
+            title: obj.title,
+            link: obj.link,
+            thumbnail: obj.thumbnail || this.slicicaSaYouTube(obj.link),
+            position: obj.position ? parseInt(obj.position) : 0,
+            isActive: obj.isActive === undefined ? true : !!obj.isActive
+        };
+
+        if (id == 'new') {
+            await db.collection('videos').insertOne(
+                Object.assign({}, polja, { published: Math.floor(new Date().getTime() / 1000) })
+            );
+        } else {
+            await db.collection('videos').updateOne({ _id: ObjectID(id) }, { $set: polja });
+        }
+
+        return { response: {}, status: 200 };
+    }
+
+    async allVideos(samoAktivne = false) {
+        const uslov = samoAktivne ? { isActive: true } : {};
+        return await db.collection('videos').find(uslov).sort({ position: 1 }).toArray();
+    }
+
+    async deleteVideo(id) {
+        await db.collection('videos').deleteOne({ _id: ObjectID(id) });
+        return { response: {}, status: 200 };
+    }
+
+
 
 
 

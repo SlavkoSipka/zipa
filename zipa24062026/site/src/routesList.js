@@ -115,6 +115,33 @@ export const routes = [
                 })
             },
 
+            // Izdvojeno i video — koristi ih predlog B na dnu naslovne.
+            (fetchFunction, match) => {
+                return fetchFunction(`${API_ENDPOINT}/featured/all`, {
+                    method: 'GET',
+                    headers: {
+                        'content-type': 'application/json'
+                    },
+                }).then(res => res.json()).then((result) => {
+                    return {
+                        izdvojeno: result,
+                    }
+                })
+            },
+
+            (fetchFunction, match) => {
+                return fetchFunction(`${API_ENDPOINT}/videos/all`, {
+                    method: 'GET',
+                    headers: {
+                        'content-type': 'application/json'
+                    },
+                }).then(res => res.json()).then((result) => {
+                    return {
+                        videos: result,
+                    }
+                })
+            },
+
             (fetchFunction, match) => {
                 return fetchFunction(`${API_ENDPOINT}/products/latest`, {
                     method: 'GET',
