@@ -413,21 +413,12 @@ class CategoryPage extends Component {
 
                                                                 <span>{'Broj stavki po stranici:'.translate(this.props.lang)}</span>
                                                                 <ul>
-                                                                    {/* 36 je podrazumevani prikaz — koliko je snimaka imao film */}
+                                                                    {/* 36 je podrazumevani prikaz — koliko je snimaka imao film.
+                                                                        Klijent je tražio da ostanu samo 36, 96 i 200. */}
                                                                     <li className={!params.ipp ? "active" : null}><Link
                                                                         to={this.props[0].location.pathname + this.generateSearchLink('ipp', null)}>
                                                                         <button>36</button>
                                                                     </Link></li>
-                                                                    <li className={params.ipp === '24' ? "active" : null}>
-                                                                        <Link
-                                                                            to={this.props[0].location.pathname + this.generateSearchLink('ipp', '24')}>
-                                                                            <button>24</button>
-                                                                        </Link></li>
-                                                                    <li className={params.ipp === '48' ? "active" : null}>
-                                                                        <Link
-                                                                            to={this.props[0].location.pathname + this.generateSearchLink('ipp', '48')}>
-                                                                            <button>48</button>
-                                                                        </Link></li>
                                                                     <li className={params.ipp === '96' ? "active" : null}>
                                                                         <Link
                                                                             to={this.props[0].location.pathname + this.generateSearchLink('ipp', '96')}>

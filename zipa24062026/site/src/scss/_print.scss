@@ -5,12 +5,14 @@
  * podaci i fotografije. Traka za pretragu, ikone društvenih mreža, baneri,
  * navigacija i dugmad se izostavljaju — oni na papiru samo zauzimaju mesto.
  *
- * Format se podešava u prozoru za štampu (A4, A3…); ovde je zadat A4 kao
- * podrazumevani, sa marginama koje ostavljaju mesta za zaglavlje.
+ * Format papira se NAMERNO ne zadaje. Ranije je ovde stajalo `size: A4`, što
+ * je zaključavalo format i uklanjalo izbor papira iz prozora za štampu —
+ * korisnik je ostajao bez mogućnosti da izabere A3 ili neki drugi format.
+ * Bez tog pravila pregledač nudi sve formate koje štampač podržava, a
+ * raspored se prilagođava jer je zadat u procentima, ne u milimetrima.
  */
 
 @page {
-    size: A4;
     margin: 12mm 10mm;
 }
 

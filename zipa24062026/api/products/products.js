@@ -25,6 +25,30 @@ dbConnect()
 
 
 /**
+ * Vraća kvačice tekstu koji je stigao pokvaren iz IPTC-a.
+ *
+ * FotoStation upisuje IPTC polja u UTF-8, ali ne upiše oznaku kodnog rasporeda
+ * (`CodedCharacterSet`). Po standardu se tada čita kao Latin-1, pa „večeras"
+ * stigne kao „veÄeras". Isti tekst u XMP delu je ispravan, jer je XMP uvek
+ * UTF-8 — zato se ispod, gde god postoje oba, uzima XMP.
+ *
+ * Popravka je povratak istim putem: znakovi nazad u bajtove po Latin-1, pa
+ * čitanje kao UTF-8. Dira samo tekst koji ima tragove kvara, a ako popravka ne
+ * da smislen rezultat, ostavlja original.
+ */
+function popraviKvacice(tekst) {
+    if (!tekst || typeof tekst !== 'string') return tekst;
+    if (!/[ÃÅÄÂ]/.test(tekst)) return tekst;
+
+    try {
+        const popravljen = Buffer.from(tekst, 'latin1').toString('utf8');
+        return popravljen.includes('�') ? tekst : popravljen;
+    } catch (e) {
+        return tekst;
+    }
+}
+
+/**
  * Ključne reči iz metapodataka fotografije svodi na uredan niz.
  *
  * FotoStation ih upisuje kao IPTC `Keywords`, a neki programi kao XMP
@@ -37,7 +61,7 @@ function normalizeKeywords(value) {
     const lista = Array.isArray(value) ? value : String(value).split(/[,;]/);
 
     const ociscene = lista
-        .map((rec) => String(rec).trim())
+        .map((rec) => popraviKvacice(String(rec).trim()))
         .filter((rec) => rec.length > 0);
 
     // izbaci ponovljene, bez obzira na velika/mala slova
@@ -223,13 +247,17 @@ class ProductsModule {
                 name: retName,
                 width: imageInfo.width,
                 height: imageInfo.height,
-                location: exifTags.City,
-                copyright: exifTags.Rights,
-                captionWriter: exifTags.CaptionWriter,
-                author: exifTags.Credit,
-                description: exifTags.Description,
+                // Gde god postoje i IPTC i XMP verzija istog podatka, uzima se
+                // XMP — on je uvek UTF-8, pa nema pokvarenih kvačica.
+                location: popraviKvacice(exifTags.City),
+                copyright: popraviKvacice(exifTags.Rights),
+                captionWriter: popraviKvacice(exifTags.CaptionWriter),
+                author: popraviKvacice(exifTags.Credit),
+                description: popraviKvacice(exifTags.Description || exifTags['Caption-Abstract']),
                 date: exifTags.DateTimeOriginal ? Math.floor(new Date(exifTags.DateTimeOriginal.year, exifTags.DateTimeOriginal.month - 1, exifTags.DateTimeOriginal.day, exifTags.DateTimeOriginal.hour, exifTags.DateTimeOriginal.minute, exifTags.DateTimeOriginal.second, exifTags.DateTimeOriginal.millisecond).getTime() / 1000) : null,
-                galleryName: exifTags.ObjectName ? exifTags.ObjectName.replace(/Ä/g, 'č').replace(/Ä‘/g, 'đ').replace(/Ä‡/g, 'ć').replace(/ÄŒ/g, 'Č') : null,
+                // Ranije se ovde krpilo slovo po slovo (Ä→č, Ä‘→đ…), što je
+                // hvatalo samo nekoliko slučajeva. Sada ide opšta popravka.
+                galleryName: popraviKvacice(exifTags.Title || exifTags.ObjectName) || null,
 
                 // Ključne reči koje je fotograf upisao u FotoStation-u (polje Keywords).
                 // Preuzimaju se automatski da se ne bi kucale ponovo na sajtu.
@@ -243,7 +271,7 @@ class ProductsModule {
                  * stajalo u opisu: imena ljudi na fotografiji, radni nazivi,
                  * drugačiji nazivi istog mesta.
                  */
-                localCaption: exifTags.LocalCaption || null,
+                localCaption: popraviKvacice(exifTags.LocalCaption) || null,
 
                 // Podaci o snimku — za prikaz na stranici fotografije.
                 camera: formatCamera(exifTags.Make, exifTags.Model),
