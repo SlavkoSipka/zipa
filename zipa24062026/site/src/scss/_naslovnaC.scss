@@ -1,0 +1,334 @@
+/*
+ * Naslovna strana — predlog C.
+ *
+ * Svetla podloga i uzdržan izgled, po uzoru na AP Newsroom. Razlika u odnosu
+ * na A i B je u tome što se kategorije ne slažu jedna ispod druge nego se
+ * svaka pomera vodoravno — na jednoj strani stane mnogo više galerija, a
+ * strana ostaje kratka.
+ */
+
+.naslovna-c {
+
+    $razmak: 14px;
+    $sirinaKartice: 232px;
+
+    padding-top: 116px;
+
+    @include mobile-tablet { padding-top: 112px; }
+
+    // ── naslovna traka preko cele širine ─────────────────────────────────
+    .glavna-traka {
+        position: relative;
+        margin-bottom: 40px;
+
+        a { display: block; color: inherit; text-decoration: none; }
+
+        > a > img {
+            width: 100%;
+            height: 460px;
+            object-fit: cover;
+            display: block;
+
+            @include mobile-tablet { height: 320px; }
+            @include mobile { height: 220px; }
+        }
+
+        // tekst leži na donjoj trećini snimka
+        .container {
+            position: absolute;
+            left: 0; right: 0; bottom: 0;
+        }
+
+        &::after {
+            content: '';
+            position: absolute;
+            left: 0; right: 0; bottom: 0;
+            height: 62%;
+            background-image: linear-gradient(transparent, rgba(8, 10, 18, 0.86));
+            pointer-events: none;
+        }
+
+        .tekst {
+            position: relative;
+            z-index: 2;
+            padding-bottom: 30px;
+            color: $white;
+
+            @include mobile { padding-bottom: 16px; }
+
+            .oznaka {
+                display: inline-block;
+                background-color: $red;
+                color: $white;
+                font-size: 11px;
+                font-weight: $semiBold;
+                letter-spacing: 0.05em;
+                text-transform: uppercase;
+                padding: 4px 10px;
+                border-radius: 3px;
+                margin-bottom: 12px;
+            }
+
+            h2 {
+                font-size: 38px;
+                font-weight: $bold;
+                line-height: 1.12;
+                color: $white;
+                margin: 0 0 10px;
+                max-width: 60%;
+                letter-spacing: -0.02em;
+
+                @include mobile-tablet { font-size: 27px; max-width: 85%; }
+                @include mobile { font-size: 19px; max-width: 100%; }
+            }
+
+            p {
+                margin: 0;
+                font-size: 13.5px;
+                font-weight: $light;
+                color: rgba(255, 255, 255, 0.84);
+
+                span:not(:last-child)::after {
+                    content: '·';
+                    margin: 0 8px;
+                    opacity: 0.7;
+                }
+
+                @include mobile { font-size: 11.5px; }
+            }
+        }
+    }
+
+    // ── odeljci ──────────────────────────────────────────────────────────
+    .odeljak {
+        margin-bottom: 34px;
+
+        @include mobile { margin-bottom: 24px; }
+
+        .naslov-odeljka {
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+            margin-bottom: 13px;
+
+            h3 {
+                font-size: 18px;
+                font-weight: $semiBold;
+                color: $black;
+                margin: 0;
+                letter-spacing: -0.012em;
+                @include mobile { font-size: 16px; }
+            }
+
+            .broj-kat {
+                font-size: 12px;
+                color: #9096A5;
+                font-weight: $light;
+                font-variant-numeric: tabular-nums;
+            }
+
+            a {
+                margin-left: auto;
+                font-size: 13px;
+                font-weight: $medium;
+                color: $blue;
+                white-space: nowrap;
+            }
+        }
+    }
+
+    /* ── traka koja se pomera vodoravno ───────────────────────────────────
+     * Ovo je glavna razlika u odnosu na druga dva predloga: kategorija ne
+     * zauzima ceo red niz stranu nego se lista u stranu.
+     */
+    .traka {
+        display: flex;
+        gap: $razmak;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding-bottom: 10px;
+        scroll-snap-type: x proximity;
+        -webkit-overflow-scrolling: touch;
+
+        // uzdržana traka za pomeranje
+        scrollbar-width: thin;
+        scrollbar-color: #C7CCD8 transparent;
+
+        &::-webkit-scrollbar { height: 7px; }
+        &::-webkit-scrollbar-track { background: transparent; }
+        &::-webkit-scrollbar-thumb {
+            background-color: #C7CCD8;
+            border-radius: 99px;
+        }
+
+        > .kartica {
+            flex: 0 0 $sirinaKartice;
+            scroll-snap-align: start;
+
+            @include mobile { flex-basis: 168px; }
+        }
+    }
+
+    // ── kartica galerije ─────────────────────────────────────────────────
+    .kartica {
+        display: block;
+        text-decoration: none;
+        color: inherit;
+
+        .slika {
+            position: relative;
+            width: 100%;
+            padding-top: 66.6%;
+            overflow: hidden;
+            border-radius: 6px;
+            background-color: #E7EAF0;
+
+            img {
+                position: absolute;
+                top: 0; left: 0;
+                width: 100%; height: 100%;
+                object-fit: cover;
+                transition: opacity 0.25s ease;
+            }
+
+            // broj fotografija, nenametljivo u uglu
+            .broj {
+                position: absolute;
+                right: 8px; bottom: 8px;
+                z-index: 2;
+                background-color: rgba(10, 13, 22, 0.74);
+                color: $white;
+                font-size: 11px;
+                font-weight: $medium;
+                padding: 2px 7px;
+                border-radius: 3px;
+                font-variant-numeric: tabular-nums;
+            }
+
+            .igraj {
+                position: absolute;
+                left: 50%; top: 50%;
+                transform: translate(-50%, -50%);
+                z-index: 2;
+                width: 40px; height: 40px;
+                display: flex; align-items: center; justify-content: center;
+                background-color: rgba(0, 0, 0, 0.58);
+                color: $white;
+                border-radius: 50%;
+                font-size: 14px;
+                padding-left: 2px;
+            }
+        }
+
+        &:hover .slika img { opacity: 0.88; }
+
+        .telo {
+            padding: 9px 1px 0;
+
+            h4 {
+                font-size: 13.5px;
+                font-weight: $semiBold;
+                color: $black;
+                line-height: 1.34;
+                margin: 0 0 3px;
+                display: -webkit-box;
+                -webkit-line-clamp: 2;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+            }
+
+            .meta {
+                font-size: 11.5px;
+                font-weight: $light;
+                color: #858C9C;
+                margin: 0;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+
+                span:not(:last-child)::after {
+                    content: '·';
+                    margin: 0 5px;
+                    opacity: 0.7;
+                }
+            }
+        }
+    }
+
+    // ── izdvojeno: dve široke, jedna do druge ────────────────────────────
+    .mreza-izdvojeno {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+
+        @include mobile { grid-template-columns: 1fr; }
+
+        .izdvojena {
+            position: relative;
+            display: block;
+            overflow: hidden;
+            border-radius: 8px;
+            background-color: #11141f;
+            text-decoration: none;
+
+            img {
+                display: block;
+                width: 100%;
+                height: 240px;
+                object-fit: cover;
+                transition: transform 0.5s ease;
+
+                @include mobile { height: 170px; }
+            }
+
+            &:hover img { transform: scale(1.035); }
+
+            .preko {
+                position: absolute;
+                left: 0; right: 0; bottom: 0;
+                padding: 56px 20px 18px;
+                background-image: linear-gradient(transparent, rgba(8, 11, 22, 0.9));
+
+                h4 {
+                    margin: 0;
+                    font-size: 21px;
+                    font-weight: $bold;
+                    line-height: 1.18;
+                    color: $white;
+                    @include mobile { font-size: 16px; }
+                }
+            }
+        }
+    }
+
+    // ── reklama ──────────────────────────────────────────────────────────
+    .mesto-reklame {
+        display: flex;
+        justify-content: center;
+        gap: $razmak;
+        flex-wrap: wrap;
+
+        a { display: block; max-width: 980px; width: 100%; }
+
+        img {
+            display: block;
+            width: 100%;
+            max-width: 980px;
+            height: auto;
+            border-radius: 6px;
+        }
+    }
+
+    .alert {
+        background-color: $red;
+        border-radius: 15px;
+        color: $white;
+        font-size: 16px;
+        font-weight: $medium;
+        margin-bottom: 21px;
+        padding: 12px 18px;
+        display: flex;
+        align-items: center;
+        svg { margin-right: 20px; }
+    }
+}
