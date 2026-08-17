@@ -27,6 +27,22 @@ const datum = (vreme) => {
     return `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${d.getFullYear()}.`;
 };
 
+
+/*
+ * Kuda vodi izdvojena stavka.
+ *
+ * Ako pokazuje na kategoriju, otvara se prikaz pojedinačnih fotografija —
+ * upravo onako kako je klijent pokazao na Pixsell primeru: uđeš u grupu i
+ * vidiš snimke, ne spisak galerija. Veza ka jednoj galeriji ostaje kakva jeste.
+ */
+const odredisteIzdvojenog = (veza) => {
+    const v = veza || '/galerije';
+    if (v.indexOf('/galerije') === 0 && v.indexOf('category=') !== -1 && v.indexOf('view=') === -1) {
+        return v + (v.indexOf('?') !== -1 ? '&' : '?') + 'view=photos';
+    }
+    return v;
+};
+
 class PredlogB extends Component {
 
     /*
@@ -166,7 +182,7 @@ class PredlogB extends Component {
                                 {this.props.izdvojeno.slice(0, 4).map((s, i) => {
                                     const naslov = Object.translate(s, 'title', lang) || '';
                                     return (
-                                        <Link key={i} to={s.link || '/galerije'} className="izdvojena">
+                                        <Link key={i} to={odredisteIzdvojenog(s.link)} className="izdvojena">
                                             <div className="slika">
                                                 {s.image ? <img src={s.image} alt={naslov} loading="lazy" /> : null}
                                                 <div className="preko-teksta">
@@ -187,7 +203,18 @@ class PredlogB extends Component {
                 {kategorije.map((k, idx) => {
                     // Iz obrasca stiže kao tekst („1" ili „2"), iz baze kao broj.
                     const redova = Number(k.homeRows) === 2 ? 2 : 1;
-                    const galerije = (k.photos || []).slice(0, redova * 5);
+
+                    /*
+                     * Način prikaza se bira po kategoriji, da naslovna ne bude
+                     * jednolična — traženo za Foto specijal i slične grupe.
+                     *
+                     *   redovni — pet u redu
+                     *   krupni  — prva galerija preko dva mesta, ostale uz nju
+                     *   traka   — lista se u stranu, staje ih više
+                     */
+                    const nacin = k.homeStyle || 'redovni';
+                    const koliko = nacin === 'traka' ? 10 : redova * 5;
+                    const galerije = (k.photos || []).slice(0, koliko);
                     if (!galerije.length) return null;
 
                     return (
@@ -203,8 +230,14 @@ class PredlogB extends Component {
                                             {'Sve'.translate(lang)} &rarr;
                                         </Link>
                                     </div>
-                                    <div className="mreza-pet">
-                                        {galerije.map((g, i) => this.kartica(g, `${idx}-${i}`))}
+                                    <div className={`mreza-pet nacin-${nacin}`}>
+                                        {galerije.map((g, i) =>
+                                            // U krupnom prikazu prva galerija ide preko
+                                            // dva mesta, sa natpisom preko fotografije.
+                                            nacin === 'krupni' && i === 0
+                                                ? this.kartica(g, `${idx}-${i}`, 'preko', 'velika')
+                                                : this.kartica(g, `${idx}-${i}`)
+                                        )}
                                     </div>
                                 </Container>
                             </section>

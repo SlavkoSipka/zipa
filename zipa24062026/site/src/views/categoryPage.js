@@ -472,7 +472,9 @@ class CategoryPage extends Component {
                                                                         <Col lg="3" md="4" xs="6" key={idx}>
                                                                             <Link
                                                                                 className="photo-result"
-                                                                                to={`/galerija/${foto.userAlias}/${foto.galleryAlias}/${foto.galleryId}?photo=${foto.idx}`}>
+                                                                                /* Ruta ima dva dela: /galerija/naziv/oznaka.
+                                                                                   Sa tri dela veza vodi u prazno. */
+                                                                                to={`/galerija/${foto.galleryAlias}/${foto.galleryId}?photo=${foto.idx}`}>
                                                                                 <div className="photo-result-image">
                                                                                     <img
                                                                                         src={`${PHOTOS_ENDPOINT}/photos/350x/${foto.image}`}

@@ -287,6 +287,21 @@ class form extends React.Component {
                             <option value="2">{'Dva reda (10 galerija)'.translate(this.props.lang)}</option>
                         </Field>
 
+                        {/*
+                          * Način prikaza na naslovnoj. Za Foto specijal i slične
+                          * grupe, da naslovna ne bude jednolična.
+                          */}
+                        <Field
+                            name="homeStyle"
+                            component={renderSelectField}
+                            label={'Način prikaza na početnoj'.translate(this.props.lang)}
+                            placeholder={'Redovni — pet u redu'.translate(this.props.lang)}
+                        >
+                            <option value="redovni">{'Redovni — pet u redu'.translate(this.props.lang)}</option>
+                            <option value="krupni">{'Krupni — prva galerija preko dva mjesta'.translate(this.props.lang)}</option>
+                            <option value="traka">{'Traka — lista se u stranu'.translate(this.props.lang)}</option>
+                        </Field>
+
 
                     </Col>
 

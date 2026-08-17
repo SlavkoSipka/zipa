@@ -511,3 +511,58 @@ header .logo .desktop-logo.logo-b > .natpis-b {
         svg { margin-right: 20px; }
     }
 }
+
+/* ── Načini prikaza kategorije na naslovnoj ──────────────────────────────
+ *
+ * Traženo je da Foto specijal i slične grupe mogu izgledati drugačije od
+ * ostalih, da naslovna ne bude jednolična. Bira se u obrascu kategorije.
+ */
+.naslovna-b {
+
+    // krupni — prva galerija preko dva mjesta i dva reda
+    .mreza-pet.nacin-krupni {
+        grid-template-rows: auto auto;
+
+        > .kartica:first-child {
+            grid-column: span 2;
+            grid-row: span 2;
+
+            .slika { padding-top: 0; height: 100%; }
+        }
+
+        @include mobile-tablet {
+            > .kartica:first-child { grid-column: span 2; grid-row: span 1; }
+        }
+        @include mobile {
+            grid-template-rows: none;
+            > .kartica:first-child {
+                grid-column: span 2; grid-row: span 1;
+                .slika { padding-top: 66.6%; height: auto; }
+            }
+        }
+    }
+
+    // traka — lista se u stranu, pa u isti prostor stane više galerija
+    .mreza-pet.nacin-traka {
+        display: flex;
+        gap: 18px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding-bottom: 10px;
+        scroll-snap-type: x proximity;
+        -webkit-overflow-scrolling: touch;
+
+        scrollbar-width: thin;
+        scrollbar-color: #C7CCD8 transparent;
+        &::-webkit-scrollbar { height: 7px; }
+        &::-webkit-scrollbar-track { background: transparent; }
+        &::-webkit-scrollbar-thumb { background-color: #C7CCD8; border-radius: 99px; }
+
+        > .kartica {
+            flex: 0 0 210px;
+            scroll-snap-align: start;
+
+            @include mobile { flex-basis: 158px; }
+        }
+    }
+}

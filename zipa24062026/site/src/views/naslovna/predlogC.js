@@ -27,6 +27,22 @@ const datum = (vreme) => {
     return `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${d.getFullYear()}.`;
 };
 
+
+/*
+ * Kuda vodi izdvojena stavka.
+ *
+ * Ako pokazuje na kategoriju, otvara se prikaz pojedinačnih fotografija —
+ * upravo onako kako je klijent pokazao na Pixsell primeru: uđeš u grupu i
+ * vidiš snimke, ne spisak galerija. Veza ka jednoj galeriji ostaje kakva jeste.
+ */
+const odredisteIzdvojenog = (veza) => {
+    const v = veza || '/galerije';
+    if (v.indexOf('/galerije') === 0 && v.indexOf('category=') !== -1 && v.indexOf('view=') === -1) {
+        return v + (v.indexOf('?') !== -1 ? '&' : '?') + 'view=photos';
+    }
+    return v;
+};
+
 class PredlogC extends Component {
 
     kartica(g, kljuc) {
@@ -132,7 +148,7 @@ class PredlogC extends Component {
                                 {this.props.izdvojeno.slice(0, 2).map((s, i) => {
                                     const naslov = Object.translate(s, 'title', lang) || '';
                                     return (
-                                        <Link key={i} to={s.link || '/galerije'} className="izdvojena">
+                                        <Link key={i} to={odredisteIzdvojenog(s.link)} className="izdvojena">
                                             {s.image ? <img src={s.image} alt={naslov} loading="lazy" /> : null}
                                             <div className="preko"><h4>{naslov}</h4></div>
                                         </Link>
