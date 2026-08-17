@@ -149,6 +149,23 @@ const renderMultiCheckboxField = ({
     >{children}</MultiCheckbox>
 )
 
+const renderSelectField = ({
+    input,
+    placeholder,
+    label,
+    meta: { touched, error },
+    children
+}) => (
+
+        <Select
+            placeholder={placeholder}
+            label={label}
+            errorText={touched && error}
+            error={touched && error}
+            {...input}
+        >{children}</Select>
+    )
+
 const renderCheckField = ({
     input,
     placeholder,
@@ -262,6 +279,21 @@ class form extends React.Component {
                             component={renderTextField}
                             label={'Pozicija *'.translate(this.props.lang)}
                         ></Field>
+
+                        {/*
+                          * Unapred zadate veličine, da se banere priprema po
+                          * poznatoj mjeri umjesto da svaki bude svoje veličine.
+                          */}
+                        <Field
+                            name="size"
+                            component={renderSelectField}
+                            label={'Veličina banera'.translate(this.props.lang)}
+                            placeholder={'Široki — 980 × po potrebi'.translate(this.props.lang)}
+                        >
+                            <option value="siroki">Široki — 980 × po potrebi</option>
+                            <option value="uspravni">Uspravni — 160 × 600</option>
+                            <option value="kvadratni">Kvadratni — 300 × 250</option>
+                        </Field>
 
 
                     </Col>

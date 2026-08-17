@@ -508,3 +508,25 @@
 
     h2 { margin-top: 16px; }
 }
+
+/* ── Širi okvir sadržaja uz nove izglede ─────────────────────────────────
+ *
+ * Bočne trake za banere su sakrivene, ali je sadržaj i dalje stajao u uskom
+ * okviru koji im je ostavljao mjesta. Taj prostor sada ide fotografijama —
+ * na širim ekranima okvir raste do 1400 tačaka, a na užim se ponaša kao i do
+ * sada, pa se ništa ne lomi.
+ */
+.naslovna-a,
+.naslovna-b,
+.naslovna-c {
+    > .container,
+    .odeljak > .container,
+    section > .container {
+        @media (min-width: 1500px) {
+            max-width: 1400px;
+        }
+    }
+}
+
+// Naslovna traka predloga C ide preko cele širine, pa ostaje kako jeste.
+.naslovna-c .glavna-traka > a > img { max-width: none; }

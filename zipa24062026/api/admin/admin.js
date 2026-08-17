@@ -1429,6 +1429,8 @@ class Admin {
                 detail: obj.detail ? true : false,
                 ad: obj.ad ? true : false,
                 hidden: obj.hidden ? true : false,
+                // Unapred zadata veličina, da se baneri pripremaju po mjeri.
+                size: obj.size || 'siroki',
                 published: Math.floor(new Date().getTime() / 1000)
             });
         } else {
@@ -1445,6 +1447,7 @@ class Admin {
                     detail: obj.detail ? true : false,
                     ad: obj.ad ? true : false,
                     hidden: obj.hidden ? true : false,
+                    size: obj.size || 'siroki',
                     position: parseInt(obj.position),
                 }
             })
