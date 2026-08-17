@@ -69,6 +69,7 @@ import PreviewPage from './views/account/previewPage';
 import SubscribersPage from './views/account/subscribers';
 import ImportPage from './views/account/import';
 import VideoPage from './views/videoPage';
+import ArchiveStats from './views/account/archiveStats';
 import {API_ENDPOINT, PHOTOS_ENDPOINT} from './constants'
 
 
@@ -273,6 +274,15 @@ export const routes = [
             }
         },
 
+        loadData: []
+    },
+    {
+        // Pregled arhive od pocetka rada: galerije, fotografije i fotografi
+        // po godinama. Podaci se dovlace u samoj stranici, uz token.
+        path: "/account/archive-stats",
+        component: ArchiveStats,
+        exact: true,
+        generateSeoTags: () => ({ title: 'Arhiva od početka rada' }),
         loadData: []
     },
     {

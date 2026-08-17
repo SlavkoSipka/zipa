@@ -312,6 +312,64 @@ class Admin {
         return res;
     }
 
+
+    /**
+     * Pregled arhive od početka rada do danas, po godinama.
+     *
+     * Klijent je tražio uvid „od postavljanja sajta do danas, posebno za
+     * posete". Evidencija poseta nije stigla u bazi koju smo preuzeli od
+     * dosadašnjeg izvođača — došle su galerije, korisnici, kategorije i
+     * klikovi na banere, ali ne i istorija poseta; beleženje radi tek od
+     * preuzimanja sajta nadalje.
+     *
+     * Ono što jeste dostupno od prvog dana jeste rast same arhive: kada je
+     * koja galerija snimljena, koliko nosi fotografija i koji ih je fotograf
+     * napravio. Za foto-agenciju je to i korisniji podatak od broja poseta.
+     */
+    async archiveStats() {
+        const godine = await db.query(
+            `select extract(year from to_timestamp(g."date"))::int   as godina,
+                    count(*)::int                                    as galerija,
+                    coalesce(sum(jsonb_array_length(
+                        coalesce(g."photos", '[]'::jsonb)))::int, 0) as fotografija,
+                    count(distinct g."user")::int                    as fotografa
+               from gallery g
+              where g."date" is not null and g."date" > 0
+                and to_timestamp(g."date") <= now()
+              group by 1
+              order by 1`
+        );
+
+        const ukupno = await db.query(
+            `select count(*)::int                                    as galerija,
+                    coalesce(sum(jsonb_array_length(
+                        coalesce("photos", '[]'::jsonb)))::int, 0)   as fotografija,
+                    count(distinct "user")::int                      as fotografa,
+                    to_char(to_timestamp(min("date")), 'DD.MM.YYYY.') as prva,
+                    to_char(to_timestamp(max("date")), 'DD.MM.YYYY.') as poslednja
+               from gallery
+              where "date" is not null and "date" > 0`
+        );
+
+        const fotografi = await db.query(
+            `select g."user"                                         as ime,
+                    count(*)::int                                    as galerija,
+                    coalesce(sum(jsonb_array_length(
+                        coalesce(g."photos", '[]'::jsonb)))::int, 0) as fotografija
+               from gallery g
+              where g."user" is not null and g."user" <> ''
+              group by 1
+              order by fotografija desc
+              limit 15`
+        );
+
+        return {
+            godine: godine.rows,
+            ukupno: ukupno.rows[0] || {},
+            fotografi: fotografi.rows
+        };
+    }
+
     async statisticsFromDateRange(from, to) {
         if (!to) {
             to = Math.floor(Date.now() / 1000);

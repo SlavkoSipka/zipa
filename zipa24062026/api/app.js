@@ -728,6 +728,11 @@ app.post('/delete-originals', permissionMiddleware('*'), async (req, res) => {
     res.send(await adminModule.deleteOriginals(parseInt(req.body.from), parseInt(req.body.to)));
 });
 
+// Pregled arhive od početka rada — po godinama, i najplodniji fotografi.
+app.get('/admin/archive-stats', permissionMiddleware('*'), async (req, res) => {
+    res.send(await adminModule.archiveStats());
+});
+
 app.get('/admin/statistics', permissionMiddleware('*'), async (req, res) => {
     res.send(await adminModule.statistics());
 });

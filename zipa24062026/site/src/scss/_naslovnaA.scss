@@ -333,3 +333,73 @@ header .navigation ul.meni-a {
         svg { margin-right: 20px; }
     }
 }
+
+/* ── Pregled arhive od početka rada (administracija) ───────────────────── */
+.arhiva-stat {
+    h1 { font-size: 28px; font-weight: $bold; color: $black; margin-bottom: 8px; }
+    h2 { font-size: 19px; font-weight: $semiBold; color: $black; margin: 34px 0 14px; }
+    .uvod { color: #6B7280; font-size: 15px; margin-bottom: 20px; }
+
+    // tri broja u vrhu
+    .zbir {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-bottom: 22px;
+
+        @include mobile { grid-template-columns: 1fr; }
+
+        .stavka {
+            background-color: #F4F6FA;
+            border-radius: 10px;
+            padding: 18px 20px;
+
+            .broj {
+                display: block;
+                font-size: 27px;
+                font-weight: $bold;
+                color: $darkBlue;
+                font-variant-numeric: tabular-nums;
+                line-height: 1.15;
+            }
+            .opis { font-size: 13px; color: #6B7280; }
+        }
+    }
+
+    .napomena.upozorenje {
+        border-left-color: #C99A16;
+        background-color: #FDF6E7;
+        color: #6B5518;
+    }
+
+    .napomena {
+        border-left: 3px solid $darkBlue;
+        background-color: #EEF1FB;
+        padding: 14px 18px;
+        border-radius: 0 8px 8px 0;
+        font-size: 14px;
+        color: #4B5162;
+        margin-bottom: 10px;
+    }
+
+    .grafikon { height: 300px; margin-bottom: 26px; }
+
+    // tabele se pomeraju u stranu na uskim ekranima umesto da se lome
+    .tabela-okvir { overflow-x: auto; }
+
+    .tabela {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+
+        th, td {
+            padding: 9px 12px;
+            border-bottom: 1px solid #E8EBF2;
+            text-align: left;
+            white-space: nowrap;
+        }
+        th { font-weight: $semiBold; color: #4B5162; background-color: #F7F8FC; }
+        td.d, th.d { text-align: right; font-variant-numeric: tabular-nums; }
+        tbody tr:hover { background-color: #FAFBFE; }
+    }
+}
