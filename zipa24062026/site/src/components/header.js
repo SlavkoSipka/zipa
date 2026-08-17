@@ -633,6 +633,9 @@ class Header extends Component {
                                                 <Link to={'/account/archive-stats'}>
                                                     <DropdownItem>{'Arhiva od početka rada'.translate(this.props.lang)}</DropdownItem></Link>
 
+                                                <Link to={'/account/watermarks'}>
+                                                    <DropdownItem>{'Žig na fotografijama'.translate(this.props.lang)}</DropdownItem></Link>
+
                                                 <Link to={'/account/download-logs'}>
                                                     <DropdownItem>{'Transakcije'.translate(this.props.lang)}</DropdownItem></Link>
                                                 <Link to={'/account/logs'}>

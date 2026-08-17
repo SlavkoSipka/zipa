@@ -70,6 +70,7 @@ import SubscribersPage from './views/account/subscribers';
 import ImportPage from './views/account/import';
 import VideoPage from './views/videoPage';
 import ArchiveStats from './views/account/archiveStats';
+import WatermarksPage from './views/account/watermarksPage';
 import {API_ENDPOINT, PHOTOS_ENDPOINT} from './constants'
 
 
@@ -274,6 +275,14 @@ export const routes = [
             }
         },
 
+        loadData: []
+    },
+    {
+        // Zbirka zigova za pregledne fotografije.
+        path: "/account/watermarks",
+        component: WatermarksPage,
+        exact: true,
+        generateSeoTags: () => ({ title: 'Žig na fotografijama' }),
         loadData: []
     },
     {

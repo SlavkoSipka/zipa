@@ -728,6 +728,27 @@ app.post('/delete-originals', permissionMiddleware('*'), async (req, res) => {
     res.send(await adminModule.deleteOriginals(parseInt(req.body.from), parseInt(req.body.to)));
 });
 
+// Zbirka žigova za pregledne fotografije.
+app.get('/watermarks/all', permissionMiddleware('*'), async (req, res) => {
+    res.send(await adminModule.allWatermarks());
+});
+
+app.post('/watermarks/update/:id', permissionMiddleware('*'), async (req, res) => {
+    let result = await adminModule.updateWatermark(req.params.id, req.body);
+    res.status(result.status).send(result.response);
+});
+
+app.post('/watermarks/activate/:id', permissionMiddleware('*'), async (req, res) => {
+    let result = await adminModule.activateWatermark(req.params.id);
+    res.status(result.status).send(result.response);
+});
+
+app.delete('/watermarks/delete/:id', permissionMiddleware('*'), async (req, res) => {
+    let result = await adminModule.deleteWatermark(req.params.id);
+    res.status(result.status).send(result.response);
+});
+
+
 // Pregled arhive od početka rada — po godinama, i najplodniji fotografi.
 app.get('/admin/archive-stats', permissionMiddleware('*'), async (req, res) => {
     res.send(await adminModule.archiveStats());

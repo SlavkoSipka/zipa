@@ -916,6 +916,79 @@ class Admin {
     }
 
 
+    /* ── Zbirka žigova ────────────────────────────────────────────────────
+     *
+     * Klijent je pitao može li sam povremeno menjati logotip na preglednim
+     * fotografijama. Do sada je postojao samo jedan, u Podešavanjima sajta —
+     * da bi ga promenio i vratio, morao bi svaki put ponovo da postavlja fajl.
+     *
+     * Ovde se čuva više žigova, a „uključi" samo prepisuje adresu izabranog u
+     * `settings.watermark`. Time kod za postavljanje fotografija ostaje
+     * netaknut — on i dalje čita jedno te isto polje.
+     *
+     * Važno: žig se ugrađuje u preglednu fotografiju u trenutku postavljanja,
+     * pa promena važi za galerije postavljene od tada nadalje.
+     */
+    async allWatermarks() {
+        const spisak = await db.collection('watermarks').find({}).sort({ published: -1 }).toArray();
+        const podesavanja = await db.collection('settings').find({}).toArray();
+        const trenutni = podesavanja.length ? podesavanja[0].watermark : null;
+
+        return spisak.map((z) => Object.assign({}, z, { ukljucen: !!trenutni && z.image === trenutni }));
+    }
+
+    async updateWatermark(id, data) {
+        const polja = { name: data.name, image: data.image };
+
+        if (id == 'new') {
+            await db.collection('watermarks').insertOne(
+                Object.assign({}, polja, { published: Math.floor(new Date().getTime() / 1000) })
+            );
+        } else {
+            await db.collection('watermarks').updateOne({ _id: ObjectID(id) }, { $set: polja });
+        }
+        return { response: {}, status: 200 };
+    }
+
+    // Uključi izabrani žig — prepisuje se u podešavanja, odakle ga čita
+    // postavljanje fotografija.
+    async activateWatermark(id) {
+        const red = await db.collection('watermarks').find({ _id: ObjectID(id) }).toArray();
+        if (!red.length || !red[0].image) {
+            return { response: { error: 'nije nadjen' }, status: 404 };
+        }
+
+        const podesavanja = await db.collection('settings').find({}).toArray();
+        if (!podesavanja.length) {
+            return { response: { error: 'nema podesavanja' }, status: 400 };
+        }
+
+        const novo = Object.assign({}, podesavanja[0], { watermark: red[0].image });
+        await db.collection('settings').deleteMany({});
+        await db.collection('settings').insertOne(novo);
+
+        return { response: {}, status: 200 };
+    }
+
+    async deleteWatermark(id) {
+        // Onaj koji je trenutno uključen se ne briše — inače bi nove galerije
+        // ostale bez žiga a da niko ne primeti.
+        const red = await db.collection('watermarks').find({ _id: ObjectID(id) }).toArray();
+        const podesavanja = await db.collection('settings').find({}).toArray();
+        const trenutni = podesavanja.length ? podesavanja[0].watermark : null;
+
+        if (red.length && trenutni && red[0].image === trenutni) {
+            return {
+                response: { error: 'Ovaj žig je trenutno uključen. Prvo uključite drugi, pa ga onda obrišite.' },
+                status: 400
+            };
+        }
+
+        await db.collection('watermarks').deleteOne({ _id: ObjectID(id) });
+        return { response: {}, status: 200 };
+    }
+
+
 
 
 
