@@ -69,12 +69,21 @@ import PreviewPage from './views/account/previewPage';
 import SubscribersPage from './views/account/subscribers';
 import ImportPage from './views/account/import';
 import VideoPage from './views/videoPage';
+import OdjavaPage from './views/odjavaPage';
 import ArchiveStats from './views/account/archiveStats';
 import WatermarksPage from './views/account/watermarksPage';
 import {API_ENDPOINT, PHOTOS_ENDPOINT} from './constants'
 
 
 export const routes = [
+    {
+        // Odjava sa liste za obavestenja — otvara se iz veze u samoj posti.
+        path: "/odjava",
+        component: OdjavaPage,
+        exact: true,
+        generateSeoTags: () => ({ title: 'Odjava sa liste' }),
+        loadData: []
+    },
     {
         // Snimci sa YouTube kanala agencije. Postoji zasebna strana da stavka
         // „VIDEO" u meniju ne bi vodila u prazno.

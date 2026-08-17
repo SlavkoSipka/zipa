@@ -15,7 +15,7 @@ const exec = require('child_process').exec;
 const { lstatSync, readdirSync } = require('fs')
 const { join } = require('path')
 const sendMail = require('../sendMail');
-const { API_ENDPOINT } = require('../constants');
+const { API_ENDPOINT, SITE_URL } = require('../constants');
 
 
 function generateAlias(str) {
@@ -1187,6 +1187,32 @@ class Admin {
 
     }
 
+    /*
+     * Oznaka za odjavu.
+     *
+     * Veza za odjavu nosi adresu i ovu oznaku, izvedenu iz adrese i tajne
+     * ključa. Bez nje bi svako mogao da odjavi tuđu adresu prostim pogađanjem
+     * — dovoljno bi bilo znati mejl.
+     */
+    oznakaZaOdjavu(email) {
+        const crypto = require('crypto');
+        return crypto
+            .createHmac('sha256', process.env.JWT_SECRET || 'zipa')
+            .update(String(email).toLowerCase())
+            .digest('hex')
+            .slice(0, 20);
+    }
+
+    async odjaviPretplatnika(email, oznaka) {
+        if (!email || !oznaka) return { response: { error: 'nepotpun zahtev' }, status: 400 };
+        if (this.oznakaZaOdjavu(email) !== oznaka) {
+            return { response: { error: 'neispravna veza' }, status: 403 };
+        }
+
+        await db.collection('subscribers').deleteMany({ email: String(email).toLowerCase() });
+        return { response: { ok: true }, status: 200 };
+    }
+
     async sendNewsletter(id) {
         let newsletter = await db.collection('newsletters').findOne({ _id: ObjectID(id) });
         if (!newsletter) {
@@ -1218,8 +1244,43 @@ class Admin {
         }
 
 
+        const predlozak = fs.readFileSync('./emails/newsletter.html', 'utf-8');
+
+        /*
+         * Šalje se jedno po jedno, sa malim razmakom.
+         *
+         * Ranije je ceo spisak odlazio odjednom, bez čekanja: pri većem broju
+         * pretplatnika to zna da zaguši poštanski server i da nas označi kao
+         * nepoželjnog pošiljaoca. Pola sekunde između poruka je dovoljno.
+         *
+         * Svaka poruka nosi svoju vezu za odjavu — po adresi primaoca.
+         */
         for (let i = 0; i < emails.length; i++) {
-            sendMail(emails[i], newsletter.title.ba, String.format(fs.readFileSync('./emails/newsletter.html', 'utf-8'), newsletter.title.ba, newsletter.image ? `<img src="${newsletter.image}" style="max-width: 80%;" />` : '', newsletter.content ? newsletter.content : '', itemsHTML))
+            const adresa = emails[i];
+            const vezaOdjave =
+                `${SITE_URL}/odjava?email=${encodeURIComponent(adresa)}&k=${this.oznakaZaOdjavu(adresa)}`;
+
+            try {
+                await sendMail(
+                    adresa,
+                    newsletter.title.ba,
+                    String.format(
+                        predlozak,
+                        newsletter.title.ba,
+                        newsletter.image ? `<img src="${newsletter.image}" style="max-width: 80%;" />` : '',
+                        newsletter.content ? newsletter.content : '',
+                        itemsHTML,
+                        vezaOdjave
+                    )
+                );
+            } catch (e) {
+                // Jedna adresa koja ne prolazi ne sme da zaustavi ostale.
+                console.error('[newsletter] neuspelo slanje na', adresa, '-', e.message);
+            }
+
+            if (i < emails.length - 1) {
+                await new Promise((r) => setTimeout(r, 500));
+            }
         }
 
     }

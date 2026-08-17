@@ -524,3 +524,14 @@ header .navigation ul.meni-a {
         }
     }
 }
+
+/* Odjava sa liste za obavještenja. */
+.odjava-strana {
+    padding: 160px 0 80px;
+    @include mobile-tablet { padding-top: 140px; }
+
+    h1 { font-size: 28px; font-weight: $bold; color: $black; margin-bottom: 12px; }
+    p { font-size: 16px; color: #4B5162; max-width: 62ch; margin-bottom: 10px; }
+    .sitno { font-size: 14px; color: #7A8194; }
+    a { color: $blue; }
+}

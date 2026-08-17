@@ -472,18 +472,38 @@ app.post('/newsletter/update/:id', permissionMiddleware('*'), async (req, res) =
     res.status(result.status).send(result.response);
 });
 
-app.get('/newsletter/send/test/:id', async (req, res) => {
+/*
+ * Slanje newslettera mora biti zaštićeno.
+ *
+ * Ove tri rute su stajale bez provere prava, pa je svako ko pogodi oznaku
+ * newslettera mogao da ga pošalje na celu listu pretplatnika — bez prijave.
+ * Uz 62 adrese to je i neprijatnost za primaoce i put da nas servis za poštu
+ * označi kao nepoželjnog pošiljaoca.
+ */
+app.get('/newsletter/send/test/:id', permissionMiddleware('*'), async (req, res) => {
     res.send(await adminModule.sendTestNewsletter(req.params.id));
 });
 
 
-app.get('/newsletter/send/:id', async (req, res) => {
+app.get('/newsletter/send/:id', permissionMiddleware('*'), async (req, res) => {
     res.send(await adminModule.sendNewsletter(req.params.id));
 });
 
 
-app.get('/newsletter/get/:id', async (req, res) => {
+app.get('/newsletter/get/:id', permissionMiddleware('*'), async (req, res) => {
     res.send(await adminModule.fetchNewsletter(req.params.id));
+});
+
+/*
+ * Odjava sa liste.
+ *
+ * Namerno bez prijave — primalac pošte nije korisnik sajta. Umesto toga veza
+ * nosi oznaku izvedenu iz adrese, pa se tuđa adresa ne može odjaviti pukim
+ * pogađanjem.
+ */
+app.get('/newsletter/unsubscribe', async (req, res) => {
+    let result = await adminModule.odjaviPretplatnika(req.query.email, req.query.k);
+    res.status(result.status).send(result.response);
 });
 
 app.delete('/newsletter/delete/:id', permissionMiddleware('*'), async (req, res) => {
