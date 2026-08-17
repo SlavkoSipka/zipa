@@ -63,7 +63,7 @@ class PredlogB extends Component {
         return (
             <Link
                 key={kljuc}
-                to={`/galerija/${g.userAlias}/${alias}/${g._id}`}
+                to={`/galerija/${alias}/${g._id}`}
                 className={`kartica ${oblik} ${velicina}`}
             >
                 <div className="slika">

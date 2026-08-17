@@ -36,7 +36,7 @@ class PredlogA extends Component {
         const broj = g.photosCount !== undefined ? g.photosCount : (g.photos && g.photos.length);
 
         return (
-            <Link key={kljuc} to={`/galerija/${g.userAlias}/${alias}/${g._id}`} className="plocica">
+            <Link key={kljuc} to={`/galerija/${alias}/${g._id}`} className="plocica">
                 <div className="slika">
                     {slika ? <img src={slikaUrl(slika, '700x')} alt={naziv} loading="lazy" /> : null}
                     {g.categoryName ? (

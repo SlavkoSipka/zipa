@@ -58,6 +58,10 @@ class DetailPage extends Component {
             touchStartX: null,
             touchEndX: null,
             isMobile: false,
+
+            // Redosled fotografija u galeriji — kako su snimljene ili obrnuto.
+            // Traženo uz novi prikaz, po uzoru na Pixsell.
+            obrnutRedosled: false,
         };
     }
 
@@ -202,6 +206,22 @@ class DetailPage extends Component {
         if (gallery.error == "notfound") {
             return <Redirect to="/404"></Redirect>;
         }
+
+        /*
+         * Novi prikaz fotografija u galeriji — natpis preko dna, redni broj i
+         * biranje redosleda — ide uz nove izglede naslovne. Dok je izabran
+         * „trenutni", galerija ostaje kakva je bila, da se ništa ne menja
+         * posetiocima pre nego što se izgled odobri.
+         */
+        const noviPrikaz =
+            this.props.settings && this.props.settings.homepageLayout &&
+            this.props.settings.homepageLayout !== 'trenutni';
+
+        // Redosled se okreće samo u prikazu; položaj fotografije u galeriji
+        // (idx) ostaje isti, jer se po njemu otvara uvećani prikaz.
+        const poredaneFotografije = (gallery.photos || [])
+            .map((item, idx) => ({ item, idx }));
+        if (noviPrikaz && this.state.obrnutRedosled) poredaneFotografije.reverse();
 
         let priceMap = {
             3000: 1,
@@ -897,8 +917,32 @@ class DetailPage extends Component {
                                     ></p>
                                 </div>
                             </Col>
+                            {/*
+                              * Biranje redosleda — vidljivo samo uz nove izglede.
+                              * Fotografije stoje onako kako su snimljene, a ovim
+                              * se okreće, kako je traženo po uzoru na Pixsell.
+                              */}
+                            {noviPrikaz && gallery.photos && gallery.photos.length > 1 ? (
+                                <Col lg="12">
+                                    <div className="red-fotografija">
+                                        <span className="koliko">
+                                            {gallery.photos.length} {'fotografija'.translate(this.props.lang)}
+                                        </span>
+                                        <button
+                                            type="button"
+                                            className="prekidac-reda"
+                                            onClick={() => this.setState({ obrnutRedosled: !this.state.obrnutRedosled })}
+                                        >
+                                            {this.state.obrnutRedosled
+                                                ? 'Od poslednje ka prvoj'.translate(this.props.lang)
+                                                : 'Od prve ka poslednjoj'.translate(this.props.lang)}
+                                        </button>
+                                    </div>
+                                </Col>
+                            ) : null}
+
                             {gallery.photos &&
-                                gallery.photos.map((item, idx) => {
+                                poredaneFotografije.map(({ item, idx }) => {
                                     return (
                                         <Col lg="3" sm="4" xs="6" key={idx}>
                                             {/*<Link*/}
@@ -946,6 +990,20 @@ class DetailPage extends Component {
                                                 <div className="zoom">
                                                     <Isvg src={searchIcon} />
                                                 </div>
+
+                                                {/* Redni broj i opis preko dna
+                                                    fotografije — po uzoru koji
+                                                    je klijent poslao. */}
+                                                {noviPrikaz ? (
+                                                    <>
+                                                        <span className="redni-broj">{idx + 1}</span>
+                                                        {item.description || item.name ? (
+                                                            <div className="natpis">
+                                                                {item.description || item.name}
+                                                            </div>
+                                                        ) : null}
+                                                    </>
+                                                ) : null}
                                             </article>
                                         </Col>
                                     );

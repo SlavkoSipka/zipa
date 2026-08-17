@@ -39,7 +39,7 @@ class PredlogC extends Component {
         const broj = g.photosCount !== undefined ? g.photosCount : (g.photos && g.photos.length);
 
         return (
-            <Link key={kljuc} to={`/galerija/${g.userAlias}/${alias}/${g._id}`} className="kartica">
+            <Link key={kljuc} to={`/galerija/${alias}/${g._id}`} className="kartica">
                 <div className="slika">
                     {slika ? <img src={slikaUrl(slika)} alt={naziv} loading="lazy" /> : null}
                     {broj ? <span className="broj">{broj}</span> : null}
@@ -87,7 +87,7 @@ class PredlogC extends Component {
                 {/* ── Naslovna traka: jedan snimak preko cele širine ────── */}
                 {glavna ? (
                     <section className="glavna-traka">
-                        <Link to={`/galerija/${glavna.userAlias}/${aliasGlavne}/${glavna._id}`}>
+                        <Link to={`/galerija/${aliasGlavne}/${glavna._id}`}>
                             {slikaGlavne ? <img src={slikaUrl(slikaGlavne, '700x')} alt={naslovGlavne} /> : null}
                             <Container>
                                 <div className="tekst">
