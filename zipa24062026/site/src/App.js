@@ -307,8 +307,15 @@ class App extends Component {
                     })
                 }
 
+                // Baner za iskačuću reklamu na telefonu.
+                if (result[i].mobilePopup && !result[i].hidden) {
+                    this.setState({
+                        mobilePopupBanner: result[i]
+                    })
+                }
 
-                if (!result[i].leftSide && !result[i].rightSide && !result[i].footer && !result[i].sponsor && !result[i].detail && !result[i].ad && !result[i].hidden) {
+
+                if (!result[i].leftSide && !result[i].rightSide && !result[i].footer && !result[i].sponsor && !result[i].detail && !result[i].ad && !result[i].mobilePopup && !result[i].hidden) {
                     banners.push(result[i]);
                 }
 

@@ -1431,6 +1431,8 @@ class Admin {
                 hidden: obj.hidden ? true : false,
                 // Unapred zadata veličina, da se baneri pripremaju po mjeri.
                 size: obj.size || 'siroki',
+                mobilePopup: obj.mobilePopup ? true : false,
+                mobileOnly: obj.mobileOnly ? true : false,
                 published: Math.floor(new Date().getTime() / 1000)
             });
         } else {
@@ -1448,6 +1450,8 @@ class Admin {
                     ad: obj.ad ? true : false,
                     hidden: obj.hidden ? true : false,
                     size: obj.size || 'siroki',
+                    mobilePopup: obj.mobilePopup ? true : false,
+                    mobileOnly: obj.mobileOnly ? true : false,
                     position: parseInt(obj.position),
                 }
             })

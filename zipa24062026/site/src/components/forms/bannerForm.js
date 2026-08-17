@@ -293,6 +293,7 @@ class form extends React.Component {
                             <option value="siroki">Široki — 980 × po potrebi</option>
                             <option value="uspravni">Uspravni — 160 × 600</option>
                             <option value="kvadratni">Kvadratni — 300 × 250</option>
+                            <option value="mobilni">Za telefon — 320 × 100</option>
                         </Field>
 
 
@@ -351,6 +352,18 @@ class form extends React.Component {
 
                     </Col>
                     <Col lg="3">
+
+                        <Field
+                            name="mobilePopup"
+                            component={renderCheckField}
+                            label={'Iskačuća na telefonu'.translate(this.props.lang)}
+                        ></Field>
+
+                        <Field
+                            name="mobileOnly"
+                            component={renderCheckField}
+                            label={'Samo na telefonu'.translate(this.props.lang)}
+                        ></Field>
 
                         <Field
                             name="ad"

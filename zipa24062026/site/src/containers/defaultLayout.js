@@ -11,6 +11,7 @@ import closeIcon from '../assets/svg/close-modal.svg';
 import DocumentMeta from 'react-document-meta';
 import { Container, Row, Col } from 'reactstrap';
 import DetailSearchForm from '../components/forms/detailSearchForm';
+import IskacucaReklama from '../components/iskacucaReklama';
 
 
 function generateSearchLink(params) {
@@ -39,6 +40,14 @@ export const DefaultLayout = (Wrapped) => (props) => {
             <Header {...props} />
             <Wrapped {...props} />
             <Footer {...props} />
+
+            {/* Iskačuća reklama — samo na telefonu, i samo ako je uključena
+                u Podešavanjima sajta. */}
+            <IskacucaReklama
+                ukljucena={props.settings && props.settings.mobilePopup}
+                baner={props.mobilePopupBanner}
+                bannerClick={props.bannerClick}
+            />
             {props.detailSearch ?
                 <div className="detail-search-modal">
                     <div>

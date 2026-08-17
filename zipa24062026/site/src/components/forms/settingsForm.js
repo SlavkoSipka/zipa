@@ -315,6 +315,16 @@ class form extends React.Component {
                         ></Field>
                     </Col>
 
+                    <Col lg="6">
+                        {/* Iskačuća reklama se prikazuje samo na telefonu,
+                            jednom po poseti i sa jasnim dugmetom za zatvaranje. */}
+                        <Field
+                            name="mobilePopup"
+                            component={renderCheckField}
+                            label="Iskačuća reklama na telefonu"
+                        ></Field>
+                    </Col>
+
                     <Col lg="12">
                         <div className="spacer-t"></div>
                     </Col>
