@@ -369,6 +369,20 @@ class form extends React.Component {
                                 ></Field>
 
                             </Col>
+
+                            {/*
+                              * Obaveštenje se šalje samo kad se ovo označi —
+                              * namerno nije samostalno, jer bi pretplatnici uz
+                              * sedamsto galerija godišnje dobijali po dva
+                              * pisma dnevno.
+                              */}
+                            <Col lg="12">
+                                <Field
+                                    name="notifySubscribers"
+                                    component={renderCheckField}
+                                    label={'Obavijesti pretplatnike o ovoj galeriji'.translate(this.props.lang)}
+                                ></Field>
+                            </Col>
                         </Row>
 
                     </Col>

@@ -14,7 +14,9 @@ let db;
 const dbConnect = require('../db');
 const storage = require('../storage');
 const sharp = require('sharp');
-const { API_ENDPOINT } = require('../constants');
+const { API_ENDPOINT, SITE_URL } = require('../constants');
+const sendMail = require('../sendMail');
+const crypto = require('crypto');
 dbConnect()
     .then((conn) => {
         db = conn;
@@ -110,6 +112,22 @@ function generateAlias(str) {
     return str;
 }
 
+
+
+/*
+ * Popunjavanje obrasca pošte: {0}, {1}, {2}… zamenjuju se redom.
+ *
+ * Isto radi i `String.format` iz `app.js`, ali je tamo zakačen na globalni
+ * String — pa ovaj fajl zavisi od toga da je `app.js` već učitan. Ovde stoji
+ * svoja kopija, da slanje ne padne ako se modul učita zasebno.
+ */
+function popuniObrazac(obrazac, ...vrednosti) {
+    let s = obrazac;
+    vrednosti.forEach((v, i) => {
+        s = s.replace(new RegExp('\\{' + i + '\\}', 'gm'), v === undefined || v === null ? '' : v);
+    });
+    return s;
+}
 
 class ProductsModule {
     constructor(props) {
@@ -610,6 +628,69 @@ class ProductsModule {
 
 
 
+    /*
+     * Obaveštenje pretplatnicima da je objavljena nova galerija.
+     *
+     * Koristi isti obrazac pošte kao newsletter i istu vezu za odjavu — da
+     * primalac ima jedno mesto za odjavu, bez obzira koja mu poruka stigne.
+     */
+    oznakaZaOdjavu(email) {
+        return crypto
+            .createHmac('sha256', process.env.JWT_SECRET || 'zipa')
+            .update(String(email).toLowerCase())
+            .digest('hex')
+            .slice(0, 20);
+    }
+
+    async posaljiObavestenjeOGaleriji(galleryId) {
+        const galerija = await db.collection('gallery').findOne({ _id: ObjectID(galleryId) });
+        if (!galerija || !galerija.isActive) return;
+
+        const pretplatnici = await db.collection('subscribers').find().toArray();
+        if (!pretplatnici.length) return;
+
+        // ista adresa upisana više puta ne sme da dobije više poruka
+        const adrese = Object.keys(
+            pretplatnici.reduce((z, p) => { if (p.email) z[String(p.email).toLowerCase()] = 1; return z; }, {})
+        );
+
+        const naslov = (galerija.name && (galerija.name.ba || galerija.name.en)) || 'Nova galerija';
+        const opis = (galerija.description && (galerija.description.ba || galerija.description.en)) || '';
+        const prva = galerija.photos && galerija.photos[0];
+        const alias = (galerija.alias && galerija.alias.ba) || '';
+
+        const stavka = popuniObrazac(
+            fs.readFileSync('./emails/orderItem.html', 'utf-8'),
+            prva ? `${API_ENDPOINT}/photos/350x/` + encodeURI(prva.image) : '',
+            naslov,
+            opis,
+            alias,
+            galerija._id
+        );
+
+        const predlozak = fs.readFileSync('./emails/newsletter.html', 'utf-8');
+
+        for (let i = 0; i < adrese.length; i++) {
+            const adresa = adrese[i];
+            const vezaOdjave =
+                `${SITE_URL}/odjava?email=${encodeURIComponent(adresa)}&k=${this.oznakaZaOdjavu(adresa)}`;
+
+            try {
+                await sendMail(
+                    adresa,
+                    `Nova galerija: ${naslov}`,
+                    popuniObrazac(predlozak, naslov, '', opis, stavka, vezaOdjave)
+                );
+            } catch (e) {
+                console.error('[obavestenje] neuspelo slanje na', adresa, '-', e.message);
+            }
+
+            if (i < adrese.length - 1) {
+                await new Promise((r) => setTimeout(r, 500));
+            }
+        }
+    }
+
     async updateGallery(uid, id, obj) {
         //obj.alias = generateAlias(obj.name);
         if (obj.name) {
@@ -739,6 +820,23 @@ class ProductsModule {
         }
 
         this.setPhotosCountToCategories();
+
+        /*
+         * Obaveštenje pretplatnicima o novoj galeriji.
+         *
+         * Šalje se samo ako je kvačica označena i samo za javno vidljivu
+         * galeriju. Namerno nije samostalno: agencija objavi oko sedam stotina
+         * galerija godišnje, pa bi obaveštenje o svakoj značilo dva pisma
+         * dnevno svakom pretplatniku — najbrži način da se svi odjave.
+         *
+         * Ne čeka se ishod slanja: fotograf ne treba da gleda u prazan ekran
+         * dok pošta odlazi, a neuspeh slanja ne sme da obori snimanje galerije.
+         */
+        if (obj.notifySubscribers && (obj.isActive ? true : false)) {
+            this.posaljiObavestenjeOGaleriji(obj._id || id).catch((e) =>
+                console.error('[obavestenje] neuspelo:', e.message)
+            );
+        }
 
         return {
             response: {
