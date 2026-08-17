@@ -71,8 +71,16 @@ class LoginPage extends Component {
 
     render() {
 
+        /*
+         * Stranica za prijavu prati izabrani izgled naslovne, jer je traženo da
+         * se za svaki predlog razlikuje. Razlika je u boji i rasporedu, ne u
+         * sadržaju — polja i dugmad ostaju ista, pa se ništa ne uči iznova.
+         */
+        const izgled = (this.props.settings && this.props.settings.homepageLayout) || 'trenutni';
+        const razred = izgled !== 'trenutni' ? `login-wrap prijava-${izgled}` : 'login-wrap';
+
         return (
-            <div className="login-wrap">
+            <div className={razred}>
                 <div className="into-wrap">
                     <Container>
                         <Row>

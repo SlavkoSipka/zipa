@@ -200,6 +200,14 @@ class CategoryPage extends Component {
     render() {
         let params = this.getSearchParams();
 
+        /*
+         * Uz nove izglede spisak galerija je gušći — četiri u redu umesto tri —
+         * i kartice nose isti izgled kao na novoj naslovnoj. Dok je izabran
+         * „trenutni", spisak ostaje kakav je bio.
+         */
+        const noviPrikaz =
+            this.props.settings && this.props.settings.homepageLayout &&
+            this.props.settings.homepageLayout !== 'trenutni';
 
         let categories = [{
             name: {ba: 'Sve kategorije', en: 'Sve kategorije'.translate(this.props.lang)},
@@ -486,12 +494,13 @@ class CategoryPage extends Component {
                                                                 })}
                                                             </Row>
                                                             :
-                                                        <Row className="articles">
+                                                        <Row className={noviPrikaz ? 'articles novi-spisak' : 'articles'}>
                                                             {
                                                                 this.state.items && this.state.items.map((article, idx) => {
                                                                     return (
                                                                         <Col
-                                                                            lg={this.state.displayStyle == 'list' ? '12' : '4'}
+                                                                            lg={this.state.displayStyle == 'list' ? '12' : (noviPrikaz ? '3' : '4')}
+                                                                            md={this.state.displayStyle == 'list' ? '12' : (noviPrikaz ? '4' : '6')}
                                                                             key={idx}>
                                                                             <Article
                                                                                 _id={article._id}
