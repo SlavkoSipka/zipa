@@ -340,6 +340,28 @@ class UsersModule {
 
 
     async register(email, password, name, type) {
+        // Isto kao kod newslettera: prazan obrazac je obarao ceo API.
+        if (typeof email !== 'string' || !email.trim() || email.indexOf('@') === -1) {
+            return {
+                response: { error: 'Unesite ispravnu e-mail adresu.' },
+                status: 400
+            };
+        }
+        if (typeof password !== 'string' || !password) {
+            return {
+                response: { error: 'Unesite lozinku.' },
+                status: 400
+            };
+        }
+        if (typeof name !== 'string' || !name.trim()) {
+            return {
+                response: { error: 'Unesite ime.' },
+                status: 400
+            };
+        }
+
+        email = email.trim().toLowerCase();
+
         let check = await db.collection('users').find({ email: email }).count();
         if (check) {
             return {
@@ -1587,6 +1609,19 @@ class UsersModule {
 
 
     async subscribeToNewsletter(email) {
+        // Bez ove provere je prazan obrazac obarao ceo API — a ruta je javna,
+        // pa je bilo dovoljno poslati prazno telo da sajt padne.
+        if (typeof email !== 'string' || !email.trim()) {
+            return { error: true };
+        }
+        email = email.trim().toLowerCase();
+
+        // ista adresa ne treba da stoji dvaput na listi
+        const vec = await db.collection('subscribers').find({ email: email }).toArray();
+        if (vec.length) {
+            return { error: null };
+        }
+
         if (email.indexOf('@') !== -1) {
             await db.collection('subscribers').insertOne({
                 email: email,

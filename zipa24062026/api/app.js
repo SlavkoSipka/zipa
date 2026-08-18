@@ -634,7 +634,8 @@ app.get('/categories/home', async (req, res) => {
 })
 
 app.post('/gallery/search/:lang', userCheck, async (req, res) => {
-    res.send(await productsModule.gallery(res.locals.uid, req.params.lang, req.body.query));
+    // Bez ovoga je zahtev bez `query` obarao ceo API.
+    res.send(await productsModule.gallery(res.locals.uid, req.params.lang, req.body.query || {}));
 });
 
 // Pretraga koja vraća pojedinačne fotografije umesto celih galerija.
@@ -786,7 +787,12 @@ app.post('/admin/statistics', permissionMiddleware('*'), async (req, res) => {
     // res.send(await adminModule.statistics(req.body.from, req.body.to));
 });
 
-app.post('/admin/exportVisitsPerDay', async (req, res) => {
+/*
+ * Ova ruta je stajala BEZ ikakve provere prava, a vraća zaradu po danima,
+ * broj preuzimanja, posete i spisak svih fotografa sa imenima. Bilo ko sa
+ * adresom video je poslovne brojeve agencije.
+ */
+app.post('/admin/exportVisitsPerDay', permissionMiddleware('*'), async (req, res) => {
     const { from, to } = req.body;
 
     const statisticsResult = await adminModule.statisticsExportWithDate(from, to);
@@ -815,3 +821,70 @@ app.get('/test', async () => {
 setTimeout(() => {
     productsModule.setPhotosCountToCategories();
 }, 3000);
+
+
+/* ── Zaštita od pada ──────────────────────────────────────────────────────
+ *
+ * Do sada API nije imao nijednu zaštitu od grešaka. Rute su `async`, pa je
+ * svaka greška u bilo kojoj od njih postajala neuhvaćeno odbijanje obećanja —
+ * a Node na to gasi ceo proces. Jedan pogrešan zahtev je obarao sajt za sve
+ * posetioce, dok ga neko ručno ne pokrene ponovo.
+ *
+ * Provereno je da se to dešava na najmanje tri mesta, od kojih su dva javna:
+ * prijava na newsletter i registracija sa praznim obrascem.
+ *
+ * Ova tri sloja rešavaju i te i sve buduće slučajeve:
+ *   1. omotač oko svih ruta — greška u ruti postaje uredan odgovor 500
+ *   2. završni rukovalac — hvata ono što omotač propusti
+ *   3. mreža na kraju — proces se ne gasi ni ako greška iskoči van zahteva
+ */
+
+// 1. Omotač: svaka postojeća ruta se obavija hvatanjem greške.
+(function zastitiRute() {
+    const slojevi = (app._router && app._router.stack) || [];
+    let obavijeno = 0;
+
+    for (const sloj of slojevi) {
+        if (!sloj.route || !sloj.route.stack) continue;
+
+        for (const rukovalac of sloj.route.stack) {
+            const izvorna = rukovalac.handle;
+            // samo rukovaoci oblika (req, res) ili (req, res, next)
+            if (typeof izvorna !== 'function' || izvorna.length > 3) continue;
+
+            rukovalac.handle = function (req, res, next) {
+                try {
+                    const ishod = izvorna.call(this, req, res, next);
+                    if (ishod && typeof ishod.catch === 'function') {
+                        ishod.catch(next);
+                    }
+                    return ishod;
+                } catch (e) {
+                    next(e);
+                }
+            };
+            obavijeno++;
+        }
+    }
+
+    console.log(`[zastita] obavijeno ruta: ${obavijeno}`);
+})();
+
+// 2. Završni rukovalac: greška iz bilo koje rute postaje uredan odgovor.
+app.use(function (err, req, res, next) {
+    console.error('[greska]', req.method, req.originalUrl, '-', err && err.message);
+
+    if (res.headersSent) return next(err);
+
+    // Poruka se namerno ne prosleđuje korisniku — može da oda ustrojstvo baze.
+    res.status(500).send({ error: 'Došlo je do greške. Pokušajte ponovo.' });
+});
+
+// 3. Mreža na kraju: proces ostaje živ i kad greška iskoči van zahteva.
+process.on('unhandledRejection', (razlog) => {
+    console.error('[neuhvaceno odbijanje]', razlog && (razlog.stack || razlog.message || razlog));
+});
+
+process.on('uncaughtException', (e) => {
+    console.error('[neuhvacena greska]', e && (e.stack || e.message));
+});

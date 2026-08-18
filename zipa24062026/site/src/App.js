@@ -170,10 +170,18 @@ class App extends Component {
     }
 
 
+    /*
+     * Izbor jezika se pamti u pregledaču.
+     *
+     * Ranije je stajao samo u stanju strane, pa se pri svakom prelasku na
+     * drugu stranu vraćao na bosanski — posetilac koji izabere engleski bi
+     * ga izgubio već na sledećem kliku.
+     */
     setLang = (lang) => {
-        this.setState({
-            lang
-        })
+        this.setState({ lang });
+        try {
+            localStorage.setItem('jezik', lang);
+        } catch (e) { /* privatni režim — jezik onda važi samo do osvežavanja */ }
     }
 
     handleDelete(func) {
@@ -231,6 +239,14 @@ class App extends Component {
     }
 
     componentDidMount() {
+        // Vraćamo jezik koji je posetilac ranije izabrao.
+        try {
+            const zapamcen = localStorage.getItem('jezik');
+            if (zapamcen && zapamcen !== this.state.lang) {
+                this.setState({ lang: zapamcen });
+            }
+        } catch (e) { /* privatni režim */ }
+
         this.initFetch();
     }
 

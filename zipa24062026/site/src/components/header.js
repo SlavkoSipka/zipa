@@ -117,7 +117,18 @@ class Header extends Component {
                                     <button
                                         className={this.props.lang === 'en' ? 'jezik izabran' : 'jezik'}
                                         onClick={this.setLangEn}>EN</button>
-                                    <Link to="/page/cjenovnik">{'CJENOVNIK'.translate(this.props.lang)}</Link>
+                                    {/*
+                                      * Stranica „cjenovnik" još ne postoji u
+                                      * administraciji. Dok je ne naprave, veza
+                                      * se ne prikazuje — ranije je vodila na
+                                      * praznu stranu. Čim strana bude
+                                      * napravljena, veza se sama pojavi.
+                                      */}
+                                    {(this.props.pages || []).some(
+                                        (s) => s && s.alias && (s.alias.ba === 'cjenovnik' || s.alias === 'cjenovnik')
+                                    ) ? (
+                                        <Link to="/page/cjenovnik">{'CJENOVNIK'.translate(this.props.lang)}</Link>
+                                    ) : null}
                                     {this.props.uData ?
                                         <Link to="/account/profile">{'NALOG'.translate(this.props.lang)}</Link>
                                         :

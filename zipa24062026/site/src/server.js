@@ -48,7 +48,25 @@ server
           generateSeoTags = route.generateSeoTags;
         }
         for (let i = 0; i < route.loadData.length; i++) {
-          promises.push(route.loadData[i](fetch, match, req.path, req.query, lang));
+          /*
+           * Svako dovlačenje podataka se hvata posebno.
+           *
+           * Ranije je jedan neuspeh — API koji ne odgovori, ili vrati HTML
+           * umesto podataka — obarao ceo proces sajta, za sve posetioce.
+           * Tako je otvaranje /blog gasilo sajt, jer ta ruta u API-ju uopšte
+           * ne postoji pa se vraćala stranica greške.
+           *
+           * Sada strana koja ne dobije podatke ostaje bez tog dela sadržaja,
+           * a sve ostalo radi.
+           */
+          promises.push(
+            Promise.resolve()
+              .then(() => route.loadData[i](fetch, match, req.path, req.query, lang))
+              .catch((e) => {
+                console.error('[podaci] ' + req.path + ' - ' + (e && e.message));
+                return {};
+              })
+          );
         }
 
      
