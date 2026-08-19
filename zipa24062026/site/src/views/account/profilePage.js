@@ -515,7 +515,7 @@ class ProfilePage extends Component {
                                                 <Col lg="4" sm="4">
                                                     <div className="block">
                                                         <div>
-                                                            <h6>Promet danas</h6>
+                                                            <h6>{'Promet danas'.translate(this.props.lang)}</h6>
                                                             <h3>{this.stat(this.state.adminStatistics.todayEarnings, ' KM')}</h3>
                                                         </div>
                                                         <Isvg src={statIcon}/>
@@ -525,7 +525,7 @@ class ProfilePage extends Component {
                                                 <Col lg="4" sm="4">
                                                     <div className="block">
                                                         <div>
-                                                            <h6>Mjesečni promet</h6>
+                                                            <h6>{'Mjesečni promet'.translate(this.props.lang)}</h6>
                                                             <h3>{this.stat(this.state.adminStatistics.currentMonthEarnings, ' KM')}</h3>
                                                         </div>
                                                         <Isvg src={statIcon}/>
@@ -535,7 +535,7 @@ class ProfilePage extends Component {
                                                 <Col lg="4" sm="4">
                                                     <div className="block">
                                                         <div>
-                                                            <h6>Ukupno preuzeto fotografija</h6>
+                                                            <h6>{'Ukupno preuzeto fotografija'.translate(this.props.lang)}</h6>
                                                             <h3>{this.stat(this.state.adminStatistics.totalDownloads)}</h3>
                                                         </div>
                                                         <Isvg src={statIcon}/>
@@ -779,7 +779,7 @@ class ProfilePage extends Component {
                 {this.state.uploadedPictures ?
                     <div className="delete-modal">
                         <div>
-                            <h6>Broj uploadovanih fotografija</h6>
+                            <h6>{'Broj uploadovanih fotografija'.translate(this.props.lang)}</h6>
 
 
                             <FromToForm onSubmit={(data) => {
@@ -820,7 +820,7 @@ class ProfilePage extends Component {
                 {this.state.visitPerDay ?
                     <div className="delete-modal">
                         <div>
-                            <h6>Posjete po danima</h6>
+                            <h6>{'Posjete po danima'.translate(this.props.lang)}</h6>
 
 
                             <FromToForm onSubmit={(data) => {
@@ -863,7 +863,7 @@ class ProfilePage extends Component {
                     <div className="delete-modal">
                         <div>
                             <Isvg src={backup}/>
-                            <h6>Preuzmite backup</h6>
+                            <h6>{'Preuzmite backup'.translate(this.props.lang)}</h6>
                             <FromToForm onSubmit={(data) => {
                                 this.setState({
                                     downloadBackup: null
@@ -903,7 +903,7 @@ class ProfilePage extends Component {
                     <div className="delete-modal">
                         <div>
                             <Isvg src={trashIcon}/>
-                            <h6>Uklonite originale</h6>
+                            <h6>{'Uklonite originale'.translate(this.props.lang)}</h6>
                             <FromToForm onSubmit={(data) => {
                                 this.setState({
                                     removeOriginals: null
