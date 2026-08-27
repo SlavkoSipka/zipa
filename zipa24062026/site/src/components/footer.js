@@ -2,8 +2,6 @@ import React, { Component } from 'react';
 import { Link } from 'react-router-dom'
 import Isvg from 'react-inlinesvg';
 
-import logo from '../assets/svg/footer-logo.svg';
-
 import social1 from '../assets/svg/social1.svg';
 import social2 from '../assets/svg/social2.svg';
 import social3 from '../assets/svg/social3.svg';
@@ -11,10 +9,7 @@ import social4 from '../assets/svg/social4.svg';
 import social5 from '../assets/svg/social5.svg';
 import social6 from '../assets/svg/social6.svg';
 
-import rightArrow from '../assets/svg/right-arrow.svg';
-import BlogArticle from '../components/articles/blogArticle';
 import newsletterIcon from '../assets/svg/newsletter-icon.svg';
-
 
 import phoneIcon from '../assets/svg/footer-phone.svg';
 import locationIcon from '../assets/svg/footer-location.svg';
@@ -22,42 +17,121 @@ import locationIcon from '../assets/svg/footer-location.svg';
 import {
     Container,
     Row,
-    Col,
-    DropdownItem,
-    DropdownMenu,
-    DropdownToggle,
-    UncontrolledDropdown
+    Col
 } from 'reactstrap';
 import { API_ENDPOINT } from '../constants';
+
+/*
+ * PODNOŽJE
+ *
+ * Sajt se zatvara istim tonom kojim je otvoren — podnožje nosi `--boja-traka`,
+ * isto kao zaglavlje. Izgled je u `scss/_podnozje.scss`; tamo se tokeni
+ * preusmeravaju u opsegu podnožja, pa veze, polja i okviri fokusa potamne
+ * odjednom.
+ *
+ * Klasa `podnozje-sajta` ostaje uz novu `z-podnozje`: `_global.scss` cilja
+ * podnožje po toj klasi (`footer:where(.podnozje-sajta)`), pa bi njeno
+ * uklanjanje promenilo šta se gasi pri štampi.
+ */
+
+// Društvene mreže — ikonica, polje u podešavanjima i naziv za čitač ekrana.
+// Ako mreža nema adresu u podešavanjima, ne iscrtava se uopšte.
+const MREZE = [
+    { kljuc: 'facebook',  ikona: social1, naziv: 'Facebook' },
+    { kljuc: 'instagram', ikona: social2, naziv: 'Instagram' },
+    { kljuc: 'twitter',   ikona: social3, naziv: 'X (Twitter)' },
+    { kljuc: 'pinterest', ikona: social4, naziv: 'Pinterest' },
+    { kljuc: 'tumblr',    ikona: social5, naziv: 'Tumblr' },
+    { kljuc: 'linkedin',  ikona: social6, naziv: 'LinkedIn' },
+];
 
 class Footer extends Component {
     constructor(props) {
         super(props);
 
         this.state = {
+            email: '',
+            _done: null,
+            _error: null,
         };
     }
 
+    /*
+     * Prijava na newsletter.
+     *
+     * Poziv ka API-ju je NEPROMENJEN. Dodata je samo provera pre slanja, da
+     * bi poruka mogla da kaže šta je tačno pošlo naopako: API vraća samo
+     * `{error: true}`, bez razloga, pa se prazna i neispravna adresa inače
+     * ne bi mogle razlikovati.
+     */
+    prijaviSe = () => {
+        const email = (this.state.email || '').trim();
+        const l = this.props.lang;
 
+        if (!email) {
+            this.setState({ _done: null, _error: 'Unesite e-mail adresu.'.translate(l) });
+            return;
+        }
 
+        if (email.indexOf('@') === -1 || email.indexOf('.') === -1) {
+            this.setState({
+                _done: null,
+                _error: 'Adresa nije ispravna — proverite da li ste je tačno unijeli.'.translate(l)
+            });
+            return;
+        }
+
+        fetch(`${API_ENDPOINT}/newsletter/subscribe`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email: this.state.email })
+        }).then((res) => res.json()).then((result) => {
+            if (!result.error) {
+                this.setState({
+                    _done: 'Prijavljeni ste. Hvala vam!'.translate(l),
+                    _error: null,
+                })
+            } else {
+                this.setState({
+                    _error: 'Prijava nije uspjela. Pokušajte ponovo za koji trenutak.'.translate(l),
+                    _done: null
+                })
+            }
+        }).catch(() => {
+            this.setState({
+                _error: 'Nema veze sa serverom. Provjerite internet i pokušajte ponovo.'.translate(l),
+                _done: null
+            })
+        })
+    };
 
     render() {
+        const l = this.props.lang;
+        const p = this.props.settings || {};
+
+        const mreze = MREZE.filter((m) => p[m.kljuc]);
+
+        // Arhiva ide od 1990; druga godina je uvek tekuća.
+        const godina = new Date().getFullYear();
+
         return (
             <>
 
-                {this.props.settings.enableInfoBlocks ?
+                {p.enableInfoBlocks ?
                     <section className="section-info-blocks">
 
                         <Container>
                             <Row>
                                 {
-                                    this.props.settings.infoblock.map((item, idx) => {
+                                    p.infoblock.map((item, idx) => {
                                         return (
-                                            <Col lg="3" className="item">
+                                            <Col lg="3" className="item" key={idx}>
                                                 <Isvg src={item.icon} />
                                                 <div>
-                                                    <h6>{Object.translate(item, 'value', this.props.lang)}</h6>
-                                                    <p>{Object.translate(item, 'name', this.props.lang)}</p>
+                                                    <h6>{Object.translate(item, 'value', l)}</h6>
+                                                    <p>{Object.translate(item, 'name', l)}</p>
                                                 </div>
                                             </Col>
                                         )
@@ -67,136 +141,155 @@ class Footer extends Component {
                             </Row>
                         </Container>
                     </section>
-                    :
-
-                    <section className="section-newsletter">
-
-                        <Container>
-                            <Row>
-                                <Col lg="12" >
-                                    <div className="content">
-                                        <Isvg src={newsletterIcon} />
-
-                                        <Row>
-                                            <Col lg="6">
-                                                <h3><span>{'PRIJAVITE SE'.translate(this.props.lang)}</span> {'NA'.translate(this.props.lang)}<br />{'NAŠ NEWSLETTER'.translate(this.props.lang)}</h3>
-                                            </Col>
-                                            <Col lg="6">
-                                                {this.state._done ?
-                                                    <p className="done">{'Uspješno ste se prijavili na naš newsletter'.translate(this.props.lang)}</p>
-                                                    :
-                                                    <div className="input">
-                                                        <input type="text" value={this.state.email} onChange={(e) => this.setState({ email: e.target.value })} placeholder={'Unesite svoju e-mail adresu'.translate(this.props.lang)} />
-                                                        <button onClick={() => {
-                                                            fetch(`${API_ENDPOINT}/newsletter/subscribe`, {
-                                                                method: 'POST',
-                                                                headers: {
-                                                                    'Content-Type': 'application/json'
-                                                                },
-                                                                body: JSON.stringify({ email: this.state.email })
-                                                            }).then((res) => res.json()).then((result) => {
-                                                                if (!result.error) {
-                                                                    this.setState({
-                                                                        _done: true,
-                                                                        _error: null,
-                                                                    })
-                                                                } else {
-                                                                    this.setState({
-                                                                        _error: true,
-                                                                        _done: null
-                                                                    })
-                                                                }
-                                                            })
-                                                        }}>{'PRIJAVI SE'.translate(this.props.lang)}</button>
-                                                    </div>
-                                                }
-                                                {
-                                                    this.state._error ?
-                                                        <p className="err">{'Greška!'.translate(this.props.lang)}</p>
-                                                        :
-                                                        null
-                                                }
-                                            </Col>
-                                        </Row>
-                                    </div>
-                                </Col>
-                            </Row>
-                        </Container>
-
-                    </section>
+                    : null
                 }
 
-                <footer>
-                    <Container>
-                        <Row>
-                            <Col lg="4" className="f-col-1">
-                                <Isvg src={this.props.settings.footerLogo} />
-                                <div className="contact">
-                                    <div><Isvg src={phoneIcon} /> {'POZOVITE NAS'.translate(this.props.lang)}</div>
-                                    <p>{this.props.settings.phoneNumber}</p>
-                                </div>
-                                <div className="contact">
-                                    <div><Isvg src={locationIcon} /> {'LOKACIJA'.translate(this.props.lang)}</div>
-                                    {
-                                        <p dangerouslySetInnerHTML={{ __html: this.props.settings.location && this.props.settings.location.replace(/\n/g, '<br/>') }}></p>
-                                    }
+                <footer className="podnozje-sajta z-podnozje">
+                    <div className="z-podnozje__sirina">
+
+                        {/* ── newsletter ───────────────────────────────── */}
+                        {!p.enableInfoBlocks ?
+                            <div className="z-podnozje__newsletter">
+                                <div className="z-podnozje__newsletter-tekst">
+                                    <h2 className="z-podnozje__newsletter-naslov">
+                                        {'Prijavite se na naš newsletter'.translate(l)}
+                                    </h2>
+                                    <p className="z-podnozje__newsletter-opis">
+                                        {'Nove galerije iz arhive, jednom mjesečno. Odjava je moguća u svakom trenutku.'.translate(l)}
+                                    </p>
                                 </div>
 
-                            </Col>
-                            <Col lg="4" className="f-col-2">
-                                <div>
-                                    <h6>{'NAVIGACIJA'.translate(this.props.lang)}</h6>
-                                    <ul>
-                                        <li><Link to='/'>{'Početna'.translate(this.props.lang)}</Link></li>
-                                        <li><Link to='/help'>{'Pomoć'.translate(this.props.lang)}</Link></li>
-                                        <li><Link to='/galerije'>{'Galerije'.translate(this.props.lang)}</Link></li>
-                                        <li><Link to='/page/uslovi-koriscenja'>{'Uslovi korišćenja'.translate(this.props.lang)}</Link></li>
-                                        <li><Link to='/page/o-nama'>{'Agencija'.translate(this.props.lang)}</Link></li>
-                                        <li><Link to='/contact'>{'Kontakt'.translate(this.props.lang)}</Link></li>
-                                    </ul>
-                                </div>
-                                <div>
-                                    <h6>{'PRATITE NAS'.translate(this.props.lang)}</h6>
-                                    <div className="social">
-                                        <a href={this.props.settings.facebook} target="_blank"><Isvg src={social1} /></a>
-                                        <a href={this.props.settings.instagram} target="_blank"><Isvg src={social2} /></a>
-                                        <a href={this.props.settings.twitter} target="_blank"><Isvg src={social3} /></a>
-                                        <a href={this.props.settings.pinterest} target="_blank"><Isvg src={social4} /></a>
-                                        <a href={this.props.settings.tumblr} target="_blank"><Isvg src={social5} /></a>
-                                        <a href={this.props.settings.linkedin} target="_blank"><Isvg src={social6} /></a>
-                                    </div>
-                                </div>
-                            </Col>
-                            <Col lg={{ size: 4 }} className="f-col-3">
-                                {this.props.footerBanner ?
-                                    <div className="banner" >
-                                        {
-                                            this.props.footerBanner.images.map((item, idx) => {
-                                                return (
-                                                    <a href={item.link} target="_blank" onClick={() => this.props.bannerClick(item.link)}>
-                                                        <img key={idx} src={item.image} />
-                                                    </a>
-                                                )
-                                            })
-                                        }
+                                <div className="z-podnozje__newsletter-obrazac">
+                                    <div className="z-podnozje__polje-red">
+                                        <input
+                                            type="email"
+                                            className="z-podnozje__unos"
+                                            value={this.state.email}
+                                            aria-label={'Vaša e-mail adresa'.translate(l)}
+                                            placeholder={'Unesite svoju e-mail adresu'.translate(l)}
+                                            onChange={(e) => this.setState({ email: e.target.value })}
+                                            onKeyDown={(e) => { if (e.key === 'Enter') this.prijaviSe(); }}
+                                        />
+                                        <button type="button"
+                                                className="z-podnozje__dugme"
+                                                onClick={this.prijaviSe}>
+                                            {'Prijavi se'.translate(l)}
+                                        </button>
                                     </div>
 
-                                    :
-                                    null
+                                    {/* `role="status"` da čitač ekrana pročita ishod
+                                        bez pomjeranja fokusa. */}
+                                    {this.state._done ?
+                                        <p className="z-podnozje__poruka z-podnozje__poruka--uspeh" role="status">
+                                            {this.state._done}
+                                        </p>
+                                        : null}
+                                    {this.state._error ?
+                                        <p className="z-podnozje__poruka z-podnozje__poruka--greska" role="status">
+                                            {this.state._error}
+                                        </p>
+                                        : null}
+                                </div>
+                            </div>
+                            : null}
 
+                        {/* ── stupci ───────────────────────────────────── */}
+                        <div className="z-podnozje__stupci">
+
+                            <div>
+                                {p.footerLogo ?
+                                    <div className="z-podnozje__logo"><Isvg src={p.footerLogo} /></div>
+                                    : null}
+                                <p className="z-podnozje__o-nama">
+                                    {'Foto servis agencije ZIPA PHOTO iz Banjaluke. Arhiva fotografija od 1990. do danas — događaji, ljudi i mjesta Republike Srpske.'.translate(l)}
+                                </p>
+
+                                {mreze.length ?
+                                    <div className="z-podnozje__mreze">
+                                        {mreze.map((m) => (
+                                            <a key={m.kljuc}
+                                               className="z-podnozje__mreza"
+                                               href={p[m.kljuc]}
+                                               target="_blank"
+                                               rel="noopener noreferrer"
+                                               aria-label={m.naziv}>
+                                                <Isvg src={m.ikona} />
+                                            </a>
+                                        ))}
+                                    </div>
+                                    : null}
+                            </div>
+
+                            <div>
+                                <h2 className="z-podnozje__naslov-stupca">{'Navigacija'.translate(l)}</h2>
+                                <ul className="z-podnozje__spisak">
+                                    <li><Link className="z-podnozje__veza" to="/">{'Početna'.translate(l)}</Link></li>
+                                    <li><Link className="z-podnozje__veza" to="/galerije">{'Galerije'.translate(l)}</Link></li>
+                                    <li><Link className="z-podnozje__veza" to="/video">{'Video'.translate(l)}</Link></li>
+                                    <li><Link className="z-podnozje__veza" to="/page/o-nama">{'Agencija'.translate(l)}</Link></li>
+                                    <li><Link className="z-podnozje__veza" to="/help">{'Pomoć'.translate(l)}</Link></li>
+                                </ul>
+                            </div>
+
+                            <div>
+                                <h2 className="z-podnozje__naslov-stupca">{'Pravno'.translate(l)}</h2>
+                                <ul className="z-podnozje__spisak">
+                                    <li><Link className="z-podnozje__veza" to="/page/uslovi-koriscenja">{'Uslovi korišćenja'.translate(l)}</Link></li>
+                                    <li><Link className="z-podnozje__veza" to="/page/impresum">{'Impresum'.translate(l)}</Link></li>
+                                    <li><Link className="z-podnozje__veza" to="/page/ugovori">{'Ugovori'.translate(l)}</Link></li>
+                                    <li><Link className="z-podnozje__veza" to="/odjava">{'Odjava sa newslettera'.translate(l)}</Link></li>
+                                </ul>
+                            </div>
+
+                            <div>
+                                <h2 className="z-podnozje__naslov-stupca">{'Kontakt'.translate(l)}</h2>
+
+                                {p.phoneNumber ?
+                                    <div className="z-podnozje__kontakt-stavka">
+                                        <Isvg src={phoneIcon} />
+                                        <p><a className="z-podnozje__veza" href={`tel:${String(p.phoneNumber).replace(/\s/g, '')}`}>{p.phoneNumber}</a></p>
+                                    </div>
+                                    : null}
+
+                                {p.location ?
+                                    <div className="z-podnozje__kontakt-stavka">
+                                        <Isvg src={locationIcon} />
+                                        <p dangerouslySetInnerHTML={{ __html: p.location.replace(/\n/g, '<br/>') }} />
+                                    </div>
+                                    : null}
+
+                                <div className="z-podnozje__kontakt-stavka">
+                                    <Isvg src={newsletterIcon} />
+                                    <p><a className="z-podnozje__veza" href="mailto:info@zipaphoto.net">info@zipaphoto.net</a></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {this.props.footerBanner ?
+                            <div className="z-podnozje__baner">
+                                {
+                                    this.props.footerBanner.images.map((item, idx) => {
+                                        return (
+                                            <a key={idx} href={item.link} target="_blank" rel="noopener noreferrer"
+                                               onClick={() => this.props.bannerClick(item.link)}>
+                                                <img src={item.image} alt="" />
+                                            </a>
+                                        )
+                                    })
                                 }
-                            </Col>
+                            </div>
+                            : null
+                        }
 
-                            <Col lg="12">
-                                <div className="spacer"></div>
-                            </Col>
-                            <Col lg="12" className="copyright">
-                                <p>Copyright © ZIPA PHOTO AGENCY  - 1990-2024. All Rights Reserved.</p>
-                                <p>Created by <a target="_blank" href="https://novamedia.agency">nova media.</a></p>
-                            </Col>
-                        </Row>
-                    </Container>
-
+                        {/* ── donji red ────────────────────────────────── */}
+                        <div className="z-podnozje__dno">
+                            <p>{`Copyright © ZIPA PHOTO AGENCY — 1990–${godina}. `}{'Sva prava zadržana.'.translate(l)}</p>
+                            <p>
+                                {'Izradila'.translate(l)}{' '}
+                                <a href="https://novamedia.agency" target="_blank" rel="noopener noreferrer">nova media.</a>
+                            </p>
+                        </div>
+                    </div>
                 </footer>
             </>
         );

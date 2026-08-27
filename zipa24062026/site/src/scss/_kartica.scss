@@ -1,0 +1,254 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   KARTICA GALERIJE — jedna, za sva mesta
+   ═══════════════════════════════════════════════════════════════════════════
+   Zamenjuje šest nezavisnih verzija iste kartice.
+
+   KUTIJE NEMA. Bez pozadine, okvira, senke i unutrašnjeg razmaka — „slika u
+   ramu" je obrazac koji napuštamo. Fotografija ide preko cele širine i ona
+   je jedini element sa radijusom; tekst stoji direktno ispod nje, na beloj
+   podlozi strane. Time slika dobija sav prostor koji je ram trošio.
+
+   Tekst NIKAD ne ide preko fotografije: žig stoji u srednjoj trećini kadra.
+   Dve oznake u uglovima su izuzetak — uglovi su van žiga.
+
+   Varijante (`home-article`, `list-view-article`…) ostaju kao klase na
+   korenu, jer se roditeljske mreže na njih oslanjaju; unutrašnjost je nova,
+   pa stara ugnežđena pravila iz `_global.scss` nemaju šta da uhvate.
+*/
+
+/* Ram se gasi izričito i sa istom težinom kojom je nacrtan: zatečeno
+   `.articles.novi-spisak .home-article` (`_naslovnaC.scss`) ima tri razreda,
+   pa ga golo `.z-kartica-galerije` ne bi nadjačalo. Ova tri selektora se
+   izjednačavaju sa njim, a `_kartica.scss` se uvozi kasnije — pa pobeđuje.
+   To je i smisao posla: šest verzija kartice svodi se na jednu. */
+.z-kartica-galerije,
+.articles .z-kartica-galerije,
+.articles.novi-spisak .z-kartica-galerije {
+    background: none;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 0;
+    overflow: visible;
+}
+
+.z-kartica-galerije {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+
+    /* ── fotografija ──────────────────────────────────────────────────── */
+
+    &__slika {
+        position: relative;
+        display: block;
+        width: 100%;
+
+        /* Stalan odnos stranica — bez njega se mreža krivi dok se slike
+           učitavaju. `flex` i `width` idu obavezno uz njega: sa
+           `flex-basis: auto` i bez zadate širine, širina se razreši na nulu
+           i kartica se sruši. */
+        aspect-ratio: 3 / 2;
+        flex: 0 0 auto;
+
+        border-radius: var(--radijus-panel);
+        background: var(--boja-podloga-tiha);
+        overflow: hidden;      // drži uvećanje pri hoveru unutar okvira
+
+        @include z-fokus;
+
+        img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            @include z-prelaz(transform);
+        }
+    }
+
+    // Kategorija — sitna crvena oznaka u gornjem levom uglu.
+    &__kategorija {
+        position: absolute;
+        top: var(--razmak-1);
+        left: var(--razmak-1);
+        // Bez z-indeksa: `position: absolute` je dovoljno da nadjača goli
+        // `img` pored sebe. Sa `z-index: 1` je ova oznaka izlazila IZNAD
+        // otvorenog panela u zaglavlju — zaglavlje je sopstveni sloj
+        // (`position: relative` + `z-index: 1`), pa mu je unutrašnji panel
+        // od 200 bio zarobljen na „1" spolja, a oznaka kasnija u DOM-u je
+        // pri izjednačenju pobeđivala.
+
+        padding: 1px var(--razmak-1);
+        border-radius: 3px;
+        background: var(--boja-oznaka);
+        color: var(--boja-podloga);
+
+        font-size: 10px;
+        line-height: 1.5;
+        font-weight: var(--tezina-jaka);
+        letter-spacing: .02em;
+        text-transform: uppercase;
+    }
+
+    /* Broj fotografija — donji desni ugao slike, bez reči. Tamna
+       poluprovidna podloga da broj ostane čitljiv nad bilo kojim kadrom. */
+    &__broj {
+        position: absolute;
+        right: var(--razmak-1);
+        bottom: var(--razmak-1);
+        // Isti razlog kao kod `&__kategorija` — bez z-indeksa.
+
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+
+        padding: 1px var(--razmak-1);
+        border-radius: 3px;
+        background: var(--boja-zavesa);
+        color: var(--boja-traka-tekst);
+
+        font-size: 10px;
+        line-height: 1.5;
+        font-weight: var(--tezina-srednja);
+
+        svg { width: 10px; height: 10px; display: block; }
+        svg path, svg circle, svg rect { fill: var(--boja-traka-tekst); }
+    }
+
+    /* ── tekst ispod slike — dva reda, ne tri ─────────────────────────── */
+
+    &__telo {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        padding: var(--razmak-2) 0 0;
+    }
+
+    &__naslov {
+        margin: 0;
+        font-family: var(--pismo-naslov);
+        font-size: 15px;
+        line-height: 1.34;
+        font-weight: var(--tezina-srednja);
+
+        /* U bazi naslovi stoje VELIKIM SLOVIMA, pa se duži ne čitaju. Baza
+           se ne dira — slog se popravlja u prikazu. */
+        text-transform: lowercase;
+        &::first-letter { text-transform: uppercase; }
+
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+
+        a {
+            color: var(--boja-veza);
+            text-decoration: none;
+            @include z-prelaz(color);
+            @include z-fokus;
+        }
+    }
+
+    &__mesto {
+        margin: 0;
+        font-size: 12px;
+        line-height: 1.4;
+        color: var(--boja-tekst-tiho);
+    }
+
+    /* ── hover — samo slika i naslov, ništa se ne pomera ──────────────── */
+
+    &:hover {
+        .z-kartica-galerije__slika img { transform: scale(1.03); }
+        .z-kartica-galerije__naslov a   { color: var(--boja-oznaka-tekst); }
+    }
+
+    /* ── varijanta: spisak ────────────────────────────────────────────── */
+
+    &--spisak {
+        flex-direction: row;
+        gap: var(--razmak-4);
+
+        .z-kartica-galerije__slika { flex: 0 0 34%; aspect-ratio: 4 / 3; }
+        .z-kartica-galerije__telo  { padding-top: 0; justify-content: center; }
+
+        @include mobile {
+            flex-direction: column;
+            gap: 0;
+            .z-kartica-galerije__slika { flex: 0 0 auto; width: 100%; aspect-ratio: 3 / 2; }
+            .z-kartica-galerije__telo  { padding-top: var(--razmak-2); }
+        }
+    }
+
+    /* ── varijanta: veliki prikaz ─────────────────────────────────────── */
+
+    &--veliko {
+        .z-kartica-galerije__slika  { aspect-ratio: 16 / 9; }
+        .z-kartica-galerije__naslov { font-size: 18px; }
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MREŽA — uži razmak, da slika dobije prostor
+   ═══════════════════════════════════════════════════════════════════════════
+   Bootstrap-ov `Row`/`Col` nosi razmak od 15px sa svake strane. Ovde se
+   svodi na 10px, što daje ~20px između kartica.
+*/
+.articles {
+    margin-left: -10px;
+    margin-right: -10px;
+
+    > [class*="col-"] {
+        padding-left: 10px;
+        padding-right: 10px;
+        margin-bottom: var(--razmak-5);
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SKELETON — iste mere kao prava kartica
+   ═══════════════════════════════════════════════════════════════════════════
+*/
+.z-kartica-skelet {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+
+    &__slika {
+        width: 100%;
+        aspect-ratio: 3 / 2;
+        border-radius: var(--radijus-panel);
+        background: var(--boja-podloga-tiha);
+    }
+
+    &__telo {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: var(--razmak-2) 0 0;
+    }
+
+    &__linija {
+        height: 12px;
+        border-radius: var(--radijus-mali);
+        background: var(--boja-podloga-tiha);
+
+        &--naslov { height: 15px; width: 85%; }
+        &--kratka { height: 10px; width: 55%; }
+    }
+
+    // Tiho pulsiranje; pod `prefers-reduced-motion` se gasi.
+    &__slika, &__linija { animation: z-skelet 1.4s ease-in-out infinite; }
+}
+
+@keyframes z-skelet {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: .55; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .z-kartica-skelet__slika,
+    .z-kartica-skelet__linija { animation: none; }
+}

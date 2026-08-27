@@ -1,0 +1,774 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   POMOĆ, TEMA POMOĆI I SADRŽAJNE STRANE
+   ═══════════════════════════════════════════════════════════════════════════
+   Tri strane koje dele isti posao — tekst koji se čita, a ne gleda:
+
+     `.z-pomoc`   /help          pretraga, teme kao kartice, najčešća pitanja
+     `.z-tema`    /faq/:alias    sadržaj sa strane, pitanja u harmonici
+     `.z-strana`  /page/:alias   jedan izgled za sve sadržajne strane
+
+   Zajedničko im je pravilo o širini: red teksta staje u oko 65 znakova
+   (`65ch`). Preko toga oko gubi početak sledećeg reda.
+*/
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   POMOĆ
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.z-pomoc {
+    padding-bottom: var(--razmak-8);
+
+    &__vrh {
+        margin-bottom: var(--razmak-7);
+        padding: var(--razmak-7) 0;
+        background: var(--boja-podloga-tiha);
+        border-bottom: 1px solid var(--boja-linija);
+
+        @include mobile { padding: var(--razmak-5) 0; }
+    }
+
+    &__naslov {
+        margin: 0 0 var(--razmak-2);
+        font-family: var(--pismo-naslov);
+        font-size: var(--slovo-2xl);
+        line-height: var(--red-2xl);
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-tekst);
+    }
+
+    &__uvod {
+        margin: 0 0 var(--razmak-5);
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
+        color: var(--boja-tekst-tiho);
+    }
+
+    /* ── pretraga ─────────────────────────────────────────────────────── */
+
+    &__pretraga {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: var(--razmak-2);
+        max-width: 560px;
+        padding: 0 var(--razmak-3);
+
+        border: 1px solid var(--boja-linija);
+        border-radius: var(--radijus-panel);
+        background: var(--boja-povrsina);
+
+        // Okvir fokusa ide na omotač, ne na `input` — kao u zaglavlju.
+        &:focus-within {
+            outline: 2px solid var(--boja-fokus);
+            outline-offset: 2px;
+        }
+
+        svg {
+            flex: 0 0 auto;
+            width: 16px;
+            height: 16px;
+        }
+
+        svg path, svg circle, svg rect { fill: var(--boja-tekst-tiho); }
+    }
+
+    &__polje {
+        flex: 1 1 auto;
+        min-width: 0;
+        min-height: var(--visina-pretraga);
+
+        border: 0;
+        background: transparent;
+
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-md);
+        color: var(--boja-tekst);
+
+        &::placeholder { color: var(--boja-tekst-tiho); }
+        &:focus { outline: none; }
+    }
+
+    /* ── odeljci ──────────────────────────────────────────────────────── */
+
+    &__odeljak + &__odeljak {
+        margin-top: var(--razmak-8);
+    }
+
+    &__odeljak-naslov {
+        margin: 0 0 var(--razmak-4);
+        font-family: var(--pismo-naslov);
+        font-size: var(--slovo-xl);
+        line-height: var(--red-xl);
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-tekst);
+    }
+
+    /* ── teme ─────────────────────────────────────────────────────────── */
+
+    &__teme {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: var(--razmak-3);
+
+        @include tablet { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        @include mobile { grid-template-columns: 1fr; }
+    }
+
+    &__tema {
+        display: flex;
+        flex-direction: column;
+        gap: var(--razmak-2);
+        padding: var(--razmak-4);
+
+        border: 1px solid var(--boja-linija);
+        border-radius: var(--radijus-panel);
+        background: var(--boja-povrsina);
+        text-decoration: none;
+
+        @include z-prelaz(border-color);
+        &:hover { border-color: var(--boja-tekst-tiho); }
+        @include z-fokus;
+    }
+
+    &__tema-ikonica {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+
+        border-radius: var(--radijus-mali);
+        background: var(--boja-podloga-tiha);
+
+        svg { width: 20px; height: 20px; }
+        svg path, svg circle, svg rect { fill: var(--boja-tekst); }
+    }
+
+    &__tema-naziv {
+        font-size: var(--slovo-lg);
+        line-height: var(--red-lg);
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-tekst);
+        overflow-wrap: anywhere;
+    }
+
+    &__tema-broj {
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        color: var(--boja-tekst-tiho);
+    }
+
+    /* ── harmonika sa pitanjima ───────────────────────────────────────── */
+
+    &__harmonika {
+        max-width: 65ch;
+        border-top: 1px solid var(--boja-linija);
+    }
+
+    &__pitanje {
+        border-bottom: 1px solid var(--boja-linija);
+    }
+
+    &__pitanje-naslov {
+        margin: 0;
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
+    }
+
+    &__prekidac {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: var(--razmak-3);
+        width: 100%;
+        padding: var(--razmak-3) 0;
+        text-align: left;
+
+        border: 0;
+        background: transparent;
+
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-tekst);
+        cursor: pointer;
+
+        @include z-prelaz(color);
+        &:hover { color: var(--boja-oznaka-tekst); }
+        @include z-fokus;
+    }
+
+    &__znak {
+        flex: 0 0 auto;
+        font-family: var(--pismo-podaci);
+        font-size: var(--slovo-lg);
+        color: var(--boja-tekst-tiho);
+    }
+
+    &__odgovor {
+        padding: 0 0 var(--razmak-4);
+
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
+        color: var(--boja-tekst);
+
+        p:last-child { margin-bottom: 0; }
+        a { @include z-veza; @include z-fokus; }
+    }
+
+    &__dalje {
+        display: inline-block;
+        margin-top: var(--razmak-3);
+        font-size: var(--slovo-sm);
+
+        @include z-veza-meni;
+        @include z-fokus;
+    }
+
+    &__prazno {
+        max-width: 65ch;
+        margin: 0;
+        padding: var(--razmak-7) var(--razmak-4);
+        text-align: center;
+
+        border: 1px dashed var(--boja-linija);
+        border-radius: var(--radijus-panel);
+
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
+        color: var(--boja-tekst-tiho);
+    }
+
+    /* ── kad pomoć ne pomogne ─────────────────────────────────────────── */
+
+    &__pomoc-dalje {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: var(--razmak-3);
+        margin-top: var(--razmak-8);
+        padding-top: var(--razmak-5);
+        border-top: 1px solid var(--boja-linija);
+    }
+
+    &__pomoc-tekst {
+        margin: 0;
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
+        color: var(--boja-tekst);
+    }
+
+    &__radnja {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 40px;
+        padding: 0 var(--razmak-4);
+
+        border: 0;
+        border-radius: var(--radijus-panel);
+        background: var(--boja-akcenat);
+
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-sm);
+        font-weight: var(--tezina-poludebela);
+        color: var(--boja-akcenat-tekst);
+        text-decoration: none;
+
+        @include z-prelaz(background-color);
+        &:hover { background: var(--boja-akcenat-jako); }
+        @include z-fokus;
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TEMA POMOĆI
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.z-tema {
+    padding-bottom: var(--razmak-8);
+
+    &__vrh {
+        margin-bottom: var(--razmak-6);
+        padding: var(--razmak-6) 0;
+        background: var(--boja-podloga-tiha);
+        border-bottom: 1px solid var(--boja-linija);
+
+        @include mobile { padding: var(--razmak-5) 0; }
+    }
+
+    &__putanja {
+        margin: 0 0 var(--razmak-1);
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+
+        a { @include z-veza-meni; @include z-fokus; }
+    }
+
+    &__naslov {
+        margin: 0;
+        font-family: var(--pismo-naslov);
+        font-size: var(--slovo-2xl);
+        line-height: var(--red-2xl);
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-tekst);
+    }
+
+    /* ── raspored ─────────────────────────────────────────────────────── */
+
+    &__raspored {
+        display: grid;
+        grid-template-columns: 240px 1fr;
+        gap: var(--razmak-7);
+        align-items: start;
+
+        @include mobile-tablet {
+            grid-template-columns: 1fr;
+            gap: var(--razmak-5);
+        }
+    }
+
+    &__sadrzaj {
+        position: sticky;
+        top: var(--razmak-5);
+
+        @include mobile-tablet { position: static; }
+    }
+
+    &__sadrzaj-naslov {
+        margin: 0 0 var(--razmak-2);
+        font-size: var(--slovo-xs);
+        line-height: var(--red-xs);
+        font-weight: var(--tezina-jaka);
+        letter-spacing: .1em;
+        text-transform: uppercase;
+        color: var(--boja-tekst-tiho);
+    }
+
+    &__spisak {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        counter-reset: pitanje;
+    }
+
+    &__stavka {
+        display: block;
+        width: 100%;
+        padding: var(--razmak-1) 0;
+        text-align: left;
+
+        border: 0;
+        background: transparent;
+
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        color: var(--boja-tekst);
+        cursor: pointer;
+
+        @include z-prelaz(color);
+        &:hover { text-decoration: underline; }
+        @include z-fokus;
+
+        &--ovde {
+            font-weight: var(--tezina-jaka);
+            color: var(--boja-oznaka-tekst);
+        }
+    }
+
+    &__telo {
+        min-width: 0;
+        max-width: 65ch;
+    }
+
+    /* ── harmonika ────────────────────────────────────────────────────── */
+
+    &__harmonika {
+        border-top: 1px solid var(--boja-linija);
+    }
+
+    &__pitanje {
+        border-bottom: 1px solid var(--boja-linija);
+    }
+
+    &__pitanje-naslov {
+        margin: 0;
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
+    }
+
+    &__prekidac {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: var(--razmak-3);
+        width: 100%;
+        padding: var(--razmak-3) 0;
+        text-align: left;
+
+        border: 0;
+        background: transparent;
+
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-tekst);
+        cursor: pointer;
+
+        @include z-prelaz(color);
+        &:hover { color: var(--boja-oznaka-tekst); }
+        @include z-fokus;
+    }
+
+    &__znak {
+        flex: 0 0 auto;
+        font-family: var(--pismo-podaci);
+        font-size: var(--slovo-lg);
+        color: var(--boja-tekst-tiho);
+    }
+
+    &__odgovor {
+        padding: 0 0 var(--razmak-4);
+
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
+        color: var(--boja-tekst);
+
+        p:last-child { margin-bottom: 0; }
+        a { @include z-veza; @include z-fokus; }
+    }
+
+    &__prazno {
+        margin: 0;
+        padding: var(--razmak-7) var(--razmak-4);
+        text-align: center;
+
+        border: 1px dashed var(--boja-linija);
+        border-radius: var(--radijus-panel);
+
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
+        color: var(--boja-tekst-tiho);
+    }
+
+    /* ── srodne teme ──────────────────────────────────────────────────── */
+
+    &__srodne {
+        margin-top: var(--razmak-8);
+        padding-top: var(--razmak-5);
+        border-top: 1px solid var(--boja-linija);
+    }
+
+    &__srodne-naslov {
+        margin: 0 0 var(--razmak-3);
+        font-family: var(--pismo-naslov);
+        font-size: var(--slovo-lg);
+        line-height: var(--red-lg);
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-tekst);
+    }
+
+    &__srodne-spisak {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--razmak-2);
+    }
+
+    &__srodna {
+        display: inline-flex;
+        align-items: center;
+        min-height: 34px;
+        padding: 0 var(--razmak-3);
+
+        border: 1px solid var(--boja-linija);
+        border-radius: var(--radijus-pun);
+
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        color: var(--boja-tekst);
+        text-decoration: none;
+
+        @include z-prelaz(border-color);
+        &:hover { border-color: var(--boja-tekst-tiho); }
+        @include z-fokus;
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SADRŽAJNA STRANA
+   ═══════════════════════════════════════════════════════════════════════════
+   Sadržaj se unosi u administraciji kao slobodan HTML, pa se ovde ne cilja
+   nijedna klasa — samo gole oznake unutar `.z-strana__telo`. Skala je ista
+   za sve strane, pa „O nama" i „Uslovi korišćenja" izgledaju kao ista kuća.
+*/
+
+.z-strana {
+    padding-bottom: var(--razmak-8);
+
+    &__vrh {
+        margin-bottom: var(--razmak-6);
+        padding: var(--razmak-6) 0;
+        background: var(--boja-podloga-tiha);
+        border-bottom: 1px solid var(--boja-linija);
+
+        @include mobile { padding: var(--razmak-5) 0; }
+    }
+
+    &__putanja {
+        margin: 0 0 var(--razmak-1);
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+
+        a { @include z-veza-meni; @include z-fokus; }
+    }
+
+    &__naslov {
+        margin: 0;
+        font-family: var(--pismo-naslov);
+        font-size: var(--slovo-2xl);
+        line-height: var(--red-2xl);
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-tekst);
+    }
+
+    /* ── raspored ─────────────────────────────────────────────────────── */
+
+    &__raspored {
+        display: grid;
+        grid-template-columns: 240px 1fr;
+        gap: var(--razmak-7);
+        align-items: start;
+
+        @include mobile-tablet {
+            grid-template-columns: 1fr;
+            gap: var(--razmak-5);
+        }
+
+        // Bez naslova u tekstu nema ni spiska — tekst uzima punu širinu.
+        &--bez-sadrzaja { grid-template-columns: 1fr; }
+    }
+
+    &__sadrzaj {
+        position: sticky;
+        top: var(--razmak-5);
+
+        @include mobile-tablet { position: static; }
+    }
+
+    &__sadrzaj-naslov {
+        margin: 0 0 var(--razmak-2);
+        font-size: var(--slovo-xs);
+        line-height: var(--red-xs);
+        font-weight: var(--tezina-jaka);
+        letter-spacing: .1em;
+        text-transform: uppercase;
+        color: var(--boja-tekst-tiho);
+    }
+
+    &__spisak {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    &__stavka {
+        display: block;
+        padding: var(--razmak-1) 0;
+
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        color: var(--boja-tekst);
+
+        @include z-veza-meni;
+        @include z-fokus;
+
+        &--uvuceno { padding-left: var(--razmak-3); }
+    }
+
+    /* ── tekst ────────────────────────────────────────────────────────── */
+
+    &__telo {
+        min-width: 0;
+        max-width: 65ch;
+
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
+        color: var(--boja-tekst);
+
+        // Prvi naslov ne gura razmak — vrh strane ga je već dao.
+        > :first-child { margin-top: 0; }
+
+        h2 {
+            margin: var(--razmak-6) 0 var(--razmak-3);
+            font-family: var(--pismo-naslov);
+            font-size: var(--slovo-xl);
+            line-height: var(--red-xl);
+            font-weight: var(--tezina-jaka);
+            color: var(--boja-tekst);
+
+            // Da naslov ne završi pod lepljivim delom pri skoku iz sadržaja.
+            scroll-margin-top: var(--razmak-5);
+        }
+
+        h3 {
+            margin: var(--razmak-5) 0 var(--razmak-2);
+            font-family: var(--pismo-naslov);
+            font-size: var(--slovo-lg);
+            line-height: var(--red-lg);
+            font-weight: var(--tezina-jaka);
+            color: var(--boja-tekst);
+
+            scroll-margin-top: var(--razmak-5);
+        }
+
+        // Uneti tekst zna da ima i h4 — ne sme da ispadne iz skale.
+        h4, h5, h6 {
+            margin: var(--razmak-4) 0 var(--razmak-2);
+            font-family: var(--pismo-naslov);
+            font-size: var(--slovo-md);
+            line-height: var(--red-md);
+            font-weight: var(--tezina-jaka);
+            color: var(--boja-tekst);
+        }
+
+        p { margin: 0 0 var(--razmak-4); }
+
+        a { @include z-veza; @include z-fokus; }
+
+        strong, b { font-weight: var(--tezina-jaka); }
+
+        ul, ol {
+            margin: 0 0 var(--razmak-4);
+            padding-left: var(--razmak-5);
+        }
+
+        li { margin-bottom: var(--razmak-2); }
+
+        blockquote {
+            margin: var(--razmak-5) 0;
+            padding: var(--razmak-2) 0 var(--razmak-2) var(--razmak-4);
+
+            border-left: 3px solid var(--boja-oznaka);
+            color: var(--boja-tekst);
+
+            p:last-child { margin-bottom: 0; }
+        }
+
+        hr {
+            margin: var(--razmak-6) 0;
+            border: 0;
+            border-top: 1px solid var(--boja-linija);
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: var(--razmak-5) 0;
+            border-radius: var(--radijus-mali);
+        }
+
+        // Tabela iz unosa ume da bude šira od kolone — skroluje u sebi,
+        // strana se ne razvlači.
+        table {
+            display: block;
+            width: 100%;
+            overflow-x: auto;
+            margin: 0 0 var(--razmak-5);
+            border-collapse: collapse;
+
+            font-size: var(--slovo-sm);
+            line-height: var(--red-sm);
+        }
+
+        th, td {
+            padding: var(--razmak-2) var(--razmak-3);
+            border: 1px solid var(--boja-linija);
+            text-align: left;
+        }
+
+        th {
+            background: var(--boja-podloga-tiha);
+            font-weight: var(--tezina-jaka);
+        }
+
+        iframe {
+            max-width: 100%;
+            margin: var(--razmak-5) 0;
+        }
+    }
+
+    /* ── prazno stanje ────────────────────────────────────────────────── */
+    // „Saradnja" i „Ugovori" su danas prazne. Prazna strana je i dalje
+    // strana — mora da kaže šta dalje, umesto da bude beli list.
+
+    &__prazno {
+        max-width: 65ch;
+        padding: var(--razmak-8) var(--razmak-5);
+        text-align: center;
+
+        border: 1px dashed var(--boja-linija);
+        border-radius: var(--radijus-panel);
+    }
+
+    &__prazno-naslov {
+        margin: 0 0 var(--razmak-2);
+        font-family: var(--pismo-naslov);
+        font-size: var(--slovo-xl);
+        line-height: var(--red-xl);
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-tekst);
+    }
+
+    &__prazno-opis {
+        margin: 0 auto var(--razmak-5);
+        max-width: 48ch;
+
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
+        color: var(--boja-tekst-tiho);
+    }
+
+    &__prazno-radnje {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: var(--razmak-3);
+    }
+
+    &__radnja {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 40px;
+        padding: 0 var(--razmak-4);
+
+        border: 1px solid var(--boja-linija);
+        border-radius: var(--radijus-panel);
+        background: var(--boja-povrsina);
+
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-sm);
+        font-weight: var(--tezina-srednja);
+        color: var(--boja-tekst);
+        text-decoration: none;
+
+        @include z-prelaz(border-color, background-color);
+        &:hover { border-color: var(--boja-tekst-tiho); }
+        @include z-fokus;
+
+        &--glavna {
+            border: 0;
+            background: var(--boja-akcenat);
+            color: var(--boja-akcenat-tekst);
+            font-weight: var(--tezina-poludebela);
+
+            &:hover { background: var(--boja-akcenat-jako); }
+        }
+    }
+}

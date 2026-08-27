@@ -1,0 +1,414 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   VRH STRANE /galerije — jedan naslov, jedna alatna traka
+   ═══════════════════════════════════════════════════════════════════════════
+   Zamenjuje tri naslova jedan ispod drugog i filtere razvučene preko dva
+   reda. Amber ostaje na JEDNOM mestu — dugmetu „Pretraži"; aktivna stanja
+   su tamna traka sa belim tekstom, primenjeni filteri crveni okvir.
+*/
+
+.z-stranica-galerija__vrh {
+    background: var(--boja-povrsina);
+}
+
+.z-stranica-galerija__naslov-red {
+    display: flex;
+    align-items: baseline;
+    gap: var(--razmak-3);
+    // 28px od zaglavlja gore, 20px do alatne trake dole — nijedan token se
+    // ne poklapa tačno (24 ili 32 najbliži), pa ide direktna vrednost.
+    padding: 28px 0 20px;
+}
+
+.z-stranica-galerija__naslov {
+    margin: 0;
+    font-family: var(--pismo-naslov);
+    font-size: 22px;
+    line-height: 1.2;
+    font-weight: var(--tezina-jaka);
+    color: var(--boja-tekst);
+}
+
+
+/* ── alatna traka ─────────────────────────────────────────────────────── */
+
+.z-alatna-traka {
+    // Lepi se ispod zaglavlja: zaglavlje je u toku strane i pri skrolovanju
+    // odlazi van kadra, pa traka zauzima njegovo mesto na vrhu.
+    position: sticky;
+    top: 0;
+    z-index: var(--sloj-lepljivo);
+
+    background: var(--boja-povrsina);
+    border-top: 1px solid var(--boja-linija);
+    border-bottom: 1px solid var(--boja-linija);
+}
+
+.z-alatna-traka__sirina {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    // Razmak između grupa (pretraga | filteri | Više filtera | prekidač |
+    // ikonice) — 24px se poklapa sa --razmak-5.
+    gap: var(--razmak-5);
+    // Gore/dole 14px — nijedan token se ne poklapa (12 ili 16 najbliži),
+    // pa ide direktna vrednost. Sa dugmadi od 36px to daje traku od ~68px.
+    padding-top: 14px;
+    padding-bottom: 14px;
+}
+
+/* ── polje pretrage ───────────────────────────────────────────────────── */
+
+.z-alatna-traka__pretraga {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex: 1 1 220px;
+    min-width: 180px;
+    max-width: 320px;
+
+    svg {
+        position: absolute;
+        left: var(--razmak-3);
+        width: 16px;
+        height: 16px;
+        pointer-events: none;
+    }
+    svg path, svg circle, svg rect { fill: var(--boja-tekst-tiho); }
+
+    input {
+        width: 100%;
+        height: 36px;
+        padding: 0 36px 0 32px;
+        border: 1px solid var(--boja-linija);
+        border-radius: var(--radijus-panel);
+        background: var(--boja-podloga-tiha);
+
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-sm);
+        color: var(--boja-tekst);
+
+        @include z-prelaz(border-color, background-color);
+        &::placeholder { color: var(--boja-tekst-tiho); }
+        &:focus {
+            outline: none;
+            border-color: var(--boja-tekst-tiho);
+            background: var(--boja-povrsina);
+        }
+    }
+}
+
+// Amber — jedino mesto u traci koje ga sme nositi.
+.z-alatna-traka__pretrazi {
+    position: absolute;
+    right: 4px;
+    top: 4px;
+    bottom: 4px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+
+    border: 0;
+    border-radius: var(--radijus-mali);
+    background: var(--boja-akcenat);
+    cursor: pointer;
+
+    @include z-prelaz(background-color);
+    &:hover { background: var(--boja-akcenat-jako); }
+    @include z-fokus;
+
+    svg { position: static; width: 14px; height: 14px; }
+    svg path, svg circle, svg rect { fill: var(--boja-akcenat-tekst); }
+}
+
+/* ── dugmad filtera ───────────────────────────────────────────────────── */
+
+// Nosi spisak dugmadi filtera i dugme „Više filtera" kao dve grupe —
+// 24px između njih (--razmak-5, grupa-do-grupe).
+.z-alatna-traka__filteri {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--razmak-5);
+}
+
+// Dugmad filtera (Datum, Grad, Kategorija, Orijentacija) međusobno — 10px,
+// nijedan token se ne poklapa (8 ili 12 najbliži).
+.z-alatna-traka__filter-spisak {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+
+.z-alatna-traka__filter-grupa { position: relative; }
+
+.z-alatna-traka__filter {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 36px;
+    padding: 0 var(--razmak-3);
+
+    border: 1px solid var(--boja-linija);
+    border-radius: var(--radijus-panel);
+    background: var(--boja-povrsina);
+
+    font-family: var(--pismo-tekst);
+    font-size: var(--slovo-sm);
+    font-weight: var(--tezina-srednja);
+    color: var(--boja-tekst);
+    white-space: nowrap;
+    cursor: pointer;
+
+    // Strelica na dole, iscrtana bez ikonice — isti trik kao padajuće liste.
+    &::after {
+        content: '';
+        width: 6px;
+        height: 6px;
+        margin-left: 2px;
+        border-right: 1.5px solid currentColor;
+        border-bottom: 1.5px solid currentColor;
+        transform: rotate(45deg);
+        opacity: .55;
+    }
+
+    @include z-prelaz(border-color, color);
+    &:hover { border-color: var(--boja-tekst-tiho); }
+    @include z-fokus;
+
+    // Filter sa vrednošću — tanak crveni okvir, isti jezik kao primenjene
+    // pilule ispod trake.
+    &--aktivan {
+        border-color: var(--boja-oznaka);
+        color: var(--boja-oznaka-tekst);
+        font-weight: var(--tezina-jaka);
+    }
+}
+
+.z-alatna-traka__vise {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 36px;
+    padding: 0 var(--razmak-3);
+
+    border: 0;
+    border-radius: var(--radijus-panel);
+    background: transparent;
+
+    font-family: var(--pismo-tekst);
+    font-size: var(--slovo-sm);
+    font-weight: var(--tezina-srednja);
+    color: var(--boja-tekst-tiho);
+    cursor: pointer;
+
+    @include z-prelaz(background-color, color);
+    &:hover { background: var(--boja-podloga-tiha); color: var(--boja-tekst); }
+    @include z-fokus;
+
+    svg { width: 14px; height: 14px; }
+    svg path, svg circle, svg rect { fill: currentColor; }
+}
+
+/* ── padajući panel ───────────────────────────────────────────────────── */
+
+.z-alatna-traka__panel {
+    position: absolute;
+    top: calc(100% + var(--razmak-2));
+    left: 0;
+    z-index: var(--sloj-padajuce);
+
+    display: flex;
+    flex-direction: column;
+    gap: var(--razmak-3);
+    min-width: 260px;
+    padding: var(--razmak-4);
+
+    background: var(--boja-povrsina);
+    border: 1px solid var(--boja-linija);
+    border-radius: var(--radijus-panel);
+    box-shadow: var(--senka-lebdi);
+
+    &--usko { min-width: 200px; }
+}
+
+/* ── desni klaster: prekidač i ikonice prikaza ────────────────────────── */
+
+.z-alatna-traka__desno {
+    display: flex;
+    align-items: center;
+    // Prekidač do ikonica prikaza — 24px, poklapa se sa --razmak-5.
+    gap: var(--razmak-5);
+}
+
+.z-alatna-traka__prekidac {
+    display: inline-flex;
+    padding: 3px;
+    border-radius: var(--radijus-panel);
+    background: var(--boja-podloga-tiha);
+}
+
+.z-alatna-traka__prekidac-dugme {
+    display: inline-flex;
+    align-items: center;
+    height: 32px;
+    padding: 0 var(--razmak-3);
+    border-radius: var(--radijus-mali);
+
+    font-family: var(--pismo-tekst);
+    font-size: var(--slovo-sm);
+    font-weight: var(--tezina-srednja);
+    color: var(--boja-tekst-tiho);
+    text-decoration: none;
+
+    @include z-prelaz(background-color, color);
+    @include z-fokus;
+
+    // Isti jezik za „aktivno" kao ikonice prikaza — tamna traka, beo tekst.
+    &--aktivan {
+        background: var(--boja-traka);
+        color: var(--boja-traka-tekst);
+        font-weight: var(--tezina-jaka);
+    }
+}
+
+.z-alatna-traka__prikazi {
+    display: flex;
+    // 6px — nijedan token se ne poklapa (4 ili 8 najbliži).
+    gap: 6px;
+
+    button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+
+        border: 0;
+        border-radius: var(--radijus-mali);
+        background: transparent;
+        cursor: pointer;
+
+        @include z-prelaz(background-color);
+        @include z-fokus;
+
+        svg { width: 16px; height: 16px; }
+        svg path, svg circle, svg rect { fill: var(--boja-tekst-tiho); }
+
+        &:hover { background: var(--boja-podloga-tiha); }
+
+        &.active {
+            background: var(--boja-traka);
+            svg path, svg circle, svg rect { fill: var(--boja-traka-tekst); }
+        }
+    }
+}
+
+@include mobile-tablet {
+    .z-alatna-traka__sirina { justify-content: flex-start; }
+    .z-alatna-traka__pretraga { flex: 1 1 100%; max-width: none; order: -1; }
+    .z-alatna-traka__desno { margin-left: auto; }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PRIMENJENI FILTERI — uklonjive pilule
+   ═══════════════════════════════════════════════════════════════════════════
+*/
+
+.z-primenjeni-filteri {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--razmak-2);
+    padding: var(--razmak-3) 0;
+}
+
+.z-primenjeni-filteri__pilula {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 28px;
+    padding: 0 var(--razmak-1) 0 var(--razmak-3);
+
+    border: 1px solid var(--boja-oznaka);
+    border-radius: var(--radijus-pun);
+    background: var(--boja-povrsina);
+
+    font-family: var(--pismo-tekst);
+    font-size: 12px;
+    font-weight: var(--tezina-srednja);
+    color: var(--boja-oznaka-tekst);
+    cursor: pointer;
+
+    @include z-prelaz(background-color);
+    &:hover { background: var(--boja-podloga-tiha); }
+    @include z-fokus;
+
+    svg { width: 16px; height: 16px; padding: 3px; }
+    svg path, svg circle, svg rect { fill: var(--boja-oznaka-tekst); }
+}
+
+.z-primenjeni-filteri__ponisti {
+    height: 28px;
+    padding: 0 var(--razmak-2);
+
+    border: 0;
+    background: transparent;
+
+    font-family: var(--pismo-tekst);
+    font-size: 12px;
+    font-weight: var(--tezina-srednja);
+    color: var(--boja-tekst-tiho);
+    text-decoration: underline;
+    cursor: pointer;
+
+    @include z-prelaz(color);
+    &:hover { color: var(--boja-tekst); }
+    @include z-fokus;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DNO — podela na strane i broj po strani, sitno, jedan pored drugog
+   ═══════════════════════════════════════════════════════════════════════════
+*/
+
+.z-podela-dno {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--razmak-4);
+    margin-top: var(--razmak-5);
+}
+
+.z-broj-po-strani {
+    display: flex;
+    align-items: center;
+    gap: var(--razmak-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    font-size: 12px;
+    color: var(--boja-tekst-tiho);
+
+    li { display: flex; align-items: center; }
+
+    a {
+        color: var(--boja-tekst-tiho);
+        text-decoration: none;
+        @include z-prelaz(color);
+        &:hover { color: var(--boja-tekst); }
+        @include z-fokus;
+    }
+
+    &__aktivan a {
+        color: var(--boja-tekst);
+        font-weight: var(--tezina-jaka);
+    }
+}

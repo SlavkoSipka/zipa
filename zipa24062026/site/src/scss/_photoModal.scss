@@ -1,298 +1,644 @@
-@mixin mobile {
-    @media only screen and (max-width: 1024px) {
-        @content;
-    }
-}
+/* ═══════════════════════════════════════════════════════════════════════════
+   PROZOR SA FOTOGRAFIJOM — mesto gde se donosi odluka o kupovini
+   ═══════════════════════════════════════════════════════════════════════════
+   Ovde je ranije stajala LOKALNA definicija `@mixin mobile` na 1024px, koja
+   je nadjačavala sistemsku. Sve prelomne tačke sada dolaze iz
+   `_settings.scss` — u ovom fajlu se ne definiše nijedan mixin, promenljiva
+   ni funkcija.
 
-@mixin minToMobile {
-    @media only screen and (min-width: 578px) {
-        @content;
-    }
-}
+   Podloga prozora je TAMNA (`--boja-traka`): fotografija se procenjuje po
+   boji, a svetla podloga oko nje pomera doživljaj tonova.
 
-.displayNone {
-    display: none;
-}
+   Panel sa cenama je BEO, ne tamno siv. Dva razloga: kupovina je čitanje
+   podataka i cifara, a to traži najveću čitljivost; i amber dugme je u celom
+   sistemu površina sa TAMNIM tekstom (`--boja-akcenat-tekst`), pa mu treba
+   svetla podloga da ostane „glavna radnja", a ne svetleća mrlja na tamnom.
+   Podela je ista kao na sajtu: tamna traka za gledanje, beli list za posao.
+*/
 
-.customWidth {
-    min-width: 95% !important;
-    @include mobile {
-        min-width: 100% !important;
-        min-height: 100% !important;
+/* Slojevi iz tokena, ne Bootstrap-ovih 1040/1050 — da cela lestvica ostane
+   jedan sistem. `--sloj-prozor` (1000) je iznad `--sloj-zavesa` (900), a oba
+   iznad zaglavlja (`--sloj-padajuce`, 200) i lepljive alatne trake. */
+.modal:has(> .z-prozor) { z-index: var(--sloj-prozor); }
+.modal-backdrop        { z-index: var(--sloj-zavesa); }
+
+.z-prozor {
+
+    /* ── okvir ────────────────────────────────────────────────────────── */
+
+    // `reactstrap` sam crta `.modal`; ovde se samo preuzima izgled.
+    &.modal-dialog {
+        max-width: none;
+        width: 100%;
+        /* Visina se vezuje za `.modal`, ne za `vh`/`dvh`. Bootstrap `.modal`
+           je `position: fixed; inset: 0`, dakle tačno vidno polje — dok su
+           `100vh` i `100dvh` u pregledaču znali da daju manju vrednost od
+           stvarne (mereno: 812 naspram 918), pa je strana virila ispod
+           prozora. */
+        height: 100%;
         margin: 0;
+
+        /* Bootstrap-ov `.modal.fade .modal-dialog` pomera prozor za -50px i
+           računa da će ga `.modal.show .modal-dialog { transform: none }`
+           vratiti. Kod nas je ostajao zaglavljen na -50px — gornja traka van
+           kadra — jer se PRELAZ nikad ne dovrši, pa računata vrednost ostaje
+           na početnoj. Dokazano merenjem: sa `transition: none` transform
+           odmah padne na `none` i traka se vrati na 0.
+
+           Zato se ovde gasi i prelaz, ne samo transform. Prozor se otvara
+           bez klizanja — što je i bolje: fotografija ne treba da poskakuje
+           pre nego što se vidi. */
+        transform: none;
+        transition: none;
     }
-}
 
-.customPaddingModal {
-    padding: 0 !important;
-}
-
-.photoModalCloseButton {
-    background-color: transparent;
-    border: 1px solid black;
-    border-radius: 50%;
-    font-size: 20px;
-    cursor: pointer;
-}
-
-.imageContainer {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr); /* 2 equal columns */
-    grid-template-rows: repeat(2, auto); /* 2 rows */
-    gap: 10px; /* Adjust spacing between grid items */
-    row-gap: 30px;
-    width: 100%; /* Optional: Set the container's width */
-    @include mobile {
-        grid-template-columns: repeat(1, 1fr); // 3 equal columns for mobile
-        grid-template-rows: auto; // Single row
-    }
-}
-
-.imagesWrapper {
-    grid-column: 1; /* Place in the first column */
-    grid-row: 1; /* Place in the first row */
-    @include mobile {
-        grid-column: 1; // Place in the first column for mobile
-        grid-row: 1;    // Ensure all items stay in the same row
-    }
-}
-.navigationWrapperMobile {
-    @include mobile {
-        grid-column: 1; // Place in the first column for mobile
-        grid-row: 2;    // Ensure all items stay in the same row
+    /* Visina je ZAKLJUČANA na prozor, ne `min-height`: sa `min-height` je
+       dugačak opis izdužio ceo prozor, pa su cene i gornja traka otišle van
+       kadra i skrolovala je cela strana umesto panela. Ovako telo dobija
+       ostatak visine, a panel skroluje sam u sebi. */
+    .modal-content {
+        height: 100%;
         display: flex;
+        flex-direction: column;
+        border: 0;
+        border-radius: 0;
+        background: var(--boja-traka);
+        color: var(--boja-traka-tekst);
+        overflow: hidden;
+    }
+
+    .modal-header { flex: 0 0 auto; }
+
+    .modal-body {
+        flex: 1 1 auto;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .modal-header,
+    .modal-body {
+        border: 0;
+        padding: 0;
+    }
+
+    /* ── gornja traka prozora ─────────────────────────────────────────── */
+
+    &__vrh {
+        display: flex;
+        align-items: center;
         justify-content: space-between;
-        padding: 0 1rem !important;
-        button {
-            background-color: transparent;
-            padding: 10px 20px;
-        }
-    }
-}
-.imagesButtons {
-    grid-column: 2; /* Place in the second column */
-    grid-row: 1; /* Place in the first row */
-    @include mobile {
-        grid-column: 1; // Place in the second column for mobile
-        grid-row: 3;    // Ensure all items stay in the same row
-        padding: 0 1rem !important;
-    }
-}
-.imagesDescription {
-    grid-column: 1 / span 2; /* Span both columns */
-    grid-row: 2; /* Take up the entire second row */
-    height: 100%; /* Optional: Ensures it occupies full space */
-    @include mobile {
-        grid-column: 1; // Place in the third column for mobile
-        grid-row: 4;    // Ensure all items stay in the same row
-        padding: 0 1rem !important;
-    }
-}
+        gap: var(--razmak-4);
+        width: 100%;
 
-.headerContent {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 40px;
-}
+        padding: var(--razmak-3) var(--razmak-5);
+        border-bottom: 1px solid var(--boja-traka-linija);
+    }
 
-.navigationWrapper {
-    display: flex;
-    gap: 20px;
+    &__naslov {
+        margin: 0;
+        min-width: 0;
 
-    button {
+        font-family: var(--pismo-naslov);
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-traka-tekst);
+
+        // Dugi nazivi galerija ne smeju da guraju brojač i zatvaranje.
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    &__brojac {
+        flex: 0 0 auto;
+        font-family: var(--pismo-podaci);
+        font-size: var(--slovo-sm);
+        font-weight: var(--tezina-srednja);
+        color: var(--boja-traka-tekst-tiho);
+    }
+
+    &__zatvori {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+
+        border: 0;
+        border-radius: var(--radijus-panel);
         background: transparent;
-        border: 1px solid black;
-        font-size: 30px;
-        padding: 5px 15px;
+        color: var(--boja-traka-tekst);
+        font-size: var(--slovo-md);
         cursor: pointer;
 
-        &:hover {
-            color: blue;
+        @include z-prelaz(background-color);
+        &:hover { background: var(--boja-traka-linija); }
+        @include z-fokus;
+
+        svg { width: 14px; height: 14px; }
+        svg path, svg circle, svg rect { fill: var(--boja-traka-tekst); }
+    }
+
+    /* ── telo: fotografija levo, panel desno ──────────────────────────── */
+
+    &__telo {
+        flex: 1 1 auto;
+        min-height: 0;      // bez ovoga deca ne mogu da skroluju u flex-u
+
+        display: flex;
+        align-items: stretch;
+        gap: 0;
+
+        @include mobile-tablet {
+            flex-direction: column;
+            overflow-y: auto;   // na telefonu se skroluje celo telo
         }
     }
-}
 
-.titleWrapper {
-    h1,
-    p {
-        padding: 0;
-        margin: 0;
+    &__scena {
+        position: relative;
+        flex: 1 1 auto;
+        min-width: 0;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: var(--razmak-5);
+
+        // Na telefonu scena dobija svoju visinu; panel ide ispod nje.
+        @include mobile-tablet {
+            flex: 0 0 auto;
+            height: 58%;
+        }
+
+        // Fotografija UVEK cela u vidnom polju — visina scene je ono što
+        // ostane od prozora posle gornje trake i trake sa umanjenima.
+        min-height: 0;
     }
-}
 
-.imagesWrapper {
-    width: 100%;
-    height: 100%;
-    img {
-        // height: 467px;
-        // width: 700px;
-        // aspect-ratio: 16/9;
-        width: 100%;
-        height: 100%;
+    &__slika-okvir {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        max-width: 100%;
+        // Visinu daje scena (flex), ne prozor — pa se ne meri u `vh`.
+        max-height: 100%;
+    }
+
+    /*
+     * Postepeno učitavanje: mala verzija ide u pozadinu razmazana, oštra
+     * preko nje. Kad oštra stigne, `--stigla` je otkriva.
+     */
+    &__slika {
+        display: block;
+        max-width: 100%;
+        max-height: 100%;
+        width: auto;
+        height: auto;
         object-fit: contain;
     }
-}
 
-.imagesButtons {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    box-sizing: border-box;
-    justify-content: center;
-    padding: 20px;
-    @include mobile {
-        padding: 0;
-    }
-
-    @include mobile {
-        gap: 10px;
-    }
-
-    div {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-
-        @include mobile {
-            flex-direction: column;
-            gap: 10px;
-
-            button {
-                align-items: center;
-
-                span {
-                    font-size: 12px;
-                }
-            }
-        }
-    }
-
-    .downloadingButtonAndText {
-        display: flex;
-        justify-content: center;
-
-        @include mobile {
-            flex-wrap: wrap;
-        }
-
-        .original-not-found {
-            max-width: 445px;
-            text-align: center;
-            border: 1px solid red;
-            margin: 0;
-        }
-
-        .download-btn {
-            background-color: #3c59b9;
-            border-radius: 10px;
-            padding: 13px;
-            width: 100%;
-            font-size: 14px;
-            font-weight: 500;
-            color: #ffffff;
-            border: 0;
-            display: flex;
-            flex-direction: row;
-            justify-content: center;
-            align-items: flex-end;
-            gap: 20px;
-
-            &:hover {
-                border: unset;
-            }
-        }
-    }
-
-    .buyPhoto {
-        background-color: #3c59b9;
-        border-radius: 10px;
-        padding: 13px;
+    &__slika--pregled {
+        position: absolute;
+        inset: 0;
         width: 100%;
-        font-size: 14px;
-        font-weight: 500;
-        color: #ffffff;
-        border: 0;
+        height: 100%;
+        filter: blur(12px);
+        transform: scale(1.02);   // da razmazane ivice ne otkriju rub
+    }
+
+    &__slika--puna {
+        position: relative;
+        opacity: 0;
+        @include z-prelaz(opacity);
+
+        &.z-prozor__slika--stigla { opacity: 1; }
+    }
+
+    /* ── strelice ─────────────────────────────────────────────────────── */
+
+    // Uvek na istom mestu, bez obzira na odnos stranica fotografije.
+    &__strelica {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 1;
+
+        display: inline-flex;
         align-items: center;
+        justify-content: center;
+        width: 48px;
+        height: 48px;
 
-        &:hover {
-            border: none;
-        }
+        border: 0;
+        border-radius: var(--radijus-pun);
+        background: var(--boja-zavesa);
+        color: var(--boja-traka-tekst);
+        font-size: var(--slovo-lg);
+        line-height: 1;
+        cursor: pointer;
 
-        &:focus {
-            outline: none;
-        }
-    }
+        @include z-prelaz(background-color);
+        &:hover { background: var(--boja-traka-linija); }
+        @include z-fokus;
 
-    button {
-        border-radius: 10px;
-        background-color: #edeff5;
-        border: 2px solid #edeff5;
-        outline: none;
-        text-align: left;
-        display: flex;
-        flex-direction: column;
-        width: 100%;
-        padding: 8px 10px;
+        &--nazad   { left: var(--razmak-3); }
+        &--napred  { right: var(--razmak-3); }
 
         @include mobile {
-            padding: 4px 5px;
+            width: 40px;
+            height: 40px;
+        }
+    }
 
-            span {
-                font-size: 14px;
+    /* ── panel sa cenama ──────────────────────────────────────────────── */
+
+    /*
+     * Panel je DEO istog prozora, ne bela ploča zalepljena na njega. Podloga
+     * je malo svetlija od trake (`--boja-traka-povrsina`), razdvaja ga samo
+     * tanka linija — bez senke i bez radijusa na spoljnim ivicama.
+     */
+    &__panel {
+        flex: 0 0 310px;
+        max-width: 310px;
+        min-height: 0;
+
+        border-left: 1px solid var(--boja-traka-linija);
+        background: var(--boja-traka-povrsina);
+        color: var(--boja-traka-tekst);
+
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+
+        @include mobile-tablet {
+            flex: 1 1 auto;
+            max-width: none;
+            border-left: 0;
+            border-top: 1px solid var(--boja-traka-linija);
+        }
+    }
+
+    // Sadržaj koji skroluje; glavno dugme ostaje zalepljeno za dno.
+    &__panel-telo {
+        flex: 1 1 auto;
+        padding: var(--razmak-4);
+    }
+
+    // Panel je uzak — naslov od 20px bi mu pojeo vrh. Sitna oznaka umesto.
+    &__oznaka-grupe {
+        display: block;
+        margin: 0 0 var(--razmak-2);
+
+        font-size: 10px;
+        line-height: 1.6;
+        font-weight: var(--tezina-jaka);
+        letter-spacing: .1em;
+        text-transform: uppercase;
+        color: var(--boja-traka-tekst-tiho);
+    }
+
+    /* ── izbor rezolucije: kompaktan spisak, redovi nalepljeni ────────── */
+
+    &__rezolucije {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: var(--razmak-5);
+
+        border: 1px solid var(--boja-traka-linija);
+        border-radius: var(--radijus-panel);
+        overflow: hidden;
+    }
+
+    &__rezolucija {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--razmak-3);
+        width: 100%;
+        min-height: 44px;
+        padding: var(--razmak-2) var(--razmak-3);
+        text-align: left;
+
+        border: 0;
+        // Redovi su nalepljeni jedan na drugi — razdvaja ih samo linija.
+        border-top: 1px solid var(--boja-traka-linija);
+        &:first-child { border-top: 0; }
+
+        background: transparent;
+        cursor: pointer;
+
+        @include z-prelaz(background-color);
+        &:hover { background: var(--boja-traka-linija); }
+        @include z-fokus;
+
+        /* Izabrani red — svetlija podloga i amber traka uz levu ivicu.
+           CRVENE ovde nema: na ceni bi izgledala kao greška ili popust. */
+        &--izabrana {
+            background: var(--boja-traka-linija);
+
+            &::before {
+                content: '';
+                position: absolute;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                width: 3px;
+                background: var(--boja-akcenat);
             }
         }
+    }
 
-        &:hover {
-            border: 2px solid #3c59b9;
+    &__rez-levo { min-width: 0; }
+
+    &__rez-naziv {
+        display: block;
+        font-size: var(--slovo-sm);
+        line-height: 1.3;
+        font-weight: var(--tezina-srednja);
+        color: var(--boja-traka-tekst-tiho);
+
+        .z-prozor__rezolucija--izabrana & {
+            color: var(--boja-traka-tekst);
+            font-weight: var(--tezina-jaka);
+        }
+    }
+
+    &__rez-opis {
+        display: block;
+        font-size: 11px;
+        line-height: 1.4;
+        color: var(--boja-traka-tekst-tiho);
+    }
+
+    &__rez-cena {
+        flex: 0 0 auto;
+        font-size: var(--slovo-sm);
+        line-height: 1.3;
+        font-weight: var(--tezina-srednja);
+        color: var(--boja-traka-tekst-tiho);
+        white-space: nowrap;
+
+        .z-prozor__rezolucija--izabrana & {
+            color: var(--boja-traka-tekst);
+            font-weight: var(--tezina-jaka);
+        }
+    }
+
+    /* ── radnje ───────────────────────────────────────────────────────── */
+
+    // Zalepljeno za dno panela — dostupno i kad podaci skroluju.
+    &__radnje {
+        position: sticky;
+        bottom: 0;
+        z-index: 1;
+
+        display: flex;
+        gap: var(--razmak-2);
+        padding: var(--razmak-3) var(--razmak-4);
+
+        /* Negativna margina poništava razmak `__panel-tela` — dugmad se
+           lepe za punu širinu panela, ne za njegovu unutrašnjost. */
+        margin: var(--razmak-4) calc(-1 * var(--razmak-4)) 0;
+
+        border-top: 1px solid var(--boja-traka-linija);
+        background: var(--boja-traka-povrsina);
+    }
+
+    // Jedino amber dugme u prozoru.
+    &__glavna-radnja {
+        flex: 1 1 auto;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--razmak-2);
+        min-height: 40px;
+        padding: 0 var(--razmak-4);
+
+        border: 0;
+        border-radius: var(--radijus-panel);
+        background: var(--boja-akcenat);
+        color: var(--boja-akcenat-tekst);
+
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-sm);
+        font-weight: var(--tezina-poludebela);
+        cursor: pointer;
+
+        @include z-prelaz(background-color);
+        &:hover { background: var(--boja-akcenat-jako); }
+        @include z-fokus;
+
+        // `cart.svg` je crtan LINIJOM, ne popunom — otud i `stroke`.
+        svg { width: 16px; height: 16px; }
+        svg path, svg circle, svg rect, svg line, svg polyline {
+            stroke: var(--boja-akcenat-tekst);
+            fill: none;
+        }
+    }
+
+    // Kvadratno dugme, samo ikonica — natpis nosi `title`/`aria-label`.
+    &__sporedna-radnja {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        min-height: 40px;
+
+        border: 1px solid var(--boja-traka-linija);
+        border-radius: var(--radijus-panel);
+        background: transparent;
+        cursor: pointer;
+
+        @include z-prelaz(border-color, background-color);
+        &:hover { background: var(--boja-traka-linija); }
+        @include z-fokus;
+
+        svg { width: 15px; height: 15px; }
+        svg path, svg circle, svg rect { fill: var(--boja-traka-tekst); }
+    }
+
+    &__napomena {
+        margin: 0 0 var(--razmak-4);
+        font-size: 11.5px;
+        line-height: 1.5;
+        color: var(--boja-traka-tekst-tiho);
+
+        a { color: var(--boja-veza-traka); @include z-fokus; }
+    }
+
+    /* ── opis pa podaci ───────────────────────────────────────────────── */
+
+    // Opis ide preko cele širine panela — ne kao vrednost u redu „Naziv",
+    // gde je ceo pasus razvlačio panel.
+    &__opis {
+        margin: 0 0 var(--razmak-2);
+        font-size: 11.5px;
+        line-height: 1.55;
+        color: var(--boja-traka-tekst-tiho);
+
+        &--skupljen {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+    }
+
+    &__opis-vise {
+        margin-bottom: var(--razmak-4);
+        padding: 0;
+
+        border: 0;
+        background: transparent;
+
+        font-family: var(--pismo-tekst);
+        font-size: 11.5px;
+        font-weight: var(--tezina-srednja);
+        color: var(--boja-veza-traka);
+        text-decoration: underline;
+        cursor: pointer;
+
+        @include z-fokus;
+    }
+
+    &__podaci {
+        margin: 0;
+        padding-top: var(--razmak-3);
+        border-top: 1px solid var(--boja-traka-linija);
+    }
+
+    // Oznaka levo, vrednost desno — poravnate suprotno.
+    &__red {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: var(--razmak-3);
+        padding: 3px 0;
+
+        dt {
+            flex: 0 0 auto;
+            margin: 0;
+            font-size: 11.5px;
+            line-height: 1.5;
+            color: var(--boja-traka-tekst-tiho);
         }
 
-        &:focus {
-            outline: none;
+        dd {
+            flex: 0 1 auto;
+            min-width: 0;
+            margin: 0;
+            text-align: right;
+
+            font-size: 11.5px;
+            line-height: 1.5;
+            color: var(--boja-traka-tekst);
+            overflow-wrap: anywhere;
         }
     }
 
-    .active {
-        border: 2px solid #3c59b9;
-    }
-}
+    // ID se prepisuje u narudžbu — pločica govori da je za kopiranje.
+    &__id {
+        padding: 2px var(--razmak-2);
+        border-radius: var(--radijus-mali);
+        background: var(--boja-traka);
 
-.imagesDescriptionWrapper {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr); /* 2 equal columns */
-    grid-template-rows: repeat(2, auto); /* 2 rows */
-    gap: 10px; /* Adjust spacing between grid items */
-    width: 100%; /* Optional: Set the container's width */
-    @include mobile {
-        grid-template-columns: repeat(1, 1fr); // 3 equal columns for mobile
-        grid-template-rows: auto; // Single row
+        font-weight: var(--tezina-srednja);
+        letter-spacing: .04em;
+        white-space: nowrap;
     }
-}
 
-.descriptionHeader {
-    grid-column: 1 / span 2; /* Span both columns */
-    grid-row: 1; /* Take up the entire second row */
-    height: 100%; /* Optional: Ensures it occupies full space */
-    @include mobile {
-        grid-column: 1; // Place in the first column for mobile
-        grid-row: 1;    // Ensure all items stay in the same row
+    /* ── iz galerije ──────────────────────────────────────────────────── */
+
+    // Nije „ključna reč" — arhiva ovde ima naziv galerije. Zato se i zove
+    // onako kako jeste, i piše se normalnim slogom.
+    &__iz-galerije {
+        display: flex;
+        align-items: baseline;
+        gap: var(--razmak-2);
+        margin-top: var(--razmak-3);
+        padding-top: var(--razmak-3);
+        border-top: 1px solid var(--boja-traka-linija);
+
+        font-size: 11.5px;
+        line-height: 1.5;
     }
-}
-.descriptionLeft {
-    grid-column: 1; /* Place in the second column */
-    grid-row: 2; /* Place in the first row */
-    @include mobile {
-        grid-column: 1; // Place in the second column for mobile
-        grid-row: 2;    // Ensure all items stay in the same row
+
+    &__iz-galerije-oznaka {
+        flex: 0 0 auto;
+        color: var(--boja-traka-tekst-tiho);
     }
-}
-.descriptionRight {
-    grid-column: 2; /* Place in the first column */
-    grid-row: 2; /* Place in the first row */
-    text-align: end;
-    @include mobile {
-        grid-column: 1; // Place in the third column for mobile
-        grid-row: 3;    // Ensure all items stay in the same row
-        text-align: start;
+
+    &__iz-galerije-veza {
+        min-width: 0;
+        color: var(--boja-veza-traka);
+        text-decoration: underline;
+        text-underline-offset: .15em;
+
+        // Nazivi u bazi stoje VELIKIM SLOVIMA — slog se popravlja u prikazu.
+        text-transform: lowercase;
+        &::first-letter { text-transform: uppercase; }
+
+        @include z-fokus;
+    }
+
+    /* ── traka sa umanjenim prikazima ─────────────────────────────────── */
+
+    &__traka {
+        flex: 0 0 auto;
+        display: flex;
+        gap: var(--razmak-1);
+        padding: var(--razmak-2) var(--razmak-5);
+        border-top: 1px solid var(--boja-traka-linija);
+
+        overflow-x: auto;
+        overscroll-behavior-x: contain;
+    }
+
+    &__umanjena {
+        flex: 0 0 auto;
+        width: 64px;
+        height: 44px;
+        padding: 0;
+
+        border: 2px solid transparent;
+        border-radius: var(--radijus-mali);
+        background: var(--boja-traka-linija);
+        overflow: hidden;
+        cursor: pointer;
+
+        @include z-prelaz(border-color, opacity);
+        opacity: .55;
+        &:hover { opacity: 1; }
+        @include z-fokus;
+
+        img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        // Trenutna — AMBER, ne crvena: u ovom prozoru crvene nema nigde
+        // drugde, pa bi bila nedosledna.
+        &--trenutna {
+            border-color: var(--boja-akcenat);
+            opacity: 1;
+        }
+    }
+
+    /* ── prazno stanje ────────────────────────────────────────────────── */
+
+    &__prazno {
+        padding: var(--razmak-8);
+        text-align: center;
+        color: var(--boja-traka-tekst-tiho);
     }
 }

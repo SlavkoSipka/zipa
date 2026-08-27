@@ -462,10 +462,30 @@ class UsersModule {
 
         await db.collection('users').updateOne({ _id: ObjectID(uid) }, { $set: { emailVerificationCode: null, emailVerified: true, emailVerificationTimestamp: Math.floor(new Date().getTime() / 1000) } });
 
+        /*
+         * Token se izdaje SAMO ako je nalog već odobren.
+         *
+         * Registracija upisuje `accountEnabled: false`, a `accountEnabled`
+         * postaje `true` isključivo ručno, kroz `/users/change/accountEnabled`.
+         * `login()` takav nalog odbija porukom da čeka odobrenje
+         * administratora — a ova ruta je do sada svakome ko potvrdi adresu
+         * vraćala ispravan JWT sa rokom od 30 dana. Time je nalog koji sama
+         * prijava ne pušta mogao da dobije pristup zaobilaznim putem.
+         *
+         * Potvrda adrese i dalje uspeva; samo bez tokena dok odobrenja nema.
+         */
+        if (!user[0].accountEnabled) {
+            return {
+                response: { accountEnabled: false },
+                status: 200
+            };
+        }
+
         let token = jwt.sign({ "id": uid }, constants.jwtSecretKey, { algorithm: 'HS256', expiresIn: '30d' });
         return {
             response: {
-                token: token
+                token: token,
+                accountEnabled: true
             },
             status: 200
         };

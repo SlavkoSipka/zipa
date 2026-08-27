@@ -151,7 +151,7 @@
             height: unset;
             padding: 15px 30px 20px 30px;
             margin-bottom: 20px;
-            margin-top: 120px;
+            margin-top: var(--zaglavlje-visina);
         }
         .user-info{
             display: flex;
@@ -370,7 +370,7 @@
                 h3 {
                     font-size: 32px;
                     font-weight: $bold;
-                    color: $blue;
+                    color: var(--boja-tekst);
                     margin-bottom: 5px;
                 }
 
@@ -424,7 +424,7 @@
                         color: $black;
 
                         &:last-child{
-                            color: $blue;
+                            color: var(--boja-tekst);
                         }
                     }
                 }
@@ -639,7 +639,7 @@
                 }
 
                 > a {
-                    color: $blue;
+                    @include z-veza;
                     font-weight: $medium;
                 }
 
@@ -1023,7 +1023,7 @@
                     }
 
                     .date{
-                        color: $darkBlue;
+                        color: var(--boja-tekst);
                         margin-top: auto;
                         margin-bottom: 0;
                     }
@@ -1492,14 +1492,14 @@
                     left: 25px;
             
                     p{
-                        color: #6D7587;
+                        color: var(--boja-tekst-tiho);
                         font-size: 16px;
                         font-weight: 400;
                         margin-bottom: 0;
                         margin-left: 10px;
                 
                         span {
-                            color: $darkBlue;
+                            color: var(--boja-tekst);
                         }
                     }
                 }
@@ -1555,7 +1555,7 @@
                 }
 
                 input[type=text]{
-                    color: $blue;
+                    color: var(--boja-tekst);
                     font-size: 32px;
                     font-weight: $bold;
                     border: 0;
@@ -1573,7 +1573,7 @@
                 margin-bottom: 28px;
 
                 label{
-                    color: #6D7587;
+                    color: var(--boja-tekst-tiho);
                     font-size: 16px;
                     font-weight: $medium;
                     margin-bottom: 9px;
@@ -1655,7 +1655,7 @@
                 flex-direction: column;
                 margin-bottom: 28px;
                 label{
-                    color: #6D7587;
+                    color: var(--boja-tekst-tiho);
                     font-size: 16px;
                     font-weight: $medium;
                     margin-bottom: 9px;
@@ -1888,7 +1888,7 @@
                         p {
                             margin-bottom: 0;
                             margin-left: 20px;
-                            color: $blue;
+                            color: var(--boja-tekst);
                             font-size: 14px;
                         }
 
@@ -1957,14 +1957,14 @@
                         left: 25px;
                 
                         p{
-                            color: #6D7587;
+                            color: var(--boja-tekst-tiho);
                             font-size: 16px;
                             font-weight: 400;
                             margin-bottom: 0;
                             margin-left: 10px;
                     
                             span {
-                                color: $darkBlue;
+                                color: var(--boja-tekst);
                             }
                         }
                     }
@@ -2025,7 +2025,7 @@
                 flex-direction: column;
                 margin-bottom: 28px;
                 label{
-                    color: #6D7587;
+                    color: var(--boja-tekst-tiho);
                     font-size: 16px;
                     font-weight: $medium;
                     margin-bottom: 9px;
@@ -2044,7 +2044,7 @@
                 flex-direction: column;
                 margin-bottom: 28px;
                 label{
-                    color: #6D7587;
+                    color: var(--boja-tekst-tiho);
                     font-size: 16px;
                     font-weight: $medium;
                     margin-bottom: 9px;
@@ -2111,7 +2111,7 @@
                 label{
                     font-size: 16px;
                     font-weight: $medium;
-                    color: #6D7587;
+                    color: var(--boja-tekst-tiho);
                     margin-bottom: 9px;
 
                 }

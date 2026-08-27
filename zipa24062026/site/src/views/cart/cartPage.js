@@ -12,8 +12,7 @@ import {
 } from 'reactstrap';
 
 
-import Article from '../../components/articles/cartArticle';
-import BlogArticle from '../../components/articles/blogArticle';
+import Article, { kataloskiBroj } from '../../components/articles/article';
 
 
 import rightArrow from '../../assets/svg/right-arrow.svg';
@@ -22,7 +21,7 @@ import emptyCart from '../../assets/svg/empty-cart.svg';
 
 import lock from '../../assets/svg/secure.svg';
 import doneIcon from '../../assets/svg/done.svg';
-import { API_ENDPOINT } from '../../constants';
+import { API_ENDPOINT, PHOTOS_ENDPOINT } from '../../constants';
 
 class CartPage extends Component {
     constructor(props) {
@@ -33,6 +32,7 @@ class CartPage extends Component {
 
         this.state = {
             cart: [],
+            uklonjena: null,
             ...props.initialData
         };
     }
@@ -70,7 +70,30 @@ class CartPage extends Component {
                 cart = JSON.parse(cart);
             }
 
-            cart.splice(cart.indexOf(id), 1);
+            /*
+             * Stavka se traži po SVA TRI podatka, ne po `indexOf`.
+             *
+             * Ranije je ovde stajalo `cart.splice(cart.indexOf(id), 1)`.
+             * `cart` je niz objekata `{galleryId, photoId, resolution}`, a
+             * `id` je string — `indexOf` je zato uvek vraćao -1, pa je
+             * `splice(-1, 1)` brisao POSLEDNJU stavku, koju god da si
+             * kliknuo. Prijavljeni korisnici nisu bili pogođeni jer kod njih
+             * ide poziv na server sa sva tri parametra.
+             *
+             * Ista fotografija može biti u korpi u dve rezolucije, pa
+             * `resolution` mora da uđe u poređenje — inače bi se brisala
+             * pogrešna od te dve. `photoId` i `resolution` se porede kao
+             * brojevi, jer iz `localStorage` znaju da stignu kao stringovi.
+             */
+            const trazeno = cart.findIndex((s) =>
+                String(s.galleryId) === String(id)
+                && Number(s.photoId) === Number(photoId)
+                && Number(s.resolution) === Number(resolution)
+            );
+
+            if (trazeno !== -1) {
+                cart.splice(trazeno, 1);
+            }
 
             localStorage.setItem('cart', JSON.stringify(cart));
             this.init();
@@ -205,7 +228,37 @@ class CartPage extends Component {
     }
 
 
+    /*
+     * Uklanjanje sa mogućnošću poništenja.
+     *
+     * Stavka se pamti u stanju pa se `removeFromCart` poziva nepromenjen.
+     * „Vrati" koristi ISTE postojeće puteve kojima se stavka i dodaje —
+     * `addToCart` za prijavljene, `localStorage` za goste. Nema novih poziva.
+     */
+    ukloniUzPonistenje = (stavka) => {
+        this.setState({ uklonjena: stavka });
+        this.removeFromCart(stavka._id, stavka.photoId, stavka.resolution);
+    };
+
+    vratiUklonjenu = () => {
+        const s = this.state.uklonjena;
+        if (!s) return;
+
+        if (this.props.uData) {
+            this.props.addToCart({ _id: s._id }, s.photoId, s.resolution);
+            setTimeout(this.init, 400);
+        } else {
+            let cart = localStorage.getItem('cart');
+            cart = cart ? JSON.parse(cart) : [];
+            cart.push({ galleryId: s._id, photoId: s.photoId, resolution: s.resolution });
+            localStorage.setItem('cart', JSON.stringify(cart));
+            this.init();
+        }
+        this.setState({ uklonjena: null });
+    };
+
     render() {
+        const l = this.props.lang;
 
         let total = 0;
         if (this.state.cart) {
@@ -214,133 +267,230 @@ class CartPage extends Component {
             }
         }
 
+        const stavki = this.state.cart ? this.state.cart.length : 0;
+        const obrada = this.state.shippingPrice;
+
+        // Kataloški broj galerije + mesto fotografije = ID za narudžbu, isti
+        // koji stoji u prozoru sa fotografijom.
+        const idStavke = (s) => {
+            const kat = kataloskiBroj(s.date, s._id);
+            if (!kat) return null;
+            return `${kat}-${String((s.photoId || 0) + 1).padStart(3, '0')}`;
+        };
 
         return (
-            <div className="cart-wrap">
-                <div className="into-wrap">
-                    <Container>
-                        <Row>
-                            <Col lg="12" className="cart-info">
-                                <Isvg src={cart} />
-                                <div>
-                                    <h1>{'Korpa'.translate(this.props.lang)}</h1>
-                                    <p>{'Imate'.translate(this.props.lang)} {this.state.cart.length} {this.state.cart.length == 1 ? 'fotografiju'.translate(this.props.lang) : 'fotografije'.translate(this.props.lang)} {'u korpi'.translate(this.props.lang)}</p>
-                                </div>
-                            </Col>
-                        </Row>
+            <div className={'cart-wrap z-korpa' + (stavki ? ' z-korpa--sa-trakom' : '')}>
+                <Container>
 
-                    </Container>
-                </div>
+                    <div className="z-korpa__vrh">
+                        <h1 className="z-korpa__naslov">{'Korpa'.translate(l)}</h1>
+                        {!this.state._done ? (
+                            <span className="z-korpa__broj">
+                                {stavki} {'fotografija'.translate(l)}
+                            </span>
+                        ) : null}
+                    </div>
 
-                {!this.state._done ?
-                    <section className="downloads-section">
-                        <Container>
-                            <Row>
-                                <Col lg={this.state.cart && this.state.cart.length ? "9" : "12"} className="area">
-                                    {this.state.cart && this.state.cart.length ?
-                                        <div className="top">
-                                            <h2>{'Fotografije u korpi'.translate(this.props.lang)}</h2>
-                                            <div className="actions">
-                                                <button>{'Nastavi kupovinu'.translate(this.props.lang)}</button>
-                                                <button onClick={this.emptyCart}>{'Izprazni korpu'.translate(this.props.lang)}</button>
+                    {this.state._done ? (
+                        /* ── narudžba završena ───────────────────────── */
+                        <div className="z-korpa__gotovo">
+                            <Isvg src={doneIcon} />
+                            <h2 className="z-korpa__prazna-naslov">
+                                {'Vaša narudžba je završena!'.translate(l)}
+                            </h2>
+                            <p className="z-korpa__prazna-opis">
+                                {'Kupljene fotografije možete preuzeti na'.translate(l)}{' '}
+                                <Link to="/account/downloads">{'stranici preuzimanja'.translate(l)}</Link>.
+                            </p>
+                            <Link className="z-korpa__dugme" to="/galerije">
+                                {'Pretraži još fotografija'.translate(l)}
+                            </Link>
+                        </div>
+                    ) : stavki ? (
+                        /* ── korpa sa stavkama ───────────────────────── */
+                        <div className="z-korpa__raspored">
 
-                                            </div>
-                                        </div>
-                                        :
-                                        <div className="no-items">
-                                            <Isvg src={emptyCart} />
-                                            <h6>{'Vaša korpa je prazna'.translate(this.props.lang)}</h6>
-                                            <p>{'Pretražite naš sajt i pronađite željene fotografije.'.translate(this.props.lang)}</p>
-                                            <Link to='/'><button>{'Pretraži fotografije'.translate(this.props.lang)} <Isvg src={rightArrow} /> </button></Link>
-                                        </div>
-                                    }
+                            <div>
+                                <div className="z-korpa__stavke">
+                                    {this.state.cart.map((s, idx) => {
+                                        const foto = (s.photos && (s.photos[s.photoId] || s.photos[0])) || null;
+                                        const putanja = `/galerija/${Object.translate(s, 'alias', l)}/${s._id}`;
+                                        const id = idStavke(s);
 
-                                    <Row className="articles">
-                                        {
-                                            this.state.cart && this.state.cart.map((article, idx) => {
-                                                return (
-                                                    <Col lg={12}>
-                                                        <Article
-                                                            image={article.photo && article.photo.image}
-                                                            name={Object.translate(article, 'name', this.props.lang)}
-                                                            shortDescription={Object.translate(article, 'description', this.props.lang)}
-                                                            alias={Object.translate(article, 'alias', this.props.lang)}
-                                                            userAlias={article.userAlias}
-                                                            imagesCount={article.photosCount !== undefined ? article.photosCount : (article.photos && article.photos.length)}
-                                                            location={article.location}
-                                                            resolution={article.resolution}
-                                                            price={article.price}
-                                                            published={article.published}
-                                                            updateQuantity={(quantity) => this.props.updateCart(article, quantity, this.init)}
-                                                            handleRemove={() => this.removeFromCart(article._id, article.photoId, article.resolution)}
-                                                            listView={true}
+                                        return (
+                                            <div className="z-korpa__stavka" key={s.cartId || idx}>
+                                                <Link to={putanja} className="z-korpa__slika" tabIndex="-1" aria-hidden="true">
+                                                    {foto ? (
+                                                        <img
+                                                            src={`${PHOTOS_ENDPOINT}/photos/350x/${foto.image}`}
+                                                            alt=""
+                                                            loading="lazy"
                                                         />
-                                                    </Col>
+                                                    ) : null}
+                                                </Link>
 
-                                                )
-                                            })
-                                        }
-                                    </Row>
+                                                <div className="z-korpa__podaci">
+                                                    <h2 className="z-korpa__naziv">
+                                                        <Link to={putanja}>
+                                                            {Object.translate(s, 'name', l)}
+                                                        </Link>
+                                                    </h2>
+                                                    <p className="z-korpa__meta">
+                                                        {id ? (
+                                                            <span className="z-korpa__id">{id}</span>
+                                                        ) : null}
+                                                        {/* Rezolucija se ne može menjati iz korpe —
+                                                            na serveru ne postoji ruta za izmjenu. */}
+                                                        <span className="z-korpa__rezolucija">
+                                                            {s.resolution} px
+                                                        </span>
+                                                        {s.location ? <span>{s.location}</span> : null}
+                                                    </p>
+                                                </div>
 
-
-
-                                </Col>
-                                {this.state.cart && this.state.cart.length ?
-                                    <Col lg={{ size: 3 }}>
-                                        <div className="info-box">
-                                            <h6>{'Ukupno u korpi'.translate(this.props.lang)}</h6>
-                                            <div className="item">
-                                                <span className="name">{'Fotografije'.translate(this.props.lang)}</span>
-                                                <span className="price">${total.formatPrice(2)}</span>
+                                                <div className="z-korpa__desno">
+                                                    <span className="z-korpa__cena">
+                                                        ${(s.price).formatPrice(2)}
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        className="z-korpa__ukloni"
+                                                        onClick={() => this.ukloniUzPonistenje(s)}
+                                                    >
+                                                        {'Ukloni'.translate(l)}
+                                                    </button>
+                                                </div>
                                             </div>
+                                        );
+                                    })}
+                                </div>
 
-                                            <div className="item">
-                                            </div>
-                                            <div className="item">
-                                                <span className="name">{'Troškovi obrade'.translate(this.props.lang)}</span>
-                                                <span className="price">${this.state.shippingPrice ? this.state.shippingPrice.formatPrice(2) : '?'}</span>
-                                            </div>
-                                            <div className="total">
-                                                <span className="name">{'Ukupno:'.translate(this.props.lang)}</span>
-                                                <span className="price">${(total).formatPrice(2)}</span>
-                                            </div>
-
-                                            <p><Isvg src={lock} />{'Sigurna kupovina'.translate(this.props.lang)}</p>
-                                        </div>
-                                        <div className="paypal-container" ref={(node) => this.paypalContainer = node}></div>
-
-                                    </Col>
-
-                                    :
-                                    null
-                                }
-                            </Row>
-                        </Container>
-
-                    </section>
-
-                    :
-                    <section className="downloads-section">
-                        <Container>
-                            <Row>
-                                <Col lg={"12"} className="area">
-
-                                    <div className="no-items">
-                                        <Isvg src={doneIcon} />
-                                        <h6>{'Vaša narudžba je završena!'.translate(this.props.lang)}</h6>
-                                        <p>{'Možete preuzeti kupljene fotografije na sledećem'.translate(this.props.lang)} <Link to='/account/downloads'>{'linku'.translate(this.props.lang)}</Link>.</p>
-                                        <Link to='/'><button>{'Pretraži još fotografija'.translate(this.props.lang)} <Isvg src={rightArrow} /> </button></Link>
+                                {this.state.uklonjena ? (
+                                    <div className="z-korpa__ponisti" role="status">
+                                        <span>{'Uklonjeno iz korpe.'.translate(l)}</span>
+                                        <button
+                                            type="button"
+                                            className="z-korpa__ponisti-dugme"
+                                            onClick={this.vratiUklonjenu}
+                                        >
+                                            {'Vrati'.translate(l)}
+                                        </button>
                                     </div>
+                                ) : null}
 
-                                </Col>
-                            </Row>
-                        </Container>
-                    </section>
+                                <div className="z-korpa__radnje-spiska">
+                                    <Link className="z-korpa__tiho-dugme" to="/galerije">
+                                        {'Nastavi kupovinu'.translate(l)}
+                                    </Link>
+                                    <button
+                                        type="button"
+                                        className="z-korpa__tiho-dugme"
+                                        onClick={this.emptyCart}
+                                    >
+                                        {'Isprazni korpu'.translate(l)}
+                                    </button>
+                                </div>
+                            </div>
 
-                }
+                            {/* ── zbir ───────────────────────────────── */}
+                            <aside className="z-korpa__zbir" id="placanje">
+                                <h2 className="z-korpa__zbir-naslov">
+                                    {'Zbir'.translate(l)}
+                                </h2>
 
+                                <div className="z-korpa__zbir-red">
+                                    <span>{'Fotografije'.translate(l)}</span>
+                                    <span>${total.formatPrice(2)}</span>
+                                </div>
 
-            </div >
+                                {obrada !== undefined && obrada !== null ? (
+                                    <div className="z-korpa__zbir-red">
+                                        <span>{'Troškovi obrade'.translate(l)}</span>
+                                        <span>${obrada.formatPrice(2)}</span>
+                                    </div>
+                                ) : null}
+
+                                <div className="z-korpa__zbir-ukupno">
+                                    <span>{'Ukupno'.translate(l)}</span>
+                                    <span>${(total).formatPrice(2)}</span>
+                                </div>
+
+                                {/* Licenca stoji PRE plaćanja, ne posle. */}
+                                <p className="z-korpa__licenca">
+                                    {'Kupovinom dobijate pravo korištenja fotografije u skladu sa'.translate(l)}{' '}
+                                    <Link to="/page/uslovi-koriscenja">
+                                        {'uslovima korištenja'.translate(l)}
+                                    </Link>
+                                    {'. Preprodaja i ustupanje trećim licima nisu dozvoljeni.'.translate(l)}
+                                </p>
+
+                                <div
+                                    className="z-korpa__placanje paypal-container"
+                                    ref={(node) => this.paypalContainer = node}
+                                ></div>
+
+                                <p className="z-korpa__sigurno">
+                                    <Isvg src={lock} />
+                                    {'Sigurna kupovina'.translate(l)}
+                                </p>
+                            </aside>
+                        </div>
+                    ) : (
+                        /* ── prazna korpa: poziv na radnju ───────────── */
+                        <div className="z-korpa__prazna">
+                            <h2 className="z-korpa__prazna-naslov">
+                                {'Korpa je prazna'.translate(l)}
+                            </h2>
+                            <p className="z-korpa__prazna-opis">
+                                {'Pretražite arhivu i pronađite fotografije koje vam trebaju.'.translate(l)}
+                            </p>
+                            <Link className="z-korpa__dugme" to="/galerije">
+                                {'Pretraži fotografije'.translate(l)}
+                            </Link>
+
+                            {this.props.najnovije && this.props.najnovije.length ? (
+                                <>
+                                    <h3 className="z-korpa__predlozi-naslov">
+                                        {'Najnovije iz arhive'.translate(l)}
+                                    </h3>
+                                    <Row className="articles">
+                                        {this.props.najnovije.map((g, idx) => (
+                                            <Col lg="3" md="4" xs="6" key={idx}>
+                                                <Article
+                                                    _id={g._id}
+                                                    categoryName={Object.translate(g, 'categoryName', l)}
+                                                    image={g.photos && g.photos[0] && g.photos[0].image}
+                                                    name={Object.translate(g, 'name', l)}
+                                                    shortDescription={Object.translate(g, 'description', l)}
+                                                    alias={Object.translate(g, 'alias', l)}
+                                                    userAlias={g.userAlias}
+                                                    imagesCount={g.photosCount !== undefined ? g.photosCount : (g.photos && g.photos.length)}
+                                                    location={g.location}
+                                                    published={g.date}
+                                                    homeArticle
+                                                />
+                                            </Col>
+                                        ))}
+                                    </Row>
+                                </>
+                            ) : null}
+                        </div>
+                    )}
+                </Container>
+
+                {/* ── traka za dno ekrana, samo na telefonu ───────────── */}
+                {stavki && !this.state._done ? (
+                    <div className="z-korpa__traka-dno">
+                        <span className="z-korpa__traka-zbir">
+                            {'Ukupno'.translate(l)}
+                            <strong>${(total).formatPrice(2)}</strong>
+                        </span>
+                        <a className="z-korpa__dugme" href="#placanje">
+                            {'Na plaćanje'.translate(l)}
+                        </a>
+                    </div>
+                ) : null}
+            </div>
         );
     }
 }

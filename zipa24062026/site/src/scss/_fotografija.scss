@@ -1,0 +1,423 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   JEDNA FOTOGRAFIJA — /galerija/:alias/:id/:photo
+   ═══════════════════════════════════════════════════════════════════════════
+   Adresa koja se deli. Fotografija je krupna i prva, panel sa cenom stoji uz
+   nju. Panel je taman, isti kao u prozoru sa cenama (`_photoModal.scss`) —
+   ista radnja, isti izgled, pa se ne uči dvaput.
+*/
+
+.z-fotografija {
+    padding: var(--razmak-5) 0 var(--razmak-8);
+
+    /* ── vrh ──────────────────────────────────────────────────────────── */
+
+    &__vrh {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: var(--razmak-3);
+        flex-wrap: wrap;
+        margin-bottom: var(--razmak-4);
+    }
+
+    &__nazad {
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+
+        @include z-veza-meni;
+        @include z-fokus;
+
+        // Strelica ide u sadržaj, ne u markup — nije podatak.
+        &::before { content: '← '; }
+    }
+
+    &__kataloski {
+        font-family: var(--pismo-podaci);
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        letter-spacing: .02em;
+        color: var(--boja-tekst-tiho);
+    }
+
+    /* ── raspored ─────────────────────────────────────────────────────── */
+
+    &__raspored {
+        display: grid;
+        grid-template-columns: 1fr 320px;
+        gap: var(--razmak-5);
+        align-items: start;
+
+        @include mobile-tablet {
+            grid-template-columns: 1fr;
+            gap: var(--razmak-4);
+        }
+    }
+
+    /* ── kadar ────────────────────────────────────────────────────────── */
+
+    &__kadar {
+        position: relative;
+        min-width: 0;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        // Tamna podloga: fotografija zadrži svoj odnos stranica, a prazan
+        // prostor oko nje ne svetli kao list papira.
+        padding: var(--razmak-3);
+        border-radius: var(--radijus-panel);
+        background: var(--boja-traka);
+    }
+
+    &__slika {
+        max-width: 100%;
+        // Visina se ograničava da portret ne izbaci panel iz kadra.
+        max-height: 72vh;
+        height: auto;
+        display: block;
+        border-radius: var(--radijus-mali);
+    }
+
+    // Strelice — okvir bez slike, isti oblik levo i desno.
+    &__strelica {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+
+        width: 44px;
+        height: 44px;
+        padding: 0;
+
+        border: 1px solid var(--boja-traka-linija);
+        border-radius: var(--radijus-pun);
+        background: var(--boja-traka);
+        cursor: pointer;
+
+        @include z-prelaz(background-color, border-color);
+        &:hover { border-color: var(--boja-traka-tekst); }
+        @include z-fokus;
+
+        &::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 10px;
+            height: 10px;
+            border-top: 2px solid var(--boja-traka-tekst);
+            border-right: 2px solid var(--boja-traka-tekst);
+        }
+
+        &--nazad {
+            left: var(--razmak-3);
+            &::after { transform: translate(-30%, -50%) rotate(-135deg); }
+        }
+
+        &--napred {
+            right: var(--razmak-3);
+            &::after { transform: translate(-70%, -50%) rotate(45deg); }
+        }
+    }
+
+    /* ── panel sa cenom ───────────────────────────────────────────────── */
+
+    &__panel {
+        min-width: 0;
+        padding: var(--razmak-4);
+
+        border-radius: var(--radijus-panel);
+        background: var(--boja-traka-povrsina);
+        color: var(--boja-traka-tekst);
+
+        /* Tamna površina preusmerava tokene u svom opsegu, isto kao
+           zaglavlje. Bez ovoga bi okvir fokusa ostao tamni `--boja-fokus`,
+           koji se na tamnom panelu ne vidi. */
+        --boja-fokus: var(--boja-fokus-traka);
+    }
+
+    // Isto važi za kadar — strelice stoje na tamnoj podlozi.
+    &__kadar {
+        --boja-fokus: var(--boja-fokus-traka);
+    }
+
+    &__naslov {
+        margin: 0 0 var(--razmak-1);
+        font-family: var(--pismo-naslov);
+        font-size: var(--slovo-lg);
+        line-height: var(--red-lg);
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-traka-tekst);
+        overflow-wrap: anywhere;
+    }
+
+    &__podnaslov {
+        margin: 0 0 var(--razmak-4);
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        color: var(--boja-traka-tekst-tiho);
+    }
+
+    &__oznaka-grupe {
+        margin: 0 0 var(--razmak-2);
+        font-size: var(--slovo-xs);
+        line-height: var(--red-xs);
+        font-weight: var(--tezina-jaka);
+        letter-spacing: .1em;
+        text-transform: uppercase;
+        color: var(--boja-traka-tekst-tiho);
+    }
+
+    /* ── rezolucije ───────────────────────────────────────────────────── */
+
+    &__rezolucije {
+        display: flex;
+        flex-direction: column;
+        gap: var(--razmak-1);
+        margin-bottom: var(--razmak-4);
+    }
+
+    &__rezolucija {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--razmak-3);
+        width: 100%;
+        min-height: 44px;
+        padding: 0 var(--razmak-3);
+
+        border: 1px solid var(--boja-traka-linija);
+        border-radius: var(--radijus-mali);
+        background: transparent;
+
+        font-family: var(--pismo-tekst);
+        color: var(--boja-traka-tekst);
+        cursor: pointer;
+
+        @include z-prelaz(border-color, background-color);
+        &:hover { border-color: var(--boja-traka-tekst-tiho); }
+        @include z-fokus;
+
+        &--izabrana {
+            border-color: var(--boja-akcenat);
+            background: var(--boja-traka);
+        }
+    }
+
+    &__px {
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+    }
+
+    // CENA NIKAD CRVENA — crvena je oznaka, ne novac.
+    &__cena {
+        font-family: var(--pismo-podaci);
+        font-size: var(--slovo-md);
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-traka-tekst);
+        white-space: nowrap;
+    }
+
+    /* ── radnja ───────────────────────────────────────────────────────── */
+
+    &__radnja {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        min-height: var(--visina-radnja);
+        padding: 0 var(--razmak-4);
+
+        border: 1px solid var(--boja-traka-linija);
+        border-radius: var(--radijus-panel);
+        background: transparent;
+
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-radnja);
+        line-height: var(--red-radnja);
+        font-weight: var(--tezina-srednja);
+        color: var(--boja-traka-tekst);
+        text-decoration: none;
+        cursor: pointer;
+
+        @include z-prelaz(background-color, border-color);
+        @include z-fokus;
+
+        // Jedina amber površina na strani.
+        &--glavna {
+            border: 0;
+            background: var(--boja-akcenat);
+            color: var(--boja-akcenat-tekst);
+            font-weight: var(--tezina-poludebela);
+
+            &:hover { background: var(--boja-akcenat-jako); }
+        }
+    }
+
+    &__nedostupno {
+        margin: 0 0 var(--razmak-4);
+        padding: var(--razmak-3);
+
+        border-left: 3px solid var(--boja-najava);
+        border-radius: var(--radijus-mali);
+        background: var(--boja-traka);
+
+        font-size: var(--slovo-sm);
+        line-height: var(--red-md);
+        color: var(--boja-traka-tekst);
+
+        a { color: var(--boja-traka-tekst); text-decoration: underline; @include z-fokus; }
+    }
+
+    /* ── podaci ───────────────────────────────────────────────────────── */
+
+    &__podaci {
+        margin: var(--razmak-4) 0 0;
+        padding-top: var(--razmak-3);
+        border-top: 1px solid var(--boja-traka-linija);
+    }
+
+    &__red {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: var(--razmak-3);
+        padding: var(--razmak-1) 0;
+
+        dt {
+            flex: 0 0 auto;
+            margin: 0;
+            font-size: var(--slovo-sm);
+            line-height: var(--red-sm);
+            color: var(--boja-traka-tekst-tiho);
+        }
+
+        dd {
+            flex: 0 1 auto;
+            min-width: 0;
+            margin: 0;
+            text-align: right;
+
+            font-size: var(--slovo-sm);
+            line-height: var(--red-sm);
+            color: var(--boja-traka-tekst);
+            overflow-wrap: anywhere;
+        }
+    }
+
+    /* ── kuda dalje ───────────────────────────────────────────────────── */
+
+    &__veze {
+        display: flex;
+        flex-direction: column;
+        gap: var(--razmak-2);
+        margin-top: var(--razmak-4);
+        padding-top: var(--razmak-3);
+        border-top: 1px solid var(--boja-traka-linija);
+    }
+
+    &__veza {
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        color: var(--boja-traka-tekst);
+        text-decoration: underline;
+
+        @include z-prelaz(color);
+        &:hover { color: var(--boja-traka-tekst-tiho); }
+        @include z-fokus;
+    }
+
+    /* ── opis ─────────────────────────────────────────────────────────── */
+
+    &__opis {
+        max-width: 65ch;
+        margin-top: var(--razmak-7);
+
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
+        color: var(--boja-tekst);
+
+        a { @include z-veza; @include z-fokus; }
+    }
+
+    &__opis-naslov {
+        margin: 0 0 var(--razmak-3);
+        font-family: var(--pismo-naslov);
+        font-size: var(--slovo-xl);
+        line-height: var(--red-xl);
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-tekst);
+    }
+
+    /* ── deljenje ─────────────────────────────────────────────────────── */
+
+    &__dijeljenje {
+        margin-top: var(--razmak-7);
+
+        // Oznaka grupe je crtana za tamni panel; ovde je na beloj.
+        .z-fotografija__oznaka-grupe { color: var(--boja-tekst-tiho); }
+    }
+
+    &__mreze {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--razmak-2);
+
+        button { @include z-fokus; border-radius: var(--radijus-pun); }
+    }
+
+    /* ── ostalo iz galerije ───────────────────────────────────────────── */
+
+    &__ostalo {
+        margin-top: var(--razmak-7);
+    }
+
+    // Traka koja se prevlači — cela galerija u jednom redu, bez skoka strane.
+    &__traka {
+        display: flex;
+        gap: var(--razmak-2);
+        overflow-x: auto;
+        overscroll-behavior-x: contain;
+        padding-bottom: var(--razmak-2);
+    }
+
+    &__slicica {
+        flex: 0 0 auto;
+        width: 132px;
+        aspect-ratio: 3 / 2;
+
+        overflow: hidden;
+        border-radius: var(--radijus-mali);
+        background: var(--boja-podloga-tiha);
+
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            @include z-prelaz(opacity);
+        }
+
+        &:hover img { opacity: .88; }
+        @include z-fokus;
+
+        // Gde sam — crvena, kao svako aktivno stanje na sajtu.
+        &--ovde {
+            outline: 2px solid var(--boja-oznaka);
+            outline-offset: -2px;
+        }
+    }
+
+    /* ── reklamna traka ───────────────────────────────────────────────── */
+
+    &__reklame {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: var(--razmak-4);
+        margin-top: var(--razmak-8);
+
+        img { max-width: 100%; height: auto; display: block; }
+        a { @include z-fokus; }
+    }
+}

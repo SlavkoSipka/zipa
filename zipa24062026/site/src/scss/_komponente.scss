@@ -1,0 +1,746 @@
+/*
+ * KOMPONENTE — gotovi delovi od kojih se slažu strane.
+ *
+ * Pravila:
+ *  1. Nijedna vrednost ovde nije zakucana. Sve dolazi iz `_tokens.scss`.
+ *     Ako nešto ne postoji kao token, ne dodaje se ovde nego tamo.
+ *  2. Prefiks `z-` na svakoj klasi. `_global.scss` ima 4.173 reda i 62
+ *     `!important`; prefiks je jedini način da se dve stvari ne sudare.
+ *     Zato se ovaj fajl uvozi POSLE globalnog, a nijedno pravilo odavde
+ *     ne dira zatečene klase.
+ *  3. Svaki element koji prima fokus ima vidljiv okvir preko `:focus-visible`.
+ *     Podrazumevani okvir pregledača se sklanja samo tamo gde je zamenjen.
+ *
+ * Šta se vidi na strani `/stilovi`.
+ */
+
+
+/* NIJEDAN MIXIN SE NE DEFINIŠE OVDE.
+ *
+ * `z-fokus` i `z-prelaz` su preseljeni u `_settings.scss`, kod svih ostalih.
+ * Razlog: ovaj fajl se uvozi TEK POSLE fajlova strana (da mu specifičnost
+ * ide u korist), pa mixin definisan ovde ne postoji za njih — gradnja je
+ * zbog toga pukla tri puta zaredom (`_photoModal`, `_login`, `_cart`).
+ *
+ * Pravilo je u CLAUDE.md: definicije idu u temelj, pravila ostaju ovde.
+ */
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DUGME — tri jačine
+   ═══════════════════════════════════════════════════════════════════════════
+   glavno   — jedno po ekranu. Ono što se od posetioca očekuje.
+   sporedno — sve ostalo što je radnja. Okvir, bez ispune.
+   tiho     — radnja koja ne sme da odvlači pažnju. Samo tekst.
+*/
+.z-dugme {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--razmak-2);
+    position: relative;
+
+    padding: var(--razmak-3) var(--razmak-5);
+    border: 1px solid transparent;
+    border-radius: var(--radijus-panel);
+
+    font-family: var(--pismo-tekst);
+    font-size: var(--slovo-md);
+    line-height: var(--red-md);
+    font-weight: var(--tezina-jaka);
+    text-align: center;
+    text-decoration: none;
+    white-space: nowrap;
+
+    cursor: pointer;
+    user-select: none;
+    @include z-prelaz(background-color, border-color, color, box-shadow);
+    @include z-fokus;
+
+    &:disabled,
+    &[aria-disabled="true"] {
+        cursor: not-allowed;
+        opacity: .45;
+        // Bez pomeranja i bez promene boje pri prelazu — isključeno dugme
+        // ne sme da se ponaša kao da nešto radi.
+        pointer-events: none;
+    }
+
+    /* ── glavno ───────────────────────────────────────────────────────── */
+    &--glavno {
+        background: var(--boja-akcenat);
+        border-color: var(--boja-akcenat);
+        color: var(--boja-tekst-na-akcentu);
+
+        &:hover {
+            background: var(--boja-akcenat-jako);
+            border-color: var(--boja-akcenat-jako);
+        }
+        &:active { background: var(--boja-akcenat-jako); }
+    }
+
+    /* ── sporedno ─────────────────────────────────────────────────────── */
+    &--sporedno {
+        background: var(--boja-povrsina);
+        border-color: var(--boja-linija);
+        color: var(--boja-tekst);
+
+        &:hover {
+            border-color: var(--boja-akcenat);
+            color: var(--boja-veza);
+        }
+        &:active { background: var(--boja-podloga-tiha); }
+    }
+
+    /* ── tiho ─────────────────────────────────────────────────────────── */
+    &--tiho {
+        background: transparent;
+        border-color: transparent;
+        color: var(--boja-veza);
+        padding-left: var(--razmak-3);
+        padding-right: var(--razmak-3);
+
+        &:hover { background: var(--boja-podloga-tiha); }
+        &:active { color: var(--boja-akcenat-jako); }
+    }
+
+    /* ── uništavajuća radnja ──────────────────────────────────────────── */
+    &--opasno {
+        background: var(--boja-povrsina);
+        border-color: var(--boja-linija);
+        color: var(--boja-oznaka-tekst);
+
+        &:hover {
+            background: var(--boja-oznaka);
+            border-color: var(--boja-oznaka);
+            color: var(--boja-tekst-na-akcentu);
+        }
+    }
+
+    /* ── veličine ─────────────────────────────────────────────────────── */
+    &--malo {
+        padding: var(--razmak-2) var(--razmak-3);
+        font-size: var(--slovo-sm);
+    }
+    &--veliko {
+        padding: var(--razmak-4) var(--razmak-6);
+        font-size: var(--slovo-lg);
+    }
+    &--puno { width: 100%; }
+
+    /* ── čeka ─────────────────────────────────────────────────────────────
+       Natpis ostaje na mestu ali providan, pa se dugme ne skuplja i strana
+       ne poskakuje. Krug se vrti preko njega.
+    */
+    &--ceka {
+        pointer-events: none;
+        color: transparent;
+
+        // Ikonica unutar dugmeta se skriva zajedno sa natpisom.
+        > * { visibility: hidden; }
+
+        &::after {
+            content: '';
+            position: absolute;
+            width: var(--razmak-4);
+            height: var(--razmak-4);
+            border: 2px solid currentColor;
+            border-radius: var(--radijus-pun);
+            border-top-color: transparent;
+            animation: z-vrtnja var(--prelaz-sporo) linear infinite;
+        }
+
+        &.z-dugme--glavno::after  { border-color: var(--boja-tekst-na-akcentu); border-top-color: transparent; }
+        &.z-dugme--sporedno::after,
+        &.z-dugme--tiho::after    { border-color: var(--boja-akcenat); border-top-color: transparent; }
+    }
+}
+
+@keyframes z-vrtnja {
+    to { transform: rotate(360deg); }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   POLJE ZA UNOS
+   ═══════════════════════════════════════════════════════════════════════════ */
+.z-polje {
+    display: block;
+    margin-bottom: var(--razmak-4);
+
+    &__natpis {
+        display: block;
+        margin-bottom: var(--razmak-2);
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        font-weight: var(--tezina-srednja);
+        color: var(--boja-tekst);
+    }
+
+    &__obavezno {
+        color: var(--boja-oznaka-tekst);
+        margin-left: var(--razmak-1);
+    }
+
+    &__unos {
+        display: block;
+        width: 100%;
+        padding: var(--razmak-3) var(--razmak-4);
+
+        background: var(--boja-povrsina);
+        border: 1px solid var(--boja-linija);
+        border-radius: var(--radijus-panel);
+
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
+        color: var(--boja-tekst);
+
+        @include z-prelaz(border-color, background-color);
+        @include z-fokus;
+
+        &::placeholder { color: var(--boja-tekst-tiho); }
+        &:hover  { border-color: var(--boja-tekst-tiho); }
+        &:focus  { border-color: var(--boja-akcenat); }
+
+        &:disabled {
+            background: var(--boja-podloga-tiha);
+            color: var(--boja-tekst-tiho);
+            cursor: not-allowed;
+        }
+    }
+
+    textarea#{&}__unos {
+        min-height: calc(var(--razmak-8) + var(--razmak-6));
+        resize: vertical;
+    }
+
+    &__pomoc {
+        display: block;
+        margin-top: var(--razmak-2);
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        color: var(--boja-tekst-tiho);
+    }
+
+    /* Greška se ne saopštava samo bojom — ide i znak i tekst, jer boju
+       ne vidi svako. */
+    &--greska {
+        .z-polje__unos {
+            border-color: var(--boja-oznaka-tekst);
+            &:focus { border-color: var(--boja-oznaka-tekst); }
+        }
+        .z-polje__pomoc {
+            color: var(--boja-oznaka-tekst);
+            font-weight: var(--tezina-srednja);
+
+            &::before {
+                content: '⚠ ';
+            }
+        }
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PADAJUĆA LISTA
+   ═══════════════════════════════════════════════════════════════════════════
+   Jedno od retkih mesta gde senka sme — lista stvarno lebdi iznad strane.
+*/
+.z-lista {
+    position: relative;
+    display: inline-block;
+
+    &__meni {
+        position: absolute;
+        top: calc(100% + var(--razmak-1));
+        left: 0;
+        z-index: var(--sloj-padajuce);
+
+        min-width: 100%;
+        padding: var(--razmak-1) 0;
+        margin: 0;
+        list-style: none;
+
+        background: var(--boja-povrsina);
+        border: 1px solid var(--boja-linija);
+        border-radius: var(--radijus-panel);
+        box-shadow: var(--senka-lebdi);
+    }
+
+    &__stavka {
+        display: block;
+        width: 100%;
+        padding: var(--razmak-2) var(--razmak-4);
+        border: 0;
+        background: transparent;
+        text-align: left;
+        white-space: nowrap;
+        cursor: pointer;
+
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
+        color: var(--boja-tekst);
+        text-decoration: none;
+
+        @include z-prelaz(background-color, color);
+        @include z-fokus;
+
+        &:hover { background: var(--boja-podloga-tiha); }
+
+        &--izabrano {
+            color: var(--boja-oznaka-tekst);
+            font-weight: var(--tezina-jaka);
+        }
+    }
+
+    &__razdvajac {
+        height: 1px;
+        margin: var(--razmak-1) 0;
+        background: var(--boja-linija);
+        border: 0;
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   OZNAKA
+   ═══════════════════════════════════════════════════════════════════════════ */
+.z-oznaka {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--razmak-1);
+    padding: var(--razmak-1) var(--razmak-2);
+
+    background: var(--boja-podloga-tiha);
+    border-radius: var(--radijus-mali);
+
+    font-family: var(--pismo-tekst);
+    font-size: var(--slovo-xs);
+    line-height: var(--red-xs);
+    font-weight: var(--tezina-jaka);
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--boja-tekst-tiho);
+    white-space: nowrap;
+
+    &--akcenat { background: var(--boja-akcenat); color: var(--boja-tekst-na-akcentu); }
+    &--oznaka  { background: var(--boja-oznaka);  color: var(--boja-tekst-na-akcentu); }
+    &--uspeh   { background: var(--boja-uspeh);   color: var(--boja-tekst-na-akcentu); }
+    &--upozorenje { background: var(--boja-upozorenje); color: var(--boja-tekst-na-akcentu); }
+
+    // Kataloški broj i drugi podaci koji se prepisuju — u pismu za podatke,
+    // gde se 0 i O razlikuju.
+    &--podatak {
+        font-family: var(--pismo-podaci);
+        text-transform: none;
+        letter-spacing: 0;
+        color: var(--boja-tekst);
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PILULA FILTERA
+   ═══════════════════════════════════════════════════════════════════════════
+   Uslov pretrage koji se može skinuti. Kad je uključena, puna je — jedino
+   mesto gde crvena pokriva površinu.
+*/
+.z-pilula {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--razmak-2);
+    padding: var(--razmak-2) var(--razmak-4);
+
+    background: var(--boja-povrsina);
+    border: 1px solid var(--boja-linija);
+    border-radius: var(--radijus-pun);
+
+    font-family: var(--pismo-tekst);
+    font-size: var(--slovo-sm);
+    line-height: var(--red-sm);
+    color: var(--boja-tekst);
+    text-decoration: none;
+    cursor: pointer;
+
+    @include z-prelaz(background-color, border-color, color);
+    @include z-fokus;
+
+    &:hover { border-color: var(--boja-akcenat); }
+
+    &--ukljuceno {
+        background: var(--boja-oznaka);
+        border-color: var(--boja-oznaka);
+        color: var(--boja-tekst-na-akcentu);
+        font-weight: var(--tezina-srednja);
+
+        &:hover { border-color: var(--boja-oznaka); }
+    }
+
+    &__broj {
+        font-family: var(--pismo-podaci);
+        font-size: var(--slovo-xs);
+        color: var(--boja-tekst-tiho);
+    }
+    &--ukljuceno &__broj { color: var(--boja-tekst-na-akcentu); }
+
+    // Krstić za skidanje uslova.
+    &__skini {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: var(--razmak-4);
+        height: var(--razmak-4);
+        padding: 0;
+        border: 0;
+        border-radius: var(--radijus-pun);
+        background: transparent;
+        color: inherit;
+        font-size: var(--slovo-md);
+        line-height: 1;
+        cursor: pointer;
+        @include z-fokus;
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   KARTICA
+   ═══════════════════════════════════════════════════════════════════════════
+   Bez senke: u toku strane razdvaja linija. Senka se javlja samo pri prelazu
+   mišem, kao znak da se kartica može kliknuti.
+*/
+.z-kartica {
+    display: flex;
+    flex-direction: column;
+    background: var(--boja-povrsina);
+    border: 1px solid var(--boja-linija);
+    border-radius: var(--radijus-panel);
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+
+    @include z-prelaz(border-color, box-shadow);
+    @include z-fokus;
+
+    &--klikce:hover {
+        border-color: var(--boja-tekst-tiho);
+        box-shadow: var(--senka-lebdi);
+    }
+
+    // Montaža oko fotografije: uzak beo okvir, kao rub dijapozitiva.
+    &__slika {
+        position: relative;
+        display: block;
+        width: 100%;
+        aspect-ratio: 3 / 2;
+        background: var(--boja-podloga-tiha);
+        overflow: hidden;
+
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+    }
+
+    &__telo {
+        display: flex;
+        flex-direction: column;
+        gap: var(--razmak-2);
+        padding: var(--razmak-4);
+    }
+
+    &__naslov {
+        margin: 0;
+        font-family: var(--pismo-naslov);
+        font-size: var(--slovo-lg);
+        line-height: var(--red-lg);
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-tekst);
+    }
+
+    // Red sa podacima: datum · autor · broj fotografija · kataloški broj.
+    &__podaci {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--razmak-1) var(--razmak-3);
+
+        font-family: var(--pismo-podaci);
+        font-size: var(--slovo-xs);
+        line-height: var(--red-xs);
+        color: var(--boja-tekst-tiho);
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   OBAVEŠTENJE
+   ═══════════════════════════════════════════════════════════════════════════
+   Boja nikad ne nosi poruku sama — uz nju uvek ide reč i znak.
+*/
+.z-poruka {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--razmak-3);
+    padding: var(--razmak-4);
+
+    background: var(--boja-povrsina);
+    border: 1px solid var(--boja-linija);
+    border-left-width: var(--razmak-1);
+    border-radius: var(--radijus-panel);
+
+    font-family: var(--pismo-tekst);
+    font-size: var(--slovo-md);
+    line-height: var(--red-md);
+    color: var(--boja-tekst);
+
+    &__znak {
+        flex: 0 0 auto;
+        font-size: var(--slovo-lg);
+        line-height: var(--red-md);
+    }
+
+    &__sadrzaj { flex: 1 1 auto; }
+
+    &__naslov {
+        margin: 0 0 var(--razmak-1);
+        font-weight: var(--tezina-jaka);
+    }
+
+    &__zatvori {
+        flex: 0 0 auto;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: var(--boja-tekst-tiho);
+        font-size: var(--slovo-lg);
+        line-height: 1;
+        cursor: pointer;
+        @include z-fokus;
+    }
+
+    &--uspeh      { border-left-color: var(--boja-uspeh); }
+    &--greska     { border-left-color: var(--boja-oznaka-tekst); }
+    &--upozorenje { border-left-color: var(--boja-upozorenje); }
+    &--obavest    { border-left-color: var(--boja-akcenat); }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   STRANIČENJE
+   ═══════════════════════════════════════════════════════════════════════════
+   Arhiva ima 9.965 galerija — dodir na telefonu mora da bude dovoljno velik,
+   otud najmanja mera od 44px složena iz razmaka.
+*/
+.z-stranice {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: var(--razmak-1);
+    padding: var(--razmak-5) 0;
+
+    &__dugme {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: calc(var(--razmak-5) + var(--razmak-5));
+        min-height: calc(var(--razmak-5) + var(--razmak-5));
+        padding: 0 var(--razmak-2);
+
+        background: transparent;
+        border: 1px solid transparent;
+        border-radius: var(--radijus-panel);
+
+        font-family: var(--pismo-podaci);
+        font-size: var(--slovo-sm);
+        color: var(--boja-tekst);
+        text-decoration: none;
+        cursor: pointer;
+
+        @include z-prelaz(background-color, border-color, color);
+        @include z-fokus;
+
+        &:hover { background: var(--boja-podloga-tiha); }
+
+        &--ovde {
+            background: var(--boja-akcenat);
+            border-color: var(--boja-akcenat);
+            color: var(--boja-tekst-na-akcentu);
+            font-weight: var(--tezina-jaka);
+            pointer-events: none;
+        }
+
+        &:disabled {
+            color: var(--boja-tekst-tiho);
+            opacity: .45;
+            pointer-events: none;
+        }
+    }
+
+    &__razmak {
+        padding: 0 var(--razmak-2);
+        color: var(--boja-tekst-tiho);
+    }
+
+    &__ukupno {
+        margin-left: var(--razmak-4);
+        font-family: var(--pismo-podaci);
+        font-size: var(--slovo-xs);
+        color: var(--boja-tekst-tiho);
+    }
+
+    @include mobile {
+        &__ukupno {
+            margin-left: 0;
+            flex-basis: 100%;
+            text-align: center;
+            margin-top: var(--razmak-3);
+        }
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   KOSTUR — dok se čeka
+   ═══════════════════════════════════════════════════════════════════════════
+   Umesto praznine ili vrteške: oblik onoga što stiže, u pravoj veličini.
+   Strana zbog toga ne poskakuje kad podaci stignu.
+*/
+.z-kostur {
+    background: var(--boja-podloga-tiha);
+    border-radius: var(--radijus-mali);
+    position: relative;
+    overflow: hidden;
+
+    &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        transform: translateX(-100%);
+        background: linear-gradient(
+            90deg,
+            transparent,
+            var(--boja-povrsina),
+            transparent
+        );
+        opacity: .6;
+        animation: z-prelivanje 1.4s ease-in-out infinite;
+    }
+
+    &--red    { height: var(--razmak-4); margin-bottom: var(--razmak-2); }
+    &--red-kratak { height: var(--razmak-4); width: 60%; }
+    &--naslov { height: var(--razmak-5); margin-bottom: var(--razmak-3); }
+    &--slika  { aspect-ratio: 3 / 2; width: 100%; border-radius: 0; }
+}
+
+@keyframes z-prelivanje {
+    to { transform: translateX(100%); }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PRAZNO STANJE
+   ═══════════════════════════════════════════════════════════════════════════
+   Nikad samo „Nema rezultata". Uvek se kaže i šta dalje — inače posetilac
+   ostane na slepom koloseku.
+*/
+.z-prazno {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: var(--razmak-3);
+    padding: var(--razmak-8) var(--razmak-5);
+
+    background: var(--boja-povrsina);
+    border: 1px dashed var(--boja-linija);
+    border-radius: var(--radijus-panel);
+
+    &__znak {
+        font-size: var(--slovo-3xl);
+        line-height: 1;
+        color: var(--boja-tekst-tiho);
+        opacity: .5;
+    }
+
+    &__naslov {
+        margin: 0;
+        font-family: var(--pismo-naslov);
+        font-size: var(--slovo-xl);
+        line-height: var(--red-xl);
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-tekst);
+    }
+
+    &__tekst {
+        margin: 0;
+        max-width: 46ch;
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
+        color: var(--boja-tekst-tiho);
+    }
+
+    &__radnje {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--razmak-3);
+        justify-content: center;
+        margin-top: var(--razmak-2);
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MANJE KRETANJA — poslednja reč
+   ═══════════════════════════════════════════════════════════════════════════
+   Tokeni prelaza već postaju 0ms u `_tokens.scss`, ali to ne hvata animacije
+   sa svojim trajanjem (vrtnja u dugmetu, prelivanje kostura) ni zatečena
+   pravila iz `_global.scss`. Ovo ih gasi sve odjednom.
+
+   Ne piše se `animation: none` — neke stvari nestanu ako im se animacija
+   ukloni. Umesto toga trajanje ide na jedan trenutak: animacija se odigra
+   do kraja odmah i tu ostane.
+*/
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 1ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 1ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    // Kostur bez prelivanja i dalje mora da se razlikuje od prazne površine.
+    .z-kostur::after { display: none; }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PODELA NA STRANE — samo popravka za uzak ekran
+   ═══════════════════════════════════════════════════════════════════════════
+   `react-paginate` iscrtava `.pagination`, a `_global.scss` je drži kao
+   plutajući red koji se ne prelama. Na 320px je zbog toga `/galerije`
+   prelazilo 47px izvan ekrana.
+
+   Ovde se ne prekraja izgled — samo se redu dozvoljava da se prelomi ispod
+   480px. Iznad te širine važi zatečeno pravilo.
+*/
+@include telefon-mali {
+    .pagination {
+        float: none;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: var(--razmak-2);
+
+        > li { margin-right: 0; }
+    }
+}

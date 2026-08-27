@@ -3,153 +3,447 @@ import {Link, Redirect} from 'react-router-dom';
 
 import Isvg from 'react-inlinesvg';
 
-/*header*/
-
-
 import {
-    Container,
-    Row,
-    Col,
-    Dropdown,
     DropdownItem,
     DropdownMenu,
     DropdownToggle,
     UncontrolledDropdown
 } from 'reactstrap';
 
-
 import cart from '../assets/svg/cart.svg';
 import search from '../assets/svg/search.svg';
-import accountIcon from '../assets/svg/user.svg';
 import imagesCount from '../assets/svg/images-count.svg';
+import filterIcon from '../assets/svg/filters.svg';
 
 import ba from '../assets/images/basr.png';
 import en from '../assets/images/en.png';
-import filterIcon from '../assets/svg/filters.svg';
 import PretragaSaPrijedlozima from './pretragaSaPrijedlozima';
+import naslovnaIlustracija from '../assets/images/naslovna-ilustracija.png';
+
+/*
+ * ZAGLAVLJE SAJTA
+ *
+ * Dva sloja:
+ *   1. tanka traka — naziv agencije, POMOĆ, cenovnik, jezik. Sve što se
+ *      otvori jednom mesečno.
+ *   2. glavni red — logo, navigacija, pretraga, korpa, nalog. Sve što se
+ *      otvara svaki put.
+ *
+ * Zašto dva a ne jedan: u zatečenom stanju su se logo, POMOĆ, zastavica i dva
+ * dugmeta za prijavu tukli za istu liniju, pa je pretraga — jedini razlog
+ * zbog kog neko dolazi na sajt — završila kao ikonica. Razdvajanje po
+ * učestalosti oslobađa glavni red da pretraga u njemu bude široka.
+ *
+ * Pri skrolovanju se tanka traka skuplja na ništa i glavni red se stanjuje;
+ * zaglavlje ostaje zalepljeno za vrh, ne beži. Pretraga i logo se pri tome ne
+ * gube — samo se stisnu.
+ *
+ * Jedan markup za sve širine. Na telefonu isti <nav> postaje fioka koja klizi
+ * sa strane; nema drugog primerka menija u kodu.
+ *
+ * Izgled je u `scss/_zaglavlje.scss`. Stari zaglavlje-blok u `_global.scss`
+ * (redovi 87–1346) ostaje netaknut jer i dalje služi naloznoj navigaciji
+ * (`.navigation ul.account-nav`), koja se ovde prenosi nepromenjena.
+ */
+
+// Padajući paneli koji mogu biti otvoreni — jedan po jedan.
+const PANELI = ['galerije', 'kategorije', 'agencija', 'cjenovnik', 'nalog'];
 
 class Header extends Component {
     constructor(props) {
         super(props);
 
-
         this.state = {
-            yScroll: 0
+            yScroll: 0,
+            pretraga: '',
+            // Izbor vrste pretrage levo od polja. `view=photos` je isti
+            // parametar koji `views/categoryPage.js` već čita.
+            vrstaPretrage: 'galerije',
+            meniOtvoren: false,
+            panel: null
         };
     }
 
     componentDidMount() {
-        if (typeof window !== 'undefined')
-            window.addEventListener('scroll', this.listenToScroll)
+        if (typeof window === 'undefined') return;
+        window.addEventListener('scroll', this.listenToScroll);
+        document.addEventListener('keydown', this.naTaster);
+        document.addEventListener('mousedown', this.naKlikVan);
+        this.pratiVisinu();
     }
+
+    /*
+     * Strane same odvajaju mesto za zaglavlje jer je ono `position: fixed`
+     * (`_category.scss`, `_home.scss`, `_cart.scss`… — svaka svojom merom).
+     * Te mere su bile zakucane u px i razlikovale se od strane do strane, pa
+     * je svaka promena zaglavlja značila obilazak svih.
+     *
+     * Sada zaglavlje samo javlja svoju izmerenu visinu kroz
+     * `--zaglavlje-visina`, a strane je čitaju. Tačna je na svakoj širini, u
+     * svakoj temi i pri svakom prelamanju reda. `_zaglavlje.scss` drži
+     * približne vrednosti za slučaj da JS ne stigne pre prvog iscrtavanja.
+     */
+    /*
+     * Merenja visine više NEMA.
+     *
+     * Zaglavlje je prešlo iz `position: fixed` u tok strane — sada samo
+     * zauzima svoj prostor i pri skrolovanju odlazi van kadra. Strane zato
+     * ne odvajaju ništa za njega i `--zaglavlje-visina` je 0
+     * (`_zaglavlje.scss`).
+     *
+     * Ranije je ovde stajao merač sa `ResizeObserver`-om, proverom u
+     * sledećem kadru i osvežavanjem na `fonts.ready`. Sve to je služilo
+     * samo da fiksirano zaglavlje javi koliko prostora traži. Bez fiksiranja
+     * nema šta da se javlja, pa je izbačeno umesto da stoji ugašeno.
+     */
+    pratiVisinu = () => {};
 
     componentWillUnmount() {
-        if (typeof window !== 'undefined')
-            window.removeEventListener('scroll', this.listenToScroll)
+        if (typeof window === 'undefined') return;
+        window.removeEventListener('scroll', this.listenToScroll);
+        document.removeEventListener('keydown', this.naTaster);
+        document.removeEventListener('mousedown', this.naKlikVan);
+        if (this.javiVisinu) window.removeEventListener('resize', this.javiVisinu);
+        this.otkljucajSkrol();
     }
 
+    componentDidUpdate(prevProps) {
+        // Promena strane zatvara sve — inače fioka ostane otvorena preko nove
+        // strane, pošto React ne montira zaglavlje ponovo.
+        if (prevProps[0] && this.props[0]
+            && prevProps[0].location.key !== this.props[0].location.key) {
+            this.zatvoriSve();
+        }
+    }
+
+    /* ── otvaranje i zatvaranje ─────────────────────────────────────────── */
+
+    naTaster = (e) => {
+        if (e.key !== 'Escape' && e.keyCode !== 27) return;
+        if (!this.state.meniOtvoren && !this.state.panel) return;
+        this.zatvoriSve();
+    };
+
+    naKlikVan = (e) => {
+        if (!this.state.meniOtvoren && !this.state.panel) return;
+        if (this.koren && this.koren.contains(e.target)) return;
+        this.zatvoriSve();
+    };
+
+    zatvoriSve = () => {
+        this.otkljucajSkrol();
+        this.setState({meniOtvoren: false, panel: null});
+    };
+
+    prebaciPanel = (ime) => {
+        this.setState({panel: this.state.panel === ime ? null : ime});
+    };
+
+    prebaciMeni = () => {
+        const otvoren = !this.state.meniOtvoren;
+        if (otvoren) this.zakljucajSkrol(); else this.otkljucajSkrol();
+        this.setState({meniOtvoren: otvoren, panel: null});
+    };
+
+    /*
+     * Dok fioka stoji otvorena, strana ispod nje ne sme da se pomera.
+     * Zatečena vrednost se pamti i vraća — `_global.scss` na <body> drži
+     * `overflow-y: auto`, pa se ne sme naslepo obrisati.
+     */
+    zakljucajSkrol = () => {
+        if (typeof document === 'undefined') return;
+        this.skrolPre = document.body.style.overflowY;
+        document.body.style.overflowY = 'hidden';
+    };
+
+    otkljucajSkrol = () => {
+        if (typeof document === 'undefined') return;
+        if (this.skrolPre === undefined) return;
+        document.body.style.overflowY = this.skrolPre;
+        this.skrolPre = undefined;
+    };
+
+    /* ── pretraga ───────────────────────────────────────────────────────── */
+
+    /*
+     * Odredište je `/galerije?search=...`.
+     *
+     * NAPOMENA: traženo je `?q=`, ali `views/categoryPage.js` čita isključivo
+     * `search`, a `?q=` je naziv parametra API-ja za predloge — na strani ga
+     * niko ne čita. Preimenovanje bi tiho ugasilo pretragu iz zaglavlja, pa
+     * ime parametra ostaje kakvo jeste.
+     */
     pokreniPretragu = (pojam) => {
-        const q = (pojam !== undefined ? pojam : this.state.search) || '';
-        this.setState({search: q});
-        this.props[0].history.push(`/galerije${q ? `?search=${encodeURIComponent(q)}` : ''}`);
+        const q = (pojam !== undefined ? pojam : this.state.pretraga) || '';
+        this.setState({pretraga: q});
+        this.zatvoriSve();
+
+        const delovi = [];
+        if (q) delovi.push(`search=${encodeURIComponent(q)}`);
+        if (this.state.vrstaPretrage === 'fotografije') delovi.push('view=photos');
+
+        this.props[0].history.push(`/galerije${delovi.length ? `?${delovi.join('&')}` : ''}`);
     };
 
     listenToScroll = () => {
         const yScroll =
-            document.body.scrollTop || document.documentElement.scrollTop
+            document.body.scrollTop || document.documentElement.scrollTop;
+
         if (this.leftBaner) {
             if (yScroll > window.document.body.scrollHeight - 581 - 20 - (window.innerHeight) - 80) {
-                this.setState({
-                    leftBannerSticky: true
-                })
+                this.setState({leftBannerSticky: true});
             } else {
                 if (this.state.leftBannerSticky) {
-                    this.setState({
-                        leftBannerSticky: false
-                    })
+                    this.setState({leftBannerSticky: false});
                 }
             }
         }
 
-
-        this.setState({
-            yScroll: yScroll,
-            scrollHeader: yScroll < this.state.yScroll,
-        })
-    }
+        this.setState({yScroll: yScroll});
+    };
 
     setLangBa = (e) => {
         e.preventDefault();
         this.props.setLang('ba');
-    }
+    };
 
     setLangEn = (e) => {
         e.preventDefault();
         this.props.setLang('en');
+    };
+
+    /* ── delovi ─────────────────────────────────────────────────────────── */
+
+    /*
+     * Polje pretrage — jedno za obe visine trake.
+     *
+     * `siroko` je naslovna varijanta: bela, sa izborom vrste levo i amber
+     * dugmetom lupe desno. Uska varijanta je isto polje stisnuto u traku.
+     * Parametar odredišta je nepromenjen — `?search=`.
+     */
+    /*
+     * Prekidač jezika — zastavice umesto slova (isti par slika koji je stajao
+     * i pre redizajna). Stoji na dva mesta: u traci na širokom ekranu i u
+     * fioci na telefonu, gde traka nema mesta. Zato jedan metod, ne dva
+     * primerka istog markupa.
+     */
+    prekidacJezika(l, dodatnaKlasa) {
+        return (
+            <span className={'z-zaglavlje__jezici' + (dodatnaKlasa ? ' ' + dodatnaKlasa : '')}>
+                <button type="button"
+                        className={'z-zaglavlje__jezik' + (l === 'ba' ? ' z-zaglavlje__jezik--izabran' : '')}
+                        aria-pressed={l === 'ba'}
+                        aria-label={'Bosanski'.translate(l)}
+                        onClick={this.setLangBa}>
+                    <img src={ba} alt="" width="20" height="12"/>
+                </button>
+                <button type="button"
+                        className={'z-zaglavlje__jezik' + (l === 'en' ? ' z-zaglavlje__jezik--izabran' : '')}
+                        aria-pressed={l === 'en'}
+                        aria-label={'English'.translate(l)}
+                        onClick={this.setLangEn}>
+                    <img src={en} alt="" width="20" height="12"/>
+                </button>
+            </span>
+        );
     }
 
+    poljePretrage(siroko, l) {
+        return (
+            <div className={'z-zaglavlje__pretraga' + (siroko ? ' z-zaglavlje__pretraga--siroka' : ' z-zaglavlje__pretraga--uska')}>
+
+                {siroko ?
+                    <span className="z-zaglavlje__vrsta" role="group"
+                          aria-label={'Vrsta pretrage'.translate(l)}>
+                        <button type="button"
+                                className={'z-zaglavlje__vrsta-dugme' + (this.state.vrstaPretrage === 'galerije' ? ' z-zaglavlje__vrsta-dugme--izabran' : '')}
+                                aria-pressed={this.state.vrstaPretrage === 'galerije'}
+                                onClick={() => this.setState({vrstaPretrage: 'galerije'})}>
+                            {'Galerije'.translate(l)}
+                        </button>
+                        <button type="button"
+                                className={'z-zaglavlje__vrsta-dugme' + (this.state.vrstaPretrage === 'fotografije' ? ' z-zaglavlje__vrsta-dugme--izabran' : '')}
+                                aria-pressed={this.state.vrstaPretrage === 'fotografije'}
+                                onClick={() => this.setState({vrstaPretrage: 'fotografije'})}>
+                            {'Fotografije'.translate(l)}
+                        </button>
+                    </span>
+                    : null}
+
+                <div className="z-zaglavlje__polje">
+                    <PretragaSaPrijedlozima
+                        value={this.state.pretraga}
+                        placeholder={'Pretraži arhivu…'.translate(l)}
+                        onChange={(v) => this.setState({pretraga: v})}
+                        onSearch={this.pokreniPretragu}
+                        renderInput={(svojstva) => (
+                            <input {...svojstva} className="z-zaglavlje__unos"
+                                   aria-label={'Pretraga arhive'.translate(l)}/>
+                        )}
+                    />
+                </div>
+
+                <button type="button"
+                        className="z-zaglavlje__trazi"
+                        aria-label={'Traži'.translate(l)}
+                        onClick={() => this.pokreniPretragu()}>
+                    <Isvg src={search}/>
+                </button>
+
+                {!siroko ?
+                    <button type="button"
+                            className="z-zaglavlje__napredna"
+                            aria-label={'Napredna pretraga'.translate(l)}
+                            onClick={() => this.props.handleDetailSearch(true)}>
+                        <Isvg src={filterIcon}/>
+                    </button>
+                    : null}
+            </div>
+        );
+    }
+
+    /*
+     * Panel sa kategorijama.
+     *
+     * Spisak dolazi iz `this.props.categories` — istog izvora koji hrani
+     * `/galerije` (App.js → `${API_ENDPOINT}/categories`). Ništa se ne
+     * izmišlja i ništa se ne filtrira, da panel i strana pokazuju isto.
+     * Veza je ista kao ranije: `?category=<alias>&detailSearch=true`.
+     */
+    panelKategorija() {
+        const kategorije = this.props.categories || [];
+        if (!kategorije.length) return null;
+
+        return (
+            <div className="z-zaglavlje__panel z-zaglavlje__panel--kategorije">
+                <div className="z-zaglavlje__stubovi">
+                    {kategorije.map((k, idx) => (
+                        <Link
+                            key={idx}
+                            className="z-zaglavlje__stavka-panela"
+                            to={`/galerije?category=${Object.translate(k, 'alias', this.props.lang)}&detailSearch=true`}>
+                            <span>{Object.translate(k, 'name', this.props.lang)}</span>
+                            {k.photosCount ? <em>{k.photosCount}</em> : null}
+                        </Link>
+                    ))}
+                </div>
+            </div>
+        );
+    }
+
+    /*
+     * Panel „Agencija".
+     *
+     * Ranije je ovde bio podmeni u podmeniju: Agencija → Usluge →
+     * Fotografisanje. Sada su „Usluge" i „Fotografi" naslovi grupa unutar
+     * istog panela — jedan klik manje i ništa se ne krije iza drugog klika.
+     */
+    panelAgencije() {
+        const l = this.props.lang;
+        const fotografi = this.props.photographers || [];
+
+        return (
+            <div className="z-zaglavlje__panel z-zaglavlje__panel--agencija">
+                <div className="z-zaglavlje__grupa">
+                    <p className="z-zaglavlje__naslov-grupe">{'Agencija'.translate(l)}</p>
+                    <Link className="z-zaglavlje__stavka-panela" to="/page/o-nama">{'O nama'.translate(l)}</Link>
+                    <Link className="z-zaglavlje__stavka-panela" to="/page/uslovi-koriscenja">{'Uslovi korišćenja'.translate(l)}</Link>
+                    <Link className="z-zaglavlje__stavka-panela" to="/page/ugovori">{'Ugovori'.translate(l)}</Link>
+                    <Link className="z-zaglavlje__stavka-panela" to="/page/prijatelji-sajta">{'Prijatelji sajta'.translate(l)}</Link>
+                    <Link className="z-zaglavlje__stavka-panela" to="/contact">{'Kontakt'.translate(l)}</Link>
+                </div>
+
+                <div className="z-zaglavlje__grupa">
+                    <p className="z-zaglavlje__naslov-grupe">{'Usluge'.translate(l)}</p>
+                    <Link className="z-zaglavlje__stavka-panela" to="/page/fotografisanje">{'Fotografisanje'.translate(l)}</Link>
+                    <Link className="z-zaglavlje__stavka-panela" to="/page/saradnja">{'Saradnja'.translate(l)}</Link>
+                </div>
+
+                {fotografi.length ?
+                    <div className="z-zaglavlje__grupa z-zaglavlje__grupa--fotografi">
+                        <p className="z-zaglavlje__naslov-grupe">
+                            {'Fotografi'.translate(l)} <em>{fotografi.length}</em>
+                        </p>
+                        <div className="z-zaglavlje__spisak-fotografa">
+                            {fotografi.map((f, idx) => (
+                                <Link key={idx} className="z-zaglavlje__stavka-panela"
+                                      to={`/fotograf/${f.userAlias}`}>{f.name}</Link>
+                            ))}
+                        </div>
+                    </div>
+                    : null}
+            </div>
+        );
+    }
 
     render() {
+        const l = this.props.lang;
+        const u = this.props.uData;
+        const putanja = this.props[0].location.pathname;
 
-        // Gornja plava traka pripada predlogu B. Levo naziv agencije, desno
-        // jezik, cenovnik i prijava — krupnije i zbijenije, kako je traženo.
-        const plavaTraka = this.props.settings && this.props.settings.homepageLayout === 'b';
+        // Prag od 20px je isti kao ranije — samo se sada zaglavlje stanjuje
+        // umesto da beži uvis.
+        const zbijeno = this.state.yScroll > 20;
 
-        // U predlogu A meni je preoblikovan po vrsti sadržaja.
-        const meniA = this.props.settings && this.props.settings.homepageLayout === 'a';
+        // Nalozna navigacija ima svoj red ispod glavnog; javna se tad sklanja.
+        const naNalogu = putanja.indexOf('/account') === 0;
+
+        const javniMeni = !naNalogu
+            && (!u || (u && u.userRole !== 'photographer'));
+
+        const imaKorpu = !u || u.userRole !== 'photographer';
+
+        // Strana „cjenovnik" postoji samo ako je napravljena u administraciji.
+        const imaCenovnik = (this.props.pages || []).some(
+            (s) => s && s.alias && (s.alias.ba === 'cjenovnik' || s.alias === 'cjenovnik')
+        );
+
+        // Naslovna dobija visoku traku, sve ostale nisku. Ista komponenta.
+        const naslovna = putanja === '/';
+
+        // Kategorije zakačene u administraciji hrane red „Traži se:".
+        const trazi = (this.props.categories || []).filter((k) => k.isVisibleOnNav);
+
+        // „Dron" nije nova ruta nego postojeća kategorija iz arhive.
+        const dron = (this.props.categories || []).find(
+            (k) => /dron/i.test(Object.translate(k, 'name', l) || '')
+        );
+
+        /*
+         * Traka najave — najnovija galerija iz arhive. `App.js` je dovuče
+         * zajedno sa fotografijom za naslovni blok, pa nema drugog poziva.
+         */
+        const najava = this.props.najava;
+        // Galerija nosi naziv u `name`, ne u `title`.
+        const najavaNaslov = najava ? (Object.translate(najava, 'name', l) || '') : '';
+        const najavaPutanja = najava && najava._id
+            ? `/galerija/${Object.translate(najava, 'alias', l) || najava.alias || 'galerija'}/${najava._id}`
+            : null;
+
+        // Pilula levo i dalje čeka polje u podešavanjima.
+        const pilula = this.props.settings && this.props.settings.headerPill;
+
 
         return (
             <header
+                ref={(n) => this.koren = n}
                 className={
-                    (this.state.yScroll > 20 && this.state.scrollHeader ? 'scroll-header' : this.state.yScroll < 20 ? '' : 'hide-header')
-                    + (plavaTraka ? ' sa-trakom' : '')
+                    'zaglavlje-sajta z-zaglavlje'
+                    + (naslovna ? ' z-zaglavlje--visoka' : ' z-zaglavlje--niska')
+                    + (zbijeno ? ' z-zaglavlje--zbijeno' : '')
+                    + (this.state.meniOtvoren ? ' z-zaglavlje--meni-otvoren' : '')
+                    /* Fioka postoji samo kad postoji i javni meni. Bez nje se
+                       na telefonu ništa ne sme skloniti iz trake — nema gde. */
+                    + (javniMeni ? ' z-zaglavlje--sa-fiokom' : '')
                 }>
 
-                {plavaTraka ?
-                    <div className="traka-vrh">
-                        <Container>
-                            <div className="traka-sadrzaj">
-                                <span className="naziv">ZIPA AGENCY &ndash; Banja Luka</span>
-                                <div className="veze">
-                                    <button
-                                        className={this.props.lang === 'ba' ? 'jezik izabran' : 'jezik'}
-                                        onClick={this.setLangBa}>BA</button>
-                                    <button
-                                        className={this.props.lang === 'en' ? 'jezik izabran' : 'jezik'}
-                                        onClick={this.setLangEn}>EN</button>
-                                    {/*
-                                      * Stranica „cjenovnik" još ne postoji u
-                                      * administraciji. Dok je ne naprave, veza
-                                      * se ne prikazuje — ranije je vodila na
-                                      * praznu stranu. Čim strana bude
-                                      * napravljena, veza se sama pojavi.
-                                      */}
-                                    {(this.props.pages || []).some(
-                                        (s) => s && s.alias && (s.alias.ba === 'cjenovnik' || s.alias === 'cjenovnik')
-                                    ) ? (
-                                        <Link to="/page/cjenovnik">{'CJENOVNIK'.translate(this.props.lang)}</Link>
-                                    ) : null}
-                                    {this.props.uData ?
-                                        <Link to="/account/profile">{'NALOG'.translate(this.props.lang)}</Link>
-                                        :
-                                        <>
-                                            <Link to="/register">{'REGISTRUJ SE'.translate(this.props.lang)}</Link>
-                                            <Link to="/login">{'PRIJAVI SE'.translate(this.props.lang)}</Link>
-                                        </>
-                                    }
-                                </div>
-                            </div>
-                        </Container>
-                    </div>
-                    : null}
-
                 {
-                    this.props.uData && this.props.uData.userRole == 'photographer' && this.props.uData.permissions.indexOf('*') === -1 && (this.props[0].location.pathname.indexOf('/contact') == -1 && this.props[0].location.pathname.indexOf('/account') == -1 && this.props[0].location.pathname.indexOf('/page') == -1 && this.props[0].location.pathname.indexOf('/galerija') == -1) ?
+                    u && u.userRole == 'photographer' && u.permissions.indexOf('*') === -1 && (putanja.indexOf('/contact') == -1 && putanja.indexOf('/account') == -1 && putanja.indexOf('/page') == -1 && putanja.indexOf('/galerija') == -1) ?
                         <Redirect to={'/account/profile'}></Redirect>
                         :
-
                         null
                 }
+
                 {this.props.leftSideBanner ?
                     <div className="left-banner" style={this.state.leftBannerSticky ? {
                         position: 'fixed',
@@ -167,10 +461,7 @@ class Header extends Component {
                             })
                         }
                     </div>
-
-                    :
-                    null
-
+                    : null
                 }
                 {this.props.rightSideBanner ?
                     <div className="right-banner" style={this.state.leftBannerSticky ? {
@@ -189,248 +480,265 @@ class Header extends Component {
                             })
                         }
                     </div>
-
-                    :
-                    null
-
+                    : null
                 }
 
-                <Container>
-                    <Row>
-                        <Col xs="2" sm="1"
-                             className={this.state.mobileNavigation ? 'hamburger hamburger-animation' : 'hamburger'}>
-                            <button onClick={() => this.setState({mobileNavigation: !this.state.mobileNavigation})}>
-                                <div></div>
-                                <div></div>
-                                <div></div>
-                            </button>
-                        </Col>
-                        <Col lg="4" xs="8" sm="4" className="logo">
-                            {plavaTraka ?
-                                /* U predlogu B natpis je razdvojen na dva dela sa
-                                   zamenjenim bojama, kako je traženo. */
-                                <Link to='/' className="desktop-logo logo-b">
-                                    <Isvg src={this.props.settings.logo}/>
-                                    <span className="natpis-b">ZIPA<em>PHOTO</em></span>
+
+                {/* ── RED 1 — traka najave ─────────────────────────────
+                    Iscrtava se samo kad iz administracije stigne zakačena
+                    najava. Danas prop `najava` ne stiže (vidi CLAUDE.md,
+                    „ČEKA ODLUKU KLIJENTA"), pa reda nema. */}
+                {najava ?
+                    <div className="z-zaglavlje__najava">
+                        <div className="z-zaglavlje__sirina">
+                            <span className="z-zaglavlje__najava-tekst">
+                                {'Pogledajte novu galeriju'.translate(l)}
+                                {najavaNaslov ? <span className="z-zaglavlje__najava-naslov">{najavaNaslov}</span> : null}
+                            </span>
+                            {najavaPutanja ?
+                                <Link className="z-zaglavlje__najava-dugme" to={najavaPutanja}>
+                                    {'Pogledaj'.translate(l)}
                                 </Link>
-                                :
-                                <Link to='/' className="desktop-logo"><Isvg src={this.props.settings.logo}/> <span
-                                    dangerouslySetInnerHTML={{__html: this.props.settings.logoText}}></span> </Link>
-                            }
+                                : null}
+                        </div>
+                    </div>
+                    : null}
 
-                            <Isvg src={this.props.settings.logo}/>
 
-                            <PretragaSaPrijedlozima
-                                value={this.state.search}
-                                onChange={(v) => this.setState({search: v})}
-                                onSearch={this.pokreniPretragu}
-                            />
+                {/* ── RED 2 — pilula, logo, radnje ─────────────────────── */}
+                <div className="z-zaglavlje__glavni">
+                    <div className="z-zaglavlje__sirina z-zaglavlje__sirina--tri">
 
-                            <button className="search" onClick={() => this.pokreniPretragu()}>
-                                <Isvg src={search}/>
+                        <div className="z-zaglavlje__levo">
+                            <button
+                                type="button"
+                                className="z-zaglavlje__hamburger"
+                                aria-expanded={this.state.meniOtvoren}
+                                aria-controls="glavni-meni"
+                                aria-label={(this.state.meniOtvoren ? 'Zatvori meni' : 'Otvori meni').translate(l)}
+                                onClick={this.prebaciMeni}>
+                                <span/><span/><span/>
                             </button>
 
-                        </Col>
+                            {/* Obrisna pilula iz podešavanja. `settings.headerPill`
+                                danas ne postoji, pa se ne iscrtava. */}
+                            {pilula ?
+                                <Link className="z-zaglavlje__pilula"
+                                      to={this.props.settings.headerPillLink || '/galerije'}>
+                                    {pilula}
+                                </Link>
+                                : null}
+                        </div>
 
-                        <Col lg="8" className="links" sm="7" xs="2">
-                            <>
+                        <Link to="/" className="z-zaglavlje__logo">
+                            <Isvg src={this.props.settings.logo}/>
+                            <span className="z-zaglavlje__natpis"
+                                  dangerouslySetInnerHTML={{__html: this.props.settings.logoText}}/>
+                        </Link>
 
-                                <Link to="/help" className="help">{'POMOĆ'.translate(this.props.lang)}</Link>
-                            </>
-                            {/* <div className={this.state.showSearch ? "desktop-search desktop-search-visible" : 'desktop-search'}>
-                <input type="text" placeholder={'Pretraga...'.translate(this.props.lang)} value={this.state.search} onChange={(e) => this.setState({ search: e.target.value })} onKeyUp={(e) => {
-                  if (e.keyCode == 13) {
-                    e.preventDefault();
-                    this.props[0].history.push(`/galerije${this.state.search ? `?search=${encodeURIComponent(this.state.search)}` : ''}`)
-                  }
-                }} />
-                <button onClick={() => { this.setState({ showSearch: !this.state.showSearch }) }}><Isvg src={search} /></button>
-              </div>
-              */}
-                            <UncontrolledDropdown>
-                                <DropdownToggle>
-                                    <img src={this.props.lang == 'ba' ? ba : en}/>
-                                </DropdownToggle>
-                                <DropdownMenu>
-                                    <DropdownItem onClick={this.setLangBa}><a><img src={ba}/></a></DropdownItem>
-                                    <DropdownItem onClick={this.setLangEn}><a><img src={en}/></a></DropdownItem>
-
-                                </DropdownMenu>
-                            </UncontrolledDropdown>
-                            {this.props.uData ?
-                                <>
-                                    <div className="login">
-                                        <UncontrolledDropdown>
-                                            <DropdownToggle>
-                                                {'Nalog'.translate(this.props.lang)}
-                                            </DropdownToggle>
-                                            <DropdownMenu>
-                                                <Link
-                                                    to="/account/profile"><DropdownItem>{'Profil'.translate(this.props.lang)}</DropdownItem></Link>
-                                                <DropdownItem onClick={() => {
-                                                    this.props.signOut()
-                                                    this.props[0].history.push('/');
-                                                    this.props.showInfoMessage('Hvala vam što ste koristili foto servis.')
-                                                }
-                                                }>{'Izloguj se'.translate(this.props.lang)}</DropdownItem>
-
-                                            </DropdownMenu>
-                                        </UncontrolledDropdown>
-                                    </div>
-
-
-                                    {this.props.uData.userRole !== 'photographer' ?
-                                        <div className="cart"><Link to="/cart">
-                                            <button><Isvg src={cart}/> <span>{'Korpa'.translate(this.props.lang)}</span>
-                                            </button>
-                                        </Link></div>
-                                        :
-                                        null
-                                    }
-
-                                </>
-                                :
-                                <>
-                                    <div className="login"><Link
-                                        to="/login">{'Uloguj se'.translate(this.props.lang)}</Link></div>
-                                    <div className="register"><Link to="/register">
-                                        <button>{'Registruj se'.translate(this.props.lang)}</button>
-                                    </Link></div>
-                                </>
-                            }
-
-                        </Col>
-
-
-                        <Col lg="12" xs="12" sm="12"
-                             className={`navigation ${this.props.uData && this.props.uData.userRole == 'photographer' ? 'photographer-nav' : ''} ${this.props.uData && this.props.uData.userRole == 'agency' ? 'agency-nav' : ''}`}>
-                            {this.props[0].location.pathname.indexOf('/account') == -1 && (!this.props.uData || (this.props.uData && this.props.uData.userRole != 'photographer') /*|| (this.props.uData && this.props.uData.userRole == 'photographer' && this.props.uData.permissions.indexOf('*') !== -1)*/) ?
-
-                                <ul className={meniA ? 'meni-a' : null}>
-                                    {/* U predlogu A meni je preoblikovan po vrsti
-                                        sadržaja — fotografija, video i dron —
-                                        kako je predloženo u nacrtu. */}
-                                    {meniA ? [
-                                        <li key="foto" className={this.props[0].location.pathname == '/galerije' ? 'istaknuto active' : 'istaknuto'}>
-                                            <Link to='/galerije'>{'PHOTO'.translate(this.props.lang)}</Link></li>,
-                                        <li key="video" className="istaknuto">
-                                            <Link to='/video'>{'VIDEO'.translate(this.props.lang)}</Link></li>,
-                                        <li key="dron" className="istaknuto">
-                                            <Link to='/galerije?search=dron'>{'DRON'.translate(this.props.lang)}</Link></li>
-                                    ] : null}
-
-                                    <li className={this.props[0].location.pathname == '/' ? "active" : null}><Link
-                                        to='/'>{'Početna'.translate(this.props.lang)}</Link></li>
-                                    {!meniA ?
-                                        <li><Link to='/galerije'>{'Galerije'.translate(this.props.lang)}</Link></li>
-                                        : null}
-
-                                    <li className="hide-on-mobile">
-                                        <UncontrolledDropdown>
-                                            <DropdownToggle>
-                                                {'Kategorije'.translate(this.props.lang)}
-                                            </DropdownToggle>
-                                            <DropdownMenu>
-                                                {
-                                                    this.props.categories.map((item, idx) => {
-                                                        return (
-                                                            <Link
-                                                                to={`/galerije?category=${Object.translate(item, 'alias', this.props.lang)}&detailSearch=true`}>
-                                                                <DropdownItem>{Object.translate(item, 'name', this.props.lang)}</DropdownItem></Link>
-                                                        )
-                                                    })
-                                                }
-                                            </DropdownMenu>
-                                        </UncontrolledDropdown>
-                                    </li>
-
-
-                                    <li className="menu hide-on-mobile">
-                                        <button className="menu-button"
-                                                onClick={() => this.setState({agencyDropdown: !this.state.agencyDropdown})}> {'Agencija'.translate(this.props.lang)} </button>
-                                        <ul style={{display: this.state.agencyDropdown ? 'block' : 'none'}}>
-                                            <li className="submenu">
-                                                <button>{'Fotografi'.translate(this.props.lang)}</button>
-                                                <ul>
-                                                    {
-                                                        this.props.photographers.map((item, idx) => {
-                                                            return (
-                                                                <li><Link
-                                                                    to={`/fotograf/${item.userAlias}`}>{item.name}</Link>
-                                                                </li>
-                                                            )
-                                                        })
-                                                    }
-
-                                                </ul>
-                                            </li>
-
-                                            <li><Link to={'/page/o-nama'}>  {'O nama'.translate(this.props.lang)}</Link>
-                                            </li>
-                                            <li><Link
-                                                to={'/page/uslovi-koriscenja'}>  {'Uslovi korišćenja'.translate(this.props.lang)}</Link>
-                                            </li>
-                                            <li className="submenu">
-                                                <button>{'Usluge'.translate(this.props.lang)}</button>
-                                                <ul>
-                                                    <li><Link
-                                                        to={'/page/fotografisanje'}>  {'Fotografisanje'.translate(this.props.lang)}</Link>
-                                                    </li>
-                                                    <li><Link
-                                                        to={'/page/saradnja'}> {'Saradnja'.translate(this.props.lang)}</Link>
-                                                    </li>
-
-                                                </ul>
-                                            </li>
-                                            <li><Link
-                                                to={'/page/ugovori'}>  {'Ugovori'.translate(this.props.lang)}</Link>
-                                            </li>
-                                            <li><Link
-                                                to={'/page/prijatelji-sajta'}> {'Prijatelji sajta'.translate(this.props.lang)}</Link>
-                                            </li>
-                                            <li><Link to="/contact"
-                                                      className="contact">{'Kontakt'.translate(this.props.lang)}</Link>
-                                            </li>
-                                        </ul>
-                                    </li>
-
-
-                                    {
-                                        this.props.categories.map((item, idx) => {
-                                            if (item.isVisibleOnNav)
-                                                return (
-                                                    <li className="nav-category"><Link
-                                                        to={`/galerije?category=${Object.translate(item, 'alias', this.props.lang)}`}>{Object.translate(item, 'name', this.props.lang)}</Link>
-                                                    </li>
-
-                                                )
-                                        })
-                                    }
-                                    <li>
-                                        <div className={'desktop-search'}>
-                                            <input type="text" placeholder={'Pretraga...'.translate(this.props.lang)}
-                                                   value={this.state.search}
-                                                   onChange={(e) => this.setState({search: e.target.value})}
-                                                   onKeyUp={(e) => {
-                                                       if (e.keyCode == 13) {
-                                                           e.preventDefault();
-                                                           this.props[0].history.push(`/galerije${this.state.search ? `?search=${encodeURIComponent(this.state.search)}` : ''}`)
-                                                       }
-                                                   }}/>
-                                            <button className="btn1" onClick={() => {
-                                                this.props[0].history.push(`/galerije${this.state.search ? `?search=${encodeURIComponent(this.state.search)}` : ''}`)
-                                            }}><Isvg src={search}/></button>
-                                            <button className="btn2" onClick={() => {
-                                                this.props.handleDetailSearch(true)
-                                            }}><Isvg src={filterIcon}/></button>
-
+                        <div className="z-zaglavlje__desno">
+                            {imaCenovnik ?
+                                <div className={'z-zaglavlje__sa-panelom z-zaglavlje__u-fioku' + (this.state.panel === 'cjenovnik' ? ' z-zaglavlje__sa-panelom--otvoren' : '')}>
+                                    <button type="button"
+                                            className="z-zaglavlje__stavka z-zaglavlje__stavka--panel"
+                                            aria-expanded={this.state.panel === 'cjenovnik'}
+                                            onClick={() => this.prebaciPanel('cjenovnik')}>
+                                        {'Cjenovnik'.translate(l)}
+                                        <span className="z-zaglavlje__strelica" aria-hidden="true"/>
+                                    </button>
+                                    {this.state.panel === 'cjenovnik' ?
+                                        <div className="z-zaglavlje__panel z-zaglavlje__panel--usko">
+                                            <div className="z-zaglavlje__grupa">
+                                                <Link className="z-zaglavlje__stavka-panela" to="/page/cjenovnik">{'Cjenovnik'.translate(l)}</Link>
+                                                <Link className="z-zaglavlje__stavka-panela" to="/help">{'Pomoć'.translate(l)}</Link>
+                                            </div>
                                         </div>
-                                    </li>
-                                </ul>
-
+                                        : null}
+                                </div>
                                 :
-                                null
+                                <Link className="z-zaglavlje__traka-veza z-zaglavlje__u-fioku" to="/help">{'POMOĆ'.translate(l)}</Link>}
+
+                            {this.prekidacJezika(l, 'z-zaglavlje__u-fioku')}
+
+                            {imaKorpu ?
+                                <Link to="/cart" className="z-zaglavlje__korpa" aria-label={'Korpa'.translate(l)}>
+                                    <Isvg src={cart}/>
+                                    <span>{'Korpa'.translate(l)}</span>
+                                </Link>
+                                : null}
+
+                            {u ?
+                                <div className={'z-zaglavlje__sa-panelom z-zaglavlje__nalog' + (this.state.panel === 'nalog' ? ' z-zaglavlje__sa-panelom--otvoren' : '')}>
+                                    <button type="button"
+                                            className="z-zaglavlje__stavka z-zaglavlje__stavka--panel"
+                                            aria-expanded={this.state.panel === 'nalog'}
+                                            onClick={() => this.prebaciPanel('nalog')}>
+                                        {u.name || 'Nalog'.translate(l)}
+                                        <span className="z-zaglavlje__strelica" aria-hidden="true"/>
+                                    </button>
+                                    {this.state.panel === 'nalog' ?
+                                        <div className="z-zaglavlje__panel z-zaglavlje__panel--nalog">
+                                            <div className="z-zaglavlje__grupa">
+                                                {u.email ? <p className="z-zaglavlje__naslov-grupe">{u.email}</p> : null}
+                                                <Link className="z-zaglavlje__stavka-panela" to="/account/profile">{'Profil'.translate(l)}</Link>
+                                                <Link className="z-zaglavlje__stavka-panela" to="/account/downloads">{'Preuzimanja'.translate(l)}</Link>
+                                                {imaKorpu ?
+                                                    <Link className="z-zaglavlje__stavka-panela" to="/cart">{'Korpa'.translate(l)}</Link>
+                                                    : null}
+                                                <button type="button"
+                                                        className="z-zaglavlje__stavka-panela z-zaglavlje__odjava"
+                                                        onClick={() => {
+                                                            this.zatvoriSve();
+                                                            this.props.signOut();
+                                                            this.props[0].history.push('/');
+                                                            this.props.showInfoMessage('Hvala vam što ste koristili foto servis.');
+                                                        }}>{'Izloguj se'.translate(l)}</button>
+                                            </div>
+                                        </div>
+                                        : null}
+                                </div>
+                                :
+                                <Link className="z-zaglavlje__dugme-prijava" to="/login">{'Prijava'.translate(l)}</Link>
                             }
+                        </div>
+                    </div>
+                </div>
+
+
+                {/* ── RED 3 — navigacija ───────────────────────────────── */}
+                {javniMeni ?
+                    <div className="z-zaglavlje__navred">
+                        <div className="z-zaglavlje__sirina">
+                            <nav
+                                id="glavni-meni"
+                                className="z-zaglavlje__meni"
+                                aria-label={'Glavna navigacija'.translate(l)}>
+
+                                <div className={'z-zaglavlje__sa-panelom' + (this.state.panel === 'galerije' ? ' z-zaglavlje__sa-panelom--otvoren' : '')}>
+                                    <button type="button"
+                                            className={'z-zaglavlje__stavka z-zaglavlje__stavka--panel' + (putanja === '/galerije' ? ' z-zaglavlje__stavka--ovde' : '')}
+                                            aria-expanded={this.state.panel === 'galerije'}
+                                            onClick={() => this.prebaciPanel('galerije')}>
+                                        {'Galerije'.translate(l)}
+                                        <span className="z-zaglavlje__strelica" aria-hidden="true"/>
+                                    </button>
+                                    {this.state.panel === 'galerije' ?
+                                        <div className="z-zaglavlje__panel z-zaglavlje__panel--usko">
+                                            <div className="z-zaglavlje__grupa">
+                                                <Link className="z-zaglavlje__stavka-panela" to="/galerije">{'Sve galerije'.translate(l)}</Link>
+                                                <Link className="z-zaglavlje__stavka-panela" to="/galerije?view=photos">{'Fotografije'.translate(l)}</Link>
+                                            </div>
+                                        </div>
+                                        : null}
+                                </div>
+
+                                <div className={'z-zaglavlje__sa-panelom' + (this.state.panel === 'kategorije' ? ' z-zaglavlje__sa-panelom--otvoren' : '')}>
+                                    <button type="button"
+                                            className="z-zaglavlje__stavka z-zaglavlje__stavka--panel"
+                                            aria-expanded={this.state.panel === 'kategorije'}
+                                            onClick={() => this.prebaciPanel('kategorije')}>
+                                        {'Kategorije'.translate(l)}
+                                        <span className="z-zaglavlje__strelica" aria-hidden="true"/>
+                                    </button>
+                                    {this.state.panel === 'kategorije' ? this.panelKategorija() : null}
+                                </div>
+
+                                <Link className={'z-zaglavlje__stavka' + (putanja === '/video' ? ' z-zaglavlje__stavka--ovde' : '')}
+                                      to="/video">{'Video'.translate(l)}</Link>
+
+                                {/* „Dron" je postojeća kategorija iz arhive, ne nova ruta. */}
+                                {dron ?
+                                    <Link className="z-zaglavlje__stavka"
+                                          to={`/galerije?category=${Object.translate(dron, 'alias', l)}`}>
+                                        {'Dron'.translate(l)}
+                                    </Link>
+                                    : null}
+
+                                <div className={'z-zaglavlje__sa-panelom' + (this.state.panel === 'agencija' ? ' z-zaglavlje__sa-panelom--otvoren' : '')}>
+                                    <button type="button"
+                                            className="z-zaglavlje__stavka z-zaglavlje__stavka--panel"
+                                            aria-expanded={this.state.panel === 'agencija'}
+                                            onClick={() => this.prebaciPanel('agencija')}>
+                                        {'Agencija'.translate(l)}
+                                        <span className="z-zaglavlje__strelica" aria-hidden="true"/>
+                                    </button>
+                                    {this.state.panel === 'agencija' ? this.panelAgencije() : null}
+                                </div>
+
+                                {/* DNO FIOKE — samo na telefonu.
+                                    Cjenovnik, pomoć i jezik stoje u traci na
+                                    širokom ekranu; na 375px ta traka traži 249px
+                                    kod raspoloživih 200, pa se ovde presele.
+                                    U traci ostaju logo, korpa i prijava. */}
+                                <div className="z-zaglavlje__fioka-dno">
+                                    {imaCenovnik ?
+                                        <Link className="z-zaglavlje__stavka" to="/page/cjenovnik">
+                                            {'Cjenovnik'.translate(l)}
+                                        </Link>
+                                        : null}
+                                    <Link className="z-zaglavlje__stavka" to="/help">
+                                        {'Pomoć'.translate(l)}
+                                    </Link>
+                                    {this.prekidacJezika(l, 'z-zaglavlje__jezici--fioka')}
+                                </div>
+                            </nav>
+
+                            {/* Na ostalim stranama pretraga stoji u traci, uža. */}
+                            {!naslovna ? this.poljePretrage(false, l) : null}
+                        </div>
+                    </div>
+                    : null}
+
+
+                {/* ── NASLOVNI BLOK — samo naslovna ────────────────────── */}
+                {naslovna ?
+                    <div className="z-zaglavlje__naslovni">
+                        <div className="z-zaglavlje__sirina z-zaglavlje__naslovni-red">
+                            <div className="z-zaglavlje__naslovni-tekst">
+                                <h1 className="z-zaglavlje__naslov">
+                                    {'Arhiva Banja Luke, od 1990.'.translate(l)}
+                                </h1>
+                                <p className="z-zaglavlje__podnaslov">
+                                    {'Pretražite fotografije iz arhive agencije ZIPA PHOTO.'.translate(l)}
+                                </p>
+
+                                {this.poljePretrage(true, l)}
+
+                                {trazi.length ?
+                                    <p className="z-zaglavlje__trazi-se">
+                                        <span className="z-zaglavlje__trazi-se-natpis">{'Traži se:'.translate(l)}</span>
+                                        {trazi.map((k, idx) => (
+                                            <Link key={idx}
+                                                  className="z-zaglavlje__trazi-se-pojam"
+                                                  to={`/galerije?category=${Object.translate(k, 'alias', l)}`}>
+                                                {Object.translate(k, 'name', l)}
+                                            </Link>
+                                        ))}
+                                    </p>
+                                    : null}
+                            </div>
+
+                            {/* Ilustracija — ukras, ne sadržaj. Prazan alt; `lazy` +
+                                `low` prioritet da nikad ne konkuriše naslovu i pretrazi
+                                za propusni opseg pri prvom prikazu. Tekst NIKAD ne ide
+                                preko nje (stalno pravilo) — stoji levo u svom stupcu,
+                                slika je pozicionirana nezavisno, van toka. */}
+                            <div className="z-zaglavlje__naslovna-slika">
+                                <img src={naslovnaIlustracija} alt=""
+                                     loading="lazy" decoding="async" fetchpriority="low"/>
+                            </div>
+                        </div>
+                    </div>
+                    : null}
+
+
+                {/* Zavesa iza fioke — klik na nju zatvara meni. Postoji samo
+                    na telefonu; na širem ekranu je CSS gasi. */}
+                <div className="z-zaglavlje__zavesa" onClick={this.zatvoriSve} aria-hidden="true"/>
+
+                {/* ── nalozna navigacija — prenesena nepromenjena ──────── */}
+                {naNalogu || (u && u.userRole === 'photographer') ?
+                    <div className={`col-12 navigation ${u && u.userRole == 'photographer' ? 'photographer-nav' : ''} ${u && u.userRole == 'agency' ? 'agency-nav' : ''}`}>
                             {this.props.uData && this.props.uData.userRole == 'photographer' && (this.props[0].location.pathname.indexOf('/account') == 0 || this.props[0].location.pathname.indexOf('/galerija/') == 0) ?
 
                                 <ul className="account-nav">
@@ -659,114 +967,8 @@ class Header extends Component {
                                 :
                                 null
                             }
-
-
-                        </Col>
-
-                    </Row>
-                </Container>
-
-                <div className={this.state.mobileNavigation ? "mobile-menu-wrap mobile-menu-open" : "mobile-menu-wrap"}>
-                    <div className="overlay" onClick={() => this.setState({mobileNavigation: null})}></div>
-                    <div className="mobile-menu">
-                        <div className="user-info">
-                            <UncontrolledDropdown className="langs-select">
-                                <DropdownToggle>
-                                    <img src={this.props.lang == 'ba' ? ba : en}/>
-                                </DropdownToggle>
-                                <DropdownMenu>
-                                    <DropdownItem><a onClick={() => this.props.setLang('ba')}><img
-                                        src={ba}/></a></DropdownItem>
-                                    <DropdownItem><a onClick={() => this.props.setLang('en')}><img
-                                        src={en}/></a></DropdownItem>
-
-                                </DropdownMenu>
-                            </UncontrolledDropdown>
-
-                            <Isvg src={accountIcon}/>
-                            <h6>{this.props.uData && this.props.uData.name ? this.props.uData.name : 'Nalog'}</h6>
-                            <p>{this.props.uData ? this.props.uData.email : 'Sign up or Login to make purchase.'} </p>
-                            <div className={this.props.uData ? "buttons" : "buttons buttons-login"}>
-                                {this.props.uData ?
-                                    <>
-                                        <Link to={'/account/edit'}>
-                                            <button>{'Nalog'.translate(this.props.lang)}</button>
-                                        </Link>
-                                        <Link to={'/account/downloads'}>
-                                            <button>{'Preuzimanja'.translate(this.props.lang)}</button>
-                                        </Link>
-                                        <button onClick={() => {
-                                            this.props.signOut()
-                                            this.props[0].history.push('/');
-                                        }}>{'Odjavi se'.translate(this.props.lang)}</button>
-
-                                    </>
-                                    :
-                                    <>
-                                        <Link to={'/login'}>
-                                            <button>{'Prijava'.translate(this.props.lang)}</button>
-                                        </Link>
-                                        <Link to={'/register'}>
-                                            <button>{'Registracija'.translate(this.props.lang)}</button>
-                                        </Link>
-
-                                    </>
-                                }
-                            </div>
-                        </div>
-                        <ul>
-                            <li><Link to='/'>{'Početna'.translate(this.props.lang)}</Link></li>
-                            {this.props.uData && this.props.uData.userRole != 'photographer' ?
-                                <li><Link to='/cart'>{'Korpa'.translate(this.props.lang)}</Link></li> : null}
-                            <li className="menu">
-                                <button className="menu-button"
-                                        onClick={() => this.setState({agencyDropdown1: !this.state.agencyDropdown1})}> {'Agencija'.translate(this.props.lang)} </button>
-                                <ul style={{display: this.state.agencyDropdown1 ? 'block' : 'none'}}>
-                                    <li className="submenu">
-                                        <button
-                                            onClick={() => this.setState({agencyDropdown2: !this.state.agencyDropdown2})}>{'Fotografi'.translate(this.props.lang)}</button>
-                                        <ul style={{display: this.state.agencyDropdown2 ? 'block' : 'none'}}>
-                                            {
-                                                this.props.photographers.map((item, idx) => {
-                                                    return (
-                                                        <li><Link to={`/fotograf/${item.userAlias}`}>{item.name}</Link>
-                                                        </li>
-                                                    )
-                                                })
-                                            }
-
-                                        </ul>
-                                    </li>
-
-                                    <li><Link to={'/page/o-nama'}>  {'O nama'.translate(this.props.lang)}</Link></li>
-                                    <li><Link
-                                        to={'/page/uslovi-koriscenja'}>  {'Uslovi korišćenja'.translate(this.props.lang)}</Link>
-                                    </li>
-                                    <li className="submenu">
-                                        <button
-                                            onClick={() => this.setState({agencyDropdown3: !this.state.agencyDropdown3})}>{'Usluge'.translate(this.props.lang)}</button>
-                                        <ul style={{display: this.state.agencyDropdown3 ? 'block' : 'none'}}>
-                                            <li><Link
-                                                to={'/page/fotografisanje'}>  {'Fotografisanje'.translate(this.props.lang)}</Link>
-                                            </li>
-                                            <li><Link
-                                                to={'/page/saradnja'}> {'Saradnja'.translate(this.props.lang)}</Link>
-                                            </li>
-
-                                        </ul>
-                                    </li>
-                                    <li><Link to={'/page/ugovori'}>  {'Ugovori'.translate(this.props.lang)}</Link></li>
-                                    <li><Link
-                                        to={'/page/prijatelji-sajta'}> {'Prijatelji sajta'.translate(this.props.lang)}</Link>
-                                    </li>
-                                    <li><Link to="/contact"
-                                              className="contact">{'Kontakt'.translate(this.props.lang)}</Link></li>
-                                </ul>
-                            </li>
-
-                        </ul>
                     </div>
-                </div>
+                    : null}
 
             </header>
         );

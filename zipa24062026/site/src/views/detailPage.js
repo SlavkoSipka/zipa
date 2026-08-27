@@ -1,4 +1,5 @@
 import React, { Component } from "react";
+import Article, { kataloskiBroj } from '../components/articles/article';
 import { Link, Redirect } from "react-router-dom";
 import Isvg from "react-inlinesvg";
 import Page from "../containers/page";
@@ -43,6 +44,8 @@ import {
 import PriceInquiry from '../components/priceInquiry';
 import { API_ENDPOINT, PHOTOS_ENDPOINT} from "../constants";
 import download from "../assets/svg/download.svg";
+import cartIcon from "../assets/svg/cart.svg";
+import shareIcon from "../assets/svg/share.svg";
 
 class DetailPage extends Component {
     constructor(props) {
@@ -62,7 +65,18 @@ class DetailPage extends Component {
             // Redosled fotografija u galeriji — kako su snimljene ili obrnuto.
             // Traženo uz novi prikaz, po uzoru na Pixsell.
             obrnutRedosled: false,
+
+            opisOtvoren: false,
+            deljenjeOtvoreno: false,
+            srodne: [],
+
+            // Da li je oštra verzija trenutne fotografije stigla — dok ne
+            // stigne, vidi se razmazana mala.
+            ostraStigla: false,
+
+            opisFotoOtvoren: false,
         };
+        this.deljenjeRef = React.createRef();
     }
 
     init() {
@@ -118,6 +132,9 @@ class DetailPage extends Component {
         this.fetchGallery();
         this.setState({ isMobile: window.innerWidth < 1024 });
         window.addEventListener("resize", this.updateScreenWidth);
+        document.addEventListener("mousedown", this.naKlikVanDeljenja);
+        document.addEventListener("keydown", this.naTasterDeljenja);
+        document.addEventListener("keydown", this.naTasterProzora);
     }
 
     updateScreenWidth = () => {
@@ -137,11 +154,19 @@ class DetailPage extends Component {
         if (prevState.isMobile !== this.state.isMobile) {
             console.log("Screen width changed, isMobile:", this.state.isMobile);
         }
+
+        // Galerija stiže tek posle `loadData`, pa se srodne traže tada.
+        if (this.state.gallery && this.state.gallery !== prevState.gallery) {
+            this.dovuciSrodne(this.state.gallery);
+        }
     }
 
     componentWillUnmount() {
         // Clean up event listener
         window.removeEventListener("resize", this.updateScreenWidth);
+        document.removeEventListener("mousedown", this.naKlikVanDeljenja);
+        document.removeEventListener("keydown", this.naTasterDeljenja);
+        document.removeEventListener("keydown", this.naTasterProzora);
         document.body.style.overflow = "unset";
     }
 
@@ -155,8 +180,9 @@ class DetailPage extends Component {
             // Wrap around to the first image
             nextIndex = 0;
         }
-        this.setState({ selectedImageIndex: nextIndex }, () => {
+        this.setState({ selectedImageIndex: nextIndex, ostraStigla: false }, () => {
             this.fetchGalleryTrack(nextIndex);
+            this.pretovariSusedne(nextIndex);
         });
     };
 
@@ -170,8 +196,9 @@ class DetailPage extends Component {
             // Wrap around to the last image
             prevIndex = lastIndex;
         }
-        this.setState({ selectedImageIndex: prevIndex }, () => {
+        this.setState({ selectedImageIndex: prevIndex, ostraStigla: false }, () => {
             this.fetchGalleryTrack(prevIndex);
+            this.pretovariSusedne(prevIndex);
         });
     };
 
@@ -192,6 +219,110 @@ class DetailPage extends Component {
             console.error("Error fetching gallery track:", error);
         });
     };
+
+    /* Tastatura u prozoru: strelice menjaju fotografiju, Escape zatvara.
+       Radi samo dok je prozor otvoren, da se ne sudara sa stranom ispod. */
+    naTasterProzora = (e) => {
+        if (!this.state.modalOpen) return;
+
+        if (e.key === "Escape" || e.keyCode === 27) {
+            this.zatvoriProzor();
+        } else if (e.key === "ArrowRight" || e.keyCode === 39) {
+            this.handleNextImage();
+        } else if (e.key === "ArrowLeft" || e.keyCode === 37) {
+            this.handlePreviousImage();
+        }
+    };
+
+    // Prevlačenje prstom — prag od 50px da običan dodir ne pomera kadar.
+    naDodirPocetak = (e) => {
+        this.setState({ touchStartX: e.changedTouches[0].clientX });
+    };
+
+    naDodirKraj = (e) => {
+        const pocetak = this.state.touchStartX;
+        if (pocetak === null || pocetak === undefined) return;
+
+        const razlika = e.changedTouches[0].clientX - pocetak;
+        if (Math.abs(razlika) > 50) {
+            if (razlika < 0) this.handleNextImage();
+            else this.handlePreviousImage();
+        }
+        this.setState({ touchStartX: null });
+    };
+
+    /* Sledeća i prethodna se učitavaju unapred, da prelaz ne čeka mrežu.
+       Slika se samo traži — pregledač je zadrži u kešu. */
+    pretovariSusedne = (index) => {
+        const foto = this.state.galleryContent && this.state.galleryContent.photos;
+        if (!foto || !foto.length || typeof window === "undefined") return;
+
+        [index + 1, index - 1].forEach((i) => {
+            const stvarni = (i + foto.length) % foto.length;
+            const stavka = foto[stvarni];
+            if (!stavka) return;
+            const img = new window.Image();
+            img.src = `${PHOTOS_ENDPOINT}/photos/700x/${stavka.image}`;
+        });
+    };
+
+    /* Zatvaranje vraća skrol tačno na fotografiju sa koje je prozor otvoren.
+       Bez ovoga strana se vrati na vrh, a u galeriji od 156 fotografija to
+       znači ponovno traženje mesta. */
+    zatvoriProzor = () => {
+        const odakle = this.otvorenoSa;
+        this.setState({ modalOpen: false }, () => {
+            if (odakle === undefined || odakle === null) return;
+            const cilj = document.querySelectorAll(".z-galerija__foto")[odakle];
+            if (cilj) cilj.scrollIntoView({ block: "center" });
+        });
+    };
+
+    naKlikVanDeljenja = (e) => {
+        if (this.state.deljenjeOtvoreno && this.deljenjeRef.current && !this.deljenjeRef.current.contains(e.target)) {
+            this.setState({ deljenjeOtvoreno: false });
+        }
+    };
+
+    naTasterDeljenja = (e) => {
+        if ((e.key === "Escape" || e.keyCode === 27) && this.state.deljenjeOtvoreno) {
+            this.setState({ deljenjeOtvoreno: false });
+        }
+    };
+
+    /*
+     * „Iz iste kategorije" — koristi POSTOJEĆU pretragu galerija, istu koju
+     * gađa i `/galerije`. Ništa se ne menja u API-ju; ovo je samo još jedno
+     * čitanje. Bez kategorije se ne poziva.
+     */
+    dovuciSrodne(gallery) {
+        const kategorija = gallery && gallery.category;
+        if (!kategorija) return;
+
+        /* Galerija čuva ID kategorije, a pretraga prima ALIAS — isto kao na
+           `/galerije`. Bez ovog prevoda pretraga vraća nula rezultata
+           (probano). Spisak kategorija već stiže kroz `App.js`. */
+        const id = String(Array.isArray(kategorija) ? kategorija[0] : kategorija);
+        const nadjena = (this.props.categories || []).find((k) => String(k._id) === id);
+        const alias = nadjena ? Object.translate(nadjena, "alias", this.props.lang) : null;
+
+        if (!alias || this.srodneZa === alias) return;
+        this.srodneZa = alias;
+
+        fetch(`${API_ENDPOINT}/gallery/search/${this.props.lang}`, {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ query: { category: [alias], ipp: 8 } }),
+        })
+            .then((res) => res.json())
+            .then((result) => {
+                const stavke = (result && result.items ? result.items : [])
+                    .filter((g) => g && g._id !== gallery._id)
+                    .slice(0, 4);
+                this.setState({ srodne: stavke });
+            })
+            .catch(() => {});
+    }
 
     toggleModal = () => {
         this.setState((prevState) => ({
@@ -240,778 +371,827 @@ class DetailPage extends Component {
         }
         const selectedImage = galleryContent.photos[selectedImageIndex];
 
+        // Kataloški broj galerije — treba i prozoru (ID za narudžbu) i
+        // zaglavlju strane, pa se računa pre oba.
+        const katBrojModal = kataloskiBroj(
+            Object.get(gallery, "date"),
+            Object.get(gallery, "_id")
+        );
+
         if (this.state.modalOpen && this.state.galleryContent) {
+            const ukupno = galleryContent.photos.length;
+
+            /* Namena rezolucije običnim jezikom — kupac ne bira „1500 px",
+               bira „za štampu do A5". Cene i pragovi su NEPROMENJENI. */
+            const rezolucije = [
+                {
+                    px: 3000,
+                    prag: 1500,
+                    naziv: "Najveća".translate(this.props.lang),
+                    namena: "za štampu do A3".translate(this.props.lang),
+                    mnozilac: priceMap[3000],
+                },
+                {
+                    px: 1500,
+                    prag: 801,
+                    naziv: "Srednja".translate(this.props.lang),
+                    namena: "za štampu do A5".translate(this.props.lang),
+                    mnozilac: priceMap[1500],
+                },
+                {
+                    px: 800,
+                    prag: 0,
+                    naziv: "Mala".translate(this.props.lang),
+                    namena: "za veb i društvene mreže".translate(this.props.lang),
+                    mnozilac: priceMap[800],
+                },
+            ].filter((r) => selectedImage.width >= r.prag);
+
+            // ID za poručivanje — kataloški broj galerije plus mesto u njoj.
+            const idFotografije = katBrojModal
+                ? `${katBrojModal}-${String(selectedImageIndex + 1).padStart(3, "0")}`
+                : null;
+
+            const opisFotografije = selectedImage.description || selectedImage.name || "";
+            const nazivGalerije = Object.translate(gallery, "name", this.props.lang) || "";
+
             content = (
                 <Modal
                     isOpen={this.state.modalOpen}
-                    toggle={this.toggleModal}
+                    toggle={this.zatvoriProzor}
                     backdrop={"static"}
-                    centered={true}
-                    size={"lg"}
-                    scrollable={true}
-                    className={"customWidth"}
+                    centered={false}
+                    scrollable={false}
+                    /* `fade={false}`: Bootstrap-ovo `.modal.fade .modal-dialog`
+                       pomera prozor za -50px i oslanja se na prelaz da ga
+                       vrati. Taj prelaz se ovde nikad ne dovrši, pa je gornja
+                       traka ostajala van kadra. Gašenjem `fade` klase pravilo
+                       se uopšte ne primenjuje — čistije nego prebijati ga. */
+                    fade={false}
+                    className={"z-prozor"}
                 >
-                    <ModalHeader toggle={this.toggleModal} close={buttonClose}>
-                        <div className={"headerContent"}>
-                            <div className={"titleWrapper"}>
-                                <h1>{galleryContent.name?.ba}</h1>
-                                <p>
-                                    {selectedImage.date ? (
-                                        <p>
-                                            {moment
-                                                .unix(`${selectedImage.date}`)
-                                                .format("DD.MM.YYYY HH:MM:ss")}
-                                        </p>
-                                    ) : null}
-                                </p>
-                            </div>
-                            <div
-                                className={`${
-                                    this.state.isMobile
-                                        ? "displayNone"
-                                        : "navigationWrapper"
-                                }`}
+                    <ModalHeader tag="div" close={<span />}>
+                        <div className="z-prozor__vrh">
+                            <h2 className="z-prozor__naslov">
+                                {Object.translate(gallery, "name", this.props.lang)}
+                            </h2>
+
+                            <span className="z-prozor__brojac">
+                                {selectedImageIndex + 1} / {ukupno}
+                            </span>
+
+                            <button
+                                type="button"
+                                className="z-prozor__zatvori"
+                                aria-label={"Zatvori".translate(this.props.lang)}
+                                onClick={this.zatvoriProzor}
                             >
-                                <button
-                                    className={"navigationButton"}
-                                    onClick={() => {
-                                        this.handlePreviousImage();
-                                    }}
-                                >
-                                    {"<"}
-                                </button>
-                                <button
-                                    className={"navigationButton"}
-                                    onClick={() => {
-                                        this.handleNextImage();
-                                    }}
-                                >
-                                    {">"}
-                                </button>
-                            </div>
+                                &times;
+                            </button>
                         </div>
                     </ModalHeader>
-                    <ModalBody
-                        className={`${
-                            this.state.isMobile ? "customPaddingModal" : ""
-                        }`}
-                    >
-                        <div className={"imageContainer"}>
-                            <div className={"imagesWrapper"}>
-                                <img
-                                    src={`${PHOTOS_ENDPOINT}/photos/700x/${selectedImage.image}`}
-                                    alt={selectedImage.name}
-                                />
-                            </div>
+
+                    <ModalBody>
+                        <div className="z-prozor__telo">
+
+                            {/* ── fotografija ─────────────────────────── */}
                             <div
-                                className={`${
-                                    this.state.isMobile
-                                        ? "navigationWrapperMobile"
-                                        : "displayNone"
-                                }`}
+                                className="z-prozor__scena"
+                                onTouchStart={this.naDodirPocetak}
+                                onTouchEnd={this.naDodirKraj}
                             >
-                                <button
-                                    className={"navigationButton"}
-                                    onClick={() => {
-                                        this.handlePreviousImage();
-                                    }}
-                                >
-                                    {"<"}
-                                </button>
-                                <button
-                                    className={"navigationButton"}
-                                    onClick={() => {
-                                        this.handleNextImage();
-                                    }}
-                                >
-                                    {">"}
-                                </button>
-                            </div>
-                            <div className={"imagesButtons"}>
-                                {/*
-                                  * Arhivske galerije nemaju fiksnu cijenu — umjesto
-                                  * iznosa i dugmeta za kupovinu nudi se slanje upita.
-                                  */}
-                                {galleryContent.priceOnRequest ? (
-                                    <PriceInquiry
-                                        lang={this.props.lang}
-                                        galleryId={galleryContent._id}
-                                        photoId={selectedImageIndex}
-                                        resolution={this.state.resolution}
+                                {ukupno > 1 ? (
+                                    <button
+                                        type="button"
+                                        className="z-prozor__strelica z-prozor__strelica--nazad"
+                                        aria-label={"Prethodna".translate(this.props.lang)}
+                                        onClick={this.handlePreviousImage}
+                                    >
+                                        &#8249;
+                                    </button>
+                                ) : null}
+
+                                <div className="z-prozor__slika-okvir">
+                                    {/* Mala verzija razmazana ide prva — kadar
+                                        se vidi odmah, oštra stiže preko nje. */}
+                                    <img
+                                        className="z-prozor__slika z-prozor__slika--pregled"
+                                        src={`${PHOTOS_ENDPOINT}/photos/350x/${selectedImage.image}`}
+                                        alt=""
+                                        aria-hidden="true"
                                     />
+                                    <img
+                                        key={selectedImage.image}
+                                        className={
+                                            "z-prozor__slika z-prozor__slika--puna" +
+                                            (this.state.ostraStigla
+                                                ? " z-prozor__slika--stigla"
+                                                : "")
+                                        }
+                                        src={`${PHOTOS_ENDPOINT}/photos/700x/${selectedImage.image}`}
+                                        alt={selectedImage.description || selectedImage.name}
+                                        onLoad={() => this.setState({ ostraStigla: true })}
+                                    />
+                                </div>
+
+                                {ukupno > 1 ? (
+                                    <button
+                                        type="button"
+                                        className="z-prozor__strelica z-prozor__strelica--napred"
+                                        aria-label={"Sljedeća".translate(this.props.lang)}
+                                        onClick={this.handleNextImage}
+                                    >
+                                        &#8250;
+                                    </button>
+                                ) : null}
+                            </div>
+
+                            {/* ── panel: cene pa podaci ───────────────── */}
+                            <aside className="z-prozor__panel">
+                              <div className="z-prozor__panel-telo">
+
+                                {galleryContent.priceOnRequest ? (
+                                    <>
+                                        <span className="z-prozor__oznaka-grupe">
+                                            {"Cijena na upit".translate(this.props.lang)}
+                                        </span>
+                                        <PriceInquiry
+                                            lang={this.props.lang}
+                                            galleryId={galleryContent._id}
+                                            photoId={selectedImageIndex}
+                                            resolution={this.state.resolution}
+                                        />
+                                    </>
                                 ) : (
-                                <>
-                                <div>
-                                    {selectedImage.width >= 1500 ? (
-                                        <button
-                                            className={
-                                                this.state.resolution === 3000
-                                                    ? "active"
-                                                    : ""
-                                            }
-                                            onClick={() =>
-                                                this.setState({
-                                                    resolution: 3000,
-                                                })
-                                            }
-                                        >
-                                            <span>3000 px</span>
-                                            <span>
-                                                {galleryContent.price
-                                                    ? galleryContent.price.formatPrice(
-                                                          2
+                                    <>
+                                        <span className="z-prozor__oznaka-grupe">
+                                            {"Veličina".translate(this.props.lang)}
+                                        </span>
+
+                                        <div className="z-prozor__rezolucije">
+                                            {rezolucije.map((r) => {
+                                                const izabrana = this.state.resolution === r.px;
+                                                // Visina se računa iz odnosa originala.
+                                                const visina = selectedImage.width
+                                                    ? Math.round(
+                                                          (selectedImage.height * r.px) /
+                                                              selectedImage.width
                                                       )
-                                                    : "0"}{" "}
-                                                KM
-                                            </span>
-                                        </button>
-                                    ) : null}
-                                    {selectedImage.width >= 801 ? (
-                                        <button
-                                            className={
-                                                this.state.resolution === 1500
-                                                    ? "active"
-                                                    : ""
-                                            }
-                                            onClick={() =>
-                                                this.setState({
-                                                    resolution: 1500,
-                                                })
-                                            }
-                                        >
-                                            <span>1500 px</span>
-                                            <span>
-                                                {galleryContent.price
-                                                    ? (
-                                                          galleryContent.price *
-                                                          priceMap[1500]
-                                                      ).formatPrice(2)
-                                                    : "0"}{" "}
-                                                KM
-                                            </span>
-                                        </button>
-                                    ) : null}
-                                    {selectedImage.width >= 0 ? (
-                                        <button
-                                            className={
-                                                this.state.resolution === 800
-                                                    ? "active"
-                                                    : ""
-                                            }
-                                            onClick={() =>
-                                                this.setState({
-                                                    resolution: 800,
-                                                })
-                                            }
-                                        >
-                                            <span>800 px</span>
-                                            <span>
-                                                {galleryContent.price
-                                                    ? (
-                                                          galleryContent.price *
-                                                          priceMap[800]
-                                                      ).formatPrice(2)
-                                                    : "0"}{" "}
-                                                KM
-                                            </span>
-                                        </button>
-                                    ) : null}
-                                </div>
-                                <div className={"downloadingButtonAndText"}>
-                                    {galleryContent.price === 0 ? (
-                                        <button
-                                            className="download-btn"
-                                            onClick={() => {
-                                                fetch(
-                                                    `${API_ENDPOINT}/gallery/download/free/${galleryContent._id}/${selectedImageIndex}/${this.state.resolution}`,
-                                                    {
-                                                        method: "GET",
-                                                        headers: {
-                                                            "Content-Type":
-                                                                "application/json",
-                                                        },
-                                                    }
-                                                )
-                                                    .then((res) => res.json())
-                                                    .then((result) => {
-                                                        if (result.image) {
-                                                            var a = this.aTag;
-                                                            a.href =
-                                                                result.image; //Image Base64 Goes here
-                                                            a.download =
-                                                                selectedImage.name; //File name Here
-                                                            a.click(); //Downloaded file
+                                                    : null;
+                                                return (
+                                                    <button
+                                                        type="button"
+                                                        key={r.px}
+                                                        aria-pressed={izabrana}
+                                                        className={
+                                                            "z-prozor__rezolucija" +
+                                                            (izabrana
+                                                                ? " z-prozor__rezolucija--izabrana"
+                                                                : "")
                                                         }
-                                                    });
-                                            }}
-                                        >
-                                            <Isvg src={download} />
-                                            {"PREUZMI FOTOGRAFIJU".translate(
-                                                this.props.lang
-                                            )}
-                                        </button>
-                                    ) : selectedImage.originalIsOnServer ? (
-                                        this.state.allowedResolutions &&
-                                        this.state.allowedResolutions[
-                                            `resolution${this.state.resolution}px`
-                                        ] ? (
-                                            <button
-                                                className="download-btn"
-                                                onClick={() => {
-                                                    fetch(
-                                                        `${API_ENDPOINT}/gallery/download/${galleryContent}/${selectedImageIndex}/${this.state.resolution}`,
-                                                        {
-                                                            method: "GET",
-                                                            headers: {
-                                                                "Content-Type":
-                                                                    "application/json",
-                                                                Authorization: `Bearer ${localStorage.getItem(
-                                                                    "authToken"
-                                                                )}`,
-                                                            },
+                                                        onClick={() =>
+                                                            this.setState({ resolution: r.px })
                                                         }
-                                                    )
-                                                        .then((res) =>
-                                                            res.json()
-                                                        )
-                                                        .then((result) => {
-                                                            if (result.image) {
-                                                                var a =
-                                                                    this.aTag;
-                                                                a.href =
-                                                                    result.image; //Image Base64 Goes here
-                                                                a.download =
-                                                                    selectedImage.name; //File name Here
-                                                                a.click(); //Downloaded file
+                                                    >
+                                                        <span className="z-prozor__rez-levo">
+                                                            <span className="z-prozor__rez-naziv">
+                                                                {r.naziv}
+                                                            </span>
+                                                            <span className="z-prozor__rez-opis">
+                                                                {visina
+                                                                    ? `${r.px} × ${visina} px · `
+                                                                    : `${r.px} px · `}
+                                                                {r.namena}
+                                                            </span>
+                                                        </span>
+                                                        <span className="z-prozor__rez-cena">
+                                                            {galleryContent.price
+                                                                ? (
+                                                                      galleryContent.price *
+                                                                      r.mnozilac
+                                                                  ).formatPrice(2)
+                                                                : "0"}{" "}
+                                                            KM
+                                                        </span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+
+                                        {/* Radnje — grane i pozivi NEPROMENJENI,
+                                            samo natpisi kažu šta se dešava. */}
+                                        <div className="z-prozor__radnje">
+                                            {galleryContent.price === 0 ? (
+                                                <button
+                                                    className="z-prozor__glavna-radnja"
+                                                    onClick={() => {
+                                                        fetch(
+                                                            `${API_ENDPOINT}/gallery/download/free/${galleryContent._id}/${selectedImageIndex}/${this.state.resolution}`,
+                                                            {
+                                                                method: "GET",
+                                                                headers: {
+                                                                    "Content-Type":
+                                                                        "application/json",
+                                                                },
                                                             }
-                                                        });
-                                                }}
-                                            >
-                                                <Isvg src={download} />
-                                                {"PREUZMI FOTOGRAFIJU".translate(
-                                                    this.props.lang
-                                                )}
-                                            </button>
-                                        ) : (
-                                            <button
-                                                className="download-btn"
-                                                onClick={() => {
-                                                    if (this.props.uData)
-                                                        this.props.addToCart(
-                                                            galleryContent,
-                                                            selectedImageIndex,
-                                                            this.state
-                                                                .resolution
-                                                        );
-                                                    else
-                                                        this.props[0].history.push(
-                                                            "/login"
-                                                        );
-                                                }}
-                                            >
-                                                <Isvg src={download} />
-                                                {"KUPI FOTOGRAFIJU".translate(
-                                                    this.props.lang
-                                                )}
-                                            </button>
-                                        )
-                                    ) : (
-                                        <p className="original-not-found">
-                                            {
-                                                "Za kupovinu ili preuzimanje ove fotografije molimo Vas kontaktirajte nas putem telefona +387.66.00.11.22 ili na e-mail "
-                                            }
-                                            <a href="mailto:info@zipaphoto.net">
-                                                info@zipaphoto.net
-                                            </a>
-                                        </p>
-                                    )}
-                                    <a ref={(node) => (this.aTag = node)}></a>
-                                </div>
-                                </>
-                                )}
-                            </div>
-                            <div className={"imagesDescription"}>
-                                <p
-                                    dangerouslySetInnerHTML={{
-                                        __html: Object.translate(
-                                            gallery,
-                                            "description",
-                                            this.props.lang
-                                        )
-                                            ? Object.translate(
-                                                  gallery,
-                                                  "description",
-                                                  this.props.lang
-                                              ).replace(/\n/g, "<br/>")
-                                            : null,
-                                    }}
-                                ></p>
-                                <div className={"imagesDescriptionWrapper"}>
-                                    <div className={"descriptionHeader"}>
-                                        <div>
-                                            <h6>NAZIV</h6>
-                                            <p>{`${selectedImage.name}`}</p>
-                                        </div>
-                                    </div>
-                                    <div className={"descriptionLeft"}>
-                                        <div>
-                                            <h6>DIMENZIJA</h6>
-                                            <p>{`${selectedImage.width}x${selectedImage.height}`}</p>
-                                        </div>
-                                        <div>
-                                            <h6>Fotografisano</h6>
-                                            {selectedImage.date ? (
-                                                <p>
-                                                    {moment
-                                                        .unix(
-                                                            `${selectedImage.date}`
                                                         )
-                                                        .format("DD.MM.YYYY")}
-                                                </p>
+                                                            .then((res) => res.json())
+                                                            .then((result) => {
+                                                                if (result.image) {
+                                                                    var a = this.aTag;
+                                                                    a.href = result.image;
+                                                                    a.download = selectedImage.name;
+                                                                    a.click();
+                                                                }
+                                                            });
+                                                    }}
+                                                >
+                                                    <Isvg src={download} />
+                                                    {"Preuzmi fotografiju".translate(
+                                                        this.props.lang
+                                                    )}
+                                                </button>
+                                            ) : selectedImage.originalIsOnServer ? (
+                                                this.state.allowedResolutions &&
+                                                this.state.allowedResolutions[
+                                                    `resolution${this.state.resolution}px`
+                                                ] ? (
+                                                    <button
+                                                        className="z-prozor__glavna-radnja"
+                                                        onClick={() => {
+                                                            fetch(
+                                                                `${API_ENDPOINT}/gallery/download/${galleryContent}/${selectedImageIndex}/${this.state.resolution}`,
+                                                                {
+                                                                    method: "GET",
+                                                                    headers: {
+                                                                        "Content-Type":
+                                                                            "application/json",
+                                                                        Authorization: `Bearer ${localStorage.getItem(
+                                                                            "authToken"
+                                                                        )}`,
+                                                                    },
+                                                                }
+                                                            )
+                                                                .then((res) => res.json())
+                                                                .then((result) => {
+                                                                    if (result.image) {
+                                                                        var a = this.aTag;
+                                                                        a.href = result.image;
+                                                                        a.download =
+                                                                            selectedImage.name;
+                                                                        a.click();
+                                                                    }
+                                                                });
+                                                        }}
+                                                    >
+                                                        <Isvg src={download} />
+                                                        {"Preuzmi fotografiju".translate(
+                                                            this.props.lang
+                                                        )}
+                                                    </button>
+                                                ) : (
+                                                    <button
+                                                        className="z-prozor__glavna-radnja"
+                                                        onClick={() => {
+                                                            if (this.props.uData)
+                                                                this.props.addToCart(
+                                                                    galleryContent,
+                                                                    selectedImageIndex,
+                                                                    this.state.resolution
+                                                                );
+                                                            else
+                                                                this.props[0].history.push(
+                                                                    "/login"
+                                                                );
+                                                        }}
+                                                    >
+                                                        <Isvg src={cartIcon} />
+                                                        {"Dodaj u korpu".translate(
+                                                            this.props.lang
+                                                        )}
+                                                    </button>
+                                                )
                                             ) : null}
+
+                                            <button
+                                                type="button"
+                                                className="z-prozor__sporedna-radnja"
+                                                title={"Kopiraj vezu".translate(this.props.lang)}
+                                                aria-label={"Kopiraj vezu".translate(this.props.lang)}
+                                                onClick={() => {
+                                                    if (typeof navigator !== "undefined" &&
+                                                        navigator.clipboard) {
+                                                        navigator.clipboard.writeText(
+                                                            window.location.href
+                                                        );
+                                                    }
+                                                }}
+                                            >
+                                                <Isvg src={shareIcon} />
+                                            </button>
                                         </div>
-                                        <div>
-                                            <h6>Caption writer</h6>
-                                            {selectedImage.captionWriter ? (
-                                                <p>{`${selectedImage.captionWriter}`}</p>
-                                            ) : null}
+
+                                        {!selectedImage.originalIsOnServer &&
+                                        galleryContent.price !== 0 ? (
+                                            <p className="z-prozor__napomena">
+                                                {"Za kupovinu ili preuzimanje ove fotografije molimo Vas kontaktirajte nas putem telefona +387.66.00.11.22 ili na e-mail "}
+                                                <a href="mailto:info@zipaphoto.net">
+                                                    info@zipaphoto.net
+                                                </a>
+                                            </p>
+                                        ) : null}
+
+                                        <a ref={(node) => (this.aTag = node)}></a>
+                                    </>
+                                )}
+
+
+                                {/* Opis ide preko cele širine, ne kao vrednost
+                                    u redu „Naziv" — tamo je ceo pasus razvlačio
+                                    panel. Skraćen na tri reda. */}
+                                {opisFotografije ? (
+                                    <>
+                                        <p
+                                            className={
+                                                "z-prozor__opis" +
+                                                (this.state.opisFotoOtvoren
+                                                    ? ""
+                                                    : " z-prozor__opis--skupljen")
+                                            }
+                                        >
+                                            {opisFotografije}
+                                        </p>
+                                        <button
+                                            type="button"
+                                            className="z-prozor__opis-vise"
+                                            aria-expanded={this.state.opisFotoOtvoren}
+                                            onClick={() =>
+                                                this.setState({
+                                                    opisFotoOtvoren:
+                                                        !this.state.opisFotoOtvoren,
+                                                })
+                                            }
+                                        >
+                                            {this.state.opisFotoOtvoren
+                                                ? "manje".translate(this.props.lang)
+                                                : "više".translate(this.props.lang)}
+                                        </button>
+                                    </>
+                                ) : null}
+
+                                {/* ── podaci o fotografiji ────────────── */}
+                                <dl className="z-prozor__podaci">
+                                    {selectedImage.author ? (
+                                        <div className="z-prozor__red">
+                                            <dt>{"Autor".translate(this.props.lang)}</dt>
+                                            <dd>{selectedImage.author}</dd>
                                         </div>
-                                    </div>
-                                    <div className={"descriptionRight"}>
-                                        <div className={"rightText"}>
-                                            <h6>LOKACIJA</h6>
-                                            {galleryContent.location ? (
-                                                <p>{`${galleryContent.location}`}</p>
-                                            ) : null}
+                                    ) : null}
+
+                                    {selectedImage.date ? (
+                                        <div className="z-prozor__red">
+                                            <dt>{"Datum".translate(this.props.lang)}</dt>
+                                            <dd>
+                                                {moment
+                                                    .unix(selectedImage.date)
+                                                    .format("DD.MM.YYYY.")}
+                                            </dd>
                                         </div>
-                                        <div className={"rightText"}>
-                                            <h6>AUTOR</h6>
-                                            {selectedImage.author ? (
-                                                <p>{`${selectedImage.author}`}</p>
-                                            ) : null}
+                                    ) : null}
+
+                                    {galleryContent.location ? (
+                                        <div className="z-prozor__red">
+                                            <dt>{"Mjesto".translate(this.props.lang)}</dt>
+                                            <dd>{galleryContent.location}</dd>
                                         </div>
-                                        <div className={"rightText"}>
-                                            <h6>Copyright</h6>
-                                            {selectedImage.copyright ? (
-                                                <p>{`${selectedImage.copyright}`}</p>
-                                            ) : null}
+                                    ) : null}
+
+                                    {selectedImage.width && selectedImage.height ? (
+                                        <div className="z-prozor__red">
+                                            <dt>{"Original".translate(this.props.lang)}</dt>
+                                            <dd>
+                                                {selectedImage.width} × {selectedImage.height} px
+                                            </dd>
                                         </div>
-                                    </div>
-                                </div>
-                            </div>
+                                    ) : null}
+
+                                    {idFotografije ? (
+                                        <div className="z-prozor__red">
+                                            <dt>{"ID za narudžbu".translate(this.props.lang)}</dt>
+                                            <dd className="z-prozor__id">{idFotografije}</dd>
+                                        </div>
+                                    ) : null}
+                                </dl>
+
+                                {/* U arhivi ovde stoji naziv galerije, ne prave
+                                    ključne reči — pa se tako i zove. */}
+                                {nazivGalerije ? (
+                                    <p className="z-prozor__iz-galerije">
+                                        <span className="z-prozor__iz-galerije-oznaka">
+                                            {"Iz galerije:".translate(this.props.lang)}
+                                        </span>
+                                        <Link
+                                            className="z-prozor__iz-galerije-veza"
+                                            to={`/galerije?search=${encodeURIComponent(
+                                                nazivGalerije
+                                            )}`}
+                                            onClick={this.zatvoriProzor}
+                                        >
+                                            {nazivGalerije}
+                                        </Link>
+                                    </p>
+                                ) : null}
+                              </div>
+                            </aside>
                         </div>
+
+                        {/* ── traka sa umanjenim prikazima ────────────── */}
+                        {ukupno > 1 ? (
+                            <div className="z-prozor__traka">
+                                {galleryContent.photos.map((foto, i) => (
+                                    <button
+                                        type="button"
+                                        key={i}
+                                        aria-label={`${"Fotografija".translate(
+                                            this.props.lang
+                                        )} ${i + 1}`}
+                                        aria-current={i === selectedImageIndex}
+                                        className={
+                                            "z-prozor__umanjena" +
+                                            (i === selectedImageIndex
+                                                ? " z-prozor__umanjena--trenutna"
+                                                : "")
+                                        }
+                                        ref={
+                                            i === selectedImageIndex
+                                                ? (n) => {
+                                                      if (n && this.poslednjaTraka !== i) {
+                                                          this.poslednjaTraka = i;
+                                                          n.scrollIntoView({
+                                                              inline: "center",
+                                                              block: "nearest",
+                                                          });
+                                                      }
+                                                  }
+                                                : null
+                                        }
+                                        onClick={() => {
+                                            this.setState({
+                                                selectedImageIndex: i,
+                                                ostraStigla: false,
+                                            });
+                                            this.fetchGalleryTrack(i);
+                                            this.pretovariSusedne(i);
+                                        }}
+                                    >
+                                        <img
+                                            src={`${PHOTOS_ENDPOINT}/photos/350x/${foto.image}`}
+                                            alt=""
+                                            loading="lazy"
+                                        />
+                                    </button>
+                                ))}
+                            </div>
+                        ) : null}
                     </ModalBody>
                 </Modal>
             );
         }
 
-        let buttonClose = null;
-
-        buttonClose = (
-            <button
-                className={"photoModalCloseButton"}
-                onClick={this.toggleModal}
-            >
-                &times;
-            </button>
-        );
+        const autor = Object.get(gallery, "user");
+        const autorAlias = Object.get(gallery, "userAlias");
+        const brojFotografija = gallery.photos ? gallery.photos.length : 0;
+        const katBroj = katBrojModal;
+        const opisTekst = Object.translate(gallery, "description", this.props.lang);
+        const kategorijaNaziv = Object.translate(gallery, "categoryName", this.props.lang);
+        const mozeIzmena =
+            (this.props.uData && this.props.uData.userRole == "admin") ||
+            (this.props.uData &&
+                this.props.uData.userRole == "photographer" &&
+                (this.props.uData.permissions.indexOf("*") !== -1 ||
+                    this.props.uData._id == gallery.uid));
 
         return (
-            <div className="detail-wrap">
-                <div className="into-wrap">
+            <div className="detail-wrap z-galerija">
+
+                {/* ── zaglavlje galerije ───────────────────────────────── */}
+                <div className="z-galerija__zaglavlje">
                     <Container>
-                        <Row>
-                            <Col lg="6">
-                                <h2>
-                                    {this.state.category &&
-                                    this.state.category.breadcrumb
-                                        ? this.state.category.name
-                                        : "Pregled galerija".translate(
-                                              this.props.lang
-                                          )}
-                                </h2>
-                                {/*<h2>57.000 {'fotografija u ponudi'.translate(this.props.lang)}</h2>*/}
-                            </Col>
-                            <Col lg={{ size: 6 }}>
-                                <div className="search-wrap">
-                                    <Isvg src={picture} />
-                                    <input
-                                        type="text"
-                                        placeholder={"Unesite pojam za pretragu".translate(
-                                            this.props.lang
-                                        )}
-                                        value={this.state.search}
-                                        onChange={(e) =>
+                        <div className="z-galerija__vrh">
+                            <div className="z-galerija__naslovni">
+                                {kategorijaNaziv ? (
+                                    <span className="z-galerija__kategorija">
+                                        {kategorijaNaziv}
+                                    </span>
+                                ) : null}
+
+                                <h1 className="z-galerija__naslov">
+                                    {Object.translate(gallery, "name", this.props.lang)}
+                                </h1>
+
+                                {/* Jedan red podataka — tačke između stavki crta
+                                    CSS, pa se ne pojavljuju uz stavku koje nema. */}
+                                <p className="z-galerija__podaci">
+                                    {Object.get(gallery, "location") ? (
+                                        <span>{Object.get(gallery, "location")}</span>
+                                    ) : null}
+                                    {Object.get(gallery, "date") ? (
+                                        <span>
+                                            {moment
+                                                .unix(Object.get(gallery, "date"))
+                                                .format("DD.MM.YYYY.")}
+                                        </span>
+                                    ) : null}
+                                    {autor ? (
+                                        <span>
+                                            {autorAlias ? (
+                                                <Link to={`/fotograf/${autorAlias}`}>
+                                                    {autor}
+                                                </Link>
+                                            ) : (
+                                                autor
+                                            )}
+                                        </span>
+                                    ) : null}
+                                    {brojFotografija ? (
+                                        <span>
+                                            {brojFotografija}{" "}
+                                            {"fotografija".translate(this.props.lang)}
+                                        </span>
+                                    ) : null}
+                                    {katBroj ? (
+                                        <span className="z-galerija__kataloski">
+                                            {katBroj}
+                                        </span>
+                                    ) : null}
+                                </p>
+
+                                {opisTekst ? (
+                                    <>
+                                        <div
+                                            className={
+                                                "z-galerija__opis" +
+                                                (this.state.opisOtvoren
+                                                    ? ""
+                                                    : " z-galerija__opis--skupljen")
+                                            }
+                                        >
+                                            <p
+                                                dangerouslySetInnerHTML={{
+                                                    __html: opisTekst.replace(/\n/g, "<br/>"),
+                                                }}
+                                            ></p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            className="z-galerija__vise"
+                                            aria-expanded={this.state.opisOtvoren}
+                                            onClick={() =>
+                                                this.setState({
+                                                    opisOtvoren: !this.state.opisOtvoren,
+                                                })
+                                            }
+                                        >
+                                            {this.state.opisOtvoren
+                                                ? "Prikaži manje".translate(this.props.lang)
+                                                : "Prikaži više".translate(this.props.lang)}
+                                        </button>
+                                    </>
+                                ) : null}
+                            </div>
+
+                            {/* ── radnje ──────────────────────────────── */}
+                            <div className="z-galerija__radnje">
+                                <div
+                                    className="z-galerija__radnja-grupa"
+                                    ref={this.deljenjeRef}
+                                >
+                                    <button
+                                        type="button"
+                                        className="z-galerija__radnja"
+                                        aria-expanded={this.state.deljenjeOtvoreno}
+                                        onClick={() =>
                                             this.setState({
-                                                search: e.target.value,
+                                                deljenjeOtvoreno: !this.state.deljenjeOtvoreno,
                                             })
                                         }
-                                        onKeyUp={(e) => {
-                                            if (e.keyCode == 13) {
-                                                e.preventDefault();
-                                                this.props[0].history.push(
-                                                    `/galerije?search=${encodeURIComponent(
-                                                        this.state.search
-                                                    )}`
-                                                );
-                                            }
-                                        }}
-                                    />
-                                    <button
-                                        className="button"
-                                        onClick={() => {
-                                            this.props[0].history.push(
-                                                `/galerije?search=${encodeURIComponent(
-                                                    this.state.search
-                                                )}`
-                                            );
-                                        }}
                                     >
-                                        <Isvg src={searchIcon} />{" "}
-                                        {"PRETRAŽI".translate(this.props.lang)}{" "}
+                                        <Isvg src={picture} />
+                                        {"Podijeli".translate(this.props.lang)}
                                     </button>
+
+                                    {this.state.deljenjeOtvoreno &&
+                                    typeof window !== "undefined" ? (
+                                        <div className="z-galerija__panel-deljenje">
+                                            <FacebookShareButton url={window.location.href}>
+                                                <FacebookIcon size={32} round />
+                                            </FacebookShareButton>
+                                            <TwitterShareButton url={window.location.href}>
+                                                <TwitterIcon size={32} round />
+                                            </TwitterShareButton>
+                                            <LinkedinShareButton url={window.location.href}>
+                                                <LinkedinIcon size={32} round />
+                                            </LinkedinShareButton>
+                                            <TelegramShareButton url={window.location.href}>
+                                                <TelegramIcon size={32} round />
+                                            </TelegramShareButton>
+                                            <ViberShareButton url={window.location.href}>
+                                                <ViberIcon size={32} round />
+                                            </ViberShareButton>
+                                            <WhatsappShareButton url={window.location.href}>
+                                                <WhatsappIcon size={32} round />
+                                            </WhatsappShareButton>
+                                            <EmailShareButton url={window.location.href}>
+                                                <EmailIcon size={32} round />
+                                            </EmailShareButton>
+                                        </div>
+                                    ) : null}
                                 </div>
-                                <a
-                                    onClick={() =>
-                                        this.props.handleDetailSearch(true)
-                                    }
-                                    className="detail-search"
+
+                                <button
+                                    type="button"
+                                    className="z-galerija__radnja"
+                                    onClick={() => window.print()}
                                 >
-                                    {"Napredna pretraga".translate(
-                                        this.props.lang
-                                    )}
-                                </a>
-                            </Col>
-                        </Row>
+                                    <Isvg src={imagesCount} />
+                                    {"Štampaj".translate(this.props.lang)}
+                                </button>
+
+                                {/* Izmena i brisanje — nepromenjena prava i pozivi,
+                                    samo u istom tihom izgledu kao ostale radnje. */}
+                                {mozeIzmena ? (
+                                    <>
+                                        <Link
+                                            className="z-galerija__radnja"
+                                            to={
+                                                this.props.uData.userRole == "admin"
+                                                    ? `/account/gallery-photographer/${gallery.uid}/${gallery._id}`
+                                                    : `/account/gallery/${gallery._id}`
+                                            }
+                                        >
+                                            <Isvg src={penIcon} />
+                                            {"Izmijeni".translate(this.props.lang)}
+                                        </Link>
+                                        <button
+                                            type="button"
+                                            className="z-galerija__radnja"
+                                            onClick={() => {
+                                                this.props.handleDelete(() => {
+                                                    fetch(
+                                                        this.props.uData.userRole == "admin"
+                                                            ? `${API_ENDPOINT}/gallery/photographer/delete/${gallery.uid}/${gallery._id}`
+                                                            : `${API_ENDPOINT}/gallery/delete/` +
+                                                                  gallery._id,
+                                                        {
+                                                            method: "DELETE",
+                                                            headers: {
+                                                                Accept: "application/json",
+                                                                Authorization: `Bearer ${localStorage.getItem(
+                                                                    "authToken"
+                                                                )}`,
+                                                            },
+                                                        }
+                                                    )
+                                                        .then((res) => res.text())
+                                                        .then(() => {
+                                                            this.props[0].history.push("/");
+                                                        });
+                                                });
+                                            }}
+                                        >
+                                            <Isvg src={trashIcon} />
+                                            {"Obriši".translate(this.props.lang)}
+                                        </button>
+                                    </>
+                                ) : null}
+                            </div>
+                        </div>
                     </Container>
                 </div>
 
+                {/* ── mreža fotografija ───────────────────────────────── */}
                 <section className="section-detail">
                     <Container>
-                        <Row>
-                            <Col lg="7" sm="12">
-                                {/* <Button onClick={this.toggleModal}>
-                                    Click me
-                                </Button>
-                                <Modal
-                                    isOpen={this.state.modalOpen}
-                                    toggle={this.toggleModal}
-                                    backdrop={"static"}
-                                    centered={true}
-                                    fullscreen={true}
-                                >
-                                    <ModalHeader
-                                        toggle={this.toggleModal}
-                                        close={buttonClose}
-                                    >
-                                        Nemam blage stae ovo
-                                    </ModalHeader>
-                                    <ModalBody>
-                                        Lorem ipsum dolor sit amet, consectetur
-                                        adipisicing elit, sed do eiusmod tempor
-                                        incididunt ut labore et dolore magna
-                                        aliqua. Ut enim ad minim veniam, quis
-                                        nostrud exercitation ullamco laboris
-                                        nisi ut aliquip ex ea commodo consequat.
-                                        Duis aute irure dolor in reprehenderit
-                                        in voluptate velit esse cillum dolore eu
-                                        fugiat nulla pariatur. Excepteur sint
-                                        occaecat cupidatat non proident, sunt in
-                                        culpa qui officia deserunt mollit anim
-                                        id est laborum.
-                                    </ModalBody>
-                                </Modal> */}
-                                <h1>
-                                    {Object.translate(
-                                        gallery,
-                                        "name",
-                                        this.props.lang
-                                    )}
-                                </h1>
-                                <div className="info">
-                                    <div>
-                                        {"Fotograf:".translate(this.props.lang)}{" "}
-                                        {Object.get(gallery, "user")}
-                                    </div>
-                                    <div>
-                                        {Object.get(gallery, "location")} |{" "}
-                                        {moment
-                                            .unix(Object.get(gallery, "date"))
-                                            .format("DD.MM.YYYY.")}
-                                        <Isvg src={imagesCount} />{" "}
-                                        {gallery.photos &&
-                                            gallery.photos.length}
-                                    </div>
-                                </div>
-                            </Col>
-                            <Col
-                                lg={{ size: 5, offset: 0 }}
-                                sm={{ size: 6, offset: 6 }}
-                            >
-                                <p className="share-desc">
-                                    {"Hvala Vam što ste objavu podijelili na:".translate(
-                                        this.props.lang
-                                    )}
-                                </p>
-                                {typeof window !== "undefined" ? (
-                                    <div className="share-actions">
-                                        <FacebookShareButton
-                                            url={window.location.href}
-                                        >
-                                            {" "}
-                                            <FacebookIcon size={48} />
-                                        </FacebookShareButton>
-                                        <TwitterShareButton
-                                            url={window.location.href}
-                                        >
-                                            <TwitterIcon size={48} />
-                                        </TwitterShareButton>
-                                        <LinkedinShareButton
-                                            url={window.location.href}
-                                        >
-                                            <LinkedinIcon size={48} />
-                                        </LinkedinShareButton>
-                                        <TelegramShareButton
-                                            url={window.location.href}
-                                        >
-                                            <TelegramIcon size={48} />
-                                        </TelegramShareButton>
-                                        <EmailShareButton
-                                            url={window.location.href}
-                                        >
-                                            <EmailIcon size={48} />
-                                        </EmailShareButton>
-                                        <ViberShareButton
-                                            url={window.location.href}
-                                        >
-                                            <ViberIcon size={48} />
-                                        </ViberShareButton>
-                                        <WhatsappShareButton
-                                            url={window.location.href}
-                                        >
-                                            <WhatsappIcon size={48} />
-                                        </WhatsappShareButton>
-                                    </div>
-                                ) : null}
-                            </Col>
+                        {brojFotografija ? (
+                            <>
+                                <div className="z-galerija__traka-mreze">
+                                    <span className="z-galerija__broj-fotografija">
+                                        {brojFotografija}{" "}
+                                        {"fotografija".translate(this.props.lang)}
+                                    </span>
 
-                            <Col lg="12">
-                                {(this.props.uData &&
-                                    this.props.uData.userRole == "admin") ||
-                                (this.props.uData &&
-                                    this.props.uData.userRole ==
-                                        "photographer" &&
-                                    this.props.uData.permissions.indexOf(
-                                        "*"
-                                    ) !== -1) ? (
-                                    <div className="acc-buttons">
-                                        <Link
-                                            to={`/account/gallery-photographer/${gallery.uid}/${gallery._id}`}
-                                        >
-                                            <button>
-                                                <Isvg src={penIcon} />{" "}
-                                                {"IZMJENI".translate(
-                                                    this.props.lang
-                                                )}
-                                            </button>
-                                        </Link>
-                                        <button
-                                            onClick={() => {
-                                                this.props.handleDelete(() => {
-                                                    fetch(
-                                                        `${API_ENDPOINT}/gallery/photographer/delete/${gallery.uid}/${gallery._id}`,
-                                                        {
-                                                            method: "DELETE",
-                                                            headers: {
-                                                                Accept: "application/json",
-                                                                //'Content-Type': 'multipart/form-data',
-                                                                Authorization: `Bearer ${localStorage.getItem(
-                                                                    "authToken"
-                                                                )}`,
-                                                            },
-                                                        }
-                                                    )
-                                                        .then((res) =>
-                                                            res.text()
-                                                        )
-                                                        .then((img) => {
-                                                            this.props[0].history.push(
-                                                                "/"
-                                                            );
-                                                        });
-                                                });
-                                            }}
-                                        >
-                                            <Isvg src={trashIcon} />{" "}
-                                            {"OBRIŠI".translate(
-                                                this.props.lang
-                                            )}
-                                        </button>
-                                    </div>
-                                ) : null}
-                                {this.props.uData &&
-                                this.props.uData.userRole == "photographer" &&
-                                this.props.uData._id == gallery.uid ? (
-                                    <div className="acc-buttons">
-                                        <Link
-                                            to={`/account/gallery/${gallery._id}`}
-                                        >
-                                            <button>
-                                                <Isvg src={penIcon} />{" "}
-                                                {"IZMJENI".translate(
-                                                    this.props.lang
-                                                )}
-                                            </button>
-                                        </Link>
-                                        <button
-                                            onClick={() => {
-                                                this.props.handleDelete(() => {
-                                                    fetch(
-                                                        `${API_ENDPOINT}/gallery/delete/` +
-                                                            gallery._id,
-                                                        {
-                                                            method: "DELETE",
-                                                            headers: {
-                                                                Accept: "application/json",
-                                                                //'Content-Type': 'multipart/form-data',
-                                                                Authorization: `Bearer ${localStorage.getItem(
-                                                                    "authToken"
-                                                                )}`,
-                                                            },
-                                                        }
-                                                    )
-                                                        .then((res) =>
-                                                            res.text()
-                                                        )
-                                                        .then((img) => {
-                                                            this.props[0].history.push(
-                                                                "/"
-                                                            );
-                                                        });
-                                                });
-                                            }}
-                                        >
-                                            <Isvg src={trashIcon} />{" "}
-                                            {"OBRIŠI".translate(
-                                                this.props.lang
-                                            )}
-                                        </button>
-                                    </div>
-                                ) : null}
-
-                                <div className="description">
-                                    <p
-                                        dangerouslySetInnerHTML={{
-                                            __html: Object.translate(
-                                                gallery,
-                                                "description",
-                                                this.props.lang
-                                            )
-                                                ? Object.translate(
-                                                      gallery,
-                                                      "description",
-                                                      this.props.lang
-                                                  ).replace(/\n/g, "<br/>")
-                                                : null,
-                                        }}
-                                    ></p>
-                                </div>
-                            </Col>
-                            {/*
-                              * Biranje redosleda — vidljivo samo uz nove izglede.
-                              * Fotografije stoje onako kako su snimljene, a ovim
-                              * se okreće, kako je traženo po uzoru na Pixsell.
-                              */}
-                            {noviPrikaz && gallery.photos && gallery.photos.length > 1 ? (
-                                <Col lg="12">
-                                    <div className="red-fotografija">
-                                        <span className="koliko">
-                                            {gallery.photos.length} {'fotografija'.translate(this.props.lang)}
-                                        </span>
+                                    {brojFotografija > 1 ? (
                                         <button
                                             type="button"
-                                            className="prekidac-reda"
-                                            onClick={() => this.setState({ obrnutRedosled: !this.state.obrnutRedosled })}
+                                            className="z-galerija__redosled"
+                                            onClick={() =>
+                                                this.setState({
+                                                    obrnutRedosled: !this.state.obrnutRedosled,
+                                                })
+                                            }
                                         >
                                             {this.state.obrnutRedosled
-                                                ? 'Od poslednje ka prvoj'.translate(this.props.lang)
-                                                : 'Od prve ka poslednjoj'.translate(this.props.lang)}
+                                                ? "Od poslednje ka prvoj".translate(this.props.lang)
+                                                : "Od prve ka poslednjoj".translate(this.props.lang)}
                                         </button>
-                                    </div>
-                                </Col>
-                            ) : null}
+                                    ) : null}
+                                </div>
 
-                            {gallery.photos &&
-                                poredaneFotografije.map(({ item, idx }) => {
-                                    return (
-                                        <Col lg="3" sm="4" xs="6" key={idx}>
-                                            {/*<Link*/}
-                                            {/*    to={{*/}
-                                            {/*        pathname: `/galerija/${Object.translate(gallery, 'alias', this.props.lang)}/${gallery._id}/${idx}`,*/}
-                                            {/*        state: {gallery, lang: this.props.lang, isIframe: true, idx}*/}
-                                            {/*    }}>*/}
-                                            {/*    <article>*/}
-                                            {/*        <img src={`${PHOTOS_ENDPOINT}/photos/350x/` + item.image}/>*/}
-                                            {/*        <div className="zoom-image">*/}
-                                            {/*            <img src={`${PHOTOS_ENDPOINT}/photos/350x/` + item.image}/>*/}
+                                <div className="z-galerija__mreza">
+                                    {poredaneFotografije.map(({ item, idx }) => (
+                                        <button
+                                            type="button"
+                                            className="z-galerija__foto"
+                                            key={idx}
+                                            aria-label={`${"Fotografija".translate(
+                                                this.props.lang
+                                            )} ${idx + 1}`}
+                                            onClick={(e) => {
+                                                // Mesto u MREŽI, ne u galeriji —
+                                                // po njemu se skrol vraća tačno
+                                                // ovde kad se prozor zatvori.
+                                                this.otvorenoSa = [
+                                                    ...e.currentTarget.parentNode.children,
+                                                ].indexOf(e.currentTarget);
+                                                this.setState({
+                                                    modalOpen: true,
+                                                    selectedImageIndex: idx,
+                                                    ostraStigla: false,
+                                                });
+                                                this.fetchGalleryTrack(idx);
+                                                this.pretovariSusedne(idx);
+                                            }}
+                                        >
+                                            <img
+                                                src={`${PHOTOS_ENDPOINT}/photos/350x/${item.image}`}
+                                                srcSet={`${PHOTOS_ENDPOINT}/photos/350x/${item.image} 350w, ${PHOTOS_ENDPOINT}/photos/700x/${item.image} 700w`}
+                                                sizes="(max-width: 767px) 50vw, (max-width: 1439px) 33vw, 25vw"
+                                                alt={item.description || ""}
+                                                loading="lazy"
+                                                decoding="async"
+                                            />
 
-                                            {/*        </div>*/}
-                                            {/*        <div className="zoom"><Isvg src={searchIcon}/></div>*/}
-                                            {/*    </article>*/}
-                                            {/*</Link>*/}
+                                            <span className="z-galerija__preko">
+                                                <span className="z-galerija__redni-broj">
+                                                    {idx + 1}
+                                                </span>
+                                                {/* Obe radnje otvaraju isti prozor:
+                                                    kupovina traži izbor rezolucije, a
+                                                    on živi tamo — logika korpe se ne
+                                                    dira. */}
+                                                <span className="z-galerija__foto-radnje">
+                                                    <span className="z-galerija__foto-dugme">
+                                                        <Isvg src={searchIcon} />
+                                                    </span>
+                                                    <span className="z-galerija__foto-dugme">
+                                                        <Isvg src={download} />
+                                                    </span>
+                                                </span>
+                                            </span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </>
+                        ) : (
+                            <p className="z-galerija__prazno">
+                                {"Ova galerija još nema fotografija.".translate(
+                                    this.props.lang
+                                )}
+                            </p>
+                        )}
 
-                                            {/*<article*/}
-                                            {/*    onClick={() => this.setState({modalOpen: true, selectedImageIndex: idx})}>*/}
-                                            {/*    <img src={`${PHOTOS_ENDPOINT}/photos/350x/` + item.image}/>*/}
-                                            {/*    <div className="zoom-image">*/}
-                                            {/*        <img src={`${PHOTOS_ENDPOINT}/photos/350x/` + item.image}/>*/}
-
-                                            {/*    </div>*/}
-                                            {/*    <div className="zoom"><Isvg src={searchIcon}/></div>*/}
-                                            {/*</article>*/}
-
-                                            <article
-                                                onClick={() => {
-                                                    this.setState({
-                                                        modalOpen: true,
-                                                        selectedImageIndex: idx,
-                                                    });
-                                                    this.fetchGalleryTrack(idx);
-                                                }}
-                                            >
-                                                <img
-                                                    src={`${PHOTOS_ENDPOINT}/photos/350x/${item.image}`}
-                                                />
-                                                <div className="zoom-image">
-                                                    <img
-                                                        src={`${PHOTOS_ENDPOINT}/photos/350x/${item.image}`}
-                                                    />
-                                                </div>
-                                                <div className="zoom">
-                                                    <Isvg src={searchIcon} />
-                                                </div>
-
-                                                {/* Redni broj i opis preko dna
-                                                    fotografije — po uzoru koji
-                                                    je klijent poslao. */}
-                                                {noviPrikaz ? (
-                                                    <>
-                                                        <span className="redni-broj">{idx + 1}</span>
-                                                        {item.description || item.name ? (
-                                                            <div className="natpis">
-                                                                {item.description || item.name}
-                                                            </div>
-                                                        ) : null}
-                                                    </>
-                                                ) : null}
-                                            </article>
+                        {/* ── iz iste kategorije ──────────────────────── */}
+                        {this.state.srodne && this.state.srodne.length ? (
+                            <div className="z-galerija__srodne">
+                                <h2 className="z-galerija__srodne-naslov">
+                                    {"Iz iste kategorije".translate(this.props.lang)}
+                                </h2>
+                                <Row className="articles">
+                                    {this.state.srodne.map((srodna, idx) => (
+                                        <Col lg="3" md="4" xs="6" key={idx}>
+                                            <Article
+                                                _id={srodna._id}
+                                                categoryName={Object.translate(srodna, "categoryName", this.props.lang)}
+                                                image={srodna.photos && srodna.photos[0] && srodna.photos[0].image}
+                                                name={Object.translate(srodna, "name", this.props.lang)}
+                                                shortDescription={Object.translate(srodna, "description", this.props.lang)}
+                                                alias={Object.translate(srodna, "alias", this.props.lang)}
+                                                userAlias={srodna.userAlias}
+                                                imagesCount={srodna.photosCount !== undefined ? srodna.photosCount : (srodna.photos && srodna.photos.length)}
+                                                location={srodna.location}
+                                                published={srodna.date}
+                                                homeArticle
+                                            />
                                         </Col>
-                                    );
-                                })}
-                        </Row>
+                                    ))}
+                                </Row>
+                            </div>
+                        ) : null}
                     </Container>
                 </section>
+
                 {content}
+
                 <section className="section-banners">
                     <Container>
                         <Row>
@@ -1021,18 +1201,15 @@ class DetailPage extends Component {
                                           (item, idx) => {
                                               return (
                                                   <a
+                                                      key={idx}
                                                       href={item.link}
                                                       target="_blank"
+                                                      rel="noopener noreferrer"
                                                       onClick={() =>
-                                                          this.props.bannerClick(
-                                                              item.link
-                                                          )
+                                                          this.props.bannerClick(item.link)
                                                       }
                                                   >
-                                                      <img
-                                                          src={item.image}
-                                                          className="banner"
-                                                      />
+                                                      <img src={item.image} className="banner" alt="" />
                                                   </a>
                                               );
                                           }

@@ -51,13 +51,16 @@ class CategoryPage extends Component {
         super(props);
         this.getSearchParams = this.getSearchParams.bind(this);
         this.generateSearchLink = this.generateSearchLink.bind(this);
+        this.alatnaTrakaRef = React.createRef();
 
         this.state = {
             ...props.initialData,
             categories: [],
             cities: [],
             displayStyle: 'grid',
-            showForms: false
+            showForms: false,
+            // Koji filter u alatnoj traci ima otvoren padajući panel.
+            otvoreniFilter: null
         };
     }
 
@@ -71,6 +74,9 @@ class CategoryPage extends Component {
     componentDidMount() {
         this.setState({showForms: false})
         window.scrollTo(0, 0);
+
+        document.addEventListener('mousedown', this.naKlikVanFiltera);
+        document.addEventListener('keydown', this.naTasterFiltera);
 
         let searchParams = this.getSearchParams();
         if (searchParams.search) {
@@ -139,6 +145,121 @@ class CategoryPage extends Component {
                 this.setState({showForms: true})
             }, 100)
         }
+    }
+
+    componentWillUnmount() {
+        document.removeEventListener('mousedown', this.naKlikVanFiltera);
+        document.removeEventListener('keydown', this.naTasterFiltera);
+    }
+
+    naKlikVanFiltera = (e) => {
+        if (this.state.otvoreniFilter && this.alatnaTrakaRef.current && !this.alatnaTrakaRef.current.contains(e.target)) {
+            this.setState({otvoreniFilter: null});
+        }
+    };
+
+    naTasterFiltera = (e) => {
+        if ((e.key === 'Escape' || e.keyCode === 27) && this.state.otvoreniFilter) {
+            this.setState({otvoreniFilter: null});
+        }
+    };
+
+    prebaciFilter = (ime) => {
+        this.setState((prev) => ({otvoreniFilter: prev.otvoreniFilter === ime ? null : ime}));
+    };
+
+    // Uklanja više parametara odjednom u JEDNOM upisu u istoriju — dva
+    // uzastopna `history.push` bi drugi računao iz zastarelih propova i
+    // poništio prvo brisanje (probano, `date-from` se vraćalo).
+    ukloniParametre = (imena) => {
+        let params = this.getSearchParams();
+        imena.forEach((ime) => { delete params[ime]; });
+
+        let paramsGroup = [];
+        for (let key in params) {
+            if (params.hasOwnProperty(key) && params[key]) {
+                paramsGroup.push(`${key}=${params[key]}`);
+            }
+        }
+        this.props[0].history.push(`${this.props[0].location.pathname}${paramsGroup.length ? '?' + paramsGroup.join('&') : ''}`);
+    };
+
+    kratakDatum(sekunde) {
+        if (!sekunde) return null;
+        const d = new Date(sekunde * 1000);
+        return `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.`;
+    }
+
+    oznakaDatuma(params) {
+        const od = this.kratakDatum(params['date-from']);
+        const doDatuma = this.kratakDatum(params['date-to']);
+        if (od && doDatuma) return `${od} – ${doDatuma}`;
+        if (od) return `${'od'.translate(this.props.lang)} ${od}`;
+        if (doDatuma) return `${'do'.translate(this.props.lang)} ${doDatuma}`;
+        return 'Datum'.translate(this.props.lang);
+    }
+
+    oznakaOrijentacije(params) {
+        const delovi = [];
+        if (params['orientation-portrait']) delovi.push('Portret'.translate(this.props.lang));
+        if (params['orientation-horizontal']) delovi.push('Horizontalna'.translate(this.props.lang));
+        return delovi.length ? delovi.join(', ') : 'Orjentacija'.translate(this.props.lang);
+    }
+
+    nazivKategorije(alias, categories) {
+        if (!alias) return null;
+        const nadjena = (categories || []).find((k) => Object.translate(k, 'alias', this.props.lang) === alias);
+        return nadjena ? Object.translate(nadjena, 'name', this.props.lang) : null;
+    }
+
+    // Primenjeni filteri kao spisak uklonjivih pilula — jedan izvor
+    // istine, koristi ga i traka i dugme „Poništi sve".
+    pilule(params, categories) {
+        const l = this.props.lang;
+        const spisak = [];
+
+        if (params.search) {
+            spisak.push({
+                tekst: `${'Pretraga'.translate(l)}: ${params.search}`,
+                ukloni: () => this.ukloniParametre(['search'])
+            });
+        }
+        if (params['date-from'] || params['date-to']) {
+            spisak.push({
+                tekst: `${'Datum'.translate(l)}: ${this.oznakaDatuma(params)}`,
+                ukloni: () => this.ukloniParametre(['date-from', 'date-to'])
+            });
+        }
+        if (params.city) {
+            spisak.push({tekst: params.city, ukloni: () => this.ukloniParametre(['city'])});
+        }
+        if (params.category) {
+            spisak.push({
+                tekst: this.nazivKategorije(params.category, categories) || params.category,
+                ukloni: () => this.ukloniParametre(['category'])
+            });
+        }
+        if (params['orientation-portrait']) {
+            spisak.push({tekst: 'Portret'.translate(l), ukloni: () => this.ukloniParametre(['orientation-portrait'])});
+        }
+        if (params['orientation-horizontal']) {
+            spisak.push({tekst: 'Horizontalna'.translate(l), ukloni: () => this.ukloniParametre(['orientation-horizontal'])});
+        }
+        if (params.keywords) {
+            params.keywords.split(',').forEach((rec, idx) => {
+                if (!rec) return;
+                spisak.push({
+                    tekst: rec,
+                    ukloni: () => {
+                        let keywords = params.keywords.split(',');
+                        keywords.splice(idx, 1);
+                        this.props[0].history.push(this.generateSearchLink('keywords', keywords.join(',')));
+                    }
+                });
+            });
+        }
+
+        return spisak;
     }
 
     getSearchParams() {
@@ -225,45 +346,247 @@ class CategoryPage extends Component {
             }
         }
 
+        /*
+         * Jedan naslov umesto tri. Poredak pokriva sve stare izvore naslova
+         * odjednom: stranu pretplate (posebna ruta kroz istu komponentu),
+         * kategoriju sa sopstvene rute (breadcrumb), kategoriju izabranu kroz
+         * filter, pa pretragu, pa podrazumevano.
+         *
+         * Broj pronađenih namerno NE stoji ovde: API vraća samo broj STRANA
+         * (`Math.ceil(totalCount / ipp)`, u `products/products.js`), ne broj
+         * stavki — a menjanje API odgovora je van ove izmene (raspored i
+         * veličine, ne funkcija).
+         */
+        let naslovStrane;
+        if (this.props[0].location.pathname.indexOf('/account/subscription') == 0) {
+            naslovStrane = 'Pretplata'.translate(this.props.lang);
+        } else if (this.state.category && this.state.category.breadcrumb) {
+            naslovStrane = this.state.category.name;
+        } else if (category) {
+            naslovStrane = Object.translate(category, 'name', this.props.lang);
+        } else if (params.search) {
+            naslovStrane = `${'Rezultati za'.translate(this.props.lang)}: ${params.search}`;
+        } else {
+            naslovStrane = 'Galerije'.translate(this.props.lang);
+        }
+
+        const primenjeneFiltere = this.pilule(params, categories);
 
         return (
             <div className="category-wrap">
                 {
                     this.state.userResolutins && this.state.userResolutins._id || this.props[0].location.pathname != '/account/subscription' ?
                         <>
-                            <div className="into-wrap">
+                            <div className="z-stranica-galerija__vrh">
                                 <Container>
-                                    <Row>
-                                        <Col lg="6">
-                                            <h1>{this.state.category && this.state.category.breadcrumb ? this.state.category.name : 'Pretražite galerije'.translate(this.props.lang)}</h1>
-                                            {/*<h2>57.000 {'fotografija u ponudi'.translate(this.props.lang)}</h2>*/}
-                                        </Col>
-                                        <Col lg={{size: 6}}>
-                                            <div className="search-wrap">
-                                                <Isvg src={picture}/>
-                                                <input type="text"
-                                                       placeholder={'Unesite pojam za pretragu'.translate(this.props.lang)}
-                                                       value={this.state.search}
-                                                       onChange={(e) => this.setState({search: e.target.value})}
-                                                       onKeyUp={(e) => {
-                                                           if (e.keyCode == 13) {
-                                                               e.preventDefault();
-                                                               this.props[0].history.push(this.props[0].location.pathname + this.generateSearchLink('search', encodeURIComponent(this.state.search)));
-                                                           }
-                                                       }}/>
-                                                <button className="button" onClick={() => {
-                                                    this.props[0].history.push(this.props[0].location.pathname + this.generateSearchLink('search', encodeURIComponent(this.state.search)));
-
-                                                }}><Isvg src={searchIcon}/> {'PRETRAŽI'.translate(this.props.lang)}
-                                                </button>
-                                            </div>
-                                            <a onClick={() => this.props.handleDetailSearch(true)}
-                                               className="detail-search">{'Napredna pretraga'.translate(this.props.lang)}</a>
-
-                                        </Col>
-                                    </Row>
-
+                                    <div className="z-stranica-galerija__naslov-red">
+                                        <h1 className="z-stranica-galerija__naslov">{naslovStrane}</h1>
+                                    </div>
                                 </Container>
+
+                                {/* Jedna alatna traka umesto tri naslova i bloka filtera
+                                    razvučenog preko dva reda. Traka se lepi ispod zaglavlja
+                                    pri skrolovanju (`position: sticky` u _category.scss) —
+                                    zaglavlje samo nije više fiksirano, pa traka zauzima
+                                    njegovo mesto na vrhu čim ono ode iz kadra. */}
+                                <div className="z-alatna-traka" ref={this.alatnaTrakaRef}>
+                                    <Container className="z-alatna-traka__sirina">
+                                        <div className="z-alatna-traka__pretraga">
+                                            <Isvg src={picture}/>
+                                            <input type="text"
+                                                   placeholder={'Unesite pojam za pretragu'.translate(this.props.lang)}
+                                                   value={this.state.search}
+                                                   onChange={(e) => this.setState({search: e.target.value})}
+                                                   onKeyUp={(e) => {
+                                                       if (e.keyCode == 13) {
+                                                           e.preventDefault();
+                                                           this.props[0].history.push(this.props[0].location.pathname + this.generateSearchLink('search', encodeURIComponent(this.state.search)));
+                                                       }
+                                                   }}/>
+                                            <button type="button" className="z-alatna-traka__pretrazi"
+                                                    aria-label={'Pretraži'.translate(this.props.lang)}
+                                                    onClick={() => {
+                                                        this.props[0].history.push(this.props[0].location.pathname + this.generateSearchLink('search', encodeURIComponent(this.state.search)));
+                                                    }}>
+                                                <Isvg src={searchIcon}/>
+                                            </button>
+                                        </div>
+
+                                        {/* Polja polazne pretrage (datum/grad/kategorija/orijentacija)
+                                            čekaju `showForms` — isto kao ranije: sprečava da polja
+                                            ostanu na starim vrednostima posle promene rute (zato se
+                                            gase na 100ms pa vraćaju u `componentDidUpdate`). */}
+                                        {this.state.showForms ?
+                                            <>
+                                                <div className="z-alatna-traka__filteri">
+                                                <div className="z-alatna-traka__filter-spisak">
+                                                    <div className="z-alatna-traka__filter-grupa">
+                                                        <button type="button"
+                                                                className={'z-alatna-traka__filter' + (params['date-from'] || params['date-to'] ? ' z-alatna-traka__filter--aktivan' : '')}
+                                                                aria-expanded={this.state.otvoreniFilter === 'datum'}
+                                                                onClick={() => this.prebaciFilter('datum')}>
+                                                            {this.oznakaDatuma(params)}
+                                                        </button>
+                                                        {this.state.otvoreniFilter === 'datum' ?
+                                                            <div className="z-alatna-traka__panel">
+                                                                <DatePicker value={params['date-from']}
+                                                                            onChange={(val) => {
+                                                                                this.props[0].history.push(this.generateSearchLink('date-from', val))
+                                                                            }}
+                                                                            placeholder={'OD'.translate(this.props.lang)}
+                                                                            label={'OD'.translate(this.props.lang)}/>
+                                                                <DatePicker value={params['date-to']}
+                                                                            onChange={(val) => {
+                                                                                let date = new Date(val * 1000);
+                                                                                date.setHours(23, 59, 59, 0);
+                                                                                this.props[0].history.push(this.generateSearchLink('date-to', date.getTime() / 1000))
+                                                                            }}
+                                                                            placeholder={'DO'.translate(this.props.lang)}
+                                                                            label={'DO'.translate(this.props.lang)}/>
+                                                            </div>
+                                                            : null}
+                                                    </div>
+
+                                                    <div className="z-alatna-traka__filter-grupa">
+                                                        <button type="button"
+                                                                className={'z-alatna-traka__filter' + (params.city ? ' z-alatna-traka__filter--aktivan' : '')}
+                                                                aria-expanded={this.state.otvoreniFilter === 'grad'}
+                                                                onClick={() => this.prebaciFilter('grad')}>
+                                                            {params.city || 'Grad'.translate(this.props.lang)}
+                                                        </button>
+                                                        {this.state.otvoreniFilter === 'grad' ?
+                                                            <div className="z-alatna-traka__panel">
+                                                                <Autotext
+                                                                    label={'Grad'.translate(this.props.lang)}
+                                                                    value={params['city'] ? params['city'] : ''}
+                                                                    suggestions={this.state.cities}
+                                                                    onChange={(val) => {
+                                                                        this.props[0].history.push(this.generateSearchLink('city', val))
+                                                                    }}/>
+                                                            </div>
+                                                            : null}
+                                                    </div>
+
+                                                    {this.props.categories && this.props.categories.length ?
+                                                        <div className="z-alatna-traka__filter-grupa">
+                                                            <button type="button"
+                                                                    className={'z-alatna-traka__filter' + (params.category ? ' z-alatna-traka__filter--aktivan' : '')}
+                                                                    aria-expanded={this.state.otvoreniFilter === 'kategorija'}
+                                                                    onClick={() => this.prebaciFilter('kategorija')}>
+                                                                {this.nazivKategorije(params.category, categories) || 'Kategorija'.translate(this.props.lang)}
+                                                            </button>
+                                                            {this.state.otvoreniFilter === 'kategorija' ?
+                                                                <div className="z-alatna-traka__panel">
+                                                                    <Select
+                                                                        label={'Kategorija'.translate(this.props.lang)}
+                                                                        value={params.category}
+                                                                        onChange={(val) => {
+                                                                            this.props[0].history.push(this.generateSearchLink('category', val));
+                                                                            this.setState({otvoreniFilter: null});
+                                                                        }}>
+                                                                        {
+                                                                            categories.map((item, idx) => {
+                                                                                return (
+                                                                                    <option key={idx}
+                                                                                            value={Object.translate(item, 'alias', this.props.lang)}>{Object.translate(item, 'name', this.props.lang)}</option>
+                                                                                )
+                                                                            })
+                                                                        }
+                                                                    </Select>
+                                                                </div>
+                                                                : null}
+                                                        </div>
+                                                        : null}
+
+                                                    <div className="z-alatna-traka__filter-grupa">
+                                                        <button type="button"
+                                                                className={'z-alatna-traka__filter' + ((params['orientation-portrait'] || params['orientation-horizontal']) ? ' z-alatna-traka__filter--aktivan' : '')}
+                                                                aria-expanded={this.state.otvoreniFilter === 'orijentacija'}
+                                                                onClick={() => this.prebaciFilter('orijentacija')}>
+                                                            {this.oznakaOrijentacije(params)}
+                                                        </button>
+                                                        {this.state.otvoreniFilter === 'orijentacija' ?
+                                                            <div className="z-alatna-traka__panel z-alatna-traka__panel--usko">
+                                                                <Check
+                                                                    value={params['orientation-portrait']}
+                                                                    onChange={(val) => {
+                                                                        this.props[0].history.push(this.generateSearchLink('orientation-portrait', val))
+                                                                    }}
+                                                                    label={'Portret'.translate(this.props.lang)}></Check>
+                                                                <Check
+                                                                    value={params['orientation-horizontal']}
+                                                                    onChange={(val) => {
+                                                                        this.props[0].history.push(this.generateSearchLink('orientation-horizontal', val))
+                                                                    }}
+                                                                    label={'Horizontalna'.translate(this.props.lang)}></Check>
+                                                            </div>
+                                                            : null}
+                                                    </div>
+                                                </div>
+
+                                                    <button type="button" className="z-alatna-traka__vise"
+                                                            onClick={() => this.props.handleDetailSearch(true)}>
+                                                        <Isvg src={filterIcon}/>
+                                                        {'Više filtera'.translate(this.props.lang)}
+                                                    </button>
+                                                </div>
+
+                                                <div className="z-alatna-traka__desno">
+                                                    <div className="z-alatna-traka__prekidac">
+                                                        <Link to={this.props[0].location.pathname + this.generateSearchLink('view', null)}
+                                                              className={'z-alatna-traka__prekidac-dugme' + (params.view !== 'photos' ? ' z-alatna-traka__prekidac-dugme--aktivan' : '')}>
+                                                            {'Galerije'.translate(this.props.lang)}
+                                                        </Link>
+                                                        <Link to={this.props[0].location.pathname + this.generateSearchLink('view', 'photos')}
+                                                              className={'z-alatna-traka__prekidac-dugme' + (params.view === 'photos' ? ' z-alatna-traka__prekidac-dugme--aktivan' : '')}>
+                                                            {'Fotografije'.translate(this.props.lang)}
+                                                        </Link>
+                                                    </div>
+
+                                                    <div className="z-alatna-traka__prikazi">
+                                                        <button type="button"
+                                                                onClick={() => this.setState({displayStyle: 'grid'})}
+                                                                aria-label={'Mreža'.translate(this.props.lang)}
+                                                                className={this.state.displayStyle == 'grid' ? 'active' : ''}>
+                                                            <Isvg src={grid}/>
+                                                        </button>
+                                                        <button type="button"
+                                                                onClick={() => this.setState({displayStyle: 'list'})}
+                                                                aria-label={'Spisak'.translate(this.props.lang)}
+                                                                className={this.state.displayStyle == 'list' ? 'active' : ''}>
+                                                            <Isvg src={list}/>
+                                                        </button>
+                                                        <button type="button"
+                                                                onClick={() => this.setState({displayStyle: 'image'})}
+                                                                aria-label={'Fotografije, jedna do druge'.translate(this.props.lang)}
+                                                                className={this.state.displayStyle == 'image' ? 'active' : ''}>
+                                                            <Isvg src={grid}/>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </>
+                                            : null}
+                                    </Container>
+                                </div>
+
+                                {/* Primenjeni filteri kao uklonjive pilule — samo kad ih ima. */}
+                                {this.state.showForms && primenjeneFiltere.length ?
+                                    <Container>
+                                        <div className="z-primenjeni-filteri">
+                                            {primenjeneFiltere.map((f, idx) => (
+                                                <button key={idx} type="button" className="z-primenjeni-filteri__pilula"
+                                                        onClick={f.ukloni}>
+                                                    {f.tekst}
+                                                    <Isvg src={keywordX}/>
+                                                </button>
+                                            ))}
+                                            <button type="button" className="z-primenjeni-filteri__ponisti"
+                                                    onClick={() => this.props[0].history.push(this.props[0].location.pathname)}>
+                                                {'Poništi sve'.translate(this.props.lang)}
+                                            </button>
+                                        </div>
+                                    </Container>
+                                    : null}
                             </div>
 
 
@@ -273,191 +596,7 @@ class CategoryPage extends Component {
                                         this.state.showForms ?
                                             (
                                                 <Row>
-                                                    {
-                                                        true || params.detailSearch ?
-                                                            (<Col lg="12" className="filters">
-                                                                <h2>{'Filteri'.translate(this.props.lang)}</h2>
-                                                                <Row>
-                                                                    <Col lg="3">
-                                                                        <div className="date-wrap">
-                                                                            <DatePicker value={params['date-from']}
-                                                                                        onChange={(val) => {
-                                                                                            this.props[0].history.push(this.generateSearchLink('date-from', val))
-                                                                                        }}
-                                                                                        placeholder={'OD'.translate(this.props.lang)}
-                                                                                        label={'Datum fotografisanja'.translate(this.props.lang)}/>
-                                                                            <DatePicker value={params['date-to']}
-                                                                                        onChange={(val) => {
-                                                                                            let date = new Date(val * 1000);
-                                                                                            date.setHours(23, 59, 59, 0);
-                                                                                            this.props[0].history.push(this.generateSearchLink('date-to', date.getTime() / 1000))
-                                                                                        }}
-                                                                                        placeholder={'DO'.translate(this.props.lang)}/>
-
-                                                                        </div>
-                                                                    </Col>
-                                                                    <Col lg="9">
-                                                                        <Row>
-                                                                            <Col lg="6">
-                                                                                {params.keywords ?
-                                                                                    <div className="keywords">
-                                                                                        <label>{'Ključne riječi'.translate(this.props.lang)}</label>
-                                                                                        {
-                                                                                            params.keywords && params.keywords.split(',').map((item, idx) => {
-                                                                                                return (
-                                                                                                    <div> {item}
-                                                                                                        <button
-                                                                                                            onClick={() => {
-                                                                                                                let keywords = params.keywords.split(',');
-                                                                                                                keywords.splice(idx, 1);
-                                                                                                                this.props[0].history.push(this.generateSearchLink('keywords', keywords.join(',')))
-                                                                                                            }}><Isvg
-                                                                                                            src={keywordX}/>
-                                                                                                        </button>
-                                                                                                    </div>
-
-                                                                                                )
-                                                                                            })
-                                                                                        }
-
-                                                                                    </div>
-                                                                                    :
-                                                                                    null
-                                                                                }
-
-                                                                                <Autotext
-                                                                                    label={'Grad'.translate(this.props.lang)}
-                                                                                    value={params['city'] ? params['city'] : ''}
-                                                                                    suggestions={this.state.cities}
-                                                                                    onChange={(val) => {
-                                                                                        this.props[0].history.push(this.generateSearchLink('city', val))
-                                                                                    }}/>
-
-
-                                                                            </Col>
-                                                                            <Col lg="6">
-                                                                                {this.props.categories && this.props.categories.length ?
-                                                                                    <Select
-                                                                                        label={'Kategorija'.translate(this.props.lang)}
-                                                                                        value={params.category}
-                                                                                        onChange={(val) => {
-                                                                                            this.props[0].history.push(this.generateSearchLink('category', val))
-                                                                                        }}>
-                                                                                        {
-                                                                                            categories.map((item, idx) => {
-                                                                                                return (
-                                                                                                    <option
-                                                                                                        value={Object.translate(item, 'alias', this.props.lang)}>{Object.translate(item, 'name', this.props.lang)}</option>
-                                                                                                )
-                                                                                            })
-                                                                                        }
-
-
-                                                                                    </Select>
-                                                                                    :
-                                                                                    null
-                                                                                }
-                                                                            </Col>
-
-                                                                            <Col lg="12">
-                                                                                <div className="orientation">
-                                                                                    <label>{'Orjentacija fotografije'.translate(this.props.lang)}</label>
-                                                                                    <Check
-                                                                                        value={params['orientation-portrait']}
-                                                                                        onChange={(val) => {
-                                                                                            this.props[0].history.push(this.generateSearchLink('orientation-portrait', val))
-                                                                                        }}
-                                                                                        label={'Portret'.translate(this.props.lang)}></Check>
-                                                                                    <Check
-                                                                                        value={params['orientation-horizontal']}
-                                                                                        onChange={(val) => {
-                                                                                            this.props[0].history.push(this.generateSearchLink('orientation-horizontal', val))
-                                                                                        }}
-                                                                                        label={'Horizontalna'.translate(this.props.lang)}></Check>
-                                                                                </div>
-                                                                            </Col>
-
-
-                                                                        </Row>
-                                                                    </Col>
-
-                                                                </Row>
-
-                                                            </Col>)
-                                                            :
-                                                            null
-                                                    }
-                                                    <Col lg={params.detailSearch ? '12' : '12'} className="area">
-                                                        <Row className="top">
-                                                            <Col lg="5">
-                                                                {this.props[0].location.pathname.indexOf('/account/subscription') == 0 ?
-                                                                    <h2>{'Pretplata'.translate(this.props.lang)}</h2>
-
-                                                                    :
-                                                                    category ?
-                                                                        <h2>{Object.translate(category, 'name', this.props.lang)}</h2>
-
-                                                                        :
-                                                                        <h2>{'Pregled svih galerija'.translate(this.props.lang)}</h2>
-                                                                }
-                                                            </Col>
-                                                            <Col lg="7" className="sort">
-                                                                {/*
-                                                                  * Izbor da li se rezultati prikazuju kao galerije
-                                                                  * ili kao pojedinačne fotografije.
-                                                                  */}
-                                                                <ul className="view-switch">
-                                                                    <li className={params.view !== 'photos' ? 'active' : null}>
-                                                                        <Link to={this.props[0].location.pathname + this.generateSearchLink('view', null)}>
-                                                                            <button>{'Galerije'.translate(this.props.lang)}</button>
-                                                                        </Link>
-                                                                    </li>
-                                                                    <li className={params.view === 'photos' ? 'active' : null}>
-                                                                        <Link to={this.props[0].location.pathname + this.generateSearchLink('view', 'photos')}>
-                                                                            <button>{'Fotografije'.translate(this.props.lang)}</button>
-                                                                        </Link>
-                                                                    </li>
-                                                                </ul>
-
-                                                                <span>{'Broj stavki po stranici:'.translate(this.props.lang)}</span>
-                                                                <ul>
-                                                                    {/* 36 je podrazumevani prikaz — koliko je snimaka imao film.
-                                                                        Klijent je tražio da ostanu samo 36, 96 i 200. */}
-                                                                    <li className={!params.ipp ? "active" : null}><Link
-                                                                        to={this.props[0].location.pathname + this.generateSearchLink('ipp', null)}>
-                                                                        <button>36</button>
-                                                                    </Link></li>
-                                                                    <li className={params.ipp === '96' ? "active" : null}>
-                                                                        <Link
-                                                                            to={this.props[0].location.pathname + this.generateSearchLink('ipp', '96')}>
-                                                                            <button>96</button>
-                                                                        </Link></li>
-                                                                    <li className={params.ipp === '200' ? "active" : null}>
-                                                                        <Link
-                                                                            to={this.props[0].location.pathname + this.generateSearchLink('ipp', '200')}>
-                                                                            <button>200</button>
-                                                                        </Link></li>
-                                                                </ul>
-
-                                                                <div className="display-style">
-                                                                    <button
-                                                                        onClick={() => this.setState({displayStyle: 'grid'})}
-                                                                        className={this.state.displayStyle == 'grid' ? 'active' : ''}>
-                                                                        <Isvg src={grid}/></button>
-                                                                    <button
-                                                                        onClick={() => this.setState({displayStyle: 'list'})}
-                                                                        className={this.state.displayStyle == 'list' ? 'active' : ''}>
-                                                                        <Isvg src={list}/></button>
-                                                                    <button
-                                                                        onClick={() => this.setState({displayStyle: 'image'})}
-                                                                        className={this.state.displayStyle == 'image' ? 'active' : ''}>
-                                                                        <Isvg src={grid}/></button>
-
-                                                                </div>
-
-                                                            </Col>
-
-                                                        </Row>
+                                                    <Col lg="12" className="area">
 
 
                                                         {/*
@@ -530,26 +669,45 @@ class CategoryPage extends Component {
 
                                                         <Row>
                                                             <Col lg="12">
-                                                                <ReactPaginate
-                                                                    previousLabel={''}
-                                                                    nextLabel={''}
-                                                                    breakLabel={'...'}
-                                                                    breakClassName={'break-me'}
-                                                                    pageCount={this.state.total}
-                                                                    marginPagesDisplayed={1}
-                                                                    pageRangeDisplayed={2}
-                                                                    onPageChange={(page) => {
-                                                                        this.props[0].history.push(this.generateSearchLink('page', page.selected));
-                                                                        window.scrollTo(0, 0);
-                                                                    }}
-                                                                    containerClassName={'pagination'}
-                                                                    subContainerClassName={'pages pagination'}
-                                                                    activeClassName={'active'}
-                                                                    hrefBuilder={(page) => {
-                                                                        return this.generateSearchLink('page', page)
-                                                                    }}
-                                                                />
+                                                                {/* Broj po strani je sišao ovde, uz podelu na strane —
+                                                                    sitno, van alatne trake koja je sad jedan red. */}
+                                                                <div className="z-podela-dno">
+                                                                    <ReactPaginate
+                                                                        previousLabel={''}
+                                                                        nextLabel={''}
+                                                                        breakLabel={'...'}
+                                                                        breakClassName={'break-me'}
+                                                                        pageCount={this.state.total}
+                                                                        marginPagesDisplayed={1}
+                                                                        pageRangeDisplayed={2}
+                                                                        onPageChange={(page) => {
+                                                                            this.props[0].history.push(this.generateSearchLink('page', page.selected));
+                                                                            window.scrollTo(0, 0);
+                                                                        }}
+                                                                        containerClassName={'pagination'}
+                                                                        subContainerClassName={'pages pagination'}
+                                                                        activeClassName={'active'}
+                                                                        hrefBuilder={(page) => {
+                                                                            return this.generateSearchLink('page', page)
+                                                                        }}
+                                                                    />
 
+                                                                    <ul className="z-broj-po-strani">
+                                                                        <li>
+                                                                            <span>{'Po strani:'.translate(this.props.lang)}</span>
+                                                                        </li>
+                                                                        {/* 36 je podrazumevani prikaz — koliko je snimaka imao film. */}
+                                                                        <li className={!params.ipp ? 'z-broj-po-strani__aktivan' : ''}>
+                                                                            <Link to={this.props[0].location.pathname + this.generateSearchLink('ipp', null)}>36</Link>
+                                                                        </li>
+                                                                        <li className={params.ipp === '96' ? 'z-broj-po-strani__aktivan' : ''}>
+                                                                            <Link to={this.props[0].location.pathname + this.generateSearchLink('ipp', '96')}>96</Link>
+                                                                        </li>
+                                                                        <li className={params.ipp === '200' ? 'z-broj-po-strani__aktivan' : ''}>
+                                                                            <Link to={this.props[0].location.pathname + this.generateSearchLink('ipp', '200')}>200</Link>
+                                                                        </li>
+                                                                    </ul>
+                                                                </div>
                                                             </Col>
 
                                                         </Row>

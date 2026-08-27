@@ -35,3 +35,6 @@ migration/__pycache__/
 
 # Wrangler lokalni kes
 .wrangler/
+
+# Graphify — graf projekta, pravi se lokalno (`/graphify .`)
+graphify-out/

@@ -6,13 +6,34 @@ body {
   width: 100vw;
   overflow-x: hidden;
   overflow-y: auto;
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--pismo-tekst);
   background-color: $white;
 }
 
 
-html, body, h1, h2, h3, h4, h5, h6, p, a, span, div {
-  font-family: 'Poppins', sans-serif;
+/*
+ * Osnovno pismo za ceo sajt.
+ *
+ * Ranije je ovde bio zakucan 'Poppins' i tiho je pobeđivao svaki token —
+ * svaka strana redizajna bi ostala u Poppinsu bez obzira na temu. Sada je
+ * podeljeno na dvoje: naslovi uzimaju svoje pismo, sve ostalo pismo teksta.
+ *
+ * Pod temom „trenutni" oba tokena su i dalje 'Poppins', pa se zatečeni sajt
+ * ne menja ni za slovo. Pod temama A/B/C oba su Figtree — pravac „tamna
+ * traka" vodi ceo sajt jednim pismom.
+ *
+ * Trećeg pisma (`--pismo-podaci`) ovde namerno NEMA: među ovim golim
+ * elementima nijedan ne nosi podatke, a `code`/`pre` bi pod temom „trenutni"
+ * prešli iz podrazumevanog monospejsa u Poppins — dakle promena zatečenog
+ * izgleda. Pismo za podatke se zadaje tamo gde podaci stvarno stoje
+ * (kataloški broj, datum, rezolucija) — u `_komponente.scss`.
+ */
+html, body, p, a, span, div {
+  font-family: var(--pismo-tekst);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--pismo-naslov);
 }
 
 
@@ -46,12 +67,42 @@ button {
 
 }
 
-a {
+/* ČETVRTA GOLA ZAMKA — bila je `a { text-decoration: none !important; }`.
+   Gasila je podvlačenje na celom sajtu, pa je u pravcu „tamna traka" veza
+   ostajala bez ijednog znaka da je veza (boja joj je ista kao tekstu).
+
+   Sada je ograničena na temu „trenutni", gde čuva zatečeni izgled. Pod
+   temama A/B/C `!important` više ne postoji, pa svako pravilo sa klasom —
+   uključujući mixine `z-veza` — normalno pobeđuje.
+
+   `a:hover` mora izričito: Bootstrap podvlači svaku vezu na hover, a to
+   pravilo u bundle-u stoji PRE ovog, pa ga ovo gasi po redosledu. */
+[data-tema="trenutni"] a {
   text-decoration: none !important;
+}
+
+a {
+  text-decoration: none;
   cursor: pointer;
 }
 
-header {
+a:hover {
+  text-decoration: none;
+}
+
+/*
+ * Zaglavlje sajta.
+ *
+ * Cilja se po klasi, ne po elementu: golo `header` je hvatalo svaki <header>
+ * na sajtu i lepilo ga za vrh prozora sa `position: fixed`.
+ *
+ * `:where()` je namerno — unutar njega selektor NE nosi specifičnost, pa
+ * `header:where(.zaglavlje-sajta)` vredi tačno koliko i staro golo `header`.
+ * Da je napisano `header.zaglavlje-sajta`, sva ugnežđena pravila iz ovog
+ * bloka bi porasla za jedan razred i počela da nadjačavaju `header .traka-vrh`
+ * iz `_naslovnaB.scss` i slična. Ovako se kaskada ne pomera ni za dlaku.
+ */
+header:where(.zaglavlje-sajta) {
   position: fixed;
   top: 0;
   left: 0;
@@ -148,7 +199,7 @@ header {
           font-size: 14px;
           color: $black;
 
-          border-right: 1px solid #6D7587;
+          border-right: 1px solid var(--boja-tekst-tiho);
 
           &:last-child {
             border-right: 0;
@@ -560,7 +611,7 @@ header {
     &.white-logo {
       svg {
         path {
-          @media only screen and (min-width: 1200px) {
+          @include desktop-i-vise {
             fill: $white;
           }
         }
@@ -581,7 +632,7 @@ header {
 
 
     .help {
-      color: #7B7B93;
+      color: var(--boja-tekst-tiho);
       font-size: 14px;
       font-weight: $regular;
       margin-right: 15px;
@@ -591,7 +642,7 @@ header {
     }
 
     .contact {
-      color: #7B7B93;
+      color: var(--boja-tekst-tiho);
       font-size: 14px;
       font-weight: $regular;
       margin-right: 15px;
@@ -691,13 +742,13 @@ header {
     }
 
     .login {
-      color: #7B7B93;
+      color: var(--boja-tekst-tiho);
       font-size: 16px;
       font-weight: $regular;
       padding: 0 15px;
 
       a {
-        color: #7B7B93;
+        color: var(--boja-tekst-tiho);
       }
 
       @include mobile {
@@ -739,7 +790,7 @@ header {
 
     .cart {
       button {
-        color: $blue;
+        color: var(--boja-veza);
         font-size: 16px;
         font-weight: $medium;
         padding: 9px 19px;
@@ -1326,7 +1377,8 @@ header {
 }
 
 
-footer {
+/* Podnožje sajta — isti razlog i isti postupak kao kod zaglavlja gore. */
+footer:where(.podnozje-sajta) {
   padding-top: 62px;
   position: relative;
   margin-bottom: 20px;
@@ -1583,7 +1635,7 @@ footer {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        color: #7B7B93;
+        color: var(--boja-tekst-tiho);
         font-size: 14px;
         order: 3;
 
@@ -1594,7 +1646,7 @@ footer {
 
       p {
         font-size: 12px;
-        color: #7B7B93;
+        color: var(--boja-tekst-tiho);
         font-weight: $regular;
         margin-bottom: 8px;
         position: relative;
@@ -1684,7 +1736,7 @@ footer {
   }
 
   .list-view-article {
-    @media only screen and (min-width: 768px) {
+    @include tablet-i-vise {
 
       display: flex;
       padding: 10px;
@@ -1787,7 +1839,7 @@ footer {
     }
 
     .price {
-      color: $blue;
+      color: var(--boja-tekst);
       font-weight: $semiBold;
       font-size: 22px;
     }
@@ -1942,7 +1994,7 @@ footer {
       }
 
       .category {
-        color: $darkBlue;
+        color: var(--boja-tekst);
         text-transform: uppercase;
       }
 
@@ -1998,7 +2050,7 @@ footer {
       outline: none;
       font-size: 14px;
       font-weight: $semiBold;
-      color: $darkBlue;
+      color: var(--boja-veza);
       margin-top: 10px;
       transition: background-color 0.3s;
 
@@ -2652,7 +2704,7 @@ footer {
 
     /* Handle */
     ::-webkit-scrollbar-thumb {
-      background: #6D7587;
+      background: var(--boja-tekst-tiho);
       border-radius: 20px;
     }
 
@@ -2758,14 +2810,14 @@ footer {
       left: 25px;
 
       p {
-        color: #6D7587;
+        color: var(--boja-tekst-tiho);
         font-size: 16px;
         font-weight: 400;
         margin-bottom: 0;
         margin-left: 10px;
 
         span {
-          color: $darkBlue;
+          color: var(--boja-tekst);
         }
       }
     }
@@ -2910,14 +2962,14 @@ footer {
       left: 25px;
 
       p {
-        color: #6D7587;
+        color: var(--boja-tekst-tiho);
         font-size: 16px;
         font-weight: 400;
         margin-bottom: 0;
         margin-left: 10px;
 
         span {
-          color: $darkBlue;
+          color: var(--boja-tekst);
         }
       }
     }
@@ -2971,7 +3023,7 @@ footer {
     }
 
     .checkbox-label {
-      color: #7B7B93;
+      color: var(--boja-tekst-tiho);
       font-size: 14px;
       font-weight: $light;
       @include mobile {
@@ -3037,7 +3089,7 @@ footer {
   z-index: 999999;
   width: 400px;
 
-  @media only screen and (max-width: 768px) {
+  @include mobile {
     width: 90%;
     margin-left: 5%;
     top: 0;
@@ -3131,7 +3183,7 @@ footer {
       margin-bottom: 28px;
 
       label {
-        color: #6D7587;
+        color: var(--boja-tekst-tiho);
         font-size: 16px;
         font-weight: $medium;
         margin-bottom: 9px;
@@ -3307,7 +3359,7 @@ footer {
       margin-bottom: 28px;
 
       label {
-        color: #6D7587;
+        color: var(--boja-tekst-tiho);
         font-size: 16px;
         font-weight: $medium;
         margin-bottom: 9px;
@@ -3498,7 +3550,7 @@ footer {
           margin-bottom: 0;
 
           &:nth-child(2) {
-            background-color: #7B7B93;
+            background-color: var(--boja-tekst-tiho);
           }
 
           &:last-child {
@@ -3527,7 +3579,7 @@ footer {
       margin-bottom: 28px;
 
       label {
-        color: #6D7587;
+        color: var(--boja-tekst-tiho);
         font-size: 16px;
         font-weight: $medium;
         margin-bottom: 9px;
@@ -3613,7 +3665,7 @@ footer {
       flex-wrap: wrap;
 
       > label {
-        color: #6D7587;
+        color: var(--boja-tekst-tiho);
         font-size: 16px;
         font-weight: $medium;
         margin-bottom: 9px;
@@ -3725,7 +3777,7 @@ footer {
       margin-bottom: 28px;
 
       label {
-        color: #6D7587;
+        color: var(--boja-tekst-tiho);
         font-size: 16px;
         font-weight: $medium;
         margin-bottom: 9px;
@@ -3746,7 +3798,7 @@ footer {
       margin-bottom: 28px;
 
       label {
-        color: #6D7587;
+        color: var(--boja-tekst-tiho);
         font-size: 16px;
         font-weight: $medium;
         margin-bottom: 9px;
@@ -3778,7 +3830,7 @@ footer {
       margin-bottom: 28px;
 
       label {
-        color: #6D7587;
+        color: var(--boja-tekst-tiho);
         font-size: 16px;
         font-weight: $medium;
         margin-bottom: 9px;
@@ -3825,7 +3877,7 @@ footer {
       label {
         font-size: 16px;
         font-weight: $medium;
-        color: #6D7587;
+        color: var(--boja-tekst-tiho);
         margin-bottom: 9px;
 
       }
@@ -3908,7 +3960,7 @@ footer {
         font-size: 14px;
         font-weight: $semiBold;
         margin-bottom: 0;
-        color: $blue;
+        color: var(--boja-tekst);
 
 
       }
@@ -4021,7 +4073,7 @@ footer {
 
   a {
     font-size: 18px;
-    color: $blue;
+    @include z-veza;
   }
 }
 

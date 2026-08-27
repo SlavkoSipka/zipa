@@ -10,6 +10,48 @@ const fetch = require('node-fetch')
 
 const assets = require(process.env.RAZZLE_ASSETS_MANIFEST);
 
+/*
+ * PODEŠAVANJA SAJTA SE DOVLAČE NA SERVERU
+ *
+ * Ranije su stizala tek na klijentu, pa je server iscrtavao naslovnu bez
+ * njih: `homePage.js` bi dobio `undefined` i vratio „trenutni", a čim bi
+ * podešavanja stigla strana bi skočila na izabrani predlog. Posetilac je
+ * video treptaj, a pretraživač je dobijao pogrešnu naslovnu — u izvoru
+ * strane je stajao zatečeni izgled, ne onaj koji je klijent izabrao.
+ *
+ * Sada se podešavanja dovlače ovde i idu i u iscrtavanje i u početni HTML.
+ *
+ * Keš je kratak i u procesu: podešavanja se menjaju retko, a bez njega bi
+ * svaka poseta bilo kojoj strani dodala jedan poziv ka API-ju. Greška se ne
+ * propagira — ako API ne odgovori, ostaje poslednja poznata vrednost, a ako
+ * je nema, prazan objekat i strana radi kao pre.
+ */
+const { API_ENDPOINT } = require('./constants');
+
+const KES_TRAJANJE = 60 * 1000;
+let kesPodesavanja = { kada: 0, vrednost: {} };
+
+async function dovuciPodesavanja() {
+  const sada = Date.now();
+  if (kesPodesavanja.kada && sada - kesPodesavanja.kada < KES_TRAJANJE) {
+    return kesPodesavanja.vrednost;
+  }
+
+  try {
+    const odgovor = await fetch(`${API_ENDPOINT}/settings`, {
+      method: 'GET',
+      headers: { 'content-type': 'application/json' },
+    });
+    const vrednost = await odgovor.json();
+    kesPodesavanja = { kada: sada, vrednost: vrednost || {} };
+  } catch (e) {
+    console.error('[podesavanja] ' + (e && e.message));
+    kesPodesavanja.kada = sada;   // ne pokušavaj ponovo pri svakom zahtevu
+  }
+
+  return kesPodesavanja.vrednost;
+}
+
 async function seoFetch(lang, url) {
   console.log(lang, url);
   return {};
@@ -89,10 +131,13 @@ server
 
 
 
+    // Podešavanja idu u isto iscrtavanje, pa server odmah crta pravu naslovnu.
+    const podesavanja = await dovuciPodesavanja();
+
     let metaTags = generateSeoTags ? generateSeoTags(initialData) : { title: '', 'og:title': '' };
     const markup = renderToString(
       <StaticRouter context={context} location={req.url}>
-        <App metaTags={metaTags}  initialData={initialData} />
+        <App metaTags={metaTags} initialData={initialData} podesavanja={podesavanja} />
       </StaticRouter>
     );
 
@@ -111,6 +156,19 @@ server
         <meta name="color-scheme" content="only">
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <meta charset="utf-8" />
+
+        <!-- Podesavanja sajta stizu SA SERVERA, pre bundla. App.js iz njih
+             puni pocetno stanje, pa se prvi prikaz na klijentu poklapa sa
+             onim koji je server vec iscrtao — bez treptaja i bez razlike
+             pri hidraciji. -->
+        <script>window.__PODESAVANJA__ = ${JSON.stringify(podesavanja).replace(/</g, '\\u003c')};</script>
+
+        <!-- Tema izgleda se postavlja PRE prvog iscrtavanja, iz istog
+             podesavanja kojim se bira naslovna. Rezerva je pamcenje
+             pregledaca, pa zatim „trenutni“ — zateceni izgled, bezbedan
+             pocetak ako podesavanja nisu stigla. -->
+        <script>(function(){try{var p=window.__PODESAVANJA__||{};var t=p.homepageLayout||localStorage.getItem('tema');if(['a','b','c','trenutni'].indexOf(t)===-1)t='trenutni';document.documentElement.setAttribute('data-tema',t);}catch(e){document.documentElement.setAttribute('data-tema','trenutni');}})();</script>
+
         <title>${metaTags.title && metaTags.title}</title>
         <meta name="description" content='${metaTags.description && metaTags.description}' />
       <meta property="og:type"               content="website" />
@@ -119,6 +177,19 @@ server
       <meta property="og:image"              content="${metaTags['og:image'] && metaTags['og:image']}" />
        
         <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <!-- Pisma se učitavaju iz zaglavlja, ne kroz @import u CSS-u koji
+             blokira prikaz.
+
+             Figtree nosi pravac „tamna traka" — naslove, tekst i podatke,
+             u težinama 400/500/600. Poppins ostaje dok god tema „trenutni"
+             zavisi od njega.
+
+             Archivo Narrow, Source Sans 3 i IBM Plex Mono su izbačeni sa
+             pravcem 1 — nijedna font-family ih više ne pominje. -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400..700&family=Poppins:wght@300;400;500;600;700&display=swap">
         ${
         assets.client.css
           ? `<link rel="stylesheet" href="${assets.client.css}">`

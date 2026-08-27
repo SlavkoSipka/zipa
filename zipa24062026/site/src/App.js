@@ -155,6 +155,23 @@ class App extends Component {
             window.googleMapsCallback = this.googleMapsCallback;
         }
 
+        /*
+         * Podešavanja ulaze u POČETNO stanje, ne posle dovlačenja.
+         *
+         * Na serveru stižu kao prop (`server.js` ih dovuče pre iscrtavanja),
+         * a u pregledaču iz `window.__PODESAVANJA__`, koji server upiše u
+         * početni HTML. Zato prvi prikaz na klijentu izgleda isto kao onaj
+         * koji je server već iscrtao — nema treptaja sa „trenutni" na
+         * izabrani predlog, i nema razlike pri hidraciji.
+         *
+         * `/settings` se i dalje dovlači u `componentDidMount` — to samo
+         * osvežava vrednost ako se u međuvremenu promenila.
+         */
+        const pocetnaPodesavanja =
+            (typeof window !== 'undefined' && window.__PODESAVANJA__)
+            || props.podesavanja
+            || {};
+
         this.state = {
             banners: [],
             lang: 'ba',
@@ -164,7 +181,7 @@ class App extends Component {
             uData: null,
             productAddedToCart: null,
             infoMessages: {},
-            settings: {}
+            settings: pocetnaPodesavanja
 
         };
     }
@@ -238,6 +255,46 @@ class App extends Component {
         })
     }
 
+    /*
+     * Tema izgleda na <html data-tema="…">.
+     *
+     * Izvor je isti kao za izgled naslovne — `settings.homepageLayout`. Pošto
+     * podešavanja stižu tek posle prvog iscrtavanja, izbor se pamti u
+     * pregledaču i primenjuje odmah pri učitavanju (vidi i kratku skriptu u
+     * zaglavlju u `server.js`), pa nema treptaja između stare i nove palete.
+     *
+     * Vrednost „trenutni" nije izostanak teme nego zatečeni izgled — i za nju
+     * se atribut postavlja, jer `_tokens.scss` pod njom vraća stare vrednosti.
+     */
+    postaviTemu = () => {
+        if (typeof document === 'undefined') return;
+
+        const podesavanja = this.state.settings || {};
+        let izgled = podesavanja.homepageLayout || 'trenutni';
+
+        // Ista kapija kao u `views/homePage.js`: dok traje pretpregled, novi
+        // izgled — pa i njegove boje — vidi samo administrator. Bez ovoga bi
+        // posetilac dobio stari raspored u novoj paleti.
+        if (izgled !== 'trenutni' && podesavanja.homepageLayoutPreview) {
+            const u = this.state.uData;
+            const jesamAdmin = u && u.permissions && u.permissions.indexOf('*') !== -1;
+            if (!jesamAdmin) izgled = 'trenutni';
+        }
+
+        const tema = ['a', 'b', 'c', 'trenutni'].indexOf(izgled) !== -1 ? izgled : 'trenutni';
+
+        try { localStorage.setItem('tema', tema); } catch (e) { /* privatni režim */ }
+
+        // Na strani sa sistemom stilova preklopnik tema je smisao te strane, pa
+        // tamo ona odlučuje šta se vidi. Pamćenje je iznad ovoga već upisano,
+        // pa se po odlasku sa nje vraća prava tema iz podešavanja.
+        if (window.location && window.location.pathname === '/stilovi') return;
+
+        if (document.documentElement.getAttribute('data-tema') !== tema) {
+            document.documentElement.setAttribute('data-tema', tema);
+        }
+    }
+
     componentDidMount() {
         // Vraćamo jezik koji je posetilac ranije izabrao.
         try {
@@ -275,6 +332,38 @@ class App extends Component {
                 photographers: result
             })
         })
+
+        /*
+         * Fotografija za naslovni blok u zaglavlju.
+         *
+         * Zaglavlje je zajedničko za sve strane, pa ne vidi podatke koje
+         * `loadData` naslovne rute dovuče — oni ostaju u samoj strani.
+         * Ovde se uzima ista krajnja tačka koju naslovna već koristi
+         * (`/gallery/latest`), samo jedna, najnovija galerija.
+         *
+         * Ovo je JEDINI poziv ka API-ju dodat zbog izgleda. Bez njega
+         * naslovni blok nema fotografiju iz arhive.
+         */
+        fetch(`${API_ENDPOINT}/gallery/latest`, {
+            method: 'GET',
+            headers: {
+                'content-type': 'application/json'
+            },
+        }).then(res => res.json()).then((result) => {
+            const g = (result || []).find(
+                (x) => x && x.photos && x.photos.length && x.photos[0].image
+            );
+            if (g) {
+                this.setState({
+                    naslovnaFoto: g.photos[0].image,
+                    // Ista galerija hrani i traku najave na vrhu zaglavlja.
+                    najava: g,
+                    // Ceo spisak se zadržava — prazna korpa nudi najnovije
+                    // galerije umesto puke poruke. Bez novog poziva.
+                    najnovije: (result || []).slice(0, 4)
+                });
+            }
+        }).catch(() => {});
 
         fetch(`${API_ENDPOINT}/banners`, {
             method: 'GET',
@@ -349,9 +438,10 @@ class App extends Component {
         }).then(res => res.json()).then((result) => {
             //shuffle(result);
 
+            // Tema izgleda dolazi iz istog podešavanja kojim se bira naslovna.
             this.setState({
                 settings: result
-            })
+            }, this.postaviTemu)
         })
 
 
@@ -398,9 +488,11 @@ class App extends Component {
             return res.json()
         }).then((result) => {
             if (!result.error) {
+                // Tema se preračunava i ovde: dok traje pretpregled novog
+                // izgleda, od dozvola zavisi koju paletu korisnik vidi.
                 this.setState({
                     uData: result
-                })
+                }, this.postaviTemu)
             }
         })
 

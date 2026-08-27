@@ -1,16 +1,30 @@
 
-$white: #FFFFFF;
-$black: #1F1F1F;
-$gray: #A8A8A8;
-$darkGray: #6D7587;
-$lightGray: #D9D9D9;
-$red: #D60006;
+/*
+ * MOST KA TOKENIMA.
+ *
+ * Ovih deset promenljivih koristi 19 fajlova na stotine mesta. Umesto da se
+ * svaki fajl menja, promenljive sada pokazuju na tokene iz `_tokens.scss` —
+ * pa se sve što ih koristi prefarba odjednom, a tema „trenutni" vraća
+ * zatečene vrednosti kad je stari izgled uključen.
+ *
+ * `$blue` i `$darkBlue` su oduvek bili ISTA vrednost (#3C59B9); oba imena
+ * ostaju da se ne polomi 19 fajlova, oba pokazuju na akcenat.
+ *
+ * Provereno pre preusmeravanja: nijedan fajl ne zove darken()/rgba() nad
+ * ovim promenljivama, pa var() ne može da obori prevođenje.
+ */
+$white: var(--boja-povrsina);
+$black: var(--boja-tekst);
+$gray: var(--boja-tekst-tiho);
+$darkGray: var(--boja-tekst-tiho);
+$lightGray: var(--boja-linija);
+$red: var(--boja-oznaka);
 
-$blue: #3C59B9;
-$darkBlue: #3C59B9;
-$lightBlue: #DEEBF8;
+$blue: var(--boja-akcenat);
+$darkBlue: var(--boja-akcenat);
+$lightBlue: var(--boja-podloga-tiha);
 
-$bgColor: #F4F5FB;
+$bgColor: var(--boja-podloga);
 
 $skewAngle: -10deg;
 
@@ -29,8 +43,31 @@ $extraBold: 800;
 }
 
 
+/*
+ * PRELOMNE TAČKE — jedna lestvica: 480 / 768 / 1024 / 1440.
+ *
+ * Imena mixina su zadržana da se ne dira 323 postojeća poziva; promenjene su
+ * samo vrednosti. `small-desktop` je ranije bio 992–1199 i preklapao se sa
+ * `tablet` u opsegu 992–1023 — sada je 1024–1439, bez preklapanja.
+ *
+ * Svaka granica ima oblik ispod/iznad, pa nijednom fajlu ne treba ručni
+ * @media upit. Jedini izuzetak su dva upita po VISINI ekrana (naslovni blok
+ * predloga B mora da stane na ekran) — i oni su ovde, kao imenovani mixini.
+ */
+@mixin telefon-mali {
+  @media only screen and (max-width: 479px) {
+    @content;
+  }
+}
+
+@mixin iznad-telefona-malog {
+  @media only screen and (min-width: 480px) {
+    @content;
+  }
+}
+
 @mixin mobile {
-  @media only screen and (max-width: 767px){
+  @media only screen and (max-width: 767px) {
     @content;
   }
 }
@@ -41,8 +78,8 @@ $extraBold: 800;
   }
 }
 
-@mixin small-desktop {
-  @media only screen and (min-width: 992px) and (max-width: 1199px) {
+@mixin tablet-i-vise {
+  @media only screen and (min-width: 768px) {
     @content;
   }
 }
@@ -52,3 +89,123 @@ $extraBold: 800;
     @content;
   }
 }
+
+@mixin small-desktop {
+  @media only screen and (min-width: 1024px) and (max-width: 1439px) {
+    @content;
+  }
+}
+
+@mixin desktop-i-vise {
+  @media only screen and (min-width: 1024px) {
+    @content;
+  }
+}
+
+@mixin do-velikog-ekrana {
+  @media only screen and (max-width: 1439px) {
+    @content;
+  }
+}
+
+@mixin veliki-ekran {
+  @media only screen and (min-width: 1440px) {
+    @content;
+  }
+}
+
+@mixin nizak-ekran {
+  @media only screen and (max-height: 820px) {
+    @content;
+  }
+}
+
+@mixin vrlo-nizak-ekran {
+  @media only screen and (max-height: 680px) {
+    @content;
+  }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FOKUS I PRELAZ
+   ═══════════════════════════════════════════════════════════════════════════
+   `:focus-visible` pregledač pali pri kretanju tastaturom, a ne pri kliku
+   mišem. To rešava razlog zbog kog je okvir na 103 mesta u zatečenom kodu
+   uklonjen bez zamene (spisak: docs/outline-none.md).
+
+   Stoje OVDE, a ne u `_komponente.scss`: taj fajl se uvozi posle fajlova
+   strana, pa mixin definisan tamo ne postoji za njih.
+*/
+@mixin z-fokus {
+    &:focus-visible {
+        outline: 2px solid var(--boja-fokus);
+        outline-offset: 2px;
+        // Beli razmak između elementa i okvira odvaja okvir od same
+        // površine elementa — bez njega bi se na tamnom dugmetu stopili.
+        box-shadow: 0 0 0 2px var(--boja-povrsina);
+    }
+}
+
+// Prelaz koji se sam gasi kad posetilac traži manje kretanja: trajanja su
+// tokeni, a oni pod `prefers-reduced-motion` postaju 0ms.
+@mixin z-prelaz($svojstva...) {
+    transition-property: $svojstva;
+    transition-duration: var(--prelaz-brzo);
+    transition-timing-function: var(--prelaz-kriva);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   VEZA — klikabilnost nosi podvlačenje, ne boja
+   ═══════════════════════════════════════════════════════════════════════════
+   U pravcu „tamna traka" amber je isključivo površina (dugme, polje pretrage,
+   aktivna pilula) i nikad tekst — kao tekst na beloj daje 2,00:1. Zato veza
+   ima istu boju kao tekst, a razaznaje se podvlačenjem.
+
+   `z-veza` — veza u toku teksta. Podvučena je U MIROVANJU, jer boja ovde ne
+   nosi nikakvu razliku: bez podvlačenja se ne bi razlikovala od okolnog
+   teksta, a hover na telefonu ne postoji.
+
+   `z-veza-meni` — meni, naslovi odeljaka, stavke zaglavlja. Njih razaznaje
+   mesto na strani, pa stalno podvlačenje samo pravi šum; podvlači se na
+   hover i na fokus. */
+/* Zašto `!important`: `_global.scss:70` ima golo
+       a { text-decoration: none !important; }
+   koje gasi podvlačenje na celom sajtu, bez obzira na redosled uvoza i
+   specifičnost. Pošto u ovom pravcu podvlačenje JESTE jedini znak da je nešto
+   veza (boja je ista kao tekst), ono mora da pobedi to pravilo.
+
+   Ovo je zakrpa, ne rešenje. Pravo rešenje je ograničiti golo pravilo u
+   `_global.scss` klasom — isto kao što je urađeno sa `header`, `footer` i
+   pismima — pa `!important` odavde ukloniti. */
+@mixin z-veza {
+    color: var(--boja-veza);
+    text-decoration: underline;
+    text-underline-offset: .15em;
+    text-decoration-thickness: 1px;
+
+    &:hover { text-decoration-thickness: 2px; }
+}
+
+@mixin z-veza-meni {
+    color: var(--boja-veza);
+    text-decoration: none;
+
+    &:hover, &:focus-visible {
+        text-decoration: underline;
+        text-underline-offset: .15em;
+    }
+}
+
+// Veza koja stoji NA tamnoj traci — bela, isto pravilo za podvlačenje.
+@mixin z-veza-traka {
+    color: var(--boja-veza-traka);
+    text-decoration: none;
+
+    &:hover, &:focus-visible {
+        text-decoration: underline;
+        text-underline-offset: .15em;
+    }
+}
+

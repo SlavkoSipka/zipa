@@ -7,76 +7,9 @@
  * iznosi 16 tačaka.
  */
 
-/* Zasebna strana sa snimcima. */
-.video-strana {
-    padding: 150px 0 60px;
-
-    @include mobile-tablet { padding-top: 138px; }
-
-    h1 {
-        font-size: 32px;
-        font-weight: $bold;
-        color: $black;
-        margin-bottom: 6px;
-        @include mobile { font-size: 24px; }
-    }
-
-    .uvod { color: #6B7280; font-size: 15px; margin-bottom: 28px; }
-    .prazno { color: #6B7280; font-size: 15px; padding: 40px 0; }
-
-    .mreza-video {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 20px;
-
-        @include mobile-tablet { grid-template-columns: repeat(2, 1fr); }
-        @include mobile { grid-template-columns: 1fr; }
-
-        .plocica {
-            display: block;
-            text-decoration: none;
-            color: inherit;
-
-            .slika {
-                position: relative;
-                width: 100%;
-                padding-top: 56.25%;          // odnos kao kod snimka
-                overflow: hidden;
-                border-radius: 8px;
-                background-color: #DFE2E8;
-
-                img {
-                    position: absolute;
-                    top: 0; left: 0;
-                    width: 100%; height: 100%;
-                    object-fit: cover;
-                }
-            }
-
-            .igraj {
-                position: absolute;
-                left: 50%; top: 50%;
-                transform: translate(-50%, -50%);
-                z-index: 2;
-                width: 52px; height: 52px;
-                display: flex; align-items: center; justify-content: center;
-                background-color: rgba(0, 0, 0, 0.58);
-                color: $white;
-                border-radius: 50%;
-                font-size: 18px;
-                padding-left: 3px;
-            }
-
-            .telo h4 {
-                font-size: 15px;
-                font-weight: $semiBold;
-                color: $black;
-                margin: 10px 0 0;
-                line-height: 1.32;
-            }
-        }
-    }
-}
+/* `.video-strana` je preseljena u `scss/_video.scss`, a `.odjava-strana` u
+   `scss/_odjava.scss` — obe su zasebne strane i nemaju veze sa predlogom A
+   naslovne, u kom su stajale samo zato što je fajl bio pri ruci. */
 
 /* Glavni meni u predlogu A: prve tri stavke su vrste sadržaja i istaknute su
  * krupnije od ostalih, po nacrtu. */
@@ -107,9 +40,9 @@ header .navigation ul.meni-a {
     $razmak: 16px;
 
     // Zaglavlje lebdi preko sadržaja, pa se prvi odeljak spušta ispod njega.
-    padding-top: 138px;
+    padding-top: var(--zaglavlje-visina);
 
-    @include mobile-tablet { padding-top: 126px; }
+    @include mobile-tablet { padding-top: var(--zaglavlje-visina); }
 
     // ── zajednička pločica ───────────────────────────────────────────────
     .plocica {
@@ -211,74 +144,350 @@ header .navigation ul.meni-a {
             a {
                 margin-left: auto;
                 font-size: 14px;
-                color: $blue;
+                @include z-veza-meni;
                 white-space: nowrap;
             }
         }
     }
 
     // ── mozaik tri sa tri ────────────────────────────────────────────────
-    .mozaik {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: $razmak;
-
-        @include mobile-tablet { grid-template-columns: repeat(2, 1fr); }
-        @include mobile { grid-template-columns: 1fr; }
-    }
 
     // ── ručno izabrane fotografije ───────────────────────────────────────
-    .izabrane {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 22px;
-
-        @include mobile-tablet { grid-template-columns: repeat(2, 1fr); }
-        @include mobile { grid-template-columns: 1fr; }
-
-        .izabrana {
-            .slika { padding-top: 58%; }
-
-            .preko {
-                padding: 54px 18px 18px;
-
-                h4 {
-                    font-size: 19px;
-                    font-weight: $bold;
-                    -webkit-line-clamp: 2;
-                    @include mobile { font-size: 16px; }
-                }
-            }
-        }
-    }
 
     // ── izdvojene kategorije: dve u redu, sa razmakom ────────────────────
-    .kategorije {
+
+    // ── reklama: širina stalna, visina slobodna ──────────────────────────
+    /* ═══════════════════════════════════════════════════════════════════
+       2. NAJNOVIJE OBJAVE — vodeća galerija i hronološki spisak
+       ═══════════════════════════════════════════════════════════════════
+       Mreža tri sa tri je izbačena. Bila je zid od devet jednakih pločica u
+       kom se ništa nije isticalo, i isti oblik kao još tri sekcije ispod.
+
+       Sada: jedna galerija krupno, narednih osam kao redovi teksta. Arhiva
+       je hronološka i to se sada vidi iz oblika, ne iz natpisa.
+    */
+    .z-vodeca {
         display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 22px;
+        /* `minmax(0, …)`, ne golo `1fr`: `1fr` ima najmanju meru `min-content`,
+           pa je stubac na 320px bio 593px — koliko traži najduži neprelomivi
+           red u spisku — i grid je izlazio iz ekrana. */
+        grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+        gap: var(--razmak-6);
+        align-items: start;
 
-        @include mobile { grid-template-columns: 1fr; }
+        @include mobile-tablet {
+            grid-template-columns: minmax(0, 1fr);
+            gap: var(--razmak-5);
+        }
 
-        .kategorija {
-            .slika { padding-top: 40%; }
+        &__stavka { min-width: 0; }
 
-            .preko {
-                padding: 46px 20px 18px;
+        &__kadar {
+            position: relative;
+            display: block;
+            width: 100%;
+            aspect-ratio: 3 / 2;
 
-                h4 {
-                    font-size: 20px;
-                    font-weight: $bold;
-                    text-transform: uppercase;
-                    letter-spacing: -0.005em;
-                    @include mobile { font-size: 17px; }
-                }
-                .meta { font-size: 12.5px; }
+            overflow: hidden;
+            border-radius: var(--radijus-panel);
+            background: var(--boja-podloga-tiha);
+
+            img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                display: block;
+                @include z-prelaz(opacity);
+            }
+
+            @include z-fokus;
+        }
+
+        &__stavka:hover &__kadar img { opacity: .9; }
+
+        /* Ugaone oznake — van srednje trećine, gde stoji žig. Iste kao na
+           kartici galerije. */
+        &__kategorija {
+            position: absolute;
+            left: var(--razmak-2);
+            top: var(--razmak-2);
+
+            padding: 2px var(--razmak-2);
+            border-radius: var(--radijus-mali);
+            background: var(--boja-oznaka);
+
+            font-size: var(--slovo-xs);
+            line-height: var(--red-xs);
+            font-weight: var(--tezina-jaka);
+            color: var(--boja-podloga);
+        }
+
+        &__brojac {
+            position: absolute;
+            right: var(--razmak-2);
+            bottom: var(--razmak-2);
+
+            padding: 2px var(--razmak-2);
+            border-radius: var(--radijus-mali);
+            background: var(--boja-traka);
+
+            font-family: var(--pismo-podaci);
+            font-size: var(--slovo-xs);
+            line-height: var(--red-xs);
+            color: var(--boja-traka-tekst);
+        }
+
+        /* Tekst ISPOD fotografije — pravilo projekta važi i na naslovnoj. */
+        &__telo { margin-top: var(--razmak-3); }
+
+        &__naslov {
+            margin: 0 0 var(--razmak-1);
+            font-family: var(--pismo-naslov);
+            font-size: var(--slovo-xl);
+            line-height: var(--red-xl);
+            font-weight: var(--tezina-jaka);
+
+            a {
+                color: var(--boja-tekst);
+                text-decoration: none;
+                &:hover { text-decoration: underline; }
+                @include z-fokus;
+            }
+        }
+
+        &__meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--razmak-1) var(--razmak-3);
+            margin: 0;
+
+            font-size: var(--slovo-sm);
+            line-height: var(--red-sm);
+            color: var(--boja-tekst-tiho);
+
+            span:not(:last-child)::after {
+                content: '·';
+                margin-left: var(--razmak-3);
             }
         }
     }
 
-    // ── reklama: širina stalna, visina slobodna ──────────────────────────
+    /* ── hronološki spisak — samo tekst, bez sličica ─────────────────── */
+    .z-hronologija {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        border-top: 1px solid var(--boja-linija);
+
+        &__red {
+            display: flex;
+            align-items: baseline;
+            gap: var(--razmak-3);
+            border-bottom: 1px solid var(--boja-linija);
+        }
+
+        &__veza {
+            display: flex;
+            align-items: baseline;
+            gap: var(--razmak-3);
+            flex: 1 1 auto;
+            min-width: 0;
+            padding: var(--razmak-2) 0;
+
+            text-decoration: none;
+            @include z-fokus;
+
+            &:hover .z-hronologija__naziv { text-decoration: underline; }
+        }
+
+        &__datum {
+            flex: 0 0 auto;
+            font-family: var(--pismo-podaci);
+            font-size: var(--slovo-sm);
+            line-height: var(--red-sm);
+            color: var(--boja-tekst-tiho);
+            font-variant-numeric: tabular-nums;
+        }
+
+        &__naziv {
+            min-width: 0;
+            font-size: var(--slovo-md);
+            line-height: var(--red-md);
+            font-weight: var(--tezina-srednja);
+            color: var(--boja-tekst);
+
+            // Dug naziv se seče na jedan red — spisak mora da ostane spisak.
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        &__broj {
+            flex: 0 0 auto;
+            padding-right: var(--razmak-1);
+
+            font-family: var(--pismo-podaci);
+            font-size: var(--slovo-sm);
+            line-height: var(--red-sm);
+            color: var(--boja-tekst-tiho);
+        }
+    }
+
+
+    /* ═══════════════════════════════════════════════════════════════════
+       3. IZDVAJAMO — naizmenični urednički redovi
+       ═══════════════════════════════════════════════════════════════════
+       Ručno biran sadržaj dobija svoj ritam: svaka stavka je pun red,
+       fotografija sa jedne strane a tekst sa druge, pa sledeći red obrnuto.
+       Tekst stoji PORED fotografije, nikad preko nje.
+    */
+    .z-izdvojeno {
+        display: flex;
+        flex-direction: column;
+        gap: var(--razmak-6);
+
+        &__red {
+            display: grid;
+            grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+            gap: var(--razmak-6);
+            align-items: center;
+
+            @include mobile-tablet {
+                grid-template-columns: minmax(0, 1fr);
+                gap: var(--razmak-3);
+            }
+
+            // Svaki drugi red okreće stranu — otud „naizmenično".
+            &--obrnuto .z-izdvojeno__kadar { order: 2; }
+
+            @include mobile-tablet {
+                &--obrnuto .z-izdvojeno__kadar { order: 0; }
+            }
+        }
+
+        &__kadar {
+            display: block;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+
+            overflow: hidden;
+            border-radius: var(--radijus-panel);
+            background: var(--boja-podloga-tiha);
+
+            img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                display: block;
+                @include z-prelaz(opacity);
+            }
+        }
+
+        &__red:hover &__kadar img { opacity: .9; }
+
+        &__telo { min-width: 0; }
+
+        &__oznaka {
+            margin: 0 0 var(--razmak-2);
+            font-size: var(--slovo-xs);
+            line-height: var(--red-xs);
+            font-weight: var(--tezina-jaka);
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: var(--boja-tekst-tiho);
+        }
+
+        &__naslov {
+            margin: 0 0 var(--razmak-3);
+            font-family: var(--pismo-naslov);
+            font-size: var(--slovo-xl);
+            line-height: var(--red-xl);
+            font-weight: var(--tezina-jaka);
+
+            // Nazivi u bazi stoje VELIKIM SLOVIMA — slog se popravlja u prikazu.
+            text-transform: lowercase;
+            &::first-letter { text-transform: uppercase; }
+
+            a {
+                color: var(--boja-tekst);
+                text-decoration: none;
+                &:hover { text-decoration: underline; }
+                @include z-fokus;
+            }
+        }
+
+        &__dalje {
+            margin: 0;
+            font-size: var(--slovo-sm);
+            line-height: var(--red-sm);
+            color: var(--boja-tekst-tiho);
+        }
+    }
+
+
+    /* ═══════════════════════════════════════════════════════════════════
+       4. IZDVOJENE KATEGORIJE — zbijeni kvadratni indeks
+       ═══════════════════════════════════════════════════════════════════
+       Jedina kvadratna mreža na strani. Naziv i broj idu ISPOD fotografije;
+       služi za snalaženje, ne za utisak.
+    */
+    .z-kategorije {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: var(--razmak-4);
+
+        @include mobile { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+        &__stavka {
+            display: block;
+            min-width: 0;
+            text-decoration: none;
+
+            @include z-fokus;
+            &:hover .z-kategorije__naziv { text-decoration: underline; }
+            &:hover .z-kategorije__kadar img { opacity: .9; }
+        }
+
+        &__kadar {
+            display: block;
+            width: 100%;
+            aspect-ratio: 1;
+
+            overflow: hidden;
+            border-radius: var(--radijus-panel);
+            background: var(--boja-podloga-tiha);
+
+            img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                display: block;
+                @include z-prelaz(opacity);
+            }
+        }
+
+        &__naziv {
+            display: block;
+            margin-top: var(--razmak-2);
+
+            font-size: var(--slovo-md);
+            line-height: var(--red-md);
+            font-weight: var(--tezina-jaka);
+            color: var(--boja-tekst);
+            overflow-wrap: anywhere;
+        }
+
+        &__broj {
+            display: block;
+            margin-top: 2px;
+
+            font-family: var(--pismo-podaci);
+            font-size: var(--slovo-sm);
+            line-height: var(--red-sm);
+            color: var(--boja-tekst-tiho);
+        }
+    }
+
     .mesto-reklame {
         display: flex;
         justify-content: center;
@@ -358,7 +567,7 @@ header .navigation ul.meni-a {
                 display: block;
                 font-size: 27px;
                 font-weight: $bold;
-                color: $darkBlue;
+                color: var(--boja-tekst);
                 font-variant-numeric: tabular-nums;
                 line-height: 1.15;
             }
@@ -523,15 +732,4 @@ header .navigation ul.meni-a {
             }
         }
     }
-}
-
-/* Odjava sa liste za obavještenja. */
-.odjava-strana {
-    padding: 160px 0 80px;
-    @include mobile-tablet { padding-top: 140px; }
-
-    h1 { font-size: 28px; font-weight: $bold; color: $black; margin-bottom: 12px; }
-    p { font-size: 16px; color: #4B5162; max-width: 62ch; margin-bottom: 10px; }
-    .sitno { font-size: 14px; color: #7A8194; }
-    a { color: $blue; }
 }

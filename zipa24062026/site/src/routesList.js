@@ -70,12 +70,22 @@ import SubscribersPage from './views/account/subscribers';
 import ImportPage from './views/account/import';
 import VideoPage from './views/videoPage';
 import OdjavaPage from './views/odjavaPage';
+import StiloviPage from './views/stiloviPage';
 import ArchiveStats from './views/account/archiveStats';
 import WatermarksPage from './views/account/watermarksPage';
 import {API_ENDPOINT, PHOTOS_ENDPOINT} from './constants'
 
 
 export const routes = [
+    {
+        // Sistem stilova — radna strana, nije u meniju. Svi tokeni i sve
+        // komponente na jednom mestu, sa preklopnikom tema.
+        path: "/stilovi",
+        component: StiloviPage,
+        exact: true,
+        generateSeoTags: () => ({ title: 'Sistem stilova' }),
+        loadData: []
+    },
     {
         // Odjava sa liste za obavestenja — otvara se iz veze u samoj posti.
         path: "/odjava",
@@ -522,11 +532,31 @@ export const routes = [
         path: "/galerija/:alias/:id/:photo",
         exact: true,
         component: PhotoPage,
+        /*
+         * Ovo je adresa koja se deli, pa `og:image` mora da pokaže BAŠ ovu
+         * fotografiju — ranije je uvek slao prvu iz galerije, pa je svaki
+         * deljeni link izgledao isto.
+         *
+         * `generateSeoTags` ne dobija `match`, nego samo podatke iz
+         * `loadData`. Zato dovlačenje ispod uz galeriju vraća i redni broj
+         * fotografije (`photoIndex`). Odgovor API-ja nije diran.
+         *
+         * Veličina je 700x, ne 350x: mreže traže bar 600px širine za veliki
+         * prikaz, a 350x im je premalo.
+         */
         generateSeoTags: (data) => {
+            const i = data && data.photoIndex !== undefined ? data.photoIndex : 0;
+            const slika = Object.get(data, `gallery.photos[${i}].image`)
+                || Object.get(data, 'gallery.photos[0].image');
+
+            // Naziv galerije, ne ime datoteke: ime datoteke je za arhivu,
+            // a ovaj natpis vidi svako kome je link podeljen.
+            const naziv = Object.translate(data, 'gallery.name', 'ba');
+
             return {
-                title: Object.translate(data, 'gallery.name', 'ba'),
+                title: naziv,
                 description: Object.translate(data, 'gallery.description', 'ba'),
-                'og:image': `${PHOTOS_ENDPOINT}/photos/350x/` + Object.get(data, 'gallery.photos[0].image')
+                'og:image': slika ? `${PHOTOS_ENDPOINT}/photos/700x/` + slika : ''
             }
         },
 
@@ -540,6 +570,8 @@ export const routes = [
                 }).then(res => res.json()).then((result) => {
                     return {
                         gallery: result,
+                        // Samo za `generateSeoTags` — vidi napomenu iznad.
+                        photoIndex: match.params.photo,
                     }
                 })
 

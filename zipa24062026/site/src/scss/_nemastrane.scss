@@ -1,0 +1,191 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   STRANA KOJE NEMA — /404
+   ═══════════════════════════════════════════════════════════════════════════
+   Fotografija iz arhive kao podloga, preko nje tamna traka sa porukom i
+   pretragom.
+
+   TEKST NIKAD NE IDE PREKO FOTOGRAFIJE (stalno pravilo projekta). Ovde ga i
+   ne dira: preko kadra stoji pun preliv u boji trake, pa je poruka na traci,
+   a fotografija je ispod nje — kao podloga, ne kao pozadina teksta.
+*/
+
+.z-nemastrane {
+
+    &__kadar {
+        position: relative;
+        overflow: hidden;
+
+        display: flex;
+        align-items: center;
+
+        min-height: 60vh;
+        padding: var(--razmak-8) 0;
+
+        // Podloga i kad fotografije nema — strana nikad nije prazna.
+        background: var(--boja-traka);
+
+        /* Preliv preko fotografije: pun u boji trake levo, gde stoji tekst,
+           providan desno, gde se fotografija vidi. Bez ijedne nove boje —
+           `transparent` i token trake su dovoljni. */
+        &::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+                90deg,
+                var(--boja-traka) 0%,
+                var(--boja-traka) 34%,
+                transparent 100%
+            );
+
+            /* Na uskom ekranu nema levo i desno — preliv se okreće nadole.
+               Fotografija ostaje gore, tekst dole na punoj boji trake, pa
+               nijedno slovo ne stoji preko kadra. */
+            @include mobile-tablet {
+                background: linear-gradient(
+                    180deg,
+                    transparent 0%,
+                    transparent 18%,
+                    var(--boja-traka) 40%,
+                    var(--boja-traka) 100%
+                );
+            }
+        }
+
+        @include mobile-tablet {
+            align-items: flex-end;
+            min-height: 78vh;
+        }
+    }
+
+    &__slika {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+
+        /* Na uskom ekranu kadar je visok i uzak, pa `cover` iseca sredinu.
+           Vrh je zanimljiviji deo fotografije i jedini koji ostaje van
+           preliva. */
+        @include mobile-tablet { object-position: center top; }
+    }
+
+    &__sadrzaj {
+        // Iznad preliva.
+        position: relative;
+        z-index: var(--sloj-sadrzaj);
+
+        max-width: 56ch;
+
+        // Tamna podloga preusmerava tokene u svom opsegu, kao zaglavlje.
+        --boja-fokus: var(--boja-fokus-traka);
+    }
+
+    &__broj {
+        margin: 0 0 var(--razmak-2);
+        font-family: var(--pismo-podaci);
+        font-size: var(--slovo-xl);
+        line-height: var(--red-xl);
+        font-weight: var(--tezina-jaka);
+        letter-spacing: .08em;
+        color: var(--boja-traka-tekst-tiho);
+    }
+
+    &__naslov {
+        margin: 0 0 var(--razmak-3);
+        font-family: var(--pismo-naslov);
+        font-size: var(--slovo-2xl);
+        line-height: var(--red-2xl);
+        font-weight: var(--tezina-poludebela);
+        color: var(--boja-traka-tekst);
+    }
+
+    &__uvod {
+        margin: 0 0 var(--razmak-5);
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
+        color: var(--boja-traka-tekst-tiho);
+    }
+
+    /* ── pretraga ─────────────────────────────────────────────────────── */
+
+    &__pretraga {
+        display: flex;
+        align-items: stretch;
+        max-width: 440px;
+        margin-bottom: var(--razmak-5);
+
+        border-radius: var(--radijus-mali);
+        overflow: hidden;
+        background: var(--boja-povrsina);
+
+        &:focus-within {
+            outline: 2px solid var(--boja-fokus);
+            outline-offset: 2px;
+        }
+    }
+
+    &__polje {
+        flex: 1 1 auto;
+        min-width: 0;
+        min-height: var(--visina-pretraga);
+        padding: 0 var(--razmak-3);
+
+        border: 0;
+        background: transparent;
+
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-md);
+        // Polje je BELO i na tamnoj traci, pa ovde važe boje svetle podloge.
+        color: var(--boja-polje-tekst);
+
+        &::placeholder { color: var(--boja-polje-tekst-tiho); }
+        &:focus { outline: none; }
+    }
+
+    &__dugme {
+        flex: 0 0 auto;
+        padding: 0 var(--razmak-4);
+
+        border: 0;
+        background: var(--boja-akcenat);
+
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-sm);
+        font-weight: var(--tezina-poludebela);
+        color: var(--boja-akcenat-tekst);
+        cursor: pointer;
+
+        @include z-prelaz(background-color);
+        &:hover { background: var(--boja-akcenat-jako); }
+        @include z-fokus;
+    }
+
+    /* ── veze na glavne delove ────────────────────────────────────────── */
+
+    &__veze {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--razmak-2) var(--razmak-4);
+    }
+
+    &__veza {
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        color: var(--boja-traka-tekst);
+
+        @include z-veza-traka;
+        @include z-fokus;
+    }
+
+    /* ── potpis fotografije ───────────────────────────────────────────── */
+
+    &__potpis {
+        margin: var(--razmak-3) 0 var(--razmak-8);
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        color: var(--boja-tekst-tiho);
+    }
+}

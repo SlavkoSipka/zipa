@@ -1,26 +1,69 @@
 @charset "utf-8";
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+// Pisma se učitavaju iz zaglavlja dokumenta (server.js) — @import ovde je
+// blokirao prvi prikaz dok se ceo CSS ne pročita.
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   REDOSLED UVOZA — ne menjati bez razloga
+   ═══════════════════════════════════════════════════════════════════════════
+   Tri sloja, uvek ovim redom:
+
+   1. TEMELJ    — `tokens` (vrednosti) i `settings` (SVI mixini). Ne emituju
+                  skoro nikakav CSS, ali ih koristi sve ostalo. Zato prvi.
+   2. STRANE    — fajlovi pojedinačnih strana i `global`.
+   3. KOMPONENTE — `z-*` klase, POSLE strana, da im specifičnost ide u korist.
+
+   Pravilo koje je tri puta srušilo gradnju (`_photoModal`, `_login`,
+   `_cart`): mixin mora biti DEFINISAN u temelju. Ako se definiše u
+   `_komponente.scss`, fajlovi strana ga ne vide jer se komponente uvoze
+   posle njih — greška je „Undefined mixin". Zato su `z-fokus` i `z-prelaz`
+   preseljeni u `_settings.scss`.
+
+   Novi fajl strane ide u grupu 3, uz ostale `z-*`.
+*/
+
+/* ── 1. temelj ─────────────────────────────────────────────────────────── */
+@import 'scss/tokens.scss';
 @import 'scss/settings.scss';
+
+/* ── 2. zatečene strane ────────────────────────────────────────────────── */
 @import 'scss/home.scss';
 @import 'scss/page.scss';
 @import 'scss/category.scss';
 @import 'scss/detail.scss';
 @import 'scss/account.scss';
-@import 'scss/cart.scss';
-@import 'scss/login.scss';
 @import 'scss/blog.scss';
-@import 'scss/contact.scss';
-@import 'scss/store.scss';
-@import 'scss/stores.scss';
-@import 'scss/photographer.scss';
-@import "scss/photoModal.scss";
 
 @import 'scss/naslovnaA.scss';
 @import 'scss/naslovnaC.scss';
 @import 'scss/naslovnaB.scss';
 
 @import 'scss/global.scss';
+
+/* ── 3. komponente i prekrojene strane ─────────────────────────────────── */
+// Sve klase su pod prefiksom `z-`, pa se ništa ne sudara sa zatečenim —
+// ali specifičnost ovako ide u njihovu korist.
+@import 'scss/komponente.scss';
+
+@import 'scss/zaglavlje.scss';
+@import 'scss/podnozje.scss';
+@import 'scss/naprednaPretraga.scss';
+@import 'scss/kartica.scss';
+@import 'scss/alatnaTraka.scss';
+@import 'scss/galerija.scss';
+@import 'scss/photoModal.scss';
+@import 'scss/login.scss';
+@import 'scss/cart.scss';
+@import 'scss/nalog.scss';
+@import 'scss/photographer.scss';
+@import 'scss/contact.scss';
+@import 'scss/stranice.scss';
+@import 'scss/fotografija.scss';
+@import 'scss/video.scss';
+@import 'scss/odjava.scss';
+@import 'scss/najava.scss';
+@import 'scss/potvrda.scss';
+@import 'scss/nemastrane.scss';
+@import 'scss/stilovi.scss';
 
 // izgled pri stampi / cuvanju u PDF — mora poslednji, da nadjaca ostale
 @import 'scss/print.scss';

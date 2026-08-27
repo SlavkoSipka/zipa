@@ -1,0 +1,114 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   ODJAVA SA LISTE — /odjava
+   ═══════════════════════════════════════════════════════════════════════════
+   Izdvojeno iz `_naslovnaA.scss`. Jedna centrirana poruka: strana ima tačno
+   jedan zadatak i ništa je ne prati.
+
+   Zamenjene zakucane vrednosti: `#4B5162` i `#7A8194` → `--boja-tekst-tiho`.
+*/
+
+.z-odjava {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    padding: var(--razmak-8) 0;
+
+    &__okvir {
+        max-width: 52ch;
+        margin: 0 auto;
+        text-align: center;
+    }
+
+    // Kvačica crtana okvirom — bez slike i bez nove datoteke.
+    &__znak {
+        display: block;
+        width: 56px;
+        height: 56px;
+        margin: 0 auto var(--razmak-4);
+        position: relative;
+
+        border-radius: var(--radijus-pun);
+        background: var(--boja-podloga-tiha);
+
+        &::after {
+            content: '';
+            position: absolute;
+            left: 21px;
+            top: 15px;
+            width: 12px;
+            height: 22px;
+
+            border-right: 3px solid var(--boja-tekst-tiho);
+            border-bottom: 3px solid var(--boja-tekst-tiho);
+            transform: rotate(45deg);
+        }
+
+        // Povratak na listu je dobra vest, pa kvačica dobija boju uspeha.
+        &--uspjeh::after {
+            border-right-color: var(--boja-uspeh);
+            border-bottom-color: var(--boja-uspeh);
+        }
+    }
+
+    &__naslov {
+        margin: 0 0 var(--razmak-3);
+        font-family: var(--pismo-naslov);
+        font-size: var(--slovo-xl);
+        line-height: var(--red-xl);
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-tekst);
+    }
+
+    &__tekst {
+        margin: 0 0 var(--razmak-5);
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
+        color: var(--boja-tekst-tiho);
+
+        b { color: var(--boja-tekst); overflow-wrap: anywhere; }
+    }
+
+    /*
+     * Tiho dugme — namerno nije amber. Povratak na listu je izlaz u nuždi za
+     * onoga ko je kliknuo greškom, a ne radnja koju strana gura; amber ovde
+     * bi delovao kao da pokušavamo da poništimo odjavu.
+     */
+    &__tiho-dugme {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 40px;
+        padding: 0 var(--razmak-4);
+
+        border: 1px solid var(--boja-linija);
+        border-radius: var(--radijus-panel);
+        background: var(--boja-povrsina);
+
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-sm);
+        font-weight: var(--tezina-srednja);
+        color: var(--boja-tekst-tiho);
+        cursor: pointer;
+
+        @include z-prelaz(border-color, color);
+        &:hover { border-color: var(--boja-tekst-tiho); color: var(--boja-tekst); }
+        @include z-fokus;
+
+        &[disabled] { opacity: .6; cursor: default; }
+    }
+
+    &__veza {
+        @include z-veza;
+        @include z-fokus;
+    }
+
+    &__dno {
+        margin: var(--razmak-6) 0 0;
+        padding-top: var(--razmak-4);
+        border-top: 1px solid var(--boja-linija);
+
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+    }
+}

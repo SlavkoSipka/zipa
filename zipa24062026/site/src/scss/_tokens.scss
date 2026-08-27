@@ -1,0 +1,333 @@
+/*
+ * TOKENI — jedini izvor vrednosti za izgled.
+ *
+ * PRAVAC: „TAMNA TRAKA" (od 2026-08-23). Uzor je Shutterstock — crna traka i
+ * naslovni blok na vrhu, bela strana ispod. Sajt NIJE taman: tamno je samo
+ * zaglavlje i naslovni blok, sve ispod je belo, da se fotografije istaknu a
+ * čitljivost ostane.
+ *
+ * Imena su po ULOZI, ne po boji — `--boja-akcenat`, ne `--amber`. Kad se
+ * tema promeni, uloga ostaje ista a vrednost se menja.
+ *
+ * Teme se biraju atributom `data-tema` na <html>, iz istog podešavanja kojim
+ * se bira izgled naslovne (Podešavanja sajta → Izgled naslovne strane).
+ * Teme menjaju SAMO boje i radijuse. U ovom pravcu A, B i C razlikuje jedino
+ * boja trake — sve ostalo im je isto. Izuzetak je tema „trenutni", pri dnu.
+ */
+
+:root {
+
+    /* ── BOJE ─────────────────────────────────────────────────────────────
+     * Strana je BELA. Fotografija je jedina boja u toku strane; podloga se
+     * povlači. Tamno se pojavljuje samo u traci na vrhu.
+     */
+    --boja-podloga:       #FFFFFF;   /* pozadina strane */
+    --boja-podloga-tiha:  #F5F6F8;   /* sekcije, polja, zebra u tabeli */
+    --boja-povrsina:      #FFFFFF;   /* kartica, panel — isto belo kao strana */
+    --boja-tekst:         #1B1E24;   /* 16.70:1 na beloj */
+    --boja-tekst-tiho:    #6B7079;   /* 4.98:1 na beloj, 4.60:1 na tihoj */
+    --boja-linija:        #E6E8EB;   /* svako razdvajanje u toku strane */
+
+    /* ── TRAKA ────────────────────────────────────────────────────────────
+     * Zaglavlje i naslovni blok. Jedina tamna površina na sajtu.
+     * Ovo je jedina grupa koju teme A, B i C razlikuju.
+     */
+    --boja-traka:             #0E1626;   /* podloga trake — duboka tamnoplava */
+    --boja-traka-tekst:       #FFFFFF;   /* 18.62:1 */
+    --boja-traka-tekst-tiho:  #B4B9C0;   /* 9.44:1 — podnaslov, brojač */
+    --boja-traka-linija:      #3A3E44;   /* razdvajanje unutar trake */
+
+    /* Površina koja stoji NA tamnoj traci — panel sa cenama u prozoru
+     * fotografije. Malo svetlija od trake, da se odvoji a ostane deo istog
+     * prozora. Bela ploča je tu izgledala kao zalepljen drugi sajt. */
+    --boja-traka-povrsina:    #141D2E;
+
+    /* ── RADNJA I OZNAKA ──────────────────────────────────────────────────
+     * Amber nosi pretragu i glavnu radnju. On je POVRŠINA, ne tekst:
+     * #F2A93B kao tekst na beloj daje 2.00:1 i nikad ne sme tako da stoji.
+     */
+    --boja-akcenat:       #F2A93B;   /* dugme pretrage, glavna radnja */
+    --boja-akcenat-tekst: #3A2B0C;   /* tekst NA amberu — 6.87:1 */
+    --boja-akcenat-jako:  #DF9526;   /* pritisnuto stanje — 5.53:1 sa gornjim */
+
+    --boja-oznaka:        #D60006;   /* crvena identiteta — oznake, aktivno */
+    --boja-najava:        #2877A3;   /* traka najave — svetlija plava sa uzora */
+
+    --boja-uspeh:         #166A41;   /* 6.62:1 na beloj */
+    --boja-upozorenje:    #8A5A0F;   /* 5.92:1 na beloj */
+
+    /* Izvedeno — ne uvoditi nove vrednosti, koristiti ove.
+     *
+     * `--boja-tekst-na-akcentu` stoji na 14 mesta u kodu i do sada je bilo
+     * BELO. Na amberu belo daje 2.00:1, pa gleda u `--boja-akcenat-tekst`.
+     * Time se svih 14 mesta popravi bez diranja tih fajlova.
+     *
+     * `--boja-oznaka-tekst` je nekad bila potamnjena crvena, jer #D60006 na
+     * sivoj podlozi nije prolazila. Na beloj daje 5.44:1, pa je ista boja. */
+    --boja-tekst-na-akcentu: var(--boja-akcenat-tekst);
+    --boja-oznaka-tekst:     var(--boja-oznaka);
+
+    /* ── VEZA ─────────────────────────────────────────────────────────────
+     * Amber je površina i nikad tekst, pa veza ne može da se razlikuje bojom
+     * — ista je kao tekst. Klikabilnost nosi PODVLAČENJE, ne boja.
+     * Zato je podvučeno u mirovanju, a ne tek na hover: boja ovde ne nosi
+     * nikakvu razliku, pa bi veza bez podvlačenja bila nerazlučiva od teksta
+     * (i nedodirljiva na telefonu, gde hover ne postoji).
+     * Izuzetak su meni i naslovi odeljaka — njih razaznaje mesto, pa se tamo
+     * podvlači na hover. Mixin `z-veza` / `z-veza-meni` u `_komponente.scss`.
+     */
+    --boja-veza:       var(--boja-tekst);
+    --boja-veza-traka: var(--boja-traka-tekst);   /* veza NA tamnoj traci */
+
+    /* ── FOKUS ────────────────────────────────────────────────────────────
+     * Okvir na tastaturi. Amber ovde ne može: na beloj daje 2,00:1, a traži
+     * se 3:1. Tamna prolazi svuda gde okvir može da se nađe — 16,70:1 na
+     * beloj, 8,36:1 uz amber dugme, 3,07:1 uz crvenu oznaku. (Tamni amber
+     * bi na beloj prošao, ali uz samo amber dugme pada na 2,96:1.)
+     *
+     * Na tamnoj traci okvir ostaje AMBER (9,32:1) — traka svojim opsegom
+     * pregazi `--boja-fokus` vrednošću `--boja-fokus-traka`. */
+    --boja-fokus:       var(--boja-tekst);
+    --boja-fokus-traka: var(--boja-akcenat);
+
+    /* ── BELO POLJE U TAMNOJ TRACI ────────────────────────────────────────
+     * Zaglavlje preusmerava `--boja-tekst*` na svetle vrednosti za tamnu
+     * podlogu. Polje pretrage je, međutim, BELO i unutar te trake — tamo bi
+     * tiha boja trake (#B4B9C0) na belom dala 1,9:1. Ova dva tokena se NE
+     * preusmeravaju, pa polje zadržava boje svetle podloge. */
+    --boja-polje-tekst:      #1B1E24;
+    --boja-polje-tekst-tiho: #6B7079;
+
+    /* Crvena identiteta NA TAMNOJ TRACI. `#D60006` tamo pada — 3,42:1 na
+     * temi A i 2,99:1 na B. Ovo je ista crvena posvetljena taman koliko
+     * treba: 5,71:1 / 4,98:1 / 5,56:1 na tri trake. */
+    --boja-oznaka-traka: #FF4D52;
+    --boja-zavesa:           rgba(17, 19, 21, .55);
+
+    /* ── SLOVA ────────────────────────────────────────────────────────────
+     * Figtree nosi ceo sajt — i naslove i tekst i podatke. Mono pisma nema
+     * u ovom pravcu; kataloški broj se izdvaja težinom 500, ne pismom.
+     *
+     * Provereno pre uvođenja: Figtree ima č ć š ž đ Č Ć Š Ž Đ (čitano iz
+     * `cmap` tabele punog fonta, ne iz deklarisanog opsega).
+     */
+    --pismo-naslov:  'Figtree', system-ui, -apple-system, sans-serif;
+    --pismo-tekst:   'Figtree', system-ui, -apple-system, sans-serif;
+    --pismo-podaci:  'Figtree', system-ui, -apple-system, sans-serif;
+
+    --slovo-xs:   0.75rem;    --red-xs:   1.4;   /* oznaka kategorije, brojač */
+    --slovo-sm:   0.875rem;   --red-sm:   1.45;  /* podaci uz fotografiju */
+    --slovo-md:   1rem;       --red-md:   1.55;  /* tekst */
+    --slovo-lg:   1.125rem;   --red-lg:   1.4;   /* naslov kartice */
+    --slovo-xl:   1.5rem;     --red-xl:   1.3;   /* naslov odeljka */
+    --slovo-2xl:  2rem;       --red-2xl:  1.2;   /* naslov strane */
+    --slovo-3xl:  2.75rem;    --red-3xl:  1.1;   /* naslovni blok u traci */
+
+    --tezina-obicna:  400;
+    --tezina-srednja: 500;   /* kataloški broj, podaci */
+    --tezina-jaka:    600;
+
+    /* ── MERE PREUZETE SA UZORA (Shutterstock, mereno 2026-08-23) ─────────
+     * Zaglavlje i pretraga prate uzor u veličinama, težinama i razmaku
+     * slova. Njihovo pismo je Haffer (zaštićeno) — nosi ga Figtree, iste
+     * geometrijske porodice.
+     *
+     * Vrednosti su u rem umesto u px: na podrazumevanoj veličini daju tačno
+     * izmerene tačke, a uvećanje slova u pregledaču i dalje radi. Uz svaku
+     * stoji izmerena vrednost.
+     */
+    --tezina-knjiga:     430;   /* podnaslov, navigacija, popularni pojmovi */
+    --tezina-poludebela: 670;   /* naslovni blok, dugmad radnje */
+
+    --slovo-naslovni:  2.375rem;  --red-naslovni:  1.105;  /* 38px / 42px */
+    --razmak-naslovni: -0.005em;                           /* -0,19px */
+
+    --slovo-podnaslov: 1.125rem;  --red-podnaslov: 1.445;  /* 18px / 26px */
+    --slovo-nav:       0.875rem;  --red-nav:       1.43;   /* 14px / 20px */
+    --razmak-nav:      0.01em;                             /* 0,14px */
+    --slovo-radnja:    1rem;      --red-radnja:    1.25;   /* 16px / 20px */
+    --slovo-najava:    0.875rem;  --red-najava:    1.1;    /* 13,9px */
+
+    --visina-radnja:   44px;   /* pilula „Prijava", pilula levo */
+    --visina-najava:   40px;   /* dugme u traci najave */
+    --visina-pretraga: 48px;   /* polje pretrage */
+    --radijus-radnja:  8px;    /* pilule u zaglavlju nisu pune, nego 8px */
+
+    /* ── RAZMACI ──────────────────────────────────────────────────────────
+     * Lestvica od 4. Osam stepeni umesto 79 vrednosti.
+     */
+    --razmak-1:  4px;
+    --razmak-2:  8px;
+    --razmak-3:  12px;
+    --razmak-4:  16px;
+    --razmak-5:  24px;
+    --razmak-6:  32px;
+    --razmak-7:  48px;
+    --razmak-8:  64px;
+
+    /* ── RADIJUSI ─────────────────────────────────────────────────────────
+     * Dva: osnovni 6 i pilula. Oštrih 2px više nema — novi pravac je mekši.
+     *
+     * `--radijus-mali` stoji na 14 mesta u kodu, pa ostaje kao ime i gleda u
+     * osnovni. Da je obrisan, tih 14 mesta bi ostalo bez vrednosti.
+     */
+    --radijus-panel:  6px;                     /* kartica, polje, lista, oznaka */
+    --radijus-mali:   var(--radijus-panel);    /* zadržano ime, ista vrednost */
+    --radijus-pun:    999px;                   /* pilula filtera */
+
+    /* ── SENKE ────────────────────────────────────────────────────────────
+     * PRAVILO: sve što stoji u toku strane razdvaja se LINIJOM.
+     * Senka postoji samo tamo gde nešto stvarno lebdi iznad strane —
+     * padajuća lista, prozor, lepljiva traka.
+     */
+    --senka-lebdi:  0 4px 16px rgba(17, 19, 21, .12);   /* padajuća lista, lepljivo */
+    --senka-prozor: 0 16px 48px rgba(17, 19, 21, .22);  /* prozor sa cenama */
+
+    /* ── PRELAZI ──────────────────────────────────────────────────────────
+     * Gase se kad posetilac traži manje kretanja (blok pri dnu fajla).
+     */
+    --prelaz-brzo:   120ms;
+    --prelaz-obicno: 200ms;
+    --prelaz-sporo:  320ms;
+    --prelaz-kriva:  cubic-bezier(.2, .6, .2, 1);
+
+    /* ── SLOJEVI ──────────────────────────────────────────────────────────
+     * Zatečeno stanje ima z-index rasut po fajlovima, do 3000. Ovo je red.
+     */
+    --sloj-podloga:   0;
+    --sloj-sadrzaj:   1;
+    --sloj-lepljivo:  100;   /* zaglavlje, traka sa uslovima pretrage */
+    --sloj-padajuce:  200;   /* padajuća lista, predlozi pretrage */
+    --sloj-zavesa:    900;
+    --sloj-prozor:    1000;  /* prozor sa fotografijom i cenama */
+    --sloj-poruka:    1100;  /* obaveštenje o uspehu/grešci */
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PREDLOZI NASLOVNE — A, B, C
+   ═══════════════════════════════════════════════════════════════════════════
+   Ovde NEMA boja i to je namerno.
+
+   `homepageLayout` bira KOJA SE NASLOVNA CRTA (`homePage.js` je skretnica ka
+   `predlogA/B/C.js`). Do 2026-08-25 je isto podešavanje kroz `data-tema`
+   menjalo i tri trakasta tokena — `--boja-traka`, `--boja-traka-linija` i
+   `--boja-traka-povrsina`.
+
+   To je bio kvar, ne osobina: ta tri tokena čita OSAM fajlova van naslovne —
+   `_zaglavlje.scss` i `_podnozje.scss` (koji preko njih preusmeravaju svoju
+   površinu, liniju i tihu podlogu), pa `_photoModal`, `_fotografija`,
+   `_nemastrane`, `_alatnaTraka`, `_galerija`, `_login` i `_video`. Prebacivanje
+   na Predlog B je zato prefarbalo NAVBAR I PODNOŽJE na svakoj strani sajta,
+   iako se biralo samo kako izgleda naslovna.
+
+   Zaglavlje i podnožje su teget `#0E1626` iz `:root`, isti na celom sajtu, i
+   izbor predloga ih ne dira. A/B/C menjaju samo ono ISPOD zaglavlja, i to
+   kroz svoje SCSS fajlove (`_naslovnaA/B/C.scss`), ne kroz tokene.
+
+   Blokovi ostaju prazni, a ne obrisani, iz dva razloga: `_naslovnaC.scss` i
+   `_login.scss` u komentarima upućuju na njih, i ako se ikad ukaže potreba za
+   razlikom koja se TIČE SAMO NASLOVNE, ovo je mesto — ali nikad token koji
+   čita nešto van nje.
+
+   Tema „trenutni" je druga stvar i menja sve — ona je mreža za pad, ne predlog.
+*/
+[data-tema="a"],
+[data-tema="b"],
+[data-tema="c"] {
+    /* namerno prazno — sve tri nasleđuju :root */
+}
+
+
+/* ── TEMA „TRENUTNI" — zatečeni izgled ────────────────────────────────────
+ *
+ * Postavka izgleda naslovne ima i vrednost „trenutni", koju koristi stari
+ * sajt. Pošto most u `_settings.scss` preusmerava `$blue`, `$bgColor` i
+ * ostale promenljive na tokene, stari izgled bi se bez ovoga nehotice
+ * prefarbao u novu paletu.
+ *
+ * Ovde se tokeni vraćaju na ZATEČENE vrednosti iz `docs/audit.md`, pa stari
+ * sajt radi nepromenjen — samo sada kroz isti sistem.
+ *
+ * Ovo je ujedno i mreža za pad: ako nešto pukne posle redizajna,
+ * prebacivanje na „trenutni" u administraciji vraća zatečeno stanje bez
+ * vraćanja koda.
+ *
+ * Izuzetak od pravila „teme menjaju samo boje i radijuse": ovde se vraća i
+ * skala slova u px, jer je zatečeni sajt ceo pisan u px i u rem bi se
+ * pomerio. To je namerno i važi samo za ovu temu.
+ */
+[data-tema="trenutni"] {
+    --boja-podloga:      #F4F5FB;
+    --boja-povrsina:     #FFFFFF;
+    --boja-tekst:        #1F1F1F;
+    --boja-tekst-tiho:   #6D7587;
+    --boja-linija:       #EDEFF5;
+    --boja-akcenat:      #3C59B9;
+    --boja-akcenat-jako: #3C59B9;
+    --boja-oznaka:       #D60006;
+    --boja-oznaka-tekst: #D60006;
+    --boja-podloga-tiha: #EDEFF5;
+
+    /* Zatečeni sajt piše BELO na plavom dugmetu. U novom pravcu
+     * `--boja-tekst-na-akcentu` gleda u tekst za amber (tamnobraon), pa se
+     * ovde mora vratiti na belo — inače bi „trenutni" nasledio tamnobraon
+     * tekst na plavoj i pokvario se. Ovo čuva zatečeno stanje, ne menja ga. */
+    --boja-akcenat-tekst:    #FFFFFF;
+    --boja-tekst-na-akcentu: #FFFFFF;
+
+    /* Zatečeni sajt ima PLAVE veze, ne crne. Bez ovoga bi „trenutni"
+     * nasledio vezu u boji teksta i izgubio plavu — opet promena
+     * zatečenog izgleda. */
+    --boja-veza:       #3C59B9;
+    --boja-veza-traka: #FFFFFF;
+
+    /* Zatečeni okvir fokusa je bio u boji akcenta, dakle plav. Zadržava se. */
+    --boja-fokus:       #3C59B9;
+    --boja-fokus-traka: #3C59B9;
+
+    /* Zaglavlje preusmerava tokene u svom opsegu (`_zaglavlje.scss`), pa
+     * pod ovom temom mora da dobije ZATEČENE svetle vrednosti — inače bi
+     * ostalo bez pozadine i boje. Zatečeno zaglavlje je belo. */
+    --boja-polje-tekst:      #1F1F1F;
+    --boja-polje-tekst-tiho: #6D7587;
+
+    --boja-traka:            #FFFFFF;
+    --boja-traka-povrsina:   #F4F5FB;
+    --boja-traka-tekst:      #1F1F1F;
+    --boja-traka-tekst-tiho: #6D7587;
+    --boja-traka-linija:     #EDEFF5;
+    --boja-oznaka-traka:     #D60006;
+
+    --pismo-naslov:  'Poppins', sans-serif;
+    --pismo-tekst:   'Poppins', sans-serif;
+    --pismo-podaci:  'Poppins', sans-serif;
+
+    --slovo-xs:   12px;   --red-xs:   1.4;
+    --slovo-sm:   14px;   --red-sm:   1.45;
+    --slovo-md:   16px;   --red-md:   1.5;
+    --slovo-lg:   18px;   --red-lg:   1.4;
+    --slovo-xl:   24px;   --red-xl:   1.3;
+    --slovo-2xl:  32px;   --red-2xl:  1.2;
+    --slovo-3xl:  42px;   --red-3xl:  1.1;
+
+    --radijus-mali:   10px;
+    --radijus-panel:  15px;
+    --radijus-pun:    122px;
+
+    --senka-lebdi:  0px 14px 24px 0px rgba(0, 0, 0, .1);
+    --senka-prozor: 0px 14px 24px 0px rgba(0, 0, 0, .1);
+}
+
+
+/* ── MANJE KRETANJA ───────────────────────────────────────────────────────
+ * Ko je u sistemu tražio da se kretanje smanji, dobija sajt bez prelaza.
+ * U zatečenom stanju ovog nije bilo nigde.
+ */
+@media (prefers-reduced-motion: reduce) {
+    :root {
+        --prelaz-brzo:   0ms;
+        --prelaz-obicno: 0ms;
+        --prelaz-sporo:  0ms;
+    }
+}

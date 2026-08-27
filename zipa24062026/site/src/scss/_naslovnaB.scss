@@ -73,7 +73,7 @@ header .logo .desktop-logo.logo-b > .natpis-b {
 
     em {
         font-style: normal;
-        color: $darkBlue;
+        color: var(--boja-tekst);
     }
 
     @include mobile { font-size: 18px; }
@@ -86,9 +86,9 @@ header .logo .desktop-logo.logo-b > .natpis-b {
     // Zaglavlje sajta lebdi preko sadržaja, pa se prvi odeljak spušta tačno
     // ispod njega. U predlogu B zaglavlju je dodata i plava traka od 34
     // tačke, pa je razmak za toliko veći.
-    padding-top: 166px;
+    padding-top: calc(var(--zaglavlje-visina) + var(--razmak-5));
 
-    @include mobile-tablet { padding-top: 154px; }
+    @include mobile-tablet { padding-top: var(--zaglavlje-visina); }
 
     // ── kartica galerije ─────────────────────────────────────────────────
     .kartica {
@@ -190,7 +190,7 @@ header .logo .desktop-logo.logo-b > .natpis-b {
         }
 
         // Na niskim ekranima se natpis stišava, da ne pojede fotografiju.
-        @media (max-height: 820px) {
+        @include nizak-ekran {
             &.preko .preko-teksta {
                 padding: 26px 13px 11px;
                 h4 { font-size: 14px; -webkit-line-clamp: 2; }
@@ -203,7 +203,7 @@ header .logo .desktop-logo.logo-b > .natpis-b {
             }
         }
 
-        @media (max-height: 680px) {
+        @include vrlo-nizak-ekran {
             &.preko .preko-teksta {
                 padding: 22px 11px 9px;
                 h4 { font-size: 12.5px; -webkit-line-clamp: 1; }
@@ -291,7 +291,7 @@ header .logo .desktop-logo.logo-b > .natpis-b {
             a {
                 margin-left: auto;
                 font-size: 14px;
-                color: $blue;
+                @include z-veza-meni;
                 white-space: nowrap;
             }
 

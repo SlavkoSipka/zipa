@@ -1,0 +1,272 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   NAPREDNA PRETRAGA — prozor preko strane
+   ═══════════════════════════════════════════════════════════════════════════
+   Bela strana, amber za glavnu radnju, crvena za aktivno stanje. Zavesa iza
+   prozora dolazi iz `--boja-zavesa`.
+
+   Prozor je namerno svetao iako ga otvara tamna traka: sadržaj sajta je beo,
+   a ovo je radna površina, ne nastavak trake.
+*/
+
+.z-pretraga-prozor {
+    position: fixed;
+    inset: 0;
+    z-index: var(--sloj-prozor);
+
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: var(--razmak-7) var(--razmak-5);
+    overflow-y: auto;
+
+    background: var(--boja-zavesa);
+
+    @include mobile-tablet {
+        // Na telefonu prozor ide preko celog ekrana — bez razmaka okolo.
+        padding: 0;
+        align-items: stretch;
+    }
+
+    &__okvir {
+        width: 100%;
+        max-width: 880px;
+        background: var(--boja-povrsina);
+        border-radius: var(--radijus-panel);
+        box-shadow: var(--senka-lebdi);
+
+        display: flex;
+        flex-direction: column;
+        max-height: 100%;
+
+        @include mobile-tablet {
+            max-width: none;
+            border-radius: 0;
+            min-height: 100%;
+        }
+    }
+
+    /* ── zaglavlje prozora ────────────────────────────────────────────── */
+
+    &__vrh {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--razmak-4);
+
+        padding: var(--razmak-5);
+        border-bottom: 1px solid var(--boja-linija);
+    }
+
+    &__naslov {
+        margin: 0;
+        font-family: var(--pismo-naslov);
+        font-size: var(--slovo-xl);
+        line-height: var(--red-xl);
+        font-weight: var(--tezina-poludebela);
+        color: var(--boja-tekst);
+    }
+
+    &__zatvori {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+
+        border: 0;
+        border-radius: var(--radijus-panel);
+        background: transparent;
+        cursor: pointer;
+
+        @include z-prelaz(background-color);
+        &:hover { background: var(--boja-podloga-tiha); }
+        @include z-fokus;
+
+        svg { width: 14px; height: 14px; display: block; }
+        svg path, svg circle, svg rect { fill: var(--boja-tekst-tiho); }
+    }
+
+    /* ── telo ─────────────────────────────────────────────────────────── */
+
+    &__telo {
+        padding: var(--razmak-5);
+        overflow-y: auto;
+        flex: 1 1 auto;
+    }
+
+    /* ── grupe polja ──────────────────────────────────────────────────── */
+
+    &__grupa + &__grupa {
+        margin-top: var(--razmak-6);
+        padding-top: var(--razmak-6);
+        border-top: 1px solid var(--boja-linija);
+    }
+
+    &__naslov-grupe {
+        margin: 0 0 var(--razmak-4);
+        font-size: var(--slovo-xs);
+        line-height: var(--red-xs);
+        font-weight: var(--tezina-jaka);
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: var(--boja-tekst-tiho);
+    }
+
+    // Dva polja u redu; na telefonu jedno ispod drugog.
+    &__par {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--razmak-4);
+
+        @include mobile-tablet { grid-template-columns: 1fr; }
+    }
+
+    /* ── prečice za datum ─────────────────────────────────────────────── */
+
+    &__precice {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--razmak-2);
+        margin-bottom: var(--razmak-4);
+    }
+
+    &__precica {
+        padding: var(--razmak-2) var(--razmak-4);
+
+        border: 1px solid var(--boja-linija);
+        border-radius: var(--radijus-pun);
+        background: var(--boja-povrsina);
+
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        font-weight: var(--tezina-srednja);
+        color: var(--boja-tekst);
+        cursor: pointer;
+
+        @include z-prelaz(border-color, background-color, color);
+        &:hover { border-color: var(--boja-tekst-tiho); }
+        @include z-fokus;
+
+        // Aktivno stanje nosi crvena identiteta.
+        &--izabrana {
+            border-color: var(--boja-oznaka);
+            color: var(--boja-oznaka-tekst);
+            font-weight: var(--tezina-jaka);
+        }
+    }
+
+    /* ── orijentacija kao vizuelni izbor ──────────────────────────────── */
+
+    &__orijentacije {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--razmak-3);
+    }
+
+    &__orijentacija {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: var(--razmak-2);
+
+        min-width: 104px;
+        padding: var(--razmak-4) var(--razmak-3);
+
+        border: 1px solid var(--boja-linija);
+        border-radius: var(--radijus-panel);
+        background: var(--boja-povrsina);
+
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        color: var(--boja-tekst);
+        cursor: pointer;
+
+        @include z-prelaz(border-color, background-color, color);
+        &:hover { border-color: var(--boja-tekst-tiho); }
+        @include z-fokus;
+
+        // Sličica oblika — pravougaonik u odnosu koji stavka predstavlja.
+        &-oblik {
+            border: 2px solid var(--boja-tekst-tiho);
+            border-radius: 2px;
+            @include z-prelaz(border-color);
+        }
+
+        &--uspravna &-oblik { width: 20px; height: 28px; }
+        &--polozena &-oblik { width: 32px; height: 22px; }
+
+        &--izabrana {
+            border-color: var(--boja-oznaka);
+            background: var(--boja-podloga-tiha);
+            font-weight: var(--tezina-jaka);
+            color: var(--boja-oznaka-tekst);
+
+            .z-pretraga-prozor__orijentacija-oblik {
+                border-color: var(--boja-oznaka);
+            }
+        }
+    }
+
+    /* ── dno ──────────────────────────────────────────────────────────── */
+
+    &__dno {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: var(--razmak-3);
+
+        padding: var(--razmak-4) var(--razmak-5);
+        border-top: 1px solid var(--boja-linija);
+        background: var(--boja-povrsina);
+        border-radius: 0 0 var(--radijus-panel) var(--radijus-panel);
+
+        @include mobile-tablet {
+            // Dugmad zalepljena za dno ekrana.
+            position: sticky;
+            bottom: 0;
+            border-radius: 0;
+        }
+    }
+
+    &__broj {
+        margin: 0 auto 0 0;
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        color: var(--boja-tekst-tiho);
+    }
+
+    &__dugme {
+        min-height: var(--visina-radnja);
+        padding: 0 var(--razmak-5);
+
+        border: 0;
+        border-radius: var(--radijus-panel);
+
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-radnja);
+        line-height: var(--red-radnja);
+        font-weight: var(--tezina-poludebela);
+        cursor: pointer;
+
+        @include z-prelaz(background-color, color);
+        @include z-fokus;
+
+        // Glavna radnja — amber površina, nikad amber tekst.
+        &--glavno {
+            background: var(--boja-akcenat);
+            color: var(--boja-akcenat-tekst);
+            &:hover { background: var(--boja-akcenat-jako); }
+        }
+
+        // Tiho dugme — bez površine, samo tekst.
+        &--tiho {
+            background: transparent;
+            color: var(--boja-tekst-tiho);
+            &:hover { color: var(--boja-tekst); background: var(--boja-podloga-tiha); }
+        }
+    }
+}

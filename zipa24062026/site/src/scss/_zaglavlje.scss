@@ -1,0 +1,1266 @@
+/*
+ * ZAGLAVLJE SAJTA
+ *
+ * Prati `components/header.js`. Stari zaglavlje-blok u `_global.scss`
+ * (redovi 87–1346) se NE dira — on i dalje služi naloznoj navigaciji
+ * (`.navigation ul.account-nav`), koja se u novom zaglavlju prenosi
+ * nepromenjena. Sve odavde je pod prefiksom `z-zaglavlje`, a fajl se uvozi
+ * posle globalnog, pa se ništa ne sudara.
+ *
+ * Sve vrednosti su tokeni. Radijus je oštar, razdvaja linija, senka postoji
+ * samo dok zaglavlje stvarno lebdi iznad odskrolovanog sadržaja.
+ */
+
+/*
+ * VISINA ZAGLAVLJA
+ *
+ * Zaglavlje je `position: fixed`, pa strane same odvajaju mesto za njega.
+ * Ranije je svaka imala svoju zakucanu meru (140px, 130px, 120px, 99px…) i
+ * nijedna nije bila tačna posle izmene zaglavlja.
+ *
+ * Sada `components/header.js` meri sebe i upisuje pravu vrednost u
+ * `--zaglavlje-visina` na <html>. Ovo ispod su vrednosti koje važe dok se
+ * strana iscrta na serveru i JS još nije stigao — otprilike tačne, da nema
+ * poskakivanja.
+ */
+/*
+ * `--zaglavlje-visina` je sada 0.
+ *
+ * Zaglavlje više NIJE `position: fixed` — stoji u toku strane i pri
+ * skrolovanju odlazi van kadra, kao na uzoru. Time samo zauzima svoj
+ * prostor, pa strane ne moraju ništa da odvajaju za njega.
+ *
+ * Token ostaje da postoji jer ga čita 16 fajlova; da je uklonjen, svaki
+ * `calc(var(--zaglavlje-visina) + …)` bi pukao. Ovako se te mere svedu na
+ * sopstveni razmak strane, što je i tačno.
+ */
+:root { --zaglavlje-visina: 0px; }
+
+.z-zaglavlje {
+    position: relative;
+    width: 100%;
+    /* `position: relative` + `z-index` prave sopstveni sloj — sve unutra
+       (uključujući padajuću listu predloga pretrage, `--sloj-padajuce`
+       200) je zarobljeno na ovoj vrednosti spolja, ma koliko visok
+       z-indeks nosila sama iznutra — dete nikad ne probije tavanicu koju
+       postavi roditelj.
+
+       Bilo je `--sloj-sadrzaj` (1): tad ju je pobeđivao svaki
+       `z-index: 2` iz `_naslovnaA.scss`. Popravljeno na `--sloj-lepljivo`
+       (100) — ali `_alatnaTraka.scss` (traka filtera na /galerije) je
+       LEPLJIVA istim tim slojem, 100. Izjednačeno se rešava po redosledu u
+       dokumentu, a alatna traka dolazi POSLE zaglavlja — pa je pobeđivala
+       i gurala predloge pretrage ispod sebe.
+
+       Zaglavlje je jedino globalno, mora da bude iznad svake lepljive trake
+       na strani — zato `--sloj-padajuce` (200), razred iznad. Ostaje ispod
+       pravih preklopa (zavesa, prozor). */
+    z-index: var(--sloj-padajuce);
+
+    /* `_global.scss` ima zatečeno `header:where(.zaglavlje-sajta) { padding:
+       10px 0; }` — `:where()` nema specifičnost, ali ovde ništa nije
+       gazilo `padding`, pa je curelo kroz i traku najave gurala 10px niže
+       od stvarnog vrha strane. Ovo je neutrališe. */
+    padding: 0;
+
+    /* ── TAMNA TRAKA — preusmerenje tokena u opsegu zaglavlja ────────────
+     *
+     * Umesto prefarbavanja svake linije, tokeni se ovde preusmere na svoje
+     * parnjake za traku. Time potamne odjednom i paneli, i predlozi
+     * pretrage, i okviri fokusa — bez ijednog novog pravila.
+     *
+     * Isto radi i za temu „trenutni": tamo `--boja-traka*` nose ZATEČENE
+     * svetle vrednosti, pa se zaglavlje iscrta belo kao i pre.
+     *
+     * `--boja-povrsina` je namerno u spisku: nosi pozadinu panela i beli
+     * razmak oko okvira fokusa; bez nje bi panel ostao beo na tamnoj traci.
+     */
+    --boja-povrsina:     var(--boja-traka);
+    --boja-podloga-tiha: var(--boja-traka-linija);
+    --boja-tekst:        var(--boja-traka-tekst);
+    --boja-tekst-tiho:   var(--boja-traka-tekst-tiho);
+    --boja-linija:       var(--boja-traka-linija);
+    --boja-veza:         var(--boja-veza-traka);
+    --boja-fokus:        var(--boja-fokus-traka);
+    --boja-oznaka-tekst: var(--boja-oznaka-traka);
+
+    background: var(--boja-traka);
+    border-bottom: 1px solid var(--boja-traka-linija);
+
+    // Ne `transition: all` — samo ono što se stvarno menja pri stanjivanju.
+    transition: box-shadow var(--prelaz-obicno) var(--prelaz-kriva);
+
+    &__sirina {
+        display: flex;
+        align-items: center;
+        gap: var(--razmak-4);
+
+        max-width: 1440px;
+        margin: 0 auto;
+        padding: 0 var(--razmak-5);
+    }
+
+    /* ── SLOJ 1 — tanka traka ─────────────────────────────────────────── */
+
+    &__traka {
+        background: var(--boja-podloga-tiha);
+        border-bottom: 1px solid var(--boja-linija);
+        overflow: hidden;
+
+        transition: max-height var(--prelaz-obicno) var(--prelaz-kriva),
+                    opacity var(--prelaz-brzo) var(--prelaz-kriva);
+        max-height: var(--razmak-7);
+
+        .z-zaglavlje__sirina {
+            justify-content: space-between;
+            padding-top: var(--razmak-2);
+            padding-bottom: var(--razmak-2);
+        }
+    }
+
+    &__agencija {
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        color: var(--boja-tekst-tiho);
+        white-space: nowrap;
+    }
+
+    &__traka-desno {
+        display: flex;
+        align-items: center;
+        gap: var(--razmak-4);
+        margin-left: auto;
+    }
+
+    &__traka-veza {
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        font-weight: var(--tezina-srednja);
+        letter-spacing: .04em;
+        color: var(--boja-tekst-tiho);
+        text-decoration: none;
+        white-space: nowrap;
+
+        transition: color var(--prelaz-brzo) var(--prelaz-kriva);
+        &:hover { color: var(--boja-veza); text-decoration: underline; }
+        @include z-fokus;
+
+        // Kategorija zakačena iz administracije — jedino crveno u traci.
+        &--istaknuta {
+            color: var(--boja-oznaka-tekst);
+            font-weight: var(--tezina-jaka);
+            &:hover { color: var(--boja-oznaka-tekst); text-decoration: underline; }
+        }
+    }
+
+    &__jezici {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--razmak-2);
+    }
+
+    // Zastavica u dugmetu — aktivni jezik nosi prsten, ne punu pozadinu;
+    // slika sama nosi dovoljno boje da pozadina ne treba.
+    &__jezik {
+        display: block;
+        padding: 2px;
+        border: 0;
+        border-radius: var(--radijus-mali);
+        background: transparent;
+        line-height: 0;
+        cursor: pointer;
+        opacity: .55;
+
+        img { display: block; border-radius: 2px; }
+
+        transition: opacity var(--prelaz-brzo) var(--prelaz-kriva),
+                    box-shadow var(--prelaz-brzo) var(--prelaz-kriva);
+        &:hover { opacity: .85; }
+        @include z-fokus;
+
+        &--izabran {
+            opacity: 1;
+            box-shadow: 0 0 0 2px var(--boja-traka), 0 0 0 3px var(--boja-traka-tekst);
+        }
+    }
+
+    /* ── SLOJ 2 — glavni red ──────────────────────────────────────────── */
+
+    &__glavni .z-zaglavlje__sirina {
+        // Ukupna visina mora da stane u 140px koje strane odvajaju za
+        // zaglavlje (`_category.scss`), inače sadržaj klizne ispod njega.
+        padding-top: var(--razmak-3);
+        padding-bottom: var(--razmak-3);
+        transition: padding var(--prelaz-obicno) var(--prelaz-kriva);
+    }
+
+    &__logo {
+        display: flex;
+        align-items: center;
+        gap: var(--razmak-2);
+        flex: 0 0 auto;
+        text-decoration: none;
+        /* Sam natpis već nosi boju, ali omotač `<a>` bez ovoga nasleđuje
+           Bootstrap plavu (#007bff). Danas se ne vidi jer je natpis čist
+           tekst; čim logo dobije SVG sa `fill: currentColor`, procurela bi. */
+        color: var(--boja-tekst);
+        @include z-fokus;
+
+        svg, img {
+            display: block;
+            height: var(--razmak-7);
+            width: auto;
+            transition: height var(--prelaz-obicno) var(--prelaz-kriva);
+        }
+    }
+
+    &__natpis {
+        font-family: var(--pismo-naslov);
+        font-size: var(--slovo-xl);
+        line-height: var(--red-xl);
+        font-weight: var(--tezina-jaka);
+        letter-spacing: .01em;
+        color: var(--boja-tekst);
+        white-space: nowrap;
+
+        /* Natpis stiže iz administracije kao slobodan HTML — danas je to
+           `<h6>ZIPAPHOTO.NET</h6>`. Bez ovoga bi `h6` uzeo globalnu veličinu
+           naslova i svoj razmak, pa bi logo iskakao iz reda. Ovde sve unutra
+           nasleđuje tipografiju natpisa. */
+        h1, h2, h3, h4, h5, h6, p, span, div {
+            margin: 0;
+            font: inherit;
+            color: inherit;
+            display: inline;
+        }
+        em, strong { font: inherit; color: var(--boja-tekst); }
+    }
+
+    /* ── navigacija ───────────────────────────────────────────────────── */
+
+    &__meni {
+        display: flex;
+        align-items: center;
+        gap: var(--razmak-1);
+        flex: 0 0 auto;
+    }
+
+    &__stavka {
+        display: inline-flex;
+        align-items: center;
+        // Uzor: 14px / 20px, težina 430, razmak slova 0,14px.
+        font-size: var(--slovo-nav);
+        line-height: var(--red-nav);
+        font-weight: var(--tezina-knjiga);
+        letter-spacing: var(--razmak-nav);
+        gap: var(--razmak-1);
+
+        padding: var(--razmak-2) var(--razmak-3);
+        border: 1px solid transparent;
+        border-radius: var(--radijus-mali);
+        background: transparent;
+
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-lg);
+        line-height: var(--red-lg);
+        font-weight: var(--tezina-srednja);
+        color: var(--boja-tekst);
+        text-decoration: none;
+        white-space: nowrap;
+        cursor: pointer;
+
+        transition: background-color var(--prelaz-brzo) var(--prelaz-kriva),
+                    color var(--prelaz-brzo) var(--prelaz-kriva);
+
+        &:hover { background: var(--boja-podloga-tiha); }
+        @include z-fokus;
+
+        // Gde sam — linijom ispod, ne bojom pozadine.
+        &--ovde {
+            // STANJE, ne veza — crvena bez podvlačenja. Podvlačenje je
+            // rezervisano za prave veze u toku teksta.
+            color: var(--boja-oznaka-tekst);
+            font-weight: var(--tezina-jaka);
+            box-shadow: inset 0 -2px 0 0 var(--boja-oznaka);
+        }
+
+    }
+
+    &__strelica {
+        width: 0;
+        height: 0;
+        border-left: 4px solid transparent;
+        border-right: 4px solid transparent;
+        border-top: 4px solid currentColor;
+        transition: transform var(--prelaz-brzo) var(--prelaz-kriva);
+    }
+
+    &__sa-panelom {
+        position: relative;
+
+        &--otvoren > .z-zaglavlje__stavka {
+            background: var(--boja-podloga-tiha);
+            .z-zaglavlje__strelica { transform: rotate(180deg); }
+        }
+    }
+
+    /* ── padajući paneli ──────────────────────────────────────────────── */
+
+    &__panel {
+        position: absolute;
+        top: calc(100% + var(--razmak-2));
+        left: 0;
+        z-index: var(--sloj-padajuce);
+
+        display: flex;
+        gap: var(--razmak-6);
+        padding: var(--razmak-5);
+
+        background: var(--boja-povrsina);
+        border: 1px solid var(--boja-linija);
+        border-radius: var(--radijus-panel);
+        // Panel stvarno lebdi iznad strane — jedno od dva mesta gde senka sme.
+        box-shadow: var(--senka-lebdi);
+
+        /* Sa 43 kategorije panel naraste na 712px i na ekranu od 768px bi
+           izašao ispod ivice. Umesto skraćivanja spiska — spisak je ceo
+           tačan — panel dobija svoj skrol. */
+        max-height: calc(100vh - var(--razmak-8) * 3);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+
+    /* Napomena: bez CSS `min()` — stari parser u ovom razzleu ga ne razume i
+       ruši prevođenje. Par width/max-width daje isto. */
+    &__panel--kategorije {
+        // 43 kategorije: u stubovima, ne u jednoj koloni preko celog ekrana.
+        width: calc(100vw - var(--razmak-8));
+        max-width: 920px;
+    }
+
+    &__panel--agencija {
+        width: calc(100vw - var(--razmak-8));
+        max-width: 860px;
+    }
+
+    &__panel--nalog {
+        left: auto;
+        right: 0;
+        min-width: calc(var(--razmak-8) * 4);
+        padding: var(--razmak-3);
+    }
+
+    &__stubovi {
+        column-count: 3;
+        column-gap: var(--razmak-6);
+        width: 100%;
+    }
+
+    &__grupa {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+
+    &__grupa--fotografi { flex: 1 1 auto; }
+
+    &__naslov-grupe {
+        margin: 0 0 var(--razmak-2);
+        padding-bottom: var(--razmak-2);
+        border-bottom: 1px solid var(--boja-linija);
+
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-xs);
+        line-height: var(--red-xs);
+        font-weight: var(--tezina-jaka);
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: var(--boja-tekst-tiho);
+
+        em {
+            font-family: var(--pismo-podaci);
+            font-style: normal;
+            text-transform: none;
+            letter-spacing: 0;
+        }
+    }
+
+    &__spisak-fotografa {
+        column-count: 2;
+        column-gap: var(--razmak-5);
+        max-height: calc(var(--razmak-8) * 5);
+        overflow-y: auto;
+    }
+
+    &__stavka-panela {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: var(--razmak-3);
+        break-inside: avoid;
+
+        width: 100%;
+        padding: var(--razmak-2);
+        border: 0;
+        border-radius: var(--radijus-mali);
+        background: transparent;
+        text-align: left;
+
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
+        color: var(--boja-tekst);
+        text-decoration: none;
+        cursor: pointer;
+
+        transition: background-color var(--prelaz-brzo) var(--prelaz-kriva),
+                    color var(--prelaz-brzo) var(--prelaz-kriva);
+
+        &:hover { background: var(--boja-podloga-tiha); color: var(--boja-veza); text-decoration: underline; }
+        @include z-fokus;
+
+        // Broj fotografija u kategoriji — podatak, pa pismo za podatke.
+        em {
+            flex: 0 0 auto;
+            font-family: var(--pismo-podaci);
+            font-style: normal;
+            font-size: var(--slovo-xs);
+            color: var(--boja-tekst-tiho);
+        }
+    }
+
+    &__odjava {
+        margin-top: var(--razmak-2);
+        padding-top: var(--razmak-3);
+        border-top: 1px solid var(--boja-linija);
+        border-radius: 0;
+        color: var(--boja-oznaka-tekst);
+        &:hover { color: var(--boja-oznaka-tekst); }
+    }
+
+    /* ── pretraga ─────────────────────────────────────────────────────── */
+
+    &__pretraga {
+        display: flex;
+        align-items: stretch;
+        flex: 1 1 auto;
+        min-width: 0;   // bez ovoga flex stavka odbija da se skupi
+
+        border: 1px solid var(--boja-linija);
+        border-radius: var(--radijus-mali);
+        background: var(--boja-povrsina);
+
+        transition: border-color var(--prelaz-brzo) var(--prelaz-kriva);
+        &:hover { border-color: var(--boja-tekst-tiho); }
+        // Polje pretrage ne pokazuje okvir na samom `input`-u nego na ovom
+        // omotaču. Amber ovde ne može — na beloj daje 2,00:1, a znak fokusa
+        // traži 3:1. Isti token kao ostali okviri fokusa.
+        &:focus-within { border-color: var(--boja-fokus); }
+    }
+
+    // Nosi i polje i listu predloga, pa mora da bude tačka oslonca.
+    &__polje {
+        position: relative;
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    &__unos {
+        width: 100%;
+        padding: var(--razmak-3) var(--razmak-4);
+        border: 0;
+        background: transparent;
+
+        font-family: var(--pismo-tekst);
+        // Najmanje 16px — ispod toga iOS sam uveća stranu pri kucanju.
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
+        // Polje je BELO i u tamnoj traci, pa uzima boje svetle podloge —
+        // tiha boja trake bi na belom dala 1,9:1. Ovako 4,98:1.
+        color: var(--boja-polje-tekst);
+
+        &::placeholder { color: var(--boja-polje-tekst-tiho); opacity: 1; }
+        &:focus { outline: none; }
+        &:focus-visible { outline: none; }
+    }
+
+    // Lista predloga dolazi iz `pretragaSaPrijedlozima.js` sa klasom `prijedlozi`.
+    &__polje .prijedlozi {
+        position: absolute;
+        top: calc(100% + var(--razmak-2));
+        left: 0;
+        right: 0;
+        z-index: var(--sloj-padajuce);
+
+        margin: 0;
+        padding: var(--razmak-1);
+        list-style: none;
+
+        background: var(--boja-povrsina);
+        border: 1px solid var(--boja-linija);
+        border-radius: var(--radijus-panel);
+        box-shadow: var(--senka-lebdi);
+
+        li {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: var(--razmak-3);
+            padding: var(--razmak-2) var(--razmak-3);
+            border-radius: var(--radijus-mali);
+            cursor: pointer;
+
+            font-family: var(--pismo-tekst);
+            font-size: var(--slovo-md);
+            color: var(--boja-tekst);
+        }
+
+        .oznaceni { background: var(--boja-podloga-tiha); }
+
+        .vrsta {
+            flex: 0 0 auto;
+            font-family: var(--pismo-podaci);
+            font-size: var(--slovo-xs);
+            color: var(--boja-tekst-tiho);
+        }
+    }
+
+    &__trazi,
+    &__napredna {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+
+        width: calc(var(--razmak-5) + var(--razmak-4));
+        padding: 0;
+        border: 0;
+        border-left: 1px solid var(--boja-linija);
+        background: transparent;
+        cursor: pointer;
+
+        transition: background-color var(--prelaz-brzo) var(--prelaz-kriva);
+        &:hover { background: var(--boja-podloga-tiha); }
+        @include z-fokus;
+
+        svg { width: var(--razmak-4); height: var(--razmak-4); display: block; }
+        svg path, svg circle, svg rect { fill: var(--boja-tekst-tiho); }
+    }
+
+    &__trazi {
+        background: var(--boja-akcenat);
+        border-left-color: var(--boja-akcenat);
+        &:hover { background: var(--boja-akcenat-jako); }
+        /* Lupa se gubila: dugme u širokoj pretrazi ima 32px razmaka sa svake
+           strane, pa je ikonicu kao stavku flex-a stiskalo na nulu. `flex`
+           je zato zaključan, a razmak je manji. */
+        svg { width: 20px; height: 20px; flex: 0 0 auto; }
+        svg path, svg circle, svg rect, svg g {
+            fill: var(--boja-akcenat-tekst);
+            stroke: none;
+        }
+    }
+
+    /* ── desna strana ─────────────────────────────────────────────────── */
+
+    &__desno {
+        display: flex;
+        align-items: center;
+        gap: var(--razmak-2);
+        flex: 0 0 auto;
+        margin-left: auto;
+    }
+
+    &__korpa {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--razmak-2);
+        padding: var(--razmak-2) var(--razmak-3);
+        border-radius: var(--radijus-mali);
+
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-md);
+        font-weight: var(--tezina-srednja);
+        color: var(--boja-tekst);
+        text-decoration: none;
+        white-space: nowrap;
+
+        transition: background-color var(--prelaz-brzo) var(--prelaz-kriva);
+        &:hover { background: var(--boja-podloga-tiha); }
+        @include z-fokus;
+
+        /* Korpa je na tamnoj traci bila pretanka i gubila se: ikonica je
+           crtana linijom. Puni se istom bojom i dobija obris iste boje, pa
+           poteg deluje deblji bez zamene same ikonice. */
+        svg { width: var(--razmak-5); height: var(--razmak-5); display: block; }
+        svg path, svg circle, svg rect, svg g {
+            fill: var(--boja-traka-tekst);
+            stroke: var(--boja-traka-tekst);
+            stroke-width: 0.6;
+        }
+    }
+
+    &__prijava {
+        display: flex;
+        align-items: center;
+        gap: var(--razmak-2);
+    }
+
+    &__veza-prijava {
+        padding: var(--razmak-2) var(--razmak-3);
+        border-radius: var(--radijus-mali);
+
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-md);
+        font-weight: var(--tezina-srednja);
+        color: var(--boja-tekst);
+        text-decoration: none;
+        white-space: nowrap;
+
+        &:hover { background: var(--boja-podloga-tiha); }
+        @include z-fokus;
+    }
+
+    &__dugme-registruj {
+        padding: var(--razmak-3) var(--razmak-4);
+        border-radius: var(--radijus-mali);
+        background: var(--boja-akcenat);
+
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-md);
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-tekst-na-akcentu);
+        text-decoration: none;
+        white-space: nowrap;
+
+        transition: background-color var(--prelaz-brzo) var(--prelaz-kriva);
+        &:hover { background: var(--boja-akcenat-jako); color: var(--boja-tekst-na-akcentu); }
+        @include z-fokus;
+    }
+
+    /* ── hamburger i zavesa — samo do 1023px ──────────────────────────── */
+
+    &__hamburger {
+        display: none;
+        flex: 0 0 auto;
+        width: calc(var(--razmak-5) + var(--razmak-5));
+        height: calc(var(--razmak-5) + var(--razmak-5));
+        padding: var(--razmak-3);
+        border: 1px solid var(--boja-linija);
+        border-radius: var(--radijus-mali);
+        background: var(--boja-povrsina);
+        cursor: pointer;
+        @include z-fokus;
+
+        span {
+            display: block;
+            height: 2px;
+            background: var(--boja-tekst);
+            transition: transform var(--prelaz-brzo) var(--prelaz-kriva),
+                        opacity var(--prelaz-brzo) var(--prelaz-kriva);
+            & + span { margin-top: 4px; }
+        }
+    }
+
+    &__zavesa {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: var(--sloj-zavesa);
+        background: var(--boja-zavesa);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       PRAVAC „TAMNA TRAKA" — novi delovi
+       ═══════════════════════════════════════════════════════════════════ */
+
+    /* ── RED 1 — traka najave ─────────────────────────────────────────── */
+
+    /* Uzor: traka visoka 60px, tekst i dugme po sredini, dugme puna pilula
+       visine 40px sa belom površinom. */
+    &__najava {
+        background: var(--boja-najava);
+
+        .z-zaglavlje__sirina {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--razmak-4);
+            min-height: 60px;
+            padding-top: var(--razmak-2);
+            padding-bottom: var(--razmak-2);
+        }
+    }
+
+    &__najava-tekst {
+        font-size: var(--slovo-najava);
+        line-height: var(--red-najava);
+        font-weight: var(--tezina-poludebela);
+        color: var(--boja-traka-tekst);
+    }
+
+    // Naziv galerije uz natpis — tiši, da natpis vodi.
+    &__najava-naslov {
+        margin-left: var(--razmak-2);
+        font-weight: var(--tezina-knjiga);
+        opacity: .92;
+    }
+
+    &__najava-dugme {
+        display: inline-flex;
+        align-items: center;
+        flex: 0 0 auto;
+        min-height: var(--visina-najava);
+        padding: var(--razmak-2) var(--razmak-4);
+        border-radius: var(--radijus-pun);
+
+        background: var(--boja-podloga);
+        color: var(--boja-traka);
+
+        font-size: var(--slovo-najava);
+        line-height: var(--red-najava);
+        font-weight: var(--tezina-poludebela);
+        text-decoration: none;
+        white-space: nowrap;
+
+        @include z-prelaz(opacity);
+        &:hover { opacity: .88; }
+        @include z-fokus;
+    }
+
+    /* ── RED 2 — pilula levo, logo u sredini, radnje desno ────────────── */
+
+    // Tri jednake kolone, da logo stoji tačno po sredini bez obzira na to
+    // koliko je široko ono levo i desno.
+    &__sirina--tri {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: center;
+        gap: var(--razmak-4);
+    }
+
+    &__levo {
+        display: flex;
+        align-items: center;
+        gap: var(--razmak-3);
+        min-width: 0;
+    }
+
+    // Obrisna pilula iz podešavanja — obris, ne puna površina.
+    &__pilula {
+        display: inline-flex;
+        align-items: center;
+        min-height: var(--visina-radnja);
+        padding: 0 var(--razmak-4);
+        border: 1px solid var(--boja-traka-linija);
+        border-radius: var(--radijus-radnja);
+
+        font-size: var(--slovo-radnja);
+        line-height: var(--red-radnja);
+        font-weight: var(--tezina-poludebela);
+        color: var(--boja-traka-tekst);
+        text-decoration: none;
+        white-space: nowrap;
+
+        @include z-prelaz(border-color, color);
+        &:hover {
+            border-color: var(--boja-traka-tekst-tiho);
+            color: var(--boja-traka-tekst);
+        }
+        @include z-fokus;
+    }
+
+    // Bela pilula „Prijava" — jedina bela površina u traci.
+    /* Uzor: 16px / 20px, težina 670, visina 44px, radijus 8px — pilula u
+       zaglavlju NIJE puna, nego blago zaobljena. */
+    &__dugme-prijava {
+        display: inline-flex;
+        align-items: center;
+        flex: 0 0 auto;
+        min-height: var(--visina-radnja);
+        padding: 0 var(--razmak-4);
+        border-radius: var(--radijus-radnja);
+
+        // Ne `--boja-tekst`: u opsegu zaglavlja je preusmerena na belu.
+        background: var(--boja-podloga);
+        color: var(--boja-traka);
+
+        font-size: var(--slovo-radnja);
+        line-height: var(--red-radnja);
+        font-weight: var(--tezina-poludebela);
+        text-decoration: none;
+        white-space: nowrap;
+
+        @include z-prelaz(opacity);
+        &:hover { opacity: .88; }
+        @include z-fokus;
+    }
+
+    /* ── RED 3 — navigacija po sredini ────────────────────────────────── */
+
+    &__navred {
+        border-top: 1px solid var(--boja-traka-linija);
+
+        .z-zaglavlje__sirina {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--razmak-4);
+            padding-top: var(--razmak-1);
+            padding-bottom: var(--razmak-1);
+        }
+
+        .z-zaglavlje__meni {
+            justify-content: center;
+            flex: 0 1 auto;
+        }
+    }
+
+    // Uski panel — cenovnik i galerije nemaju 43 stavke kao kategorije.
+    &__panel--usko {
+        min-width: 220px;
+        left: 0;
+        right: auto;
+    }
+
+    /* ── NASLOVNI BLOK — samo naslovna ────────────────────────────────── */
+
+    &__naslovni {
+        border-top: 1px solid var(--boja-traka-linija);
+
+        /* BEZ `overflow: hidden`. Sekao je padajuću listu predloga pretrage
+           na ivici naslovnog bloka — a sečenje ne popravlja nikakav
+           z-indeks, dete ne može da izađe iz roditelja koji ga seče.
+
+           Stajao je zbog fotografije koja se preliva desno, ali ona nikad
+           ne izlazi van prozora (mereno na 1280 i 1920: desna ivica slike
+           = ivica prozora), a `body` ionako nosi `overflow-x: hidden`. */
+
+        /* Prelaz ide preko `opacity` i `transform`, NE preko `max-height`.
+           Animirani `max-height` se ovde nikad nije dovršavao — merenje
+           visine zaglavlja menja raspored svakog kadra i vraća prelaz na
+           početak, pa je naslovni blok ostajao otvoren pri skrolovanju.
+           Trajanja su tokeni, pa ih `prefers-reduced-motion` gasi na 0ms. */
+        transform-origin: top;
+        transition: opacity   var(--prelaz-obicno) var(--prelaz-kriva),
+                    transform var(--prelaz-obicno) var(--prelaz-kriva);
+    }
+
+    &__naslovni-red {
+        display: flex;
+        align-items: center;
+        gap: var(--razmak-7);
+        padding-top: calc(var(--razmak-4) + 50px);
+        padding-bottom: calc(var(--razmak-4) + 50px);
+
+        // Tačka oslonca za ilustraciju — ona izlazi iz toka (position:
+        // absolute) i naslanja se na visinu koju ovaj red dobije od teksta.
+        position: relative;
+    }
+
+    &__naslovni-tekst {
+        flex: 1 1 auto;
+        min-width: 0;
+        // Ilustracija stoji van toka, pa bez ove granice bi tekst rastegao
+        // ceo red i ušao pod nju. 46% njoj, razmak isti kao ranije, ostatak
+        // tekstu.
+        max-width: calc(54% - var(--razmak-7));
+    }
+
+    // Mere sa uzora: 38px / 42px, težina 670, razmak slova -0,19px.
+    &__naslov {
+        margin: 0 0 var(--razmak-2);
+        font-family: var(--pismo-naslov);
+        font-size: var(--slovo-naslovni);
+        line-height: var(--red-naslovni);
+        letter-spacing: var(--razmak-naslovni);
+        font-weight: var(--tezina-poludebela);
+        color: var(--boja-traka-tekst);
+    }
+
+    // Uzor: 18px / 26px, težina 430, i to belo — ne tiho.
+    &__podnaslov {
+        margin: 0 0 var(--razmak-5);
+        font-size: var(--slovo-podnaslov);
+        line-height: var(--red-podnaslov);
+        font-weight: var(--tezina-knjiga);
+        color: var(--boja-traka-tekst);
+    }
+
+    /*
+     * Ilustracija — gotova slika, isporučena sa svojom crnom podlogom i
+     * isečenim oblikom. Bez dodatne maske ili okvira preko nje — crna se
+     * sama stapa sa trakom.
+     *
+     * Van toka (position: absolute), iz dva razloga:
+     *   — visina prati TAČNO onoliko koliko red dobije od teksta. Sopstveni
+     *     zakucan broj bi ili sekao kadar ili (kod `align-self: stretch`
+     *     bez njega) dizao ceo blok na svoj odnos stranica — to se već
+     *     jednom desilo.
+     *   — desna ivica dostiže PRAVU ivicu ekrana, ne samo ivicu kontejnera
+     *     od 1440px. Do te širine se poklapaju; iznad nje razliku nadoknađuje
+     *     `veliki-ekran` ispod (čist `calc`, bez `min()`/`max()` — ovde ne
+     *     prolaze kroz gradnju).
+     */
+    &__naslovna-slika {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        /* `right` na apsolutno pozicioniranom elementu meri se od IVICE
+           OTPUNJENJA (padding edge) okvira, ne od ivice sadržaja — razmak
+           reda (`--razmak-5`) je već isključen sam po sebi. `right: 0` zato
+           već dodiruje pravu ivicu reda; oduzimanje razmaka ovde bi je
+           gurnulo dalje nego treba (probano — 24px viška van ekrana). */
+        right: 0;
+        /* Širina se NE zadaje procentom (46%) — to je terala `object-fit`
+           da nešto seče, jer se odnos stranica kutije retko tačno poklapa
+           sa odnosom stranica slike. Umesto toga, širina se izvodi iz
+           STVARNOG odnosa slike (763×327) i visine koju kutija već ima
+           (top:0/bottom:0 = tačno visina reda). Kutija tako UVEK ima isti
+           odnos stranica kao slika — gornja i donja ivica se poklapaju sa
+           ivicama diva, a bočno se ništa ne seče. */
+        aspect-ratio: 1526 / 654;
+        width: auto;
+
+        @include veliki-ekran {
+            right: calc(-1 * (100vw - 1440px) / 2);
+        }
+
+        img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            // Kutija već ima isti odnos stranica kao slika, pa ovo više ne
+            // seče ništa — samo je mreža za sitno zaokruživanje piksela.
+            object-fit: contain;
+            object-position: right center;
+        }
+
+        @include mobile-tablet { display: none; }
+    }
+
+    /* ── red „Traži se:" ──────────────────────────────────────────────── */
+
+    // Uzor: „Trending:" i pojmovi isti kao podnaslov — 18px / 26px, 430.
+    &__trazi-se {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: var(--razmak-2) var(--razmak-3);
+        margin: var(--razmak-4) 0 0;
+        font-size: var(--slovo-podnaslov);
+        line-height: var(--red-podnaslov);
+        font-weight: var(--tezina-knjiga);
+    }
+
+    &__trazi-se-natpis {
+        color: var(--boja-traka-tekst);
+        font-weight: var(--tezina-knjiga);
+    }
+
+    // Ovo su prave veze u toku teksta, pa nose podvlačenje u mirovanju.
+    &__trazi-se-pojam {
+        color: var(--boja-veza-traka);
+        text-decoration: underline;
+        text-underline-offset: .15em;
+        text-decoration-thickness: 1px;
+
+        &:hover { text-decoration-thickness: 2px; }
+        @include z-fokus;
+    }
+
+    /* ── izbor vrste pretrage ─────────────────────────────────────────── */
+
+    &__vrsta {
+        display: inline-flex;
+        flex: 0 0 auto;
+        border-right: 1px solid var(--boja-linija);
+    }
+
+    &__vrsta-dugme {
+        padding: 0 var(--razmak-4);
+        border: 0;
+        background: transparent;
+
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        font-weight: var(--tezina-srednja);
+        // Polje pretrage je BELO i u tamnoj traci, pa ovde važe boje
+        // svetle podloge, ne trake.
+        color: var(--boja-polje-tekst-tiho);
+        white-space: nowrap;
+        cursor: pointer;
+
+        @include z-prelaz(color);
+        &:hover { color: var(--boja-polje-tekst); }
+
+        &--izabran {
+            // Crvena identiteta na belom polju — 5,44:1.
+            color: var(--boja-oznaka);
+            font-weight: var(--tezina-jaka);
+        }
+
+        &:focus-visible {
+            outline: 2px solid var(--boja-fokus);
+            outline-offset: -2px;
+        }
+    }
+
+    /* ── pretraga u dve širine ────────────────────────────────────────── */
+
+    &__pretraga--siroka {
+        max-width: 720px;
+        border-radius: var(--radijus-panel);
+        background: var(--boja-podloga);
+
+        // Uzor: polje visoko 48px, unos 16px.
+        min-height: var(--visina-pretraga);
+
+        .z-zaglavlje__unos {
+            padding-top: var(--razmak-3);
+            padding-bottom: var(--razmak-3);
+        }
+
+        .z-zaglavlje__trazi {
+            padding: 0 var(--razmak-5);
+            min-width: calc(var(--razmak-8) + var(--razmak-2));
+            border-radius: 0 var(--radijus-panel) var(--radijus-panel) 0;
+        }
+    }
+
+    &__pretraga--uska {
+        flex: 0 1 320px;
+        margin-left: auto;
+    }
+
+    /*
+     * Stanjivanja pri skrolovanju više NEMA.
+     *
+     * Zaglavlje je u toku strane i normalno odlazi van kadra — naslovni blok
+     * sa pretragom klizi uvis zajedno sa njim, umesto da nestane odjednom.
+     * Klasa `--zbijeno` se i dalje postavlja iz `header.js` jer stanje skrola
+     * koristi i levi baner, ali izgled više ne menja.
+     */
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DVE VISINE — ista komponenta
+   ═══════════════════════════════════════════════════════════════════════════
+   Razlika je samo u tome što niska varijanta nema naslovni blok. Sve ostalo —
+   tri reda, boje, ponašanje pri skrolovanju — deli se.
+*/
+.z-zaglavlje--visoka .z-zaglavlje__naslovni { display: block; }
+.z-zaglavlje--niska  .z-zaglavlje__naslovni { display: none; }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DO 1023px — isti markup, meni postaje fioka
+   ═══════════════════════════════════════════════════════════════════════════
+   Nema drugog primerka menija: ovo je isti <nav> iz glavnog reda.
+*/
+/* 1024–1439px: prostora ima taman toliko da pretraga ostane široka ako korpa
+   ostane bez natpisa. Ikonica sa nazivom preko `aria-label` ostaje čitljiva
+   čitaču ekrana. */
+@include small-desktop {
+    .z-zaglavlje__korpa span { display: none; }
+}
+
+@include mobile-tablet {
+    .z-zaglavlje {
+
+        &__hamburger { display: block; }
+
+        &__sirina { gap: var(--razmak-3); }
+
+        // Pretraga u svoj red, punom širinom — na uskom ekranu je ona jedina
+        // stvar koja ne sme da se skupi u ikonicu.
+        &__glavni .z-zaglavlje__sirina { flex-wrap: wrap; }
+        &__pretraga {
+            order: 10;
+            flex-basis: 100%;
+            margin-top: var(--razmak-3);
+        }
+
+        &__meni {
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            z-index: var(--sloj-prozor);
+
+            width: 86vw;
+            max-width: 360px;
+            padding: var(--razmak-5) var(--razmak-4);
+            overflow-y: auto;
+            overscroll-behavior: contain;
+
+            flex-direction: column;
+            align-items: stretch;
+            gap: var(--razmak-1);
+
+            background: var(--boja-povrsina);
+            border-right: 1px solid var(--boja-linija);
+
+            transform: translateX(-100%);
+            transition: transform var(--prelaz-obicno) var(--prelaz-kriva);
+        }
+
+        &__stavka {
+            justify-content: space-between;
+            width: 100%;
+            padding: var(--razmak-3);
+            font-size: var(--slovo-xl);
+        }
+
+        // Paneli u fioci nisu padajući nego se otvaraju na mestu.
+        &__panel {
+            position: static;
+            width: auto;
+            display: block;
+            padding: 0 0 var(--razmak-3) var(--razmak-3);
+            border: 0;
+            border-left: 1px solid var(--boja-linija);
+            border-radius: 0;
+            box-shadow: none;
+        }
+
+        &__stubovi,
+        &__spisak-fotografa { column-count: 1; max-height: none; }
+
+        &__grupa + .z-zaglavlje__grupa { margin-top: var(--razmak-4); }
+
+        &__korpa span { display: none; }
+
+        /* Granica od 54% postoji zbog ilustracije koja stoji desno, van toka.
+           Ispod 1024px ilustracije nema (`display: none`), pa je granica
+           stezala naslov u stubac od 145px na 375px i 108px na 320px. */
+        &__naslovni-tekst { max-width: 100%; }
+
+        &__traka .z-zaglavlje__sirina { justify-content: flex-end; }
+        &__agencija { display: none; }
+    }
+
+    .z-zaglavlje--meni-otvoren {
+        .z-zaglavlje__meni { transform: none; }
+        .z-zaglavlje__zavesa { display: block; }
+
+        .z-zaglavlje__hamburger span {
+            &:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+            &:nth-child(2) { opacity: 0; }
+            &:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+        }
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DNO FIOKE — cjenovnik, pomoć i jezik
+   ═══════════════════════════════════════════════════════════════════════════
+   Na širokom ekranu ovo stoji u desnom uglu trake, a fioka ga ne prikazuje.
+   Ispod 768px je obrnuto: traka ih skloni, fioka ih pokaže.
+*/
+.z-zaglavlje__fioka-dno { display: none; }
+
+@include mobile {
+    .z-zaglavlje {
+        &__sirina { padding: 0 var(--razmak-4); }
+        &__logo svg, &__logo img { height: var(--razmak-6); }
+        &__traka-veza { font-size: var(--slovo-xs); }
+
+        // Tanka traka na telefonu nosi samo natpise, bez razmaka za disanje.
+        &__traka .z-zaglavlje__sirina {
+            padding-top: var(--razmak-1);
+            padding-bottom: var(--razmak-1);
+        }
+
+        /* Natpis se ne sme sakriti: `settings.logo` ne daje nikakav SVG, pa je
+           ovaj tekst jedini logo i jedini put nazad na naslovnu. Umesto toga
+           se smanjuje, a red dobija uži razmak da sve stane u jednu liniju. */
+        &__natpis { font-size: var(--slovo-lg); }
+        &__sirina { gap: var(--razmak-2); }
+
+        &__prijava .z-zaglavlje__veza-prijava { display: none; }
+
+        /* 48 + 120 + 159 + razmaci = 351px, a na 375px ekranu ima 343.
+           Osam piksela deli desnu stranu od prelamanja u treći red, pa
+           dugme ide na manje pismo umesto da red pukne. */
+        &__dugme-registruj {
+            padding: var(--razmak-2) var(--razmak-3);
+            font-size: var(--slovo-sm);
+        }
+        &__korpa { padding: var(--razmak-2); }
+    }
+
+    /*
+     * PRELIV NA 375px — desna strana trake je tražila 249px kod raspoloživih
+     * 200, pa je red rastao izvan ekrana na svakoj strani sajta.
+     *
+     * Sklanja se ono što ima gde da ode: cjenovnik, pomoć i prekidač jezika
+     * silaze u fioku. U traci ostaju dugme menija, logo, korpa i prijava —
+     * jedine stvari koje na telefonu nemaju drugo mesto.
+     *
+     * Pravilo važi SAMO kad fioka postoji (`--sa-fiokom`). Na stranama naloga
+     * i kod fotografa javnog menija nema, pa nema ni fioke — tamo bi ovo
+     * sklonilo prekidač jezika bez zamene.
+     */
+    .z-zaglavlje--sa-fiokom {
+        .z-zaglavlje__desno .z-zaglavlje__u-fioku { display: none; }
+
+        .z-zaglavlje__fioka-dno {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: var(--razmak-1);
+
+            margin-top: var(--razmak-4);
+            padding-top: var(--razmak-4);
+            border-top: 1px solid var(--boja-linija);
+        }
+
+        // Zastavice u fioci stoje u redu, uz sopstveni razmak.
+        .z-zaglavlje__jezici--fioka {
+            display: flex;
+            gap: var(--razmak-2);
+            padding: var(--razmak-3);
+        }
+    }
+}
+
+/* Ispod 360px i prijava mora da se stisne — logo je jedini put nazad na
+   naslovnu i ne sme da se skrati. */
+@include telefon-mali {
+    /* Tri jednake kolone drže logo tačno po sredini, ali ispod 480px levoj
+       koloni ostane manje od dugmeta menija (48px), pa se logo popne preko
+       njega. Ovde logo prestaje da bude centriran — razmak između tri stvari
+       je važniji od simetrije. */
+    .z-zaglavlje__sirina--tri {
+        display: flex;
+        justify-content: space-between;
+        gap: var(--razmak-2);
+    }
+
+    .z-zaglavlje__logo { flex: 0 1 auto; min-width: 0; }
+
+    /* Prekidač „Galerije / Fotografije" traži 184px, pa je od polja za unos
+       ostajalo 30px. Ispod 480px prelazi u svoj red iznad polja. */
+    .z-zaglavlje__pretraga { flex-wrap: wrap; }
+
+    .z-zaglavlje__vrsta {
+        flex: 1 1 100%;
+        border-right: 0;
+        border-bottom: 1px solid var(--boja-linija);
+    }
+
+    .z-zaglavlje__vrsta-dugme { flex: 1 1 auto; }
+
+    .z-zaglavlje__dugme-prijava {
+        padding: 0 var(--razmak-3);
+        font-size: var(--slovo-sm);
+    }
+
+    .z-zaglavlje__natpis { font-size: var(--slovo-md); }
+}

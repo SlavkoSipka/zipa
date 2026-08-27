@@ -1,471 +1,494 @@
-.login-wrap{
-    .into-wrap{
-        position: relative;
-        //min-height: 100vh;
-        padding-top: 180px;
-
-        &::before{
-            content: ' ';
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            right: 20px;
-            bottom: 20px;
-            //background-image: linear-gradient(#FFFFFF, #EEF1F6, #EBEEF5);
-            border-radius: 0  0 20px 20px;
-
-        }
-
-        @include mobile-tablet{
-            height: unset;
-            padding-top: 140px;
-        }
-
-
-
-        .copyright{
-            position: absolute;
-            bottom: 34px;
-            left: 50%;
-            margin-left: -555px;
-            font-size: 14px;
-            font-weight: $regular;
-            color: $black;
-            margin-bottom: 0;
-            @include mobile-tablet{
-                display: none;
-            }
-        }
-
-
-        h1 {
-            font-size: 46px;
-            font-weight: $bold;
-            color: $black;
-            margin-bottom: 0;
-            @include mobile-tablet{
-                font-size: 28px;
-                color: $darkBlue;
-            }
-        }
-
-        h2 {
-            font-size: 18px;
-            font-weight: $medium;
-            color: $black;
-            margin-bottom: 53px;
-            @include mobile-tablet{
-                font-size: 14px;
-                font-weight: $medium;
-                margin-bottom: 0px;
-                color: $black;
-            }
-        }
-
-        h6 {
-            color: #9DA5BE;
-            font-size: 12px;
-            font-weight: $regular;
-            margin-bottom: 8px;
-        }
-
-        img {
-            max-width: 70%;
-
-        }
-
-
-        .text{
-            font-size: 14px;
-            font-weight: $light;
-            color: #6D7587;
-            margin-top: 99px;
-            padding-right: 100px;
-        }
-
-        .form-box{
-
-            .form-wrap{
-
-            }
-            
-            .error{
-                color: #E2082D;
-                text-align: center;
-                margin-top: -20px;
-                margin-bottom: 20px;
-                font-weight: $light;
-                font-size: 14px;
-            }
-    
-            h6 {
-                font-size: 28px;
-                font-weight: $semiBold;
-                color: $black;
-                margin-bottom: 5px;
-                @include mobile-tablet{
-                    font-size: 20px;
-                }
-            }
-            p {
-                color: #7B7B93;
-                font-size: 16px;
-                font-weight: $regular;
-                margin-bottom: 0;
-                @include mobile-tablet{
-                    font-size: 12px;
-                }
-            }
-
-            .bottom-link{
-                padding: 18px 0px 22px 0px;
-                font-size: 14px;
-                font-weight: $regular;
-                color: $black;
-                a {
-                    color: $darkBlue;
-                }
-            }
-
-            .spacer{
-                width: 100%;
-                height: 1px;
-                background-color: #DDDDDD;
-            }
-            .email-sent{
-                margin-top: 80px;
-                margin-bottom: 100px;
-                text-align: center;
-                svg{
-                    margin-bottom: 20px;
-                }
-
-                h6 {
-                    font-size: 24px;
-                    margin-bottom: 17px;
-                }
-                p{
-                    font-size: 16px;
-                    color: $black;
-                }
-            }
-            .login-form{
-                margin-top: 38px;
-                @include mobile-tablet{
-                    margin-top: 12px;
-                }
-
-                .form-field-icon{
-                    margin-bottom: 30px;
-
-                    
-                    @include mobile-tablet{
-                        margin-bottom: 14px;
-                    }
-
-                    label{
-                        font-size: 14px;
-                        font-weight: $regular;
-                        color: $black;
-                        margin-bottom: 10px;
-                        @include mobile-tablet{
-                            margin-bottom: 6px;
-                        }
-
-
-                    }
-
-                    > div {
-                        border-radius: 26px;
-                        padding: 13px 20px;
-                        border: 1px solid #F4F6FA; 
-                        display: flex;
-                        align-items: center;
-                        background-color: #F4F6FA;
-                        
-                        @include mobile-tablet{
-                            padding: 8px 20px;
-                        }
-                        &:hover{
-                            border: 1px solid $lightBlue;
-                        }
-
-
-                        input{
-                            border: 0;
-                            outline: none;
-                            width: 100%;
-                            font-size: 14px;
-                            background-color: #F4F6FA;
-                            margin-left: 11px;
-                        }
-
-                    }
-
-
-                }
-
-                .form-field-select{
-                    margin-bottom: 30px;
-                    label{
-                        font-size: 14px;
-                        font-weight: $regular;
-                        color: $black;
-                        margin-bottom: 10px;
-                        @include mobile-tablet{
-                            margin-bottom: 6px;
-                        }
-
-
-                    }
-
-
-                .select-field{
-                    all: unset;
-                    border-radius: 26px;
-                    display: flex;
-                    align-items: center;
-                    background-color: #F4F6FA;
-                    height: 50px;
-
-                    > a {
-                        padding: 13px 20px;
-                        width: 100%;
-                        display: flex;
-                        align-items: center;
-                        justify-content: space-between;
-                        color: $black;
-                        font-size: 14px;
-                        position: relative;
-                        height: 100%;
-                        &::after{
-                            all: unset;
-                            content: ' ';
-                            display: block;
-                            width: 8px;
-                            height: 8px;
-                            border-bottom: 2px solid $black;
-                            border-right: 2px solid $black;
-                            transform: rotate(45deg);
-                            position: absolute;
-                            right: 24px;
-                            top: 18px;
-                        }
-                    }
-
-                    .dropdown-menu{
-                        max-height: 200px;
-                        overflow-y: scroll;
-                        overflow-x: hidden;
-                        button{
-                            all: unset;
-                            display: block;
-                            width: 100%;
-                            padding: 5px 15px;
-                            white-space: nowrap;
-                            &:hover{
-                                background-color: #DDDDDD;
-                            }
-                        }
-                    }
-
-                }
-                }
-
-                .form-field-options{
-                    margin-bottom: 30px;
-
-                    
-                    @include mobile-tablet{
-                        margin-bottom: 14px;
-                    }
-
-                    label{
-                        font-size: 14px;
-                        font-weight: $regular;
-                        color: $black;
-                        margin-bottom: 10px;
-                        @include mobile-tablet{
-                            margin-bottom: 6px;
-                        }
-
-
-                    }
-
-                    .options{
-                        .option{
-                            display: flex;
-                            padding-left: 35px;
-                            position: relative;
-                            justify-content: space-between;
-                            margin-bottom: 24px;
-                            cursor: pointer;
-                            > div {
-                                width: 150px;
-                            }
-
-                            &::before{
-                                content: ' ';
-                                display: block;
-                                background-color: $white;
-                                border: 2px solid #DDDDDD;
-                                width: 24px;
-                                min-width: 24px;
-                                height: 24px;
-                                border-radius: 12px;
-                                position: absolute;
-                                top: 0;
-                                left: 0;
-                            }
-
-                            &.checked {
-                                &::after{
-                                    content: ' ';
-                                    display: block;
-                                    background-color: $darkBlue;
-                                    width: 14px;
-                                    min-width: 14px;
-                                    height: 14px;
-                                    border-radius: 7px;
-                                    position: absolute;
-                                    top: 5px;
-                                    left: 5px;
-    
-                                }
-                            }
-
-                            span {
-                                font-style: italic;
-                                font-weight: $light;
-                                font-size: 14px;
-                                color: #7B7B93;
-                            }
-                        }
-                    }
-
-                }
-                .required{
-                    label{
-                        color: #E2082D;
-                    }
-                    > div {
-                        border: 1px solid #E2082D;
-                    }
-                }
-
-
-                .checkbox-wrap{
-                    display: flex;
-                    align-items: center;
-                    cursor: pointer;
-                    .checkbox{
-                        border: 2px solid #DDDDDD;
-                        border-radius: 5px;
-                        width: 24px;
-                        height: 24px;
-                        margin-right: 10px;
-
-                        &::after{
-                            content: ' ';
-                            width: 0;
-                            height: 0;
-                            background-color: $lightBlue;
-                            border-radius: 3px;
-                            transition: width 0.3s, height 0.3s;
-                        }
-
-                    }
-
-                    .checkbox-label{
-                        color: #7B7B93;
-                        font-size: 14px;
-                        font-weight: $light;
-                        @include mobile-tablet{
-                            font-size: 12px;
-                        }
-
-                        a {
-                            color: $darkBlue;
-                        }
-                    }
-
-                    .required{
-                        border-bottom: 1px solid #E2082D;
-                    }
-
-                    .checked{
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-
-                        &::after{
-                            content: ' ';
-                            width: 14px;
-                            height: 14px;
-                            background-color: $darkBlue;
-                            border-radius: 3px;
-                        }
-                    }
-                }
-
-                .login-options{
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    margin-bottom: 36px;
-                    @include mobile-tablet{
-                        margin-bottom: 13px;
-                    }
-
-                    a {
-                        color: #7B7B93;
-                        font-size: 14px;
-                        font-weight: $light;
-                        @include mobile-tablet{
-                            font-size: 12px;
-                        }
-                    }
-                }
-
-                .spacer{}
-
-                button {
-                    background-color: $darkBlue;
-                    transition: background-color 0.3s;
-                    color: $white;
-                    font-size: 16px;
-                    font-weight: $semiBold;
-                    border: 0;
-                    outline: none;
-                    width: 100%;
-                    padding: 12px;
-                    border-radius: 124px;
-                    margin-bottom: 40px;
-                    @include mobile-tablet{
-                        margin-bottom: 20px;
-                        padding: 8px;
-                    }
-                    &:hover{
-                        background-color: $red;
-                        
-                    }
-                }
-            }
-
-        }
-
-        
-        .reset-password-box{
-            .login-form{
-                margin-top: 80px;
-            }
-            button{
-                margin-top: 100px;
-            }
-
-           
-        }
-
+/* ═══════════════════════════════════════════════════════════════════════════
+   PRIJAVA I REGISTRACIJA
+   ═══════════════════════════════════════════════════════════════════════════
+   Dve strane na širokom ekranu: levo obrazac, desno fotografija iz arhive sa
+   potpisom. Na telefonu ostaje samo obrazac.
+
+   TRI STARA BLOKA BOJA SU OBRISANA. Prijava je ranije imala `prijava-a/b/c`
+   klase u `_naslovnaC.scss` sa zakucanim bojama po varijantama naslovne, i
+   `loginPage.js` ih je lepio na koren. Sada sve ide iz tokena, pa varijante
+   nastaju SAME preko `data-tema` — bez ijedne klase u kodu.
+
+   Zamenjene zakucane vrednosti:
+     #9DA5BE (2,45:1 — palo)  →  --boja-tekst-tiho
+     #6D7587, #7B7B93         →  --boja-tekst-tiho
+     #E2082D                  →  --boja-oznaka
+     #DDDDDD                  →  --boja-linija
+     #F4F6FA                  →  --boja-podloga-tiha
+*/
+
+.z-prijava {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: 70vh;
+
+    @include mobile-tablet {
+        // Na telefonu samo obrazac — fotografija se sklanja.
+        grid-template-columns: 1fr;
     }
 
+    /*
+     * Strane bez fotografije — zaboravljena lozinka i postavljanje nove.
+     * Jedna centrirana kolona: obe imaju tačno jedan zadatak i fotografija
+     * bi bila samo ukras koji odvlači pažnju.
+     */
+    &--sama {
+        grid-template-columns: 1fr;
+
+        .z-prijava__strana { padding-top: var(--razmak-8); }
+    }
+
+    /* ── leva strana: obrazac ─────────────────────────────────────────── */
+
+    &__strana {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: var(--razmak-8) var(--razmak-5);
+
+        @include mobile { padding: var(--razmak-6) var(--razmak-4); }
+    }
+
+    &__okvir {
+        width: 100%;
+        max-width: 420px;
+    }
+
+    &__naslov {
+        margin: 0 0 var(--razmak-2);
+        font-family: var(--pismo-naslov);
+        font-size: 24px;
+        line-height: 1.25;
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-tekst);
+    }
+
+    &__uvod {
+        margin: 0 0 var(--razmak-6);
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
+        color: var(--boja-tekst-tiho);
+    }
+
+    /* ── polja ────────────────────────────────────────────────────────── */
+
+    &__polje {
+        margin-bottom: var(--razmak-4);
+    }
+
+    &__oznaka {
+        display: block;
+        margin-bottom: var(--razmak-1);
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        font-weight: var(--tezina-srednja);
+        color: var(--boja-tekst);
+    }
+
+    &__neobavezno {
+        margin-left: var(--razmak-1);
+        font-weight: var(--tezina-obicna);
+        color: var(--boja-tekst-tiho);
+    }
+
+    &__unos {
+        width: 100%;
+        min-height: 44px;
+        padding: 0 var(--razmak-3);
+
+        border: 1px solid var(--boja-linija);
+        border-radius: var(--radijus-panel);
+        background: var(--boja-povrsina);
+
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-md);
+        color: var(--boja-tekst);
+
+        @include z-prelaz(border-color);
+        &::placeholder { color: var(--boja-tekst-tiho); }
+        &:hover { border-color: var(--boja-tekst-tiho); }
+
+        &:focus-visible {
+            outline: 2px solid var(--boja-fokus);
+            outline-offset: 2px;
+        }
+
+        // Polje sa greškom — crvena, i to samo kad je greška zaista tu.
+        &--greska {
+            border-color: var(--boja-oznaka);
+        }
+    }
+
+    // Lozinka ima dugme za prikaz unutar polja.
+    &__polje-lozinka {
+        position: relative;
+
+        .z-prijava__unos { padding-right: 84px; }
+    }
+
+    &__prikazi {
+        position: absolute;
+        right: var(--razmak-1);
+        top: 50%;
+        transform: translateY(-50%);
+
+        padding: var(--razmak-1) var(--razmak-2);
+        border: 0;
+        border-radius: var(--radijus-mali);
+        background: transparent;
+
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-sm);
+        font-weight: var(--tezina-srednja);
+        color: var(--boja-tekst-tiho);
+        cursor: pointer;
+
+        @include z-prelaz(color, background-color);
+        &:hover { color: var(--boja-tekst); background: var(--boja-podloga-tiha); }
+        @include z-fokus;
+    }
+
+    // Greška stoji ISPOD polja na koje se odnosi, običnim jezikom.
+    &__greska-polja {
+        display: block;
+        margin-top: var(--razmak-1);
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        color: var(--boja-oznaka);
+    }
+
+    /* ── snaga lozinke ────────────────────────────────────────────────── */
+
+    &__snaga {
+        margin-top: var(--razmak-2);
+    }
+
+    &__snaga-traka {
+        display: flex;
+        gap: 3px;
+        margin-bottom: var(--razmak-2);
+    }
+
+    &__snaga-deo {
+        flex: 1 1 auto;
+        height: 4px;
+        border-radius: 2px;
+        background: var(--boja-linija);
+        @include z-prelaz(background-color);
+
+        &--ispunjen { background: var(--boja-uspeh); }
+    }
+
+    // Uslovi se čekiraju UŽIVO, dok se kuca — ne posle slanja.
+    &__uslovi {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2px var(--razmak-3);
+
+        @include mobile { grid-template-columns: 1fr; }
+    }
+
+    &__uslov {
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+
+        font-size: 11.5px;
+        line-height: 1.5;
+        color: var(--boja-tekst-tiho);
+
+        &::before {
+            content: '○';
+            font-size: 10px;
+        }
+
+        &--ispunjen {
+            color: var(--boja-uspeh);
+            &::before { content: '●'; }
+        }
+    }
+
+    /* ── zapamti me i zaboravljena lozinka ────────────────────────────── */
+
+    &__red-opcija {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--razmak-3);
+        margin-bottom: var(--razmak-5);
+        flex-wrap: wrap;
+    }
+
+    &__zapamti {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--razmak-2);
+
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        color: var(--boja-tekst);
+        cursor: pointer;
+
+        input {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--boja-oznaka);
+            cursor: pointer;
+
+            &:focus-visible {
+                outline: 2px solid var(--boja-fokus);
+                outline-offset: 2px;
+            }
+        }
+    }
+
+    &__veza {
+        @include z-veza;
+        font-size: var(--slovo-sm);
+        @include z-fokus;
+    }
+
+    /* ── glavna radnja ────────────────────────────────────────────────── */
+
+    &__dugme {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--razmak-2);
+        width: 100%;
+        min-height: var(--visina-radnja);
+        padding: 0 var(--razmak-4);
+
+        border: 0;
+        border-radius: var(--radijus-panel);
+        background: var(--boja-akcenat);
+        color: var(--boja-akcenat-tekst);
+
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-radnja);
+        line-height: var(--red-radnja);
+        font-weight: var(--tezina-poludebela);
+        cursor: pointer;
+
+        @include z-prelaz(background-color, opacity);
+        &:hover { background: var(--boja-akcenat-jako); }
+        @include z-fokus;
+
+        // Dok šalje — ne može dvaput.
+        &[disabled] {
+            opacity: .6;
+            cursor: default;
+        }
+    }
+
+    /* ── greška celog obrasca ─────────────────────────────────────────── */
+
+    &__greska {
+        margin: 0 0 var(--razmak-4);
+        padding: var(--razmak-3);
+
+        border-left: 3px solid var(--boja-oznaka);
+        border-radius: var(--radijus-mali);
+        background: var(--boja-podloga-tiha);
+
+        font-size: var(--slovo-sm);
+        line-height: var(--red-md);
+        color: var(--boja-tekst);
+
+        a { @include z-veza; @include z-fokus; }
+    }
+
+    /* ── dno: prelaz na drugu stranu ──────────────────────────────────── */
+
+    &__dno {
+        margin: var(--razmak-5) 0 0;
+        padding-top: var(--razmak-4);
+        border-top: 1px solid var(--boja-linija);
+
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        color: var(--boja-tekst-tiho);
+
+        a { @include z-veza; @include z-fokus; }
+    }
+
+    /* ── desna strana: fotografija iz arhive ──────────────────────────── */
+
+    &__slika {
+        position: relative;
+        overflow: hidden;
+        background: var(--boja-podloga-tiha);
+
+        @include mobile-tablet { display: none; }
+
+        img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+    }
+
+    // Potpis preko tamnog preklopa u dnu — najbolja reklama za agenciju.
+    &__potpis {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+
+        padding: var(--razmak-7) var(--razmak-5) var(--razmak-5);
+        // Preklop ide od providnog ka tamnom, da potpis ima podlogu a
+        // fotografija ostane čista u gornjem delu kadra.
+        background: linear-gradient(to top, var(--boja-traka), transparent);
+        color: var(--boja-traka-tekst);
+    }
+
+    &__potpis-naslov {
+        margin: 0 0 var(--razmak-1);
+        font-family: var(--pismo-naslov);
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
+        font-weight: var(--tezina-jaka);
+
+        // Nazivi u bazi stoje VELIKIM SLOVIMA.
+        text-transform: lowercase;
+        &::first-letter { text-transform: uppercase; }
+    }
+
+    &__potpis-podaci {
+        margin: 0;
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        color: var(--boja-traka-tekst-tiho);
+    }
+
+    /* ── poruka posle registracije ────────────────────────────────────── */
+
+    &__poslato {
+        text-align: center;
+
+        svg { width: 56px; height: 56px; margin-bottom: var(--razmak-4); }
+    }
+
+    &__poslato-naslov {
+        margin: 0 0 var(--razmak-2);
+        font-family: var(--pismo-naslov);
+        font-size: var(--slovo-lg);
+        line-height: var(--red-lg);
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-tekst);
+    }
+
+    &__poslato-opis {
+        margin: 0;
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
+        color: var(--boja-tekst-tiho);
+
+        strong { color: var(--boja-tekst); }
+    }
+
+    /* ── izbor tipa naloga ────────────────────────────────────────────── */
+
+    &__tipovi {
+        display: grid;
+        gap: var(--razmak-2);
+        margin-bottom: var(--razmak-4);
+    }
+
+    &__tip {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        padding: var(--razmak-3);
+        text-align: left;
+
+        border: 1px solid var(--boja-linija);
+        border-radius: var(--radijus-panel);
+        background: var(--boja-povrsina);
+        cursor: pointer;
+
+        @include z-prelaz(border-color, background-color);
+        &:hover { border-color: var(--boja-tekst-tiho); }
+        @include z-fokus;
+
+        &--izabran {
+            border-color: var(--boja-oznaka);
+            background: var(--boja-podloga-tiha);
+        }
+    }
+
+    &__tip-naziv {
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-tekst);
+
+        .z-prijava__tip--izabran & { color: var(--boja-oznaka-tekst); }
+    }
+
+    &__tip-opis {
+        font-size: 11.5px;
+        line-height: 1.45;
+        color: var(--boja-tekst-tiho);
+    }
+
+    /* ── saglasnost ───────────────────────────────────────────────────── */
+
+    &__saglasnost {
+        display: flex;
+        align-items: flex-start;
+        gap: var(--razmak-2);
+        margin-bottom: var(--razmak-5);
+
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        color: var(--boja-tekst);
+        cursor: pointer;
+
+        input {
+            flex: 0 0 auto;
+            width: 16px;
+            height: 16px;
+            margin-top: 2px;
+            accent-color: var(--boja-oznaka);
+            cursor: pointer;
+
+            &:focus-visible {
+                outline: 2px solid var(--boja-fokus);
+                outline-offset: 2px;
+            }
+        }
+
+        a { @include z-veza; @include z-fokus; }
+    }
+
+    /* ── izbor zemlje ─────────────────────────────────────────────────── */
+
+    &__izbor {
+        width: 100%;
+        min-height: 44px;
+        padding: 0 var(--razmak-3);
+
+        border: 1px solid var(--boja-linija);
+        border-radius: var(--radijus-panel);
+        background: var(--boja-povrsina);
+
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-md);
+        color: var(--boja-tekst);
+        cursor: pointer;
+
+        @include z-prelaz(border-color);
+        &:hover { border-color: var(--boja-tekst-tiho); }
+
+        &:focus-visible {
+            outline: 2px solid var(--boja-fokus);
+            outline-offset: 2px;
+        }
+    }
 }

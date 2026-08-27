@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 import { Container } from 'reactstrap';
+
+import Traka from '../../components/traka';
 import Isvg from 'react-inlinesvg';
 
 import infoIcon from '../../assets/svg/info.svg';
@@ -131,9 +133,9 @@ class PredlogC extends Component {
                         </div>
                     </Container>
                     <Container>
-                        <div className="traka">
+                        <Traka>
                             {najnovije.slice(1).map((g, i) => this.kartica(g, `n${i}`))}
-                        </div>
+                        </Traka>
                     </Container>
                 </section>
 
@@ -179,9 +181,9 @@ class PredlogC extends Component {
                                     </div>
                                 </Container>
                                 <Container>
-                                    <div className="traka">
+                                    <Traka>
                                         {galerije.map((g, i) => this.kartica(g, `${idx}-${i}`))}
-                                    </div>
+                                    </Traka>
                                 </Container>
                             </section>
 
@@ -213,7 +215,7 @@ class PredlogC extends Component {
                             </div>
                         </Container>
                         <Container>
-                            <div className="traka">
+                            <Traka>
                                 {this.props.videos.slice(0, 8).map((v, i) => {
                                     const naslovVidea = Object.translate(v, 'title', lang) || '';
                                     return (
@@ -226,7 +228,7 @@ class PredlogC extends Component {
                                         </a>
                                     );
                                 })}
-                            </div>
+                            </Traka>
                         </Container>
                     </section>
                 ) : null}

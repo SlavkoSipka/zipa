@@ -49,17 +49,25 @@ export const DefaultLayout = (Wrapped) => (props) => {
                 bannerClick={props.bannerClick}
             />
             {props.detailSearch ?
-                <div className="detail-search-modal">
-                    <div>
-                        <Container>
-                            <Row>
-                                <Col lg="12">
-                                    <h3>Napredna pretraga</h3>
-                                    <button className="close" onClick={() => props.handleDetailSearch(null)}><Isvg src={closeIcon} /></button>
-                                </Col>
-
-                            </Row>
-                            <DetailSearchForm photographers={props.photographers} handleDetailSearch={props.handleDetailSearch} onSubmit={(data) => {
+                /* Zavesa zatvara prozor na klik IZVAN okvira — provera
+                   `e.target === e.currentTarget` da klik unutar obrasca ne
+                   propadne do nje. Escape hvata sam obrazac. */
+                <div className="detail-search-modal z-pretraga-prozor"
+                     role="dialog"
+                     aria-modal="true"
+                     aria-label={'Napredna pretraga'.translate(props.lang)}
+                     onClick={(e) => { if (e.target === e.currentTarget) props.handleDetailSearch(null); }}>
+                    <div className="z-pretraga-prozor__okvir">
+                        <div className="z-pretraga-prozor__vrh">
+                            <h2 className="z-pretraga-prozor__naslov">{'Napredna pretraga'.translate(props.lang)}</h2>
+                            <button type="button"
+                                    className="z-pretraga-prozor__zatvori"
+                                    aria-label={'Zatvori'.translate(props.lang)}
+                                    onClick={() => props.handleDetailSearch(null)}>
+                                <Isvg src={closeIcon} />
+                            </button>
+                        </div>
+                            <DetailSearchForm lang={props.lang} photographers={props.photographers} handleDetailSearch={props.handleDetailSearch} onSubmit={(data) => {
                                 if (data['date-to']) {
                                     let date = new Date(data['date-to'] * 1000);
                                     date.setHours(23, 59, 59, 0);
@@ -69,7 +77,6 @@ export const DefaultLayout = (Wrapped) => (props) => {
                                 props[0].history.push(`/galerije${searchLink}`);
                                 props.handleDetailSearch(null);
                             }}></DetailSearchForm>
-                        </Container>
                     </div>
                 </div>
                 :

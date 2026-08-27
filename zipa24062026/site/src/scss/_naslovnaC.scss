@@ -12,9 +12,9 @@
     $razmak: 14px;
     $sirinaKartice: 232px;
 
-    padding-top: 116px;
+    padding-top: var(--zaglavlje-visina);
 
-    @include mobile-tablet { padding-top: 112px; }
+    @include mobile-tablet { padding-top: var(--zaglavlje-visina); }
 
     // ── naslovna traka preko cele širine ─────────────────────────────────
     .glavna-traka {
@@ -131,7 +131,7 @@
                 margin-left: auto;
                 font-size: 13px;
                 font-weight: $medium;
-                color: $blue;
+                @include z-veza-meni;
                 white-space: nowrap;
             }
         }
@@ -147,7 +147,9 @@
         overflow-x: auto;
         overflow-y: hidden;
         padding-bottom: 10px;
-        scroll-snap-type: x proximity;
+        /* `mandatory`, ne `proximity`: uz `proximity` traka ume da stane
+           IZMEĐU dve kartice, pa je šesta ostajala presečena na pola. */
+        scroll-snap-type: x mandatory;
         -webkit-overflow-scrolling: touch;
 
         // uzdržana traka za pomeranje
@@ -161,11 +163,26 @@
             border-radius: 99px;
         }
 
+        /*
+         * Kartica se meri u DELOVIMA ŠIRINE, ne u pikselima.
+         *
+         * Sa zakucanih 232px broj kartica retko izlazi ceo, pa je poslednja
+         * vidljiva uvek bila presečena. Ovako u kadar staje tačan broj
+         * kartica, a razmak između njih se oduzme iz mere.
+         *
+         * `calc` prolazi kroz gradnju; `min()`, `max()` i `clamp()` NE —
+         * stari CSS parser u Razzle-u pukne nad njima (vidi CLAUDE.md).
+         */
         > .kartica {
-            flex: 0 0 $sirinaKartice;
+            flex: 0 0 calc((100% - 4 * #{$razmak}) / 5);
             scroll-snap-align: start;
 
-            @include mobile { flex-basis: 168px; }
+            @include small-desktop { flex-basis: calc((100% - 3 * #{$razmak}) / 4); }
+            @include tablet        { flex-basis: calc((100% - 2 * #{$razmak}) / 3); }
+            @include mobile        { flex-basis: calc((100% - #{$razmak}) / 2); }
+            // Ispod 480px staje tačno jedna kartica, bez virka sledeće —
+            // tražено je da nijedna ne ostane presečena.
+            @include telefon-mali  { flex-basis: 100%; }
         }
     }
 
@@ -461,53 +478,13 @@
  * šta stoji.
  */
 
-/* Predlog A — svetlo i mirno, naslov levo uz tanku crvenu crtu. */
-.login-wrap.prijava-a {
-    background-color: #F7F8FC;
-
-    h1 {
-        position: relative;
-        padding-left: 18px;
-
-        &::before {
-            content: '';
-            position: absolute;
-            left: 0; top: 6px; bottom: 6px;
-            width: 4px;
-            border-radius: 2px;
-            background-color: $red;
-        }
-    }
-}
-
-/* Predlog B — tamna podloga sa krupnim natpisom, u duhu plave trake. */
-.login-wrap.prijava-b {
-    background-color: $darkBlue;
-
-    h1, h2 { color: $white; }
-    h2 { opacity: 0.86; }
-    h6 { color: rgba(255, 255, 255, 0.72); }
-
-    // sam obrazac ostaje na beloj podlozi, radi čitljivosti
-    form, .login-form, .form-wrap {
-        background-color: $white;
-        border-radius: 14px;
-        padding: 26px;
-    }
-}
-
-/* Predlog C — uzdržano, sa vodoravnom crtom ispod naslova. */
-.login-wrap.prijava-c {
-    background-color: $white;
-
-    h1 {
-        padding-bottom: 14px;
-        border-bottom: 2px solid $black;
-        display: inline-block;
-    }
-
-    h2 { margin-top: 16px; }
-}
+/* Tri bloka boja za `prijava-a/b/c` su OBRISANA (2026-08-25).
+ *
+ * Prijava je imala zakucane boje po varijantama naslovne, a `loginPage.js`
+ * im je lepio klasu na koren. Sada sve ide iz tokena, pa se varijante
+ * dobijaju same preko `data-tema` — bez ijedne klase u kodu. Izgled je u
+ * `_login.scss`.
+ */
 
 /* ── Širi okvir sadržaja uz nove izglede ─────────────────────────────────
  *
@@ -522,7 +499,7 @@
     > .container,
     .odeljak > .container,
     section > .container {
-        @media (min-width: 1500px) {
+        @include veliki-ekran {
             max-width: 1400px;
         }
     }
@@ -553,7 +530,7 @@
     padding: 22px;
 
     // na širem ekranu se ne prikazuje uopšte
-    @media (min-width: 768px) { display: none; }
+    @include tablet-i-vise { display: none; }
 
     .zavesa {
         position: absolute;
@@ -593,4 +570,4 @@
 }
 
 /* Baner označen „samo na telefonu" se na širem ekranu ne prikazuje, i obrnuto. */
-.banner.samo-telefon { @media (min-width: 768px) { display: none; } }
+.banner.samo-telefon { @include tablet-i-vise { display: none; } }

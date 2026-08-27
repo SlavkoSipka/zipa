@@ -1,5 +1,7 @@
 .page-wrap{
-
+    /* Ova strana ranije NIJE odvajala mesto za zaglavlje — sadržaj joj je
+       ulazio pod fiksiranu traku. Sad uzima istu meru kao sve ostale. */
+    padding-top: var(--zaglavlje-visina);
 }
 
 
@@ -77,10 +79,10 @@
 }
 
 
-@media only screen and (max-width: 767px) {
+@include mobile {
 
 }
 
-@media only screen and (min-width: 768px) and (max-width: 1023px) {
+@include tablet {
 
 }

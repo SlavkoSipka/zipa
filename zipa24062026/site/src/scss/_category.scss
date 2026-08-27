@@ -1,6 +1,7 @@
 .category-wrap{
     @include mobile-tablet{
-        padding-top: 140px;
+        // Mesto za zaglavlje — pravu visinu javlja `components/header.js`.
+        padding-top: var(--zaglavlje-visina);
     }
 
     .into-wrap{
@@ -8,7 +9,8 @@
         //height: 380px;
         //margin-top: 130px;
         margin-bottom: 0px;
-        padding: 200px 0 10px 0;
+        // Mesto za zaglavlje; pravu visinu javlja `components/header.js`.
+        padding: calc(var(--zaglavlje-visina) + 63px) 0 10px 0;
 
         /*&::before{
             content: ' ';
@@ -23,7 +25,9 @@
         }*/
 
         @include small-desktop{
-            padding: 20px 30px;
+            // Ovde je ranije stajalo 20px: zaglavlje je bilo prozirno na vrhu
+            // strane pa se naslov video kroz njega. Sada je neprozirno.
+            padding: var(--zaglavlje-visina) 30px 20px;
         }
 
 
@@ -130,6 +134,9 @@
 
 
     .category-section {
+        // Od alatne trake (ili pilula primenjenih filtera, kad ih ima) do
+        // prve kartice — ranije nalepljeno, sada 28px.
+        padding-top: 28px;
         padding-bottom: 50px;
         .filters{
 
@@ -152,7 +159,7 @@
                 margin-bottom: 25px;
 
                 label{
-                    color: #6D7587;
+                    color: var(--boja-tekst-tiho);
                     font-size: 16px;
                     font-weight: $medium;
                     margin-bottom: 9px;
@@ -168,7 +175,7 @@
                     text-align: left;
                     padding: 0 20px;
                     span {
-                        color: #7B7B93;
+                        color: var(--boja-tekst-tiho);
                         font-size: 16px;
                         font-weight: $medium;
                         margin-right: 16px;
@@ -240,7 +247,7 @@
                     width: 100%;
                     float: left;
                     > label{
-                        color: #6D7587;
+                        color: var(--boja-tekst-tiho);
                         font-size: 16px;
                         font-weight: $medium;
                         margin-bottom: 9px;
@@ -300,7 +307,7 @@
                 }
 
                 > label{
-                    color: #6D7587;
+                    color: var(--boja-tekst-tiho);
                     font-size: 16px;
                     font-weight: $medium;
                     margin-bottom: 9px;
@@ -410,7 +417,7 @@
                 flex-direction: column;
                 margin-bottom: 28px;
                 label{
-                    color: #6D7587;
+                    color: var(--boja-tekst-tiho);
                     font-size: 16px;
                     font-weight: $medium;
                     margin-bottom: 9px;
@@ -430,7 +437,7 @@
                 flex-direction: column;
                 margin-bottom: 28px;
                 label{
-                    color: #6D7587;
+                    color: var(--boja-tekst-tiho);
                     font-size: 16px;
                     font-weight: $medium;
                     margin-bottom: 9px;
@@ -460,7 +467,7 @@
                 flex-direction: column;
                 margin-bottom: 28px;
                 label{
-                    color: #6D7587;
+                    color: var(--boja-tekst-tiho);
                     font-size: 16px;
                     font-weight: $medium;
                     margin-bottom: 9px;
@@ -508,7 +515,7 @@
                 label{
                     font-size: 16px;
                     font-weight: $medium;
-                    color: #6D7587;
+                    color: var(--boja-tekst-tiho);
                     margin-bottom: 9px;
 
                 }
@@ -754,7 +761,7 @@
                     display: none;
                 }
 
-                @media (max-width: 1600px) {
+                @include do-velikog-ekrana {
                     display: none;
                 }
                 }

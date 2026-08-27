@@ -1,24 +1,42 @@
 import React, { Component } from 'react';
-import { Link } from 'react-router-dom'
-import Isvg from 'react-inlinesvg';
 import Page from '../containers/page';
 
-
-import {
-    Container,
-    Row,
-    Col,
-} from 'reactstrap';
-
-
-import Form from '../components/forms/contactForm';
-
-import rightArrow from '../assets/svg/right-arrow.svg';
-
-import bg from '../assets/images/category-bg.jpg';
+import { Container } from 'reactstrap';
+import ZEMLJE from '../components/forms/zemlje';
 import { API_ENDPOINT } from '../constants';
 
+/*
+ * KONTAKT — /contact
+ *
+ * Dve kolone: obrazac levo, podaci agencije desno.
+ *
+ * Redux-form je zamenjen kontrolisanim poljima, kao na prijavi i stranama
+ * naloga, ali SVIH DESET IMENA POLJA i poziv `POST /contact` su nepromenjeni
+ * — mejl koji server sastavlja izgleda isto.
+ *
+ * Obavezna polja su ista koja su i ranije imala `validate={[required]}`:
+ * ime, prezime, e-mail, poslovni telefon, kompanija i poruka.
+ */
 
+const POSAO = [
+    'Fotograf', 'Štampani mediji,', 'Digitalni mediji', 'Novinska', 'Agencija,',
+    'Foto agencija', 'WEB portali,', 'Radio stanica', 'Državna institucija,',
+    'Kompanija,', 'Poslovni subjekat', 'Privatno lice',
+];
+
+const POZICIJA = [
+    'Fotograf', 'Novinar', 'Urednik', 'Direktor', 'Menadzer',
+    'Odgovorno lice', 'Privatno lice',
+];
+
+const INDUSTRIJA = [
+    'Stampa/izdavac', 'Digitalni mediji', 'Televizija/radio', 'Agencije/PR', 'Ostalo',
+];
+
+const PRAZNO = {
+    firstName: '', lastName: '', email: '', bussinessPhone: '', country: '',
+    jobeRole: '', jobLevel: '', industry: '', company: '', message: '',
+};
 
 class ContactPage extends Component {
     constructor(props) {
@@ -26,7 +44,12 @@ class ContactPage extends Component {
         this.init = this.init.bind(this);
 
         this.state = {
-            ...props.initialData
+            ...props.initialData,
+            podaci: { ...PRAZNO },
+            greskePolja: {},
+            salje: false,
+            done: false,
+            greska: null,
         };
     }
 
@@ -42,115 +65,295 @@ class ContactPage extends Component {
                 })
             })
         }
-
     }
 
     componentDidMount() {
         this.init()
-
     }
 
     componentDidUpdate(prevProps) {
-
         if (prevProps[0].location.pathname != this.props[0].location.pathname) {
             this.init();
         }
     }
 
+    postavi = (ime, vrednost) => {
+        this.setState({ podaci: { ...this.state.podaci, [ime]: vrednost } });
+    };
 
-    submit = (data) => {
+    proveri() {
+        const l = this.props.lang;
+        const p = this.state.podaci;
+        const g = {};
+
+        if (!p.firstName.trim()) g.firstName = 'Unesite ime.'.translate(l);
+        if (!p.lastName.trim()) g.lastName = 'Unesite prezime.'.translate(l);
+
+        if (!p.email.trim()) {
+            g.email = 'Unesite e-mail adresu.'.translate(l);
+        } else if (p.email.indexOf('@') === -1 || p.email.indexOf('.') === -1) {
+            g.email = 'Adresa nije ispravna — provjerite da li ste je tačno unijeli.'.translate(l);
+        }
+
+        if (!p.bussinessPhone.trim()) g.bussinessPhone = 'Unesite broj telefona.'.translate(l);
+        if (!p.company.trim()) g.company = 'Unesite naziv kompanije ili medija.'.translate(l);
+        if (!p.message.trim()) g.message = 'Napišite poruku.'.translate(l);
+
+        this.setState({ greskePolja: g });
+        return Object.keys(g).length === 0;
+    }
+
+    submit = (e) => {
+        if (e) e.preventDefault();
+        if (this.state.salje) return;
+        if (!this.proveri()) return;
+
+        this.setState({ salje: true, greska: null });
+
         fetch(`${API_ENDPOINT}/contact`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${localStorage.getItem('authToken')}`
             },
-            body: JSON.stringify(data)
-        }).then(res => res.json()).then((result) => {
+            body: JSON.stringify(this.state.podaci)
+        }).then(res => res.json()).then(() => {
+            this.setState({ done: true, salje: false, podaci: { ...PRAZNO } });
+            window.scrollTo(0, 0);
+        }).catch(() => {
+            // Ranije se „poslato" pisalo i kad slanje padne.
             this.setState({
-                done: true
-            })
+                salje: false,
+                greska: 'Poruka nije poslata. Provjerite internet i pokušajte ponovo, ili nam pišite na info@zipaphoto.net.'.translate(this.props.lang),
+            });
         })
+    };
 
-    }
-
-
-    render() {
+    unos = (ime, natpis, dodatno = {}) => {
+        const l = this.props.lang;
+        const greska = this.state.greskePolja[ime];
+        const id = `kontakt-${ime}`;
 
         return (
-            <div className="contact-wrap">
-                <div className="into-wrap">
-                    <Container>
-                        <Row>
-                            <Col lg="12">
-                                <h1>{'Kontakt'.translate(this.props.lang)}</h1>
-                                <p>{'Kontaktirajte nas'.translate(this.props.lang)}</p>
-                            </Col>
-                        </Row>
+            <div className="z-prijava__polje">
+                <label className="z-prijava__oznaka" htmlFor={id}>
+                    {natpis.translate(l)}
+                    {dodatno.neobavezno ? (
+                        <span className="z-prijava__neobavezno">{'— neobavezno'.translate(l)}</span>
+                    ) : null}
+                </label>
+                <input
+                    id={id}
+                    type={dodatno.tip || 'text'}
+                    className={'z-prijava__unos' + (greska ? ' z-prijava__unos--greska' : '')}
+                    placeholder={dodatno.primer || ''}
+                    value={this.state.podaci[ime]}
+                    aria-invalid={!!greska}
+                    aria-describedby={greska ? `greska-${ime}` : null}
+                    onChange={(e) => this.postavi(ime, e.target.value)}
+                />
+                {greska ? (
+                    <span className="z-prijava__greska-polja" id={`greska-${ime}`}>{greska}</span>
+                ) : null}
+            </div>
+        );
+    };
 
+    izbor = (ime, natpis, vrednosti) => {
+        const l = this.props.lang;
+        const id = `kontakt-${ime}`;
+
+        return (
+            <div className="z-prijava__polje">
+                <label className="z-prijava__oznaka" htmlFor={id}>
+                    {natpis.translate(l)}
+                    <span className="z-prijava__neobavezno">{'— neobavezno'.translate(l)}</span>
+                </label>
+                <select
+                    id={id}
+                    className="z-prijava__unos"
+                    value={this.state.podaci[ime]}
+                    onChange={(e) => this.postavi(ime, e.target.value)}
+                >
+                    <option value="">{'Izaberite'.translate(l)}</option>
+                    {vrednosti.map((v) => (
+                        Array.isArray(v)
+                            ? <option value={v[0]} key={v[0]}>{v[1]}</option>
+                            : <option value={v} key={v}>{v}</option>
+                    ))}
+                </select>
+            </div>
+        );
+    };
+
+    render() {
+        const l = this.props.lang;
+        const s = this.props.settings || {};
+        const adresa = s.location ? String(s.location).replace(/\n/g, ', ') : null;
+
+        return (
+            <div className="contact-wrap z-kontakt">
+
+                <header className="z-kontakt__vrh">
+                    <Container>
+                        <h1 className="z-kontakt__naslov">{'Kontakt'.translate(l)}</h1>
+                        <p className="z-kontakt__uvod">
+                            {'Pišite nam za ponudu, licencu ili pomoć oko arhive. Odgovaramo u toku radnog dana.'.translate(l)}
+                        </p>
                     </Container>
-                </div>
+                </header>
 
-                <section className="section-dynamic">
-                    <Container>
-                        <Row>
-                            <Col lg="12">
-                                <div className="contact-info">
-                                    <h3>{"Stojimo Vam na raspolaganju za sva pitanja. ".translate(this.props.lang)}</h3>
-                                    <p>
-                                        {"Možete nas kontaktirati putem telefona ili na E-mail, a mozete da popunite kontakt formu koja se nalazi ispod. Odgovorićemo Vam u što kraćem roku. Hvala vam sto ste nas kontaktirali.".translate(this.props.lang)}
+                <Container>
+                    <div className="z-kontakt__raspored">
 
+                        {/* ── obrazac ────────────────────────────────── */}
+                        <div className="z-kontakt__obrazac">
+                            {this.state.done ? (
+                                <div className="z-kontakt__uspjeh" role="status">
+                                    <h2 className="z-kontakt__uspjeh-naslov">
+                                        {'Poruka je poslata'.translate(l)}
+                                    </h2>
+                                    <p className="z-kontakt__uspjeh-opis">
+                                        {'Javljamo se na adresu koju ste ostavili, obično isti radni dan.'.translate(l)}
                                     </p>
-                                    <hr />
-                                    <Row>
-                                        <Col lg="6">
-                                            <h4>{"Kontakt informacije".translate(this.props.lang)}</h4>
-                                            <div className="contact-field">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="54" height="54" viewBox="0 0 54 54"><g id="Group_275" data-name="Group 275" transform="translate(-400 -545)"><circle id="Ellipse_38" data-name="Ellipse 38" cx="27" cy="27" r="27" transform="translate(400 545)" fill="#3C59B9"></circle><path id="iconfinder_phone_1608790" d="M216,146.955a5.627,5.627,0,0,1-.17,1.2,6.771,6.771,0,0,1-.358,1.168,4.57,4.57,0,0,1-2.08,1.807,6.319,6.319,0,0,1-4.065.81,7.366,7.366,0,0,1-.98-.213q-.545-.153-.81-.247t-.946-.349q-.682-.256-.835-.307a15.437,15.437,0,0,1-2.983-1.415,28.631,28.631,0,0,1-8.182-8.182,15.436,15.436,0,0,1-1.415-2.983q-.051-.153-.307-.835t-.349-.946q-.094-.264-.247-.81a7.363,7.363,0,0,1-.213-.98,6.319,6.319,0,0,1,.81-4.065,4.57,4.57,0,0,1,1.807-2.08,6.771,6.771,0,0,1,1.168-.358,5.627,5.627,0,0,1,1.2-.17.955.955,0,0,1,.358.051q.307.1.9,1.3.188.324.511.92t.6,1.082q.273.486.528.912.051.068.3.426a4.758,4.758,0,0,1,.366.605,1.112,1.112,0,0,1,.119.486,1.415,1.415,0,0,1-.486.852,8.309,8.309,0,0,1-1.057.938,10.265,10.265,0,0,0-1.057.9,1.3,1.3,0,0,0-.486.784,1.152,1.152,0,0,0,.085.384,3.724,3.724,0,0,0,.145.349q.06.119.239.409t.2.324a16.894,16.894,0,0,0,6.972,6.972q.034.017.324.2t.409.239a3.717,3.717,0,0,0,.349.145,1.151,1.151,0,0,0,.384.085,1.3,1.3,0,0,0,.784-.486,10.267,10.267,0,0,0,.9-1.057,8.309,8.309,0,0,1,.938-1.057,1.415,1.415,0,0,1,.852-.486,1.112,1.112,0,0,1,.486.119,4.762,4.762,0,0,1,.605.366q.358.247.426.3.426.256.912.528t1.082.6q.6.324.92.511,1.193.6,1.3.9A.955.955,0,0,1,216,146.955Z" transform="translate(223 432)" fill="#fff"></path></g></svg>                                        <div className="contact-field-info">
-                                                    <h5>{"Telefon".translate(this.props.lang)}</h5>
-                                                    <h6>{this.props.settings.phoneNumber}</h6>
-                                                </div>
-                                            </div>
-                                            <div className="contact-field">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="54" height="54" viewBox="0 0 54 54"><g id="Group_276" data-name="Group 276" transform="translate(-400 -615)"><circle id="Ellipse_39" data-name="Ellipse 39" cx="27" cy="27" r="27" transform="translate(400 615)" fill="#3C59B9"></circle><g id="Layer_17" data-name="Layer 17" transform="translate(412 628.517)"><path id="Path_384" data-name="Path 384" d="M23.418,6H6.582A3.591,3.591,0,0,0,3,9.591V19.948a3.591,3.591,0,0,0,3.582,3.591H23.418A3.591,3.591,0,0,0,27,19.948V9.591A3.591,3.591,0,0,0,23.418,6Zm0,1.846h.148L15,14.086,6.434,7.846H23.418Zm1.735,12.1a1.745,1.745,0,0,1-1.735,1.745H6.582a1.745,1.745,0,0,1-1.735-1.745V9.591a1.772,1.772,0,0,1,.092-.545l9.526,6.932a.923.923,0,0,0,1.089,0l9.517-6.932a1.772,1.772,0,0,1,.092.545Z" transform="translate(0 0)" fill="#fff"></path></g></g></svg>                                        <div className="contact-field-info">
-                                                    <h5>{"E-mail".translate(this.props.lang)}</h5>
-                                                    <h6>info@zipaphoto.net</h6>
-                                                    <h6>zipaphoto@gmail.com</h6>
-
-                                                </div>
-                                            </div>
-
-                                        </Col>
-                                        <Col lg="6">
-                                            <h4>{"Lokacija".translate(this.props.lang)}</h4>
-                                            <div className="contact-field">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="54" height="54" viewBox="0 0 54 54"><g id="Group_277" data-name="Group 277" transform="translate(-400 -755)"><circle id="Ellipse_40" data-name="Ellipse 40" cx="27" cy="27" r="27" transform="translate(400 755)" fill="#3C59B9"></circle><g id="iconfinder_LocationPin_1737382" transform="translate(313.474 715.218)"><path id="Path_385" data-name="Path 385" d="M113.857,54.872a9.029,9.029,0,0,0-9.019,9.019c0,8,8.115,14.291,8.461,14.555l.558.426.558-.426c.346-.264,8.461-6.558,8.461-14.555A9.029,9.029,0,0,0,113.857,54.872Zm0,21.651c-1.778-1.53-7.181-6.671-7.181-12.633a7.181,7.181,0,1,1,14.363,0C121.038,69.839,115.633,74.991,113.856,76.523Z" transform="translate(0 0)" fill="#fff"></path><path id="Path_386" data-name="Path 386" d="M198.552,142.966a3.522,3.522,0,1,0,3.522,3.522A3.523,3.523,0,0,0,198.552,142.966Z" transform="translate(-84.834 -82.853)" fill="#fff"></path></g></g></svg>                                        <div className="contact-field-info">
-                                                    <h5>{"Adresa".translate(this.props.lang)}</h5>
-                                                    <h6 dangerouslySetInnerHTML={{ __html: this.props.settings.location && this.props.settings.location.replace(/\n/g, '<br/>') }}></h6>
-                                                </div>
-                                            </div>
-                                        </Col>
-                                    </Row>
-                                    <hr />
+                                    <button
+                                        type="button"
+                                        className="z-kontakt__radnja"
+                                        onClick={() => this.setState({ done: false })}
+                                    >
+                                        {'Pošaljite još jednu'.translate(l)}
+                                    </button>
                                 </div>
-                            </Col>
-                            <Col lg="12">
-                                <div className="contact-form">
-                                    <p style={{ fontSize: 12 }}>*Molimo vas popunite sva polja.</p>
-                                    <Form lang={this.props.lang} onSubmit={this.submit} />
-                                    {
-                                        this.state.done ?
-                                            <p>{'Poruka je poslata. Očekujte odgovor ubrzo!'}</p>
-                                            :
-                                            null
-                                    }
+                            ) : (
+                                <>
+                                    <h2 className="z-kontakt__odeljak-naslov">
+                                        {'Pošaljite poruku'.translate(l)}
+                                    </h2>
+
+                                    {this.state.greska ? (
+                                        <p className="z-prijava__greska">{this.state.greska}</p>
+                                    ) : null}
+
+                                    <form onSubmit={this.submit} noValidate>
+                                        <div className="z-kontakt__par">
+                                            {this.unos('firstName', 'Ime')}
+                                            {this.unos('lastName', 'Prezime')}
+                                        </div>
+
+                                        <div className="z-kontakt__par">
+                                            {this.unos('email', 'E-mail adresa', { tip: 'email', primer: 'ime@domain.com' })}
+                                            {this.unos('bussinessPhone', 'Poslovni telefon', { tip: 'tel' })}
+                                        </div>
+
+                                        <div className="z-kontakt__par">
+                                            {this.unos('company', 'Kompanija ili medij')}
+                                            {this.izbor('country', 'Zemlja', ZEMLJE)}
+                                        </div>
+
+                                        <div className="z-kontakt__par">
+                                            {this.izbor('jobeRole', 'Posao', POSAO)}
+                                            {this.izbor('jobLevel', 'Pozicija', POZICIJA)}
+                                        </div>
+
+                                        {this.izbor('industry', 'Industrija', INDUSTRIJA)}
+
+                                        <div className="z-prijava__polje">
+                                            <label className="z-prijava__oznaka" htmlFor="kontakt-message">
+                                                {'Poruka'.translate(l)}
+                                            </label>
+                                            <textarea
+                                                id="kontakt-message"
+                                                rows="6"
+                                                className={'z-prijava__unos z-kontakt__tekst' + (this.state.greskePolja.message ? ' z-prijava__unos--greska' : '')}
+                                                placeholder={'O čemu se radi?'.translate(l)}
+                                                value={this.state.podaci.message}
+                                                aria-invalid={!!this.state.greskePolja.message}
+                                                aria-describedby={this.state.greskePolja.message ? 'greska-message' : null}
+                                                onChange={(e) => this.postavi('message', e.target.value)}
+                                            />
+                                            {this.state.greskePolja.message ? (
+                                                <span className="z-prijava__greska-polja" id="greska-message">
+                                                    {this.state.greskePolja.message}
+                                                </span>
+                                            ) : null}
+                                        </div>
+
+                                        <button
+                                            type="submit"
+                                            className="z-prijava__dugme"
+                                            disabled={this.state.salje}
+                                        >
+                                            {this.state.salje
+                                                ? 'Slanje…'.translate(l)
+                                                : 'Pošaljite poruku'.translate(l)}
+                                        </button>
+                                    </form>
+                                </>
+                            )}
+                        </div>
+
+                        {/* ── podaci agencije ────────────────────────── */}
+                        <aside className="z-kontakt__podaci">
+                            <h2 className="z-kontakt__odeljak-naslov">
+                                {'Podaci'.translate(l)}
+                            </h2>
+
+                            {s.location ? (
+                                <div className="z-kontakt__stavka">
+                                    <span className="z-kontakt__stavka-naziv">{'Adresa'.translate(l)}</span>
+                                    <p
+                                        className="z-kontakt__stavka-vrednost"
+                                        dangerouslySetInnerHTML={{ __html: s.location.replace(/\n/g, '<br/>') }}
+                                    />
                                 </div>
-                            </Col>
-                        </Row>
-                    </Container>
-                </section>
+                            ) : null}
 
+                            {s.phoneNumber ? (
+                                <div className="z-kontakt__stavka">
+                                    <span className="z-kontakt__stavka-naziv">{'Telefon'.translate(l)}</span>
+                                    <p className="z-kontakt__stavka-vrednost">
+                                        <a className="z-kontakt__veza" href={`tel:${String(s.phoneNumber).replace(/\s/g, '')}`}>
+                                            {s.phoneNumber}
+                                        </a>
+                                    </p>
+                                </div>
+                            ) : null}
 
+                            <div className="z-kontakt__stavka">
+                                <span className="z-kontakt__stavka-naziv">{'E-mail'.translate(l)}</span>
+                                <p className="z-kontakt__stavka-vrednost">
+                                    <a className="z-kontakt__veza" href="mailto:info@zipaphoto.net">info@zipaphoto.net</a>
+                                    <br />
+                                    <a className="z-kontakt__veza" href="mailto:zipaphoto@gmail.com">zipaphoto@gmail.com</a>
+                                </p>
+                            </div>
+
+                            {/* Radno vreme se iscrtava samo ako je uneto u
+                                Podešavanjima sajta — polje danas ne postoji,
+                                pa se radno vreme ne izmišlja. */}
+                            {s.workingHours ? (
+                                <div className="z-kontakt__stavka">
+                                    <span className="z-kontakt__stavka-naziv">{'Radno vrijeme'.translate(l)}</span>
+                                    <p
+                                        className="z-kontakt__stavka-vrednost"
+                                        dangerouslySetInnerHTML={{ __html: String(s.workingHours).replace(/\n/g, '<br/>') }}
+                                    />
+                                </div>
+                            ) : null}
+
+                            {adresa ? (
+                                <div className="z-kontakt__mapa">
+                                    <iframe
+                                        title={'Mapa'.translate(l)}
+                                        src={`https://maps.google.com/maps?q=${encodeURIComponent(adresa)}&z=15&output=embed`}
+                                        loading="lazy"
+                                        referrerPolicy="no-referrer-when-downgrade"
+                                    />
+                                </div>
+                            ) : null}
+                        </aside>
+                    </div>
+                </Container>
             </div>
         );
     }

@@ -1,0 +1,231 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   VIDEO — /video
+   ═══════════════════════════════════════════════════════════════════════════
+   Izdvojeno iz `_naslovnaA.scss`, gde je stajalo bez veze sa predlogom A
+   naslovne strane. Stara pravila su imala zakucane boje (`#6B7280`, koja pada
+   na 4,17:1 kao tekst) i veličine; ovde sve dolazi iz tokena.
+
+   Strana je danas prazna — u bazi nema nijednog snimka. Prazno stanje zato
+   nije rub slučaj nego glavni prikaz i tako je i crtano.
+*/
+
+.z-video {
+    padding-bottom: var(--razmak-8);
+
+    &__vrh {
+        margin-bottom: var(--razmak-6);
+        padding: var(--razmak-6) 0;
+        background: var(--boja-podloga-tiha);
+        border-bottom: 1px solid var(--boja-linija);
+
+        @include mobile { padding: var(--razmak-5) 0; }
+    }
+
+    &__naslov {
+        margin: 0 0 var(--razmak-2);
+        font-family: var(--pismo-naslov);
+        font-size: var(--slovo-2xl);
+        line-height: var(--red-2xl);
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-tekst);
+    }
+
+    &__uvod {
+        max-width: 62ch;
+        margin: 0;
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
+        color: var(--boja-tekst-tiho);
+    }
+
+    /* ── mreža snimaka ────────────────────────────────────────────────── */
+
+    &__mreza {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: var(--razmak-5) var(--razmak-4);
+
+        @include tablet { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        @include mobile { grid-template-columns: 1fr; }
+    }
+
+    &__snimak {
+        display: block;
+        text-decoration: none;
+        color: inherit;
+
+        @include z-fokus;
+
+        &:hover .z-video__slika img { opacity: .88; }
+        &:hover .z-video__ime { text-decoration: underline; }
+    }
+
+    &__slika {
+        position: relative;
+        display: block;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+
+        overflow: hidden;
+        border-radius: var(--radijus-mali);
+        background: var(--boja-podloga-tiha);
+
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            @include z-prelaz(opacity);
+        }
+    }
+
+    // Znak za puštanje — trougao crtan okvirom, bez slike.
+    &__igraj {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+
+        display: block;
+        width: 0;
+        height: 0;
+        border-top: 13px solid transparent;
+        border-bottom: 13px solid transparent;
+        border-left: 20px solid var(--boja-podloga);
+
+        // Trougao sam po sebi nestaje na svetloj fotografiji — senka ga drži.
+        filter: drop-shadow(0 1px 3px rgba(0, 0, 0, .55));
+    }
+
+    // Dužina trajanja — polje `duration` danas ne postoji, vidi komentar u
+    // `views/videoPage.js`.
+    &__trajanje {
+        position: absolute;
+        right: var(--razmak-2);
+        bottom: var(--razmak-2);
+
+        padding: 1px var(--razmak-2);
+        border-radius: var(--radijus-mali);
+        background: var(--boja-traka);
+
+        font-family: var(--pismo-podaci);
+        font-size: var(--slovo-xs);
+        line-height: var(--red-xs);
+        color: var(--boja-traka-tekst);
+    }
+
+    &__telo {
+        display: block;
+        margin-top: var(--razmak-2);
+    }
+
+    &__ime {
+        display: block;
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-tekst);
+        overflow-wrap: anywhere;
+    }
+
+    &__izvor {
+        display: block;
+        margin-top: 2px;
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        color: var(--boja-tekst-tiho);
+    }
+
+    /* ── prazno stanje ────────────────────────────────────────────────── */
+
+    &__prazno {
+        max-width: 60ch;
+        margin: 0 auto;
+        padding: var(--razmak-8) var(--razmak-5);
+        text-align: center;
+
+        border: 1px dashed var(--boja-linija);
+        border-radius: var(--radijus-panel);
+    }
+
+    // Isti trougao kao na pločici, veći i na tihoj podlozi — da prazna strana
+    // ipak izgleda kao strana sa snimcima.
+    &__prazno-znak {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 64px;
+        height: 64px;
+        margin: 0 auto var(--razmak-4);
+
+        border-radius: var(--radijus-pun);
+        background: var(--boja-podloga-tiha);
+
+        &::after {
+            content: '';
+            display: block;
+            width: 0;
+            height: 0;
+            margin-left: 4px;
+            border-top: 11px solid transparent;
+            border-bottom: 11px solid transparent;
+            border-left: 17px solid var(--boja-tekst-tiho);
+        }
+    }
+
+    &__prazno-naslov {
+        margin: 0 0 var(--razmak-2);
+        font-family: var(--pismo-naslov);
+        font-size: var(--slovo-xl);
+        line-height: var(--red-xl);
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-tekst);
+    }
+
+    &__prazno-opis {
+        margin: 0 auto var(--razmak-5);
+        max-width: 52ch;
+
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
+        color: var(--boja-tekst-tiho);
+    }
+
+    &__prazno-radnje {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: var(--razmak-3);
+    }
+
+    &__radnja {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 40px;
+        padding: 0 var(--razmak-4);
+
+        border: 1px solid var(--boja-linija);
+        border-radius: var(--radijus-panel);
+        background: var(--boja-povrsina);
+
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-sm);
+        font-weight: var(--tezina-srednja);
+        color: var(--boja-tekst);
+        text-decoration: none;
+
+        @include z-prelaz(border-color, background-color);
+        &:hover { border-color: var(--boja-tekst-tiho); }
+        @include z-fokus;
+
+        &--glavna {
+            border: 0;
+            background: var(--boja-akcenat);
+            color: var(--boja-akcenat-tekst);
+            font-weight: var(--tezina-poludebela);
+
+            &:hover { background: var(--boja-akcenat-jako); }
+        }
+    }
+}

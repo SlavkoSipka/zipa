@@ -1,0 +1,320 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   PODNOŽJE — pravac „tamna traka"
+   ═══════════════════════════════════════════════════════════════════════════
+   Sajt se zatvara istim tonom kojim je otvoren: podnožje nosi `--boja-traka`,
+   isto kao zaglavlje.
+
+   Kao i kod zaglavlja, tokeni se preusmeravaju u opsegu podnožja umesto da se
+   prefarbava svaka linija. Time potamne i veze i polja i okviri fokusa
+   odjednom. Pod temom „trenutni" `--boja-traka*` nose zatečene svetle
+   vrednosti, pa se podnožje iscrta svetlo — bez posebnog pravila.
+*/
+
+.z-podnozje {
+    --boja-povrsina:     var(--boja-traka);
+    --boja-podloga-tiha: var(--boja-traka-linija);
+    --boja-tekst:        var(--boja-traka-tekst);
+    --boja-tekst-tiho:   var(--boja-traka-tekst-tiho);
+    --boja-linija:       var(--boja-traka-linija);
+    --boja-veza:         var(--boja-veza-traka);
+    --boja-fokus:        var(--boja-fokus-traka);
+    --boja-oznaka-tekst: var(--boja-oznaka-traka);
+
+    background: var(--boja-traka);
+    color: var(--boja-traka-tekst);
+
+    // Zatečeno `footer:where(.podnozje-sajta)` iz `_global.scss` nosi svoj
+    // razmak i zaobljenu podlogu kroz `::before`. Ovde ništa od toga ne važi.
+    padding: var(--razmak-8) 0 var(--razmak-5);
+    margin: 0;
+
+    &::before { content: none; }
+
+    @media print { display: none; }
+
+    &__sirina {
+        max-width: 1440px;
+        margin: 0 auto;
+        padding: 0 var(--razmak-5);
+    }
+
+    /* ── newsletter ───────────────────────────────────────────────────── */
+
+    &__newsletter {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--razmak-6);
+        flex-wrap: wrap;
+
+        padding-bottom: var(--razmak-7);
+        margin-bottom: var(--razmak-7);
+        border-bottom: 1px solid var(--boja-traka-linija);
+    }
+
+    &__newsletter-tekst {
+        flex: 1 1 320px;
+        min-width: 0;
+    }
+
+    &__newsletter-naslov {
+        margin: 0 0 var(--razmak-1);
+        font-family: var(--pismo-naslov);
+        font-size: var(--slovo-xl);
+        line-height: var(--red-xl);
+        font-weight: var(--tezina-poludebela);
+        color: var(--boja-traka-tekst);
+    }
+
+    &__newsletter-opis {
+        margin: 0;
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        color: var(--boja-traka-tekst-tiho);
+    }
+
+    &__newsletter-obrazac {
+        flex: 0 1 520px;
+        min-width: 0;
+    }
+
+    // Jedno polje i jedno dugme, spojeni u jednu površinu.
+    &__polje-red {
+        display: flex;
+        align-items: stretch;
+        gap: var(--razmak-2);
+    }
+
+    &__unos {
+        flex: 1 1 auto;
+        min-width: 0;
+        min-height: var(--visina-pretraga);
+        padding: 0 var(--razmak-4);
+
+        border: 1px solid var(--boja-traka-linija);
+        border-radius: var(--radijus-panel);
+        background: var(--boja-podloga);
+
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-md);
+        // Polje je BELO i u tamnom podnožju, pa uzima boje svetle podloge.
+        color: var(--boja-polje-tekst);
+
+        &::placeholder { color: var(--boja-polje-tekst-tiho); opacity: 1; }
+
+        &:focus-visible {
+            outline: 2px solid var(--boja-fokus-traka);
+            outline-offset: 2px;
+        }
+    }
+
+    &__dugme {
+        flex: 0 0 auto;
+        min-height: var(--visina-pretraga);
+        padding: 0 var(--razmak-5);
+
+        border: 0;
+        border-radius: var(--radijus-panel);
+        background: var(--boja-akcenat);
+        color: var(--boja-akcenat-tekst);
+
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-radnja);
+        line-height: var(--red-radnja);
+        font-weight: var(--tezina-poludebela);
+        white-space: nowrap;
+        cursor: pointer;
+
+        @include z-prelaz(background-color);
+        &:hover { background: var(--boja-akcenat-jako); }
+
+        &:focus-visible {
+            outline: 2px solid var(--boja-fokus-traka);
+            outline-offset: 2px;
+        }
+    }
+
+    // Poruke pišu ŠTA se desilo — ne samo „Greška".
+    &__poruka {
+        margin: var(--razmak-2) 0 0;
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+
+        &--uspeh { color: var(--boja-traka-tekst); }
+        &--greska { color: var(--boja-oznaka-traka); }
+    }
+
+    /* ── stupci ───────────────────────────────────────────────────────── */
+
+    &__stupci {
+        display: grid;
+        grid-template-columns: 1.4fr 1fr 1fr 1.2fr;
+        gap: var(--razmak-7);
+
+        @include mobile-tablet {
+            // Na telefonu jedna ispod druge — bez harmonike.
+            grid-template-columns: 1fr;
+            gap: var(--razmak-6);
+        }
+    }
+
+    &__naslov-stupca {
+        margin: 0 0 var(--razmak-3);
+        font-size: var(--slovo-xs);
+        line-height: var(--red-xs);
+        font-weight: var(--tezina-jaka);
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: var(--boja-traka-tekst-tiho);
+    }
+
+    &__o-nama {
+        margin: 0 0 var(--razmak-4);
+        font-size: var(--slovo-sm);
+        line-height: var(--red-md);
+        color: var(--boja-traka-tekst-tiho);
+    }
+
+    &__logo svg,
+    &__logo img {
+        display: block;
+        height: var(--razmak-7);
+        width: auto;
+        margin-bottom: var(--razmak-4);
+    }
+
+    &__spisak {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+
+        li + li { margin-top: var(--razmak-2); }
+    }
+
+    &__veza {
+        @include z-veza-traka;
+        font-size: var(--slovo-sm);
+        line-height: var(--red-md);
+        @include z-fokus;
+    }
+
+    /* ── kontakt ──────────────────────────────────────────────────────── */
+
+    &__kontakt-stavka {
+        display: flex;
+        align-items: flex-start;
+        gap: var(--razmak-2);
+        margin-bottom: var(--razmak-3);
+
+        font-size: var(--slovo-sm);
+        line-height: var(--red-md);
+        color: var(--boja-traka-tekst-tiho);
+
+        svg { flex: 0 0 auto; width: 16px; height: 16px; margin-top: 3px; }
+        svg path, svg circle, svg rect { fill: var(--boja-traka-tekst-tiho); }
+
+        p { margin: 0; }
+    }
+
+    /* ── društvene mreže ──────────────────────────────────────────────── */
+
+    &__mreze {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--razmak-2);
+        margin-top: var(--razmak-4);
+    }
+
+    &__mreza {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+
+        border: 1px solid var(--boja-traka-linija);
+        border-radius: var(--radijus-panel);
+
+        @include z-prelaz(border-color, background-color);
+        &:hover {
+            border-color: var(--boja-traka-tekst-tiho);
+            background: var(--boja-traka-linija);
+        }
+        @include z-fokus;
+
+        svg { width: 16px; height: 16px; display: block; }
+        svg path, svg circle, svg rect { fill: var(--boja-traka-tekst); }
+    }
+
+    /* ── baner ────────────────────────────────────────────────────────── */
+
+    /*
+     * Baneri partnera — traka, ne stub.
+     *
+     * Zatečeno su stajali jedan ispod drugog preko cele širine, pa je široki
+     * video baner nadjačavao celo podnožje. Sada stoje u jednom redu, svedeni
+     * na zajedničku visinu: `max-height` ih poravna po visini bez obzira na
+     * to što im se odnosi stranica jako razlikuju, a `width: auto` čuva svaki
+     * od izobličenja. Na uskom ekranu se prelamaju u više redova.
+     */
+    &__baner {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+        gap: var(--razmak-4) var(--razmak-6);
+
+        margin-top: var(--razmak-7);
+        padding-top: var(--razmak-6);
+        border-top: 1px solid var(--boja-traka-linija);
+
+        a {
+            display: block;
+            flex: 0 1 auto;
+            line-height: 0;
+            @include z-fokus;
+        }
+
+        img {
+            display: block;
+            // Zajednička visina drži traku mirnom; širina je ograničena da
+            // najširi baner ne pojede ceo red.
+            max-height: 64px;
+            max-width: 260px;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+        }
+
+        @include mobile {
+            gap: var(--razmak-3) var(--razmak-4);
+            img { max-height: 48px; max-width: 180px; }
+        }
+    }
+
+    /* ── donji red ────────────────────────────────────────────────────── */
+
+    &__dno {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--razmak-3);
+        flex-wrap: wrap;
+
+        margin-top: var(--razmak-7);
+        padding-top: var(--razmak-4);
+        border-top: 1px solid var(--boja-traka-linija);
+
+        p {
+            margin: 0;
+            font-size: var(--slovo-xs);
+            line-height: var(--red-sm);
+            color: var(--boja-traka-tekst-tiho);
+        }
+
+        a {
+            @include z-veza-traka;
+            @include z-fokus;
+        }
+    }
+}

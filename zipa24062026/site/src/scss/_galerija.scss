@@ -1,0 +1,379 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   STRANA GALERIJE — pregled jedne galerije
+   ═══════════════════════════════════════════════════════════════════════════
+   Fotografije nose stranu: zidani raspored koji poštuje pravi odnos svake
+   fotografije, sa uskim razmakom da rade kao list. Tekst se svodi na naslov,
+   jedan red podataka i opis.
+
+   Tri veličine teksta na celoj strani: naslov (24px), tekst (--slovo-md),
+   tiho (--slovo-sm). Ništa četvrto.
+*/
+
+.z-galerija {
+
+    /* ── zaglavlje galerije ───────────────────────────────────────────── */
+
+    &__zaglavlje {
+        padding: var(--razmak-6) 0 var(--razmak-5);
+        border-bottom: 1px solid var(--boja-linija);
+        margin-bottom: var(--razmak-6);
+    }
+
+    // Naslovni deo levo, radnje desno.
+    &__vrh {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: var(--razmak-6);
+
+        @include mobile-tablet {
+            flex-direction: column;
+            gap: var(--razmak-4);
+        }
+    }
+
+    &__naslovni {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    &__kategorija {
+        display: inline-block;
+        margin-bottom: var(--razmak-2);
+        padding: 2px var(--razmak-2);
+
+        border-radius: 3px;
+        background: var(--boja-oznaka);
+        color: var(--boja-podloga);
+
+        font-size: 10px;
+        line-height: 1.5;
+        font-weight: var(--tezina-jaka);
+        letter-spacing: .02em;
+        text-transform: uppercase;
+    }
+
+    &__naslov {
+        margin: 0 0 var(--razmak-2);
+        font-family: var(--pismo-naslov);
+        font-size: 24px;
+        line-height: 1.25;
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-tekst);
+
+        /* U bazi naslovi stoje VELIKIM SLOVIMA — isto kao na karticama, slog
+           se popravlja u prikazu, baza se ne dira. */
+        text-transform: lowercase;
+        &::first-letter { text-transform: uppercase; }
+
+        // Dugi naslovi se prelamaju, ne guraju radnje van reda.
+        overflow-wrap: anywhere;
+    }
+
+    // Jedan red podataka — mesto · datum · autor · broj · kataloški broj.
+    &__podaci {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--razmak-2);
+        margin: 0;
+
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        color: var(--boja-tekst-tiho);
+
+        // Tačka između stavki, crtana a ne kucana — ne pojavljuje se ispred
+        // prve ni kad neka stavka nedostaje.
+        > * + *::before {
+            content: '·';
+            margin-right: var(--razmak-2);
+            color: var(--boja-linija);
+        }
+
+        a {
+            @include z-veza;
+            color: var(--boja-tekst-tiho);
+            &:hover { color: var(--boja-tekst); }
+            @include z-fokus;
+        }
+    }
+
+    &__kataloski {
+        font-family: var(--pismo-podaci);
+        font-weight: var(--tezina-srednja);
+        letter-spacing: .04em;
+    }
+
+    /* ── opis ─────────────────────────────────────────────────────────── */
+
+    &__opis {
+        margin-top: var(--razmak-4);
+        max-width: 70ch;
+
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
+        color: var(--boja-tekst);
+
+        p { margin: 0; }
+
+        // Skupljeno na tri reda dok se ne otvori.
+        &--skupljen p {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+    }
+
+    &__vise {
+        margin-top: var(--razmak-2);
+        padding: 0;
+
+        border: 0;
+        background: transparent;
+
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-sm);
+        font-weight: var(--tezina-srednja);
+        color: var(--boja-veza);
+        text-decoration: underline;
+        cursor: pointer;
+
+        @include z-fokus;
+    }
+
+    /* ── radnje (deljenje, štampa) ────────────────────────────────────── */
+
+    &__radnje {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--razmak-2);
+        flex: 0 0 auto;
+    }
+
+    // Tiho dugme sa ikonicom I natpisom — nikad sama ikonica.
+    &__radnja {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        height: 36px;
+        padding: 0 var(--razmak-3);
+
+        border: 1px solid var(--boja-linija);
+        border-radius: var(--radijus-panel);
+        background: var(--boja-povrsina);
+
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-sm);
+        font-weight: var(--tezina-srednja);
+        color: var(--boja-tekst);
+        white-space: nowrap;
+        cursor: pointer;
+
+        @include z-prelaz(border-color, background-color);
+        &:hover { border-color: var(--boja-tekst-tiho); }
+        @include z-fokus;
+
+        svg { width: 14px; height: 14px; display: block; }
+        svg path, svg circle, svg rect { fill: var(--boja-tekst-tiho); }
+    }
+
+    // Panel sa mrežama za deljenje.
+    &__radnja-grupa { position: relative; }
+
+    &__panel-deljenje {
+        position: absolute;
+        top: calc(100% + var(--razmak-2));
+        right: 0;
+        z-index: var(--sloj-padajuce);
+
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--razmak-2);
+        width: 232px;
+        padding: var(--razmak-3);
+
+        background: var(--boja-povrsina);
+        border: 1px solid var(--boja-linija);
+        border-radius: var(--radijus-panel);
+        box-shadow: var(--senka-lebdi);
+
+        // `react-share` sam crta dugmad; ovde im se samo daje mera.
+        button { line-height: 0; }
+    }
+
+    /* ── traka iznad mreže ────────────────────────────────────────────── */
+
+    &__traka-mreze {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--razmak-4);
+        margin-bottom: var(--razmak-4);
+    }
+
+    &__broj-fotografija {
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        color: var(--boja-tekst-tiho);
+    }
+
+    // Redosled — mali tihi izbor, desno.
+    &__redosled {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+
+        border: 0;
+        background: transparent;
+        padding: 0;
+
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-sm);
+        font-weight: var(--tezina-srednja);
+        color: var(--boja-tekst-tiho);
+        cursor: pointer;
+
+        @include z-prelaz(color);
+        &:hover { color: var(--boja-tekst); }
+        @include z-fokus;
+
+        &::after {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-right: 1.5px solid currentColor;
+            border-bottom: 1.5px solid currentColor;
+            transform: rotate(45deg);
+            opacity: .55;
+        }
+    }
+
+    /* ── zidana mreža ─────────────────────────────────────────────────── */
+
+    /*
+     * Zidani raspored preko `columns`: svaka fotografija zadržava SVOJ odnos
+     * stranica (`height: auto`), pa se ništa ne iseca. Mreža sa jednakim
+     * ćelijama bi ih sve svela na isti kadar.
+     */
+    &__mreza {
+        column-count: 4;
+        column-gap: var(--razmak-2);
+
+        @include small-desktop { column-count: 3; }
+        @include tablet        { column-count: 3; }
+        @include mobile        { column-count: 2; }
+    }
+
+    &__foto {
+        position: relative;
+        display: block;
+        width: 100%;
+        padding: 0;
+        margin: 0 0 var(--razmak-2);
+
+        border: 0;
+        border-radius: var(--radijus-panel);
+        background: var(--boja-podloga-tiha);
+        overflow: hidden;
+        cursor: pointer;
+
+        // Bez ovoga `columns` preseca fotografiju na dnu stupca.
+        break-inside: avoid;
+        -webkit-column-break-inside: avoid;
+
+        @include z-fokus;
+
+        img {
+            display: block;
+            width: 100%;
+            height: auto;
+            @include z-prelaz(transform);
+        }
+
+        &:hover img { transform: scale(1.02); }
+    }
+
+    // Sloj preko fotografije — redni broj i radnje.
+    &__preko {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        padding: var(--razmak-2);
+
+        opacity: 0;
+        @include z-prelaz(opacity);
+
+        // Blaga tamna podloga samo pri vrhu, da broj i dugmad imaju kontrast
+        // nad svetlom fotografijom. Sredina kadra ostaje čista — tamo je žig.
+        background: linear-gradient(to bottom, var(--boja-zavesa) 0%, transparent 40%);
+
+        .z-galerija__foto:hover &,
+        .z-galerija__foto:focus-visible & { opacity: 1; }
+
+        // Na telefonu nema hovera — sloj je uvek tu.
+        @include mobile-tablet { opacity: 1; }
+    }
+
+    &__redni-broj {
+        font-family: var(--pismo-podaci);
+        font-size: var(--slovo-xs);
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-traka-tekst);
+    }
+
+    &__foto-radnje {
+        display: flex;
+        gap: 6px;
+    }
+
+    &__foto-dugme {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+
+        border: 0;
+        border-radius: var(--radijus-mali);
+        background: var(--boja-zavesa);
+        cursor: pointer;
+
+        @include z-prelaz(background-color);
+        &:hover { background: var(--boja-traka); }
+        @include z-fokus;
+
+        svg { width: 13px; height: 13px; display: block; }
+        svg path, svg circle, svg rect { fill: var(--boja-traka-tekst); }
+    }
+
+    /* ── prazno stanje ────────────────────────────────────────────────── */
+
+    &__prazno {
+        padding: var(--razmak-8) 0;
+        text-align: center;
+
+        font-size: var(--slovo-md);
+        color: var(--boja-tekst-tiho);
+    }
+
+    /* ── iz iste kategorije ───────────────────────────────────────────── */
+
+    &__srodne {
+        margin-top: var(--razmak-8);
+        padding-top: var(--razmak-6);
+        border-top: 1px solid var(--boja-linija);
+    }
+
+    &__srodne-naslov {
+        margin: 0 0 var(--razmak-5);
+        font-family: var(--pismo-naslov);
+        font-size: var(--slovo-lg);
+        line-height: var(--red-lg);
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-tekst);
+    }
+}

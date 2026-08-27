@@ -1,0 +1,111 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   NAJAVA — /najave/:id
+   ═══════════════════════════════════════════════════════════════════════════
+   Čita se kao vest. Telo najave koristi `z-strana__telo` iz `_stranice.scss`
+   — isti unos iz administracije, ista skala; ovde se ne prepisuje.
+*/
+
+.z-najava {
+    padding-bottom: var(--razmak-8);
+
+    &__vrh {
+        margin-bottom: var(--razmak-6);
+        padding: var(--razmak-6) 0;
+        background: var(--boja-podloga-tiha);
+        border-bottom: 1px solid var(--boja-linija);
+
+        @include mobile { padding: var(--razmak-5) 0; }
+    }
+
+    &__putanja {
+        margin: 0 0 var(--razmak-3);
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+
+        a { @include z-veza-meni; @include z-fokus; }
+    }
+
+    &__oznaka {
+        display: inline-block;
+        margin: 0 0 var(--razmak-2);
+        padding: 1px var(--razmak-2);
+
+        border-radius: var(--radijus-pun);
+        background: var(--boja-oznaka);
+
+        font-size: var(--slovo-xs);
+        line-height: var(--red-xs);
+        font-weight: var(--tezina-jaka);
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        color: var(--boja-podloga);
+    }
+
+    &__naslov {
+        margin: 0 0 var(--razmak-2);
+        max-width: 24ch;
+
+        font-family: var(--pismo-naslov);
+        font-size: var(--slovo-2xl);
+        line-height: var(--red-2xl);
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-tekst);
+        overflow-wrap: anywhere;
+    }
+
+    &__datum {
+        margin: 0;
+        font-family: var(--pismo-podaci);
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        color: var(--boja-tekst-tiho);
+    }
+
+    &__telo {
+        // Širina i skala dolaze iz `z-strana__telo`; ovde samo razmak.
+        margin-bottom: var(--razmak-6);
+    }
+
+    &__prazno {
+        max-width: 65ch;
+        margin: 0 0 var(--razmak-6);
+        padding: var(--razmak-6) var(--razmak-4);
+        text-align: center;
+
+        border: 1px dashed var(--boja-linija);
+        border-radius: var(--radijus-panel);
+
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
+        color: var(--boja-tekst-tiho);
+    }
+
+    &__nazad {
+        margin: 0;
+        padding-top: var(--razmak-5);
+        border-top: 1px solid var(--boja-linija);
+        max-width: 65ch;
+    }
+
+    &__radnja {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 40px;
+        padding: 0 var(--razmak-4);
+
+        border: 0;
+        border-radius: var(--radijus-panel);
+        background: var(--boja-akcenat);
+
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-sm);
+        font-weight: var(--tezina-poludebela);
+        color: var(--boja-akcenat-tekst);
+        text-decoration: none;
+
+        @include z-prelaz(background-color);
+        &:hover { background: var(--boja-akcenat-jako); }
+        @include z-fokus;
+    }
+}
