@@ -25,6 +25,25 @@ import { PHOTOS_ENDPOINT } from '../../constants';
 const slikaUrl = (putanja, sirina = '350x') =>
     putanja ? `${PHOTOS_ENDPOINT}/photos/${sirina}/${encodeURI(putanja)}` : null;
 
+/*
+ * Fotografija „Izdvajamo" — adresa se uvek preslaguje na TEKUCI izvor slika.
+ *
+ * U bazi ovih nekoliko redova nosi PUNU adresu, onakvu kakva je bila kad su
+ * upisani. Nekoliko ih je upisano dok se radilo lokalno, pa u sebi nose
+ * `http://localhost:10015`: kod nas se vide, na produkciji ne postoje.
+ * Zato se od zapamcene adrese uzima samo deo od `/photos/` nadalje i lepi na
+ * `PHOTOS_ENDPOINT`. Adrese koje nisu iz naseg skladista (npr. baner sa
+ * strane) prolaze nedirnute.
+ *
+ * Ovo je mreza za pad; pravo mesto je upis — API od 2026-08-29 sece domacina
+ * pri cuvanju. Ostaje i posle toga, zbog starih redova.
+ */
+const slikaIzdvojenog = (vrednost) => {
+    if (!vrednost) return null;
+    const mesto = vrednost.indexOf('/photos/');
+    return mesto === -1 ? vrednost : `${PHOTOS_ENDPOINT}${vrednost.slice(mesto)}`;
+};
+
 const datum = (vreme) => {
     if (!vreme) return '';
     const d = new Date(vreme * 1000);
@@ -209,7 +228,7 @@ class PredlogA extends Component {
                                                 aria-hidden="true"
                                             >
                                                 {s.image ? (
-                                                    <img src={s.image} alt="" loading="lazy" decoding="async" />
+                                                    <img src={slikaIzdvojenog(s.image)} alt="" loading="lazy" decoding="async" />
                                                 ) : null}
                                             </Link>
 

@@ -1060,11 +1060,27 @@ class Admin {
         return red.length ? red[0] : {};
     }
 
+    /*
+     * Fotografija se cuva BEZ domacina.
+     *
+     * Ekran za unos salje punu adresu, onakvu kakvu vidi u trenutku unosa —
+     * a to je adresa okoline u kojoj se radi. Nekoliko redova je tako upisano
+     * dok se radilo lokalno i nose `http://localhost:10015`, pa se na
+     * produkciji ne vide. Domacin se zato sece i cuva se samo `/photos/...`;
+     * strana ga lepi na tekuci izvor slika. Adrese koje nisu iz naseg
+     * skladista (nemaju `/photos/`) ostaju kakve jesu.
+     */
+    static beDomacina(adresa) {
+        if (typeof adresa !== 'string') return adresa;
+        const mesto = adresa.indexOf('/photos/');
+        return mesto === -1 ? adresa : adresa.slice(mesto);
+    }
+
     async updateFeatured(id, data) {
         const obj = data;
         const polja = {
             title: obj.title,
-            image: obj.image,
+            image: Admin.beDomacina(obj.image),
             link: obj.link,
             position: obj.position ? parseInt(obj.position) : 0,
             isActive: obj.isActive === undefined ? true : !!obj.isActive

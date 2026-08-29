@@ -76,6 +76,13 @@ server
     const context = {};
     console.log(req.url);
 
+    // Uglaste zagrade su namerne — `process.env.RAZZLE_X` webpack zameni
+    // vrednoscu iz gradnje, a `process.env['RAZZLE_X']` ostaje ziv upit.
+    const adrese = {
+      api:    process.env['RAZZLE_API_ENDPOINT'] || null,
+      photos: process.env['RAZZLE_PHOTOS_ENDPOINT'] || process.env['RAZZLE_API_ENDPOINT'] || null,
+    };
+
     let lang = 'ba';
 
     let initialData = {
@@ -170,6 +177,13 @@ server
              onim koji je server vec iscrtao — bez treptaja i bez razlike
              pri hidraciji. -->
         <script>window.__PODESAVANJA__ = ${JSON.stringify(podesavanja).replace(/</g, '\\u003c')};</script>
+
+        <!-- Adrese API-ja i slika, procitane iz ZIVE okoline servera. Razzle
+             ugradjuje promenljive RAZZLE_* u snop pri gradnji, pa bi bez ovoga
+             sajt izgradjen bez tih promenljivih zauvek trazio slike sa
+             localhost-a. Citaju se preko uglastih zagrada, da ih webpack ne
+             zameni vrednoscu iz gradnje. -->
+        <script>window.__ADRESE__ = ${JSON.stringify(adrese).replace(/</g, '\\u003c')};</script>
 
         <!-- Podaci strane koje je server vec dovukao, isti oni sa kojima je
              iscrtao markup ispod. Bez njih klijent prvi put crta PRAZNU stranu
