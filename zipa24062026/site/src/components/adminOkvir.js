@@ -137,6 +137,28 @@ export const MENI = [
     },
 ];
 
+/*
+ * MOJ NALOG — lične strane administratora.
+ *
+ * Ne stoje među grupama gore: te grupe vode servis (arhiva, sadržaj, ljudi),
+ * a ove su lične i vezane za onoga ko je prijavljen. Zato idu u dno, uz ime
+ * i „Odjavu", kao u većini administracija.
+ *
+ * Do sada ih iz administratorskog okvira nije bilo NIGDE: administrator posle
+ * prijave ide pravo na nadzornu ploču, a promjena lozinke i izmjena podataka
+ * stajale su samo kao prečice na `/account/profile`, do koje se više nije
+ * imalo kako doći.
+ *
+ * „Moja preuzimanja" nosi tu reč u nazivu namerno — u grupi SISTEM već stoji
+ * „Preuzimanja", a to je evidencija svih preuzimanja na sajtu, ne lična.
+ */
+export const MOJ_NALOG = [
+    { putanja: '/account/profile',         naziv: 'Moj profil' },
+    { putanja: '/account/edit',            naziv: 'Izmjena podataka' },
+    { putanja: '/account/change-password', naziv: 'Promjena lozinke' },
+    { putanja: '/account/downloads',       naziv: 'Moja preuzimanja' },
+];
+
 const ULOGE = {
     admin: 'Administrator',
     agency: 'Agencija',
@@ -301,6 +323,22 @@ class AdminOkvir extends Component {
                                 </span>
                             </div>
                         ) : null}
+
+                        <ul className="z-adminokvir__licne">
+                            {MOJ_NALOG.map((s) => (
+                                <li key={s.putanja}>
+                                    <Link
+                                        to={s.putanja}
+                                        className={'z-adminokvir__licna' + (jeOvde(s.putanja) ? ' z-adminokvir__licna--ovde' : '')}
+                                        aria-current={jeOvde(s.putanja) ? 'page' : null}
+                                        title={s.naziv.translate(l)}
+                                        onClick={() => this.setState({ fiokaOtvorena: false })}
+                                    >
+                                        {s.naziv.translate(l)}
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
 
                         <button
                             type="button"

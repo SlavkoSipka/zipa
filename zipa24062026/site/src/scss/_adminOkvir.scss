@@ -319,6 +319,39 @@ body.u-administraciji {
         color: var(--boja-traka-tekst-tiho);
     }
 
+    /* ── lične strane u dnu ───────────────────────────────────────────
+     * Sitnije od stavki menija: nisu deo vođenja servisa nego nalog onoga ko
+     * je prijavljen. Na tabletu, gde je meni skupljen na ikonice, sklanjaju
+     * se — tamo za natpis nema mesta, a ikonice bi se pomešale sa menijem.
+     */
+    &__licne {
+        margin: 0 0 var(--razmak-3);
+        padding: 0;
+        list-style: none;
+
+        @include tablet { display: none; }
+    }
+
+    &__licna {
+        display: block;
+        padding: var(--razmak-1) 0;
+
+        font-size: var(--slovo-xs);
+        line-height: var(--red-sm);
+        color: var(--boja-traka-tekst-tiho);
+        text-decoration: none;
+
+        @include z-prelaz(color);
+        @include z-fokus;
+
+        &:hover { color: var(--boja-traka-tekst); text-decoration: underline; }
+
+        &--ovde {
+            color: var(--boja-traka-tekst);
+            font-weight: var(--tezina-srednja);
+        }
+    }
+
     &__odjava {
         width: 100%;
         padding: var(--razmak-2) var(--razmak-3);

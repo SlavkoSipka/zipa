@@ -5,6 +5,7 @@ import moment from 'moment';
 
 import Page from '../../containers/page';
 import NalogOkvir from '../../components/nalogOkvir';
+import AdminOkvir from '../../components/adminOkvir';
 import { kataloskiBroj } from '../../components/articles/article';
 import { API_ENDPOINT, PHOTOS_ENDPOINT } from '../../constants';
 
@@ -121,6 +122,15 @@ class DownloadsPage extends Component {
     };
 
     render() {
+        /*
+         * Lične strane naloga dele isti sadržaj za sve, ali ne i isti okvir:
+         * administrator ostaje u administratorskom okviru (do njih dolazi iz
+         * njegovog dna), svi ostali su u okviru svog naloga. Uloga se samo
+         * čita — prava i pozivi ka API-ju su nepromenjeni.
+         */
+        const Okvir = this.props.uData && this.props.uData.userRole === 'admin'
+            ? AdminOkvir : NalogOkvir;
+
         const l = this.props.lang;
         const stavke = this.state.items || [];
 
@@ -138,8 +148,9 @@ class DownloadsPage extends Component {
         const imaFilter = !!(this.state.odDatuma || this.state.doDatuma);
 
         return (
-            <NalogOkvir
+            <Okvir
                 lang={l}
+                settings={this.props.settings}
                 uData={this.props.uData}
                 putanja={this.props[0].location.pathname}
                 signOut={this.props.signOut}
@@ -265,7 +276,7 @@ class DownloadsPage extends Component {
                         </Link>
                     </div>
                 )}
-            </NalogOkvir>
+            </Okvir>
         );
     }
 }

@@ -15,6 +15,7 @@ import {
 } from 'reactstrap';
 
 import NalogOkvir from '../../components/nalogOkvir';
+import AdminOkvir from '../../components/adminOkvir';
 import AdminPregled from '../../components/nalog/adminPregled';
 
 
@@ -209,6 +210,15 @@ class ProfilePage extends Component {
 
 
     render() {
+        /*
+         * Lične strane naloga dele isti sadržaj za sve, ali ne i isti okvir:
+         * administrator ostaje u administratorskom okviru (do njih dolazi iz
+         * njegovog dna), svi ostali su u okviru svog naloga. Uloga se samo
+         * čita — prava i pozivi ka API-ju su nepromenjeni.
+         */
+        const Okvir = this.props.uData && this.props.uData.userRole === 'admin'
+            ? AdminOkvir : NalogOkvir;
+
         const l = this.props.lang;
         const u = this.props.uData || {};
 
@@ -220,8 +230,9 @@ class ProfilePage extends Component {
         const jeAdmin = u.userRole === 'admin';
 
         return (
-            <NalogOkvir
+            <Okvir
                 lang={l}
+                settings={this.props.settings}
                 uData={this.props.uData}
                 putanja={this.props[0].location.pathname}
                 signOut={this.props.signOut}
@@ -324,7 +335,7 @@ class ProfilePage extends Component {
                         ucitava={this.state.loadingData}
                     />
                 ) : null}
-            </NalogOkvir>
+            </Okvir>
         );
     }
 }
