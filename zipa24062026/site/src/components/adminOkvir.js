@@ -230,6 +230,16 @@ class AdminOkvir extends Component {
         // (npr. `/account/banners/5` označava „Baneri").
         const jeOvde = (p) => putanja === p || putanja.indexOf(p + '/') === 0;
 
+        /*
+         * U „Podešavanjima sajta" polje `logoText` čuva HTML, ne čist tekst —
+         * u bazi stoji `<h6>ZIPAPHOTO.NET</h6>`, jer ga javno zaglavlje ubacuje
+         * kroz `dangerouslySetInnerHTML`. Ovde se HTML ne ubacuje (bočni meni
+         * nije mesto za slobodan HTML iz baze), pa bi se oznake ispisale kao
+         * tekst — i ispisivale su se, pored imena sajta. Zato se skidaju.
+         */
+        const natpisLoga =
+            String(podesavanja.logoText || '').replace(/<[^>]*>/g, '').trim() || 'ZIPAPHOTO';
+
         return (
             <div className={'z-adminokvir' + (this.state.fiokaOtvorena ? ' z-adminokvir--fioka' : '')}>
 
@@ -237,10 +247,27 @@ class AdminOkvir extends Component {
                 <nav className="z-adminokvir__meni" aria-label={'Meni administracije'.translate(l)}>
 
                     <div className="z-adminokvir__logo">
-                        <span className="z-adminokvir__logo-natpis">
-                            {podesavanja.logoText || 'ZIPAPHOTO'}
-                        </span>
+                        <span className="z-adminokvir__logo-natpis">{natpisLoga}</span>
                         <span className="z-adminokvir__logo-uz">{'administracija'.translate(l)}</span>
+                    </div>
+
+                    {/* ── moj nalog ──────────────────────────────────────
+                        Lične strane stoje odmah ispod imena sajta, gde se i
+                        traže, i izgledaju kao dugmad — a ne kao još jedan
+                        spisak u meniju, da se ne mešaju sa vođenjem servisa. */}
+                    <div className="z-adminokvir__licne">
+                        <p className="z-adminokvir__licne-naslov">{'MOJ NALOG'.translate(l)}</p>
+                        {MOJ_NALOG.map((s) => (
+                            <Link
+                                key={s.putanja}
+                                to={s.putanja}
+                                className={'z-adminokvir__pilula' + (jeOvde(s.putanja) ? ' z-adminokvir__pilula--ovde' : '')}
+                                aria-current={jeOvde(s.putanja) ? 'page' : null}
+                                onClick={() => this.setState({ fiokaOtvorena: false })}
+                            >
+                                {s.naziv.translate(l)}
+                            </Link>
+                        ))}
                     </div>
 
                     <div className="z-adminokvir__grupe">
@@ -323,22 +350,6 @@ class AdminOkvir extends Component {
                                 </span>
                             </div>
                         ) : null}
-
-                        <ul className="z-adminokvir__licne">
-                            {MOJ_NALOG.map((s) => (
-                                <li key={s.putanja}>
-                                    <Link
-                                        to={s.putanja}
-                                        className={'z-adminokvir__licna' + (jeOvde(s.putanja) ? ' z-adminokvir__licna--ovde' : '')}
-                                        aria-current={jeOvde(s.putanja) ? 'page' : null}
-                                        title={s.naziv.translate(l)}
-                                        onClick={() => this.setState({ fiokaOtvorena: false })}
-                                    >
-                                        {s.naziv.translate(l)}
-                                    </Link>
-                                </li>
-                            ))}
-                        </ul>
 
                         <button
                             type="button"

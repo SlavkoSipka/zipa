@@ -319,37 +319,69 @@ body.u-administraciji {
         color: var(--boja-traka-tekst-tiho);
     }
 
-    /* ── lične strane u dnu ───────────────────────────────────────────
-     * Sitnije od stavki menija: nisu deo vođenja servisa nego nalog onoga ko
-     * je prijavljen. Na tabletu, gde je meni skupljen na ikonice, sklanjaju
-     * se — tamo za natpis nema mesta, a ikonice bi se pomešale sa menijem.
+    /* ── moj nalog ────────────────────────────────────────────────────
+     * Odmah ispod imena sajta, iznad menija: lične strane onoga ko je
+     * prijavljen. Izgledaju kao dugmad — obrisane pilule sa ivicom — da se
+     * ne mešaju sa stavkama menija, koje vode servis.
+     *
+     * Na tabletu, gde je meni skupljen na 64px, blok se sklanja: za natpis
+     * nema mesta, a ikonice bi se pomešale sa menijem.
      */
     &__licne {
-        margin: 0 0 var(--razmak-3);
-        padding: 0;
-        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: var(--razmak-1);
+        padding: var(--razmak-4) var(--razmak-4) var(--razmak-3);
+        border-bottom: 1px solid var(--boja-traka-linija);
 
         @include tablet { display: none; }
     }
 
-    &__licna {
-        display: block;
-        padding: var(--razmak-1) 0;
+    &__licne-naslov {
+        margin: 0 0 var(--razmak-1);
+        font-size: var(--slovo-oznaka);
+        line-height: var(--red-oznaka);
+        font-weight: var(--tezina-jaka);
+        letter-spacing: .12em;
+        color: var(--boja-traka-tekst-tiho);
+    }
 
+    &__pilula {
+        display: flex;
+        align-items: center;
+        min-height: 34px;
+        padding: var(--razmak-1) var(--razmak-3);
+
+        border: 1px solid var(--boja-traka-linija);
+        border-radius: var(--radijus-pun);
+        background: transparent;
+
+        font-family: var(--pismo-tekst);
         font-size: var(--slovo-xs);
         line-height: var(--red-sm);
-        color: var(--boja-traka-tekst-tiho);
+        font-weight: var(--tezina-srednja);
+        color: var(--boja-traka-tekst);
         text-decoration: none;
 
-        @include z-prelaz(color);
+        @include z-prelaz(background-color, border-color);
         @include z-fokus;
 
-        &:hover { color: var(--boja-traka-tekst); text-decoration: underline; }
-
-        &--ovde {
+        &:hover {
+            background: var(--boja-traka-povrsina);
+            border-color: var(--boja-traka-tekst-tiho);
             color: var(--boja-traka-tekst);
-            font-weight: var(--tezina-srednja);
+            text-decoration: none;
         }
+
+        /* Aktivna strana — puna površina, bez crvene trake sa strane: ovo su
+           dugmad, a crvena je znak aktivne stavke MENIJA. */
+        &--ovde {
+            background: var(--boja-traka-povrsina);
+            border-color: var(--boja-traka-tekst-tiho);
+            font-weight: var(--tezina-jaka);
+        }
+
+        @include mobile { min-height: 44px; }
     }
 
     &__odjava {
