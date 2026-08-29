@@ -133,7 +133,7 @@ class PredlogC extends Component {
                         </div>
                     </Container>
                     <Container>
-                        <Traka>
+                        <Traka lang={lang}>
                             {najnovije.slice(1).map((g, i) => this.kartica(g, `n${i}`))}
                         </Traka>
                     </Container>
@@ -181,7 +181,7 @@ class PredlogC extends Component {
                                     </div>
                                 </Container>
                                 <Container>
-                                    <Traka>
+                                    <Traka lang={lang}>
                                         {galerije.map((g, i) => this.kartica(g, `${idx}-${i}`))}
                                     </Traka>
                                 </Container>
@@ -215,7 +215,7 @@ class PredlogC extends Component {
                             </div>
                         </Container>
                         <Container>
-                            <Traka>
+                            <Traka lang={lang}>
                                 {this.props.videos.slice(0, 8).map((v, i) => {
                                     const naslovVidea = Object.translate(v, 'title', lang) || '';
                                     return (

@@ -57,7 +57,7 @@
     &__naslov {
         margin: 0 0 var(--razmak-2);
         font-family: var(--pismo-naslov);
-        font-size: 24px;
+        font-size: var(--slovo-xl);
         line-height: 1.25;
         font-weight: var(--tezina-jaka);
         color: var(--boja-tekst);
@@ -96,7 +96,7 @@
         min-height: 44px;
         padding: 0 var(--razmak-3);
 
-        border: 1px solid var(--boja-linija);
+        border: 1px solid var(--boja-linija-kontrola);
         border-radius: var(--radijus-panel);
         background: var(--boja-povrsina);
 
@@ -172,7 +172,7 @@
     &__snaga-deo {
         flex: 1 1 auto;
         height: 4px;
-        border-radius: 2px;
+        border-radius: var(--radijus-oznaka);
         background: var(--boja-linija);
         @include z-prelaz(background-color);
 
@@ -197,13 +197,13 @@
         align-items: baseline;
         gap: 6px;
 
-        font-size: 11.5px;
+        font-size: var(--slovo-sitno);
         line-height: 1.5;
         color: var(--boja-tekst-tiho);
 
         &::before {
             content: '○';
-            font-size: 10px;
+            font-size: var(--slovo-oznaka);
         }
 
         &--ispunjen {
@@ -407,7 +407,7 @@
         padding: var(--razmak-3);
         text-align: left;
 
-        border: 1px solid var(--boja-linija);
+        border: 1px solid var(--boja-linija-kontrola);
         border-radius: var(--radijus-panel);
         background: var(--boja-povrsina);
         cursor: pointer;
@@ -432,7 +432,7 @@
     }
 
     &__tip-opis {
-        font-size: 11.5px;
+        font-size: var(--slovo-sitno);
         line-height: 1.45;
         color: var(--boja-tekst-tiho);
     }
@@ -474,7 +474,7 @@
         min-height: 44px;
         padding: 0 var(--razmak-3);
 
-        border: 1px solid var(--boja-linija);
+        border: 1px solid var(--boja-linija-kontrola);
         border-radius: var(--radijus-panel);
         background: var(--boja-povrsina);
 

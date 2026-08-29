@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 import Isvg from 'react-inlinesvg';
 import Page from '../../containers/page';
+import AdminOkvir from '../../components/adminOkvir';
 
 
 import {
@@ -75,9 +76,15 @@ class CategoriesPage extends Component {
     render() {
 
         return (
-            <div className="account-wrap">
-                <div className="into-wrap">
-                </div>
+            <AdminOkvir
+                lang={this.props.lang}
+                uData={this.props.uData}
+                settings={this.props.settings}
+                putanja={this.props[0] && this.props[0].location ? this.props[0].location.pathname : ''}
+                signOut={this.props.signOut}
+                naslov={'Pretplatnici'.translate(this.props.lang)}
+            >
+                <div className="account-wrap">
 
                 <section className="edit-account-section">
                     <Container>
@@ -157,7 +164,8 @@ class CategoriesPage extends Component {
 
 
 
-            </div>
+                </div>
+            </AdminOkvir>
         );
     }
 }

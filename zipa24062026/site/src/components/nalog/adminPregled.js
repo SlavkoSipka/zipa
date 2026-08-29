@@ -38,6 +38,7 @@ class AdminPregled extends Component {
             { naziv: 'Prethodni mjesec',   vrednost: broj(s.prevMonthEarnings, ' KM') },
             { naziv: 'Ukupno preuzeto',    vrednost: broj(s.totalDownloads) },
             { naziv: 'Preuzeto danas',     vrednost: broj(s.todayDownloads) },
+            { naziv: 'Galerija u arhivi',  vrednost: broj(s.galleriesCount) },
             { naziv: 'Fotografija u arhivi', vrednost: broj(s.photosCount) },
             { naziv: 'Fotografa',          vrednost: broj(s.photographersCount) },
         ];

@@ -47,6 +47,49 @@ import download from "../assets/svg/download.svg";
 import cartIcon from "../assets/svg/cart.svg";
 import shareIcon from "../assets/svg/share.svg";
 
+/*
+ * MREŽA FOTOGRAFIJA — zašto ovako
+ *
+ * Galerija ume da ima i preko dvesta fotografija. Sve odjednom se ne dovlače:
+ * na 156 fotografija to je oko osam megabajta i prvi prikaz bi čekao sve njih.
+ * Zato ostaje `loading="lazy"`, a uklanja se ono što je smetalo — da pločice
+ * poskakuju i da slike „iskaču" jedna po jedna.
+ *
+ * Dve stvari to rešavaju:
+ *
+ * 1. MESTO SE REZERVIŠE UNAPRED. Svaka fotografija u bazi ima `width` i
+ *    `height`, pa pločica dobija tačan odnos stranica pre nego što slika
+ *    stigne. Mreža je `column-count`, a tamo nepoznata visina znači da svaka
+ *    pristigla slika premešta sve ispod nje — i između stubaca.
+ *
+ * 2. DOLAZAK SE STIŠAVA. Dok slike nema, pločica je tiha podloga koja lagano
+ *    diše; kad stigne, pojavi se prelivom. Klasa se dodaje direktno na čvor, a
+ *    ne kroz stanje — inače bi svaka od 156 slika izazvala novo iscrtavanje
+ *    cele strane.
+ *
+ * `complete` u `ref`-u hvata slike koje su već u kešu: za njih `onLoad` ume da
+ * ne stigne, pa bi ostale nevidljive.
+ */
+const oznaciStiglu = (slika) => {
+    const plocica = slika.parentNode;
+    if (plocica && plocica.classList) plocica.classList.add('z-galerija__foto--stigla');
+};
+
+// Odnos stranica pločice, dok slika ne stigne. Bez mera se ne postavlja ništa
+// — pločica se tada ponaša kao i do sada.
+const odnosStranica = (foto) =>
+    foto && foto.width && foto.height
+        ? { aspectRatio: `${foto.width} / ${foto.height}` }
+        : undefined;
+
+/*
+ * Imena datoteka u arhivi imaju razmake, a razmak razdvaja kandidate u
+ * `srcset` — nekodiran obara ceo atribut i slika tiho padne na `src`.
+ * Pravilo iz CLAUDE.md; isto stoji u `article.js` i `predlogA.js`.
+ */
+const slikaPutanja = (putanja) => encodeURI(putanja || '');
+
+
 class DetailPage extends Component {
     constructor(props) {
         super(props);
@@ -1098,7 +1141,7 @@ class DetailPage extends Component {
                                 </div>
 
                                 <div className="z-galerija__mreza">
-                                    {poredaneFotografije.map(({ item, idx }) => (
+                                    {poredaneFotografije.map(({ item, idx }, mesto) => (
                                         <button
                                             type="button"
                                             className="z-galerija__foto"
@@ -1123,12 +1166,22 @@ class DetailPage extends Component {
                                             }}
                                         >
                                             <img
-                                                src={`${PHOTOS_ENDPOINT}/photos/350x/${item.image}`}
-                                                srcSet={`${PHOTOS_ENDPOINT}/photos/350x/${item.image} 350w, ${PHOTOS_ENDPOINT}/photos/700x/${item.image} 700w`}
+                                                src={`${PHOTOS_ENDPOINT}/photos/350x/${slikaPutanja(item.image)}`}
+                                                srcSet={`${PHOTOS_ENDPOINT}/photos/350x/${slikaPutanja(item.image)} 350w, ${PHOTOS_ENDPOINT}/photos/700x/${slikaPutanja(item.image)} 700w`}
                                                 sizes="(max-width: 767px) 50vw, (max-width: 1439px) 33vw, 25vw"
                                                 alt={item.description || ""}
-                                                loading="lazy"
+                                                width={item.width || null}
+                                                height={item.height || null}
+                                                style={odnosStranica(item)}
+                                                /* Prvih dvanaest je ono što se vidi bez
+                                                   skrolovanja — ona idu odmah, ostala kad
+                                                   dođu na red. */
+                                                loading={mesto < 12 ? "eager" : "lazy"}
+                                                fetchpriority={mesto < 12 ? "high" : "low"}
                                                 decoding="async"
+                                                ref={(n) => { if (n && n.complete) oznaciStiglu(n); }}
+                                                onLoad={(e) => oznaciStiglu(e.currentTarget)}
+                                                onError={(e) => oznaciStiglu(e.currentTarget)}
                                             />
 
                                             <span className="z-galerija__preko">

@@ -22,7 +22,7 @@
 .z-stranica-galerija__naslov {
     margin: 0;
     font-family: var(--pismo-naslov);
-    font-size: 22px;
+    font-size: var(--slovo-lg-plus);
     line-height: 1.2;
     font-weight: var(--tezina-jaka);
     color: var(--boja-tekst);
@@ -80,7 +80,7 @@
         width: 100%;
         height: 36px;
         padding: 0 36px 0 32px;
-        border: 1px solid var(--boja-linija);
+        border: 1px solid var(--boja-linija-kontrola);
         border-radius: var(--radijus-panel);
         background: var(--boja-podloga-tiha);
 
@@ -152,7 +152,7 @@
     height: 36px;
     padding: 0 var(--razmak-3);
 
-    border: 1px solid var(--boja-linija);
+    border: 1px solid var(--boja-linija-kontrola);
     border-radius: var(--radijus-panel);
     background: var(--boja-povrsina);
 
@@ -339,7 +339,7 @@
     background: var(--boja-povrsina);
 
     font-family: var(--pismo-tekst);
-    font-size: 12px;
+    font-size: var(--slovo-xs);
     font-weight: var(--tezina-srednja);
     color: var(--boja-oznaka-tekst);
     cursor: pointer;
@@ -360,7 +360,7 @@
     background: transparent;
 
     font-family: var(--pismo-tekst);
-    font-size: 12px;
+    font-size: var(--slovo-xs);
     font-weight: var(--tezina-srednja);
     color: var(--boja-tekst-tiho);
     text-decoration: underline;
@@ -394,7 +394,7 @@
     padding: 0;
     list-style: none;
 
-    font-size: 12px;
+    font-size: var(--slovo-xs);
     color: var(--boja-tekst-tiho);
 
     li { display: flex; align-items: center; }

@@ -1,0 +1,142 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   TELEFON — mete za prst i polja obrazaca
+   ═══════════════════════════════════════════════════════════════════════════
+   Sve u ovom fajlu važi SAMO ispod 768px i menja isključivo mere, ne izgled:
+   ništa ne dobija drugu boju, drugo pismo ni drugi radijus.
+
+   Zašto na jednom mestu, a ne uz svaku komponentu: mere su izmerene u jednom
+   prolazu na 375px i menjaju se zajedno, po istom pravilu. Fajl se uvozi
+   POSLE svih komponenti, pa mu specifičnost ide u korist bez ijednog
+   `!important`.
+
+   Dva pravila iza mera:
+
+   1. META ZA PRST — WCAG 2.5.8 (AA) traži najmanje 24×24 CSS tačke, a
+      preporuka proizvođača telefona je 44×44. Ovde se ide na 44 gde kontrola
+      stoji sama, a na 32 gde stoji u gustom redu (prekidač jezika u traci) —
+      ispod 24 ne ostaje ništa. Veze unutar teksta standard izuzima i one se
+      ne diraju.
+
+   2. POLJA OBRAZACA IDU NA 16px — Safari na iPhone-u sam uveća celu stranu
+      kad se klikne u polje sa slovima manjim od 16px, i posle toga je strana
+      ostavljena uvećana. Polje pretrage na `/galerije` je bilo 14px i tačno
+      to je radilo.
+*/
+
+@include mobile {
+
+    /* ── polja obrazaca ──────────────────────────────────────────────────
+     * Kvačice i radio-dugmad se izostavljaju: kod njih `font-size` ne diže
+     * pregledač, a diže razmak oko njih. */
+    input:not([type='checkbox']):not([type='radio']),
+    textarea,
+    select {
+        font-size: var(--slovo-md);
+    }
+
+    /* ── kontrole koje stoje same ────────────────────────────────────────
+     * Visina ide na 44; širina se ne dira gde je kontrola tekstualna, jer je
+     * već šira od 44. */
+    .z-prijava__prikazi,          // „prikaži lozinku" u polju
+    .z-korpa__ukloni,             // uklanjanje stavke iz korpe
+    .z-korpa__tiho-dugme,
+    .z-galerija__redosled,        // preokretanje redosleda u galeriji
+    .traka-pauza {                // zaustavljanje trake na naslovnoj (C i B)
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Kvadratne kontrole sa ikonicom. */
+    .z-alatna-traka__pretrazi,
+    .z-prozor__zatvori,          // prozor fotografije sa cenama
+    .z-obavestenje__zatvori,
+    .z-poruka__zatvori {
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+    /* ── prekidač jezika ─────────────────────────────────────────────────
+     * Stoji u gustom redu zaglavlja pored korpe i prijave, pa 44 ne staje;
+     * 32×32 prolazi WCAG-ov minimum i ostaje u redu. Bio je 24×16. */
+    .z-zaglavlje__jezik {
+        min-width: 32px;
+        min-height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* ── veze koje stoje u spisku ────────────────────────────────────────
+     * WCAG 2.5.8 izuzima vezu unutar rečenice — nju drži red teksta oko nje.
+     * Ne izuzima vezu koja stoji sama u spisku: takve su u podnožju (visina
+     * 17px), izbor broja po strani (18px) i logo u zaglavlju (21px). Dobijaju
+     * visinu preko `inline-flex`, bez dodatnog razmaka spolja, pa se spisak
+     * ne razmiče.
+     */
+    .z-podnozje__veza,
+    .z-prijava__veza,
+    .z-kontakt__veza,            // telefon i e-pošta na strani kontakta
+    .z-fotograf__kontakt-veza,   // isto na strani fotografa
+    .z-galerija__vise,           // „prikaži cio opis" u galeriji
+    .z-broj-po-strani a,
+    .pagination a,
+    .z-zaglavlje__logo,
+    .z-zaglavlje__vrsta-dugme {
+        display: inline-flex;
+        align-items: center;
+        min-height: 32px;
+    }
+
+    /* Kvadratne mete — broj strane i broj po strani su uski koliko i cifra. */
+    .z-broj-po-strani a,
+    .pagination a {
+        justify-content: center;
+        min-width: 32px;
+    }
+
+    /* Telefon i e-pošta u podnožju stoje unutar rečenice, ali su i najvažnija
+     * veza na telefonu — dobijaju bar minimum iz standarda. */
+    .z-podnozje__kontakt-stavka a {
+        display: inline-flex;
+        align-items: center;
+        min-height: 24px;
+    }
+
+    /* Veza „Sve galerije →" u naslovu odeljka, na sva tri predloga. Stoji
+     * sama u redu i bila je visoka 20px. */
+    .naslovna-a, .naslovna-b, .naslovna-c {
+        .naslov-odeljka a {
+            display: inline-flex;
+            align-items: center;
+            min-height: 32px;
+        }
+    }
+
+    /* ── kartice na naslovnoj (predlozi B i C) ───────────────────────────
+     * Crtane su u prvom pravcu, sa merama upisanim u px. Ovde se NE prekraja
+     * izgled — samo se najsitniji redovi dižu iznad granice čitljivosti na
+     * telefonu (naslov 13,5 → 15px, meta 10,5–11,5 → 12px, broj 11 → 12px). */
+    /* Naslovna fotografija predloga C: oznaka kategorije i red podataka preko
+     * snimka bili su 11 i 11,5px, a stoje na tamnoj slici gde se čitaju teže
+     * nego na beloj podlozi. */
+    .naslovna-c .glavna-traka .tekst {
+        .oznaka { font-size: 12px; }
+        p { font-size: 12px; }
+    }
+
+    .naslovna-c, .naslovna-b {
+        .kartica {
+            .telo h4 { font-size: 15px; line-height: 1.35; }
+            .telo .meta { font-size: 12px; }
+            .slika .broj { font-size: 12px; }
+
+            /* Predlog B nosi svoje oznake preko fotografije: značka sa brojem
+             * snimaka i red podataka na kartici sa tekstom preko slike. */
+            .slika .znacka { font-size: 12px; }
+            .slika .preko-teksta .meta,
+            .slika .preko-teksta .meta span { font-size: 12px; }
+        }
+    }
+}

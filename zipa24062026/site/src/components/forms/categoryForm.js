@@ -274,13 +274,25 @@ class form extends React.Component {
                         ></Field>
 
                         {/*
-                          * Koliko redova galerija ova kategorija zauzima na
-                          * naslovnoj. Jedan red je pet galerija, dva reda deset.
+                          * Ova dva polja čita SAMO predlog B naslovne. Predlog A
+                          * pokazuje prve četiri kategorije u kvadratnom indeksu,
+                          * a predlog C svaku kategoriju kao traku — kod njih
+                          * nema šta da se bira, pa im vrednost ništa ne menja.
+                          *
+                          * Zato obrazac kaže na čemu je: bez ovoga je izgledalo
+                          * da polje radi na svakoj naslovnoj. (Do 2026-08-27 se
+                          * uz to nije ni upisivalo — vidi `updateCategory()`.)
                           */}
+                        {this.props.izgledNaslovne && this.props.izgledNaslovne !== 'b' ? (
+                            <p className="napomena-polja">
+                                {'Naredna dva podešavanja koristi samo Predlog B naslovne strane. Trenutno je izabran drugi izgled, pa se na sajtu neće vidjeti — vrijednost se svejedno pamti.'.translate(this.props.lang)}
+                            </p>
+                        ) : null}
+
                         <Field
                             name="homeRows"
                             component={renderSelectField}
-                            label={'Redova na početnoj'.translate(this.props.lang)}
+                            label={'Redova na početnoj (Predlog B)'.translate(this.props.lang)}
                             placeholder={'Jedan red (5 galerija)'.translate(this.props.lang)}
                         >
                             <option value="1">{'Jedan red (5 galerija)'.translate(this.props.lang)}</option>
@@ -294,7 +306,7 @@ class form extends React.Component {
                         <Field
                             name="homeStyle"
                             component={renderSelectField}
-                            label={'Način prikaza na početnoj'.translate(this.props.lang)}
+                            label={'Način prikaza na početnoj (Predlog B)'.translate(this.props.lang)}
                             placeholder={'Redovni — pet u redu'.translate(this.props.lang)}
                         >
                             <option value="redovni">{'Redovni — pet u redu'.translate(this.props.lang)}</option>

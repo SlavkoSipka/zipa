@@ -91,12 +91,12 @@
     
                 &:last-child{
                     border-radius: 25px;
-                    background-color: #369C2F;
+                    background-color: var(--boja-uspeh);
                     margin-left: auto;
                     min-width: 125px;
 
                     a {
-                        color: $white;
+                        color: var(--boja-tekst-na-akcentu);
                     }
                 }   
             }
@@ -137,7 +137,7 @@
             left: 20px;
             right: 20px;
             bottom: 0;
-            background-image: linear-gradient(#FFFFFF, #EEF1F6, #EBEEF5);
+            background-image: linear-gradient(var(--boja-povrsina), var(--boja-linija), var(--boja-linija));
             border-radius: 0  0 20px 20px;
 
         }*/
@@ -237,7 +237,7 @@
 
                     &:hover{
                         background-color: $darkBlue;
-                        color: $white;
+                        color: var(--boja-tekst-na-akcentu);
                         border: 2px solid $darkBlue;
                     }
                 }
@@ -281,7 +281,7 @@
                 //width: 48%;
                 //margin: 0 30px;
                 background-color: $blue;
-                color: $white;
+                color: var(--boja-tekst-na-akcentu);
                 border-radius: 15px;
                 padding: 13px 20px;
                 border: 0;
@@ -299,6 +299,8 @@
                         stroke: unset;
                     }
                     
+                    /* NIJE zakucana boja nego POREĐENJE vrednosti atributa
+                       u ubačenom SVG-u — mora da ostane doslovno. */
                     *[stroke="#6d7587"]{
                         stroke: $white;
                         fill: transparent;
@@ -316,7 +318,7 @@
                 width: 100%;
                 margin: 0 30px;
                 background-color: $blue;
-                color: $white;
+                color: var(--boja-tekst-na-akcentu);
                 border-radius: 15px;
                 padding: 13px 20px;
                 border: 0;
@@ -390,14 +392,14 @@
         .profile-informations{
             margin-bottom: 30px;
             > div {
-                background-color: #EDEFF5;
+                background-color: var(--boja-linija);
                 padding: 10px;
                 border-radius: 20px;
             }
 
 
             h6 {
-                background-color: #9DA5BE;
+                background-color: var(--boja-tekst-tiho);
                 border-radius: 15px;
                 color: $white;
                 font-size: 16px;
@@ -443,7 +445,7 @@
                 list-style: none;
                 padding-left: 0;
                 li {
-                    background-color: #EDEFF5;
+                    background-color: var(--boja-linija);
                     border-radius: 15px;
                     padding: 8px 18px;
                     margin-bottom: 10px;
@@ -470,7 +472,7 @@
                 list-style: none;
                 padding-left: 0;
                 li {
-                    background-color: #EDEFF5;
+                    background-color: var(--boja-linija);
                     border-radius: 15px;
                     padding: 8px 18px;
                     margin-bottom: 10px;
@@ -523,7 +525,7 @@
                     margin: 0;
 
                     > li {
-                        background-color: #EDEFF5;
+                        background-color: var(--boja-linija);
                         border-radius: 15px;
                         padding: 8px 18px;
                         display: flex;
@@ -534,7 +536,7 @@
                         img {
                             width: 64px;
                             height: 64px;
-                            border: 6px solid #9DA5BE;
+                            border: 6px solid var(--boja-tekst-tiho);
                             border-radius: 50%;
                             object-fit: cover;
                         }
@@ -550,12 +552,12 @@
                                 font-weight: $semiBold;
                             }
                             P {
-                                color: #3C59B9;
+                                color: var(--boja-akcenat);
                                 margin-bottom: 0;
                                 font-size: 12px;
                             }
                             span {
-                                color: #4ACB6C;
+                                color: var(--boja-uspeh);
                                 font-size: 12px;
                             }
                         }
@@ -563,7 +565,7 @@
                 }
 
                 button {
-                    background-color: #EDEFF5;
+                    background-color: var(--boja-linija);
                     border-radius: 15px;
                     width: 100%;
                     padding: 15px;
@@ -576,7 +578,7 @@
 
         .statistics-1{
             .block{
-                background-color: #EDEFF5;
+                background-color: var(--boja-linija);
                 border-radius: 20px;
                 padding: 16px 20px;
                 display: flex;
@@ -596,7 +598,7 @@
                 }
             }
             .block2{
-                background-color: #EDEFF5;
+                background-color: var(--boja-linija);
                 border-radius: 20px;
                 padding: 16px 20px;
                 display: flex;
@@ -627,7 +629,7 @@
             }
 
             .photos{
-                background-color: #EDEFF5;
+                background-color: var(--boja-linija);
                 border-radius: 20px;
                 padding: 20px 30px;
                 margin-bottom: 30px;
@@ -669,7 +671,7 @@
 
                             > div {
                                 width: 100%;
-                                background-color: #5C3784;
+                                background-color: var(--boja-podloga-tiha);
                                 position: relative;
                                 border-radius: 10px;
                                 height: 14px;
@@ -679,7 +681,7 @@
                                     top: 0;
                                     left: 0;
                                     height: 100%;
-                                    background-color: #CE8FFF;
+                                    background-color: var(--boja-akcenat);
                                     border-radius: 10px;
                                 }
                             }
@@ -691,7 +693,7 @@
 
         .statistics-2{
             > div {
-            background-color: #EDEFF5;
+            background-color: var(--boja-linija);
             border-radius: 20px;
             padding: 20px 30px;
             margin-bottom: 30px;
@@ -721,7 +723,7 @@
                 }
             }
             .items{
-                background-color: #EDEFF5;
+                background-color: var(--boja-linija);
                 border-radius: 20px;
                 padding-top: 30px;
                 padding-bottom: 30px;
@@ -809,7 +811,7 @@
                     display: flex;
                     align-items: center;
                     padding: 14px 22px 14px 35px;
-                    color: $white;
+                    color: var(--boja-tekst-na-akcentu);
                     border-radius: 27px;
                     border: 0;
                     outline: none;
@@ -843,7 +845,7 @@
                 font-size: 14px;
                 font-weight: $regular;
                 margin-bottom: 0;
-                color: $white;
+                color: var(--boja-tekst-na-akcentu);
 
             }
         }
@@ -921,7 +923,7 @@
                             a {
                                 text-decoration: none;
                                 button{
-                                    background-color: #F5F5F5;
+                                    background-color: var(--boja-podloga-tiha);
                                     color: $black;
                                     font-size: 16px;
                                     font-weight: $regular;
@@ -954,7 +956,7 @@
                             a {
                                 button{
                                     background-color: $darkBlue;
-                                    color: $white;
+                                    color: var(--boja-tekst-na-akcentu);
                                 }
                             }
                         }
@@ -970,7 +972,7 @@
                             border: 0;
                             outline: none;
                             box-shadow: none;
-                            background-color: #F5F5F5;
+                            background-color: var(--boja-podloga-tiha);
                             color: $black;
                             display: flex;
                             align-items: center;
@@ -1084,7 +1086,7 @@
                     display: flex;
                     align-items: center;
                     padding: 14px 22px 14px 35px;
-                    color: $white;
+                    color: var(--boja-tekst-na-akcentu);
                     border-radius: 27px;
                     border: 0;
                     outline: none;
@@ -1186,7 +1188,7 @@
                     padding: 15px 32px;
                     font-size: 14px;
                     font-weight: $semiBold;
-                    color: $white;
+                    color: var(--boja-tekst-na-akcentu);
                     transition: background-color 0.3s;
                     margin-left: 10px;
                     @include mobile{
@@ -1216,6 +1218,18 @@
         width: 100%;
         position: relative;
         padding-bottom: 50px;
+
+        /* Tabele u administraciji imaju stubaca koliko i podataka i ne
+           prelamaju se. Na telefonu su zbog toga izlazile iz kadra i gurale
+           CELU stranu: `/account/users` je na 320px prelazilo 388px, a
+           `/account/categories` 199px (izmereno 2026-08-27).
+
+           Prevlačenje u samoj tabeli, kao u `.tabela-okvir` na pregledu
+           arhive. Traka koja se namerno prevlači ne računa se u preliv. */
+        @include mobile-tablet {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
         &::before{
             content: ' ';
             position: absolute;
@@ -1237,14 +1251,14 @@
                 border-radius: 25px;
                 width: 43px;
                 height: 20px;
-                background-color: #EDEFF5;
+                background-color: var(--boja-linija);
                 position: relative;
                 &::after{
                     content: ' ';
                     display: block;
                     width: 26px;
                     height: 26px;
-                    background-color: #9DA5BE;
+                    background-color: var(--boja-tekst-tiho);
                     position: absolute;
                     left: 100%;
                     margin-left: -13px;
@@ -1256,7 +1270,7 @@
                 &.checked{
                     &::after{
                         left: 0;
-                        background-color: #CE8FFF;
+                        background-color: var(--boja-akcenat);
                     }
                 }
             }
@@ -1345,7 +1359,7 @@
         .search-wrap{
             display: flex;
             width: 100%;
-            background-color: #EDEFF5;
+            background-color: var(--boja-linija);
             border-radius: 33px;
             padding: 10px 10px 10px 10px;
             margin-bottom: 15px;
@@ -1372,7 +1386,7 @@
             .button{
                 margin-left: 30px;
                 background-color: $darkBlue;
-                color: $white;
+                color: var(--boja-tekst-na-akcentu);
                 border: 0;
                 outline: none;
                 display: flex;
@@ -1452,7 +1466,7 @@
                 }
         
                 .image-picker{
-                    border: 2px dashed #EDEFF5;
+                    border: 2px dashed var(--boja-linija);
                         border-radius: 15px;
                         
                         width: 100%;
@@ -1520,7 +1534,7 @@
                     height: 128px;
                     min-width: 128px;
                     position: relative;
-                    background-color: #9DA5BE;
+                    background-color: var(--boja-tekst-tiho);
                     border-radius: 50%;
                     display: flex;
                     align-items: center;
@@ -1559,7 +1573,7 @@
                     font-size: 32px;
                     font-weight: $bold;
                     border: 0;
-                    border-bottom: 2px solid #9DA5BE;
+                    border-bottom: 2px solid var(--boja-tekst-tiho);
                     height: 44px;
                     margin-right: 24px;
                     width: 100%;
@@ -1580,7 +1594,7 @@
                 }
 
                 > input{
-                    background-color: #EDEFF5;
+                    background-color: var(--boja-linija);
                     border: 0;
                     outline: none;
                     border-radius: 15px;
@@ -1624,14 +1638,14 @@
                     border-radius: 25px;
                     width: 43px;
                     height: 20px;
-                    background-color: #EDEFF5;
+                    background-color: var(--boja-linija);
                     position: relative;
                     &::after{
                         content: ' ';
                         display: block;
                         width: 26px;
                         height: 26px;
-                        background-color: #9DA5BE;
+                        background-color: var(--boja-tekst-tiho);
                         position: absolute;
                         left: 100%;
                         margin-left: -13px;
@@ -1643,7 +1657,7 @@
                     &.checked{
                         &::after{
                             left: 0;
-                            background-color: #CE8FFF;
+                            background-color: var(--boja-akcenat);
                         }
                     }
                 }
@@ -1662,7 +1676,7 @@
                 }
 
                 .react-tagsinput {
-                    background-color: #EDEFF5;
+                    background-color: var(--boja-linija);
                     border-radius: 15px;
                     border: 0;
                     height: 100px;
@@ -1671,7 +1685,7 @@
                     .react-tagsinput-tag{
                         background-color: $blue;
                         border: 0;
-                        color: $white;
+                        color: var(--boja-tekst-na-akcentu);
                         border-radius: 4px;
                         padding: 5px 10px;
 
@@ -1740,7 +1754,7 @@
                                     font-size: 14px;
                                     font-weight: $medium;
                                     padding: 10px 27px;
-                                    color: $white;
+                                    color: var(--boja-tekst-na-akcentu);
                                     border: 0;
                                     background-color: $blue;
                                     margin-right: 20px;
@@ -1769,7 +1783,7 @@
                     min-width: 36px;
                     width: 36px;
                     height: 36px;
-                    background-color: #EDEFF5;
+                    background-color: var(--boja-linija);
                     border-radius: 10px;
                     margin-right: 12px;
                     position: relative;
@@ -1781,7 +1795,7 @@
                         left: 8px;
                         width: 20px;
                         height: 20px;
-                        border: 2px solid #5C3784;
+                        border: 2px solid var(--boja-tekst);
                         border-radius: 3px;
                     }
 
@@ -1794,8 +1808,8 @@
                         border-radius: 0;
                         border-top: 0;
                         border-left: 0;
-                        border-bottom: 3px solid #5C3784;
-                        border-right: 3px solid #5C3784;
+                        border-bottom: 3px solid var(--boja-tekst);
+                        border-right: 3px solid var(--boja-tekst);
                             transform: rotate(45deg);
                         }
                     }
@@ -1823,7 +1837,7 @@
                         min-width: 36px;
                         width: 36px;
                         height: 36px;
-                        background-color: #EDEFF5;
+                        background-color: var(--boja-linija);
                         border-radius: 10px;
                         margin-right: 12px;
                         position: relative;
@@ -1835,7 +1849,7 @@
                             left: 8px;
                             width: 20px;
                             height: 20px;
-                            border: 2px solid #5C3784;
+                            border: 2px solid var(--boja-tekst);
                             border-radius: 3px;
                         }
 
@@ -1848,8 +1862,8 @@
                             border-radius: 0;
                             border-top: 0;
                             border-left: 0;
-                            border-bottom: 3px solid #5C3784;
-                            border-right: 3px solid #5C3784;
+                            border-bottom: 3px solid var(--boja-tekst);
+                            border-right: 3px solid var(--boja-tekst);
                                 transform: rotate(45deg);
                             }
                         }
@@ -1859,7 +1873,7 @@
             }
 
             .file-drop{
-                border: 2px dashed #CCD4E1;
+                border: 2px dashed var(--boja-linija);
                 //background-image: url(./assets/svg/dropzone.svg);
                 //background-size: 100%;
                     border-radius: 15px;
@@ -2032,7 +2046,7 @@
                 }
 
                 input {
-                    background-color: #EDEFF5;
+                    background-color: var(--boja-linija);
                     border-radius: 15px;
                     border: 0;
                     height: 50px;
@@ -2051,7 +2065,7 @@
                 }
 
                 textarea {
-                    background-color: #EDEFF5;
+                    background-color: var(--boja-linija);
                     border-radius: 15px;
                     width: 100%;
                     border: 0;
@@ -2066,7 +2080,7 @@
                 margin-bottom: 29px;
                 width: 100%;
                 height: 1px;
-                background-color: #DEDEDE;
+                background-color: var(--boja-linija);
             }
             .spacer-t{
                 margin-top: 10px;
@@ -2080,7 +2094,7 @@
             .button {
                 background-color: $blue;
                 transition: background-color 0.3s;
-                color: $white;
+                color: var(--boja-tekst-na-akcentu);
                 font-size: 16px;
                 font-weight: $semiBold;
                 border: 0;
@@ -2122,7 +2136,7 @@
                     border-radius: 15px;
                     display: flex;
                     align-items: center;
-                    background-color: #EDEFF5;
+                    background-color: var(--boja-linija);
                     height: 50px;
 
                     > a {
@@ -2161,7 +2175,7 @@
                             padding: 5px 15px;
                             white-space: nowrap;
                             &:hover{
-                                background-color: #DDDDDD;
+                                background-color: var(--boja-linija);
                             }
                         }
                     }
@@ -2174,7 +2188,7 @@
     .sponsor{
         h6 {
             font-size: 12px;
-            color: #9DA5BE;
+            color: var(--boja-tekst-tiho);
             font-weight: $regular;
             margin-bottom: 6px;
         }
@@ -2206,10 +2220,53 @@
 .section-hint {
     font-size: 13px;
     line-height: 1.5;
-    color: #7c828f;
+    color: var(--boja-tekst-tiho);
     margin: -4px 0 14px;
     max-width: 70ch;
 
-    b { color: #545a6b; font-weight: 600; }
-    a { color: #2f3fb5; text-decoration: underline; }
+    b { color: var(--boja-tekst-tiho); font-weight: 600; }
+    a { color: var(--boja-akcenat); text-decoration: underline; }
+}
+
+/* Napomena uz polje u obrascu administracije — kad podešavanje važi samo za
+   jedan izgled naslovne, obrazac to kaže umesto da izgleda kao da radi svuda. */
+.napomena-polja {
+    margin: 0 0 var(--razmak-3);
+    padding: var(--razmak-2) var(--razmak-3);
+
+    border-left: 3px solid var(--boja-najava);
+    border-radius: 0 var(--radijus-panel) var(--radijus-panel) 0;
+    background: var(--boja-podloga-tiha);
+
+    font-size: var(--slovo-sm);
+    line-height: var(--red-md);
+    color: var(--boja-tekst);
+}
+
+/* Poruka kad postavljena slika ne prolazi proveru (vrsta, veličina, odgovor
+   servera). Do 2026-08-28 odbijen fajl nije javljao ništa. */
+.greska-slike {
+    margin: var(--razmak-2) 0 0;
+    font-size: var(--slovo-sm);
+    line-height: var(--red-md);
+    color: var(--boja-oznaka);
+}
+
+/* ── Newsletter: dugme za slanje ──────────────────────────────────────────
+   Slanje je nepovratno i ide na sve pretplatnike, pa se odvaja od izmjene i
+   brisanja umjesto da stoji priljubljeno uz njih. */
+.razmak-radnji {
+    display: inline-block;
+    width: var(--razmak-6);
+}
+
+button.posalji--poslato {
+    opacity: .55;
+    cursor: not-allowed;
+}
+
+.poslato-kada {
+    color: var(--boja-tekst-tiho);
+    font-size: var(--slovo-sm);
+    white-space: nowrap;
 }

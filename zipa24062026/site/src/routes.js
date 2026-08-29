@@ -36,6 +36,16 @@ class Routes extends Component {
                                 )
                             } else {
                                 if (this.props.uData && route.redirectUser) {
+                                    /*
+                                     * `redirectUser` sme da bude i funkcija: prijavljen
+                                     * korisnik koji otvori /login ide tamo gde ga vodi i
+                                     * sama prijava — administrator na nadzornu ploču,
+                                     * ostali na svoj nalog.
+                                     */
+                                    const kuda = typeof route.redirectUser === 'function'
+                                        ? route.redirectUser(this.props.uData)
+                                        : route.redirectUser;
+
                                     return (
                                         <Route
                                             path={route.path}
@@ -43,7 +53,7 @@ class Routes extends Component {
                                             render={(...renderProps) => {
 
                                                 return (
-                                                    <Redirect to={route.redirectUser} />
+                                                    <Redirect to={kuda} />
                                                 )
                                             }}
                                         />

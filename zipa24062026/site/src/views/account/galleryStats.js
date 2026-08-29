@@ -2,6 +2,7 @@ import React, {Component} from 'react';
 import {Link} from 'react-router-dom'
 import Isvg from 'react-inlinesvg';
 import Page from '../../containers/page';
+import AdminOkvir from '../../components/adminOkvir';
 
 
 import {
@@ -211,9 +212,15 @@ class ProfilePage extends Component {
             totalVisits += this.state.photographerStatistics[i].count;
         }
         return (
-            <div className="account-wrap">
-                <div className="into-wrap">
-                </div>
+            <AdminOkvir
+                lang={this.props.lang}
+                uData={this.props.uData}
+                settings={this.props.settings}
+                putanja={this.props[0] && this.props[0].location ? this.props[0].location.pathname : ''}
+                signOut={this.props.signOut}
+                naslov={'Statistika galerija'.translate(this.props.lang)}
+            >
+                <div className="account-wrap">
                 <a ref={(node) => this.aTag = node}></a>
                 <a ref={(node) => this.aTag1 = node}></a>
 
@@ -334,7 +341,8 @@ class ProfilePage extends Component {
                 </section>
 
 
-            </div>
+                </div>
+            </AdminOkvir>
         );
     }
 }

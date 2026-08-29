@@ -2,6 +2,8 @@ import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 import Isvg from 'react-inlinesvg';
 import Page from '../../containers/page';
+import AdminOkvir from '../../components/adminOkvir';
+import NalogOkvir from '../../components/nalogOkvir';
 
 
 import {
@@ -123,10 +125,25 @@ class ChangeGallery extends Component {
     }
 
     render() {
+        /*
+         * Isti ekran koriste administrator i fotograf. Administrator ga vidi
+         * u administratorskom okviru, fotograf u okviru svog naloga — uloga
+         * se samo čita, prava i pozivi ka API-ju su nepromenjeni.
+         */
+        const Okvir = this.props.uData && this.props.uData.userRole === 'admin'
+            ? AdminOkvir : NalogOkvir;
+
         return (
-            <div className="account-wrap">
-                <div className="into-wrap">
-                </div>
+            <Okvir
+                lang={this.props.lang}
+                uData={this.props.uData}
+                settings={this.props.settings}
+                putanja={this.props[0] && this.props[0].location ? this.props[0].location.pathname : ''}
+                signOut={this.props.signOut}
+                naslov={'Galerija'.translate(this.props.lang)}
+                radnja={<Link to="/account/galleries" className="z-adminokvir__radnja z-adminokvir__radnja--tiha">{'Nazad na spisak'.translate(this.props.lang)}</Link>}
+            >
+                <div className="account-wrap">
 
 
                 <section className="edit-account-section">
@@ -169,7 +186,8 @@ class ChangeGallery extends Component {
 
 
 
-            </div>
+                </div>
+            </Okvir>
         );
     }
 }

@@ -3,16 +3,8 @@ import {Link, Redirect} from 'react-router-dom';
 
 import Isvg from 'react-inlinesvg';
 
-import {
-    DropdownItem,
-    DropdownMenu,
-    DropdownToggle,
-    UncontrolledDropdown
-} from 'reactstrap';
-
 import cart from '../assets/svg/cart.svg';
 import search from '../assets/svg/search.svg';
-import imagesCount from '../assets/svg/images-count.svg';
 import filterIcon from '../assets/svg/filters.svg';
 
 import ba from '../assets/images/basr.png';
@@ -388,8 +380,12 @@ class Header extends Component {
         // Nalozna navigacija ima svoj red ispod glavnog; javna se tad sklanja.
         const naNalogu = putanja.indexOf('/account') === 0;
 
-        const javniMeni = !naNalogu
-            && (!u || (u && u.userRole !== 'photographer'));
+        /*
+         * Fotografu se javni meni ranije sklanjao jer ga je zamenjivala traka
+         * `account-nav`. Trake više nema — bez ovoga bi fotograf na javnim
+         * stranama ostao bez ijedne veze u zaglavlju.
+         */
+        const javniMeni = !naNalogu;
 
         const imaKorpu = !u || u.userRole !== 'photographer';
 
@@ -736,239 +732,11 @@ class Header extends Component {
                     na telefonu; na širem ekranu je CSS gasi. */}
                 <div className="z-zaglavlje__zavesa" onClick={this.zatvoriSve} aria-hidden="true"/>
 
-                {/* ── nalozna navigacija — prenesena nepromenjena ──────── */}
-                {naNalogu || (u && u.userRole === 'photographer') ?
-                    <div className={`col-12 navigation ${u && u.userRole == 'photographer' ? 'photographer-nav' : ''} ${u && u.userRole == 'agency' ? 'agency-nav' : ''}`}>
-                            {this.props.uData && this.props.uData.userRole == 'photographer' && (this.props[0].location.pathname.indexOf('/account') == 0 || this.props[0].location.pathname.indexOf('/galerija/') == 0) ?
-
-                                <ul className="account-nav">
-                                    <li className={this.props[0].location.pathname == '/account/profile' ? "active" : null}>
-                                        <Link to='/account/profile'>{'Početna'.translate(this.props.lang)}</Link></li>
-                                    <li className={this.props[0].location.pathname == '/account/galleries' ? "active" : null}>
-                                        <Link to='/account/galleries'>{'Fotografije'.translate(this.props.lang)}</Link>
-                                    </li>
-                                    {this.props.uData.permissions && this.props.uData.permissions.indexOf('*') != -1 ?
-                                        <li className={this.props[0].location.pathname == '/account/users' ? "active" : null}>
-                                            <Link to='/account/users'>{'Korisnici'.translate(this.props.lang)}</Link>
-                                        </li>
-                                        :
-                                        null
-                                    }
-                                    <li className={this.props[0].location.pathname == '/account/photo-visits' ? "active" : null}>
-                                        <Link to='/account/photo-visits'>{'Pregledi'.translate(this.props.lang)}</Link>
-                                    </li>
-
-                                    <li>
-                                        <UncontrolledDropdown>
-                                            <DropdownToggle>
-                                                {'Profil'.translate(this.props.lang)}
-                                            </DropdownToggle>
-                                            <DropdownMenu>
-                                                <DropdownItem><Link
-                                                    to={'/account/edit'}>{'Izmjeni profil'.translate(this.props.lang)}</Link></DropdownItem>
-
-                                            </DropdownMenu>
-                                        </UncontrolledDropdown>
-                                    </li>
-
-                                    <li className="button-li"><Link to='/account/gallery/new'>
-                                        <button><Isvg
-                                            src={imagesCount}/> {'Dodaj fotografiju'.translate(this.props.lang)}
-                                        </button>
-                                    </Link></li>
-                                </ul>
-                                :
-                                null
-                            }
-
-                            {this.props[0].location.pathname.indexOf('/account') == 0 && this.props.uData && this.props.uData.userRole != 'photographer' && this.props.uData && this.props.uData.userRole != 'admin' ?
-
-                                <ul className="account-nav">
-                                    <li className={this.props[0].location.pathname == '/account/profile' ? "active" : null}>
-                                        <Link to='/account/profile'>{'Početna'.translate(this.props.lang)}</Link></li>
-                                    <li className={this.props[0].location.pathname == '/account/downloads' ? "active" : null}>
-                                        <Link to='/account/downloads'>{'Preuzimanja'.translate(this.props.lang)}</Link>
-                                    </li>
-                                    <li className={this.props[0].location.pathname == '/account/subscription' ? "active" : null}>
-                                        <Link to='/account/subscription'>{'Pretplata'.translate(this.props.lang)}</Link>
-                                    </li>
-
-                                    <li>
-                                        <UncontrolledDropdown>
-                                            <DropdownToggle>
-                                                {'Profil'.translate(this.props.lang)}
-                                            </DropdownToggle>
-                                            <DropdownMenu>
-                                                <DropdownItem><Link
-                                                    to={'/account/edit'}>{'Ažuriranje profila'.translate(this.props.lang)}</Link></DropdownItem>
-                                                <DropdownItem><Link
-                                                    to={'/account/change-password'}>{'Promjena lozinke'.translate(this.props.lang)}</Link></DropdownItem>
-
-                                            </DropdownMenu>
-                                        </UncontrolledDropdown>
-                                    </li>
-
-                                </ul>
-                                :
-                                null
-                            }
-
-
-                            {this.props[0].location.pathname.indexOf('/account') == 0 && this.props.uData && this.props.uData.userRole == 'admin' ?
-
-                                <ul className="account-nav admin-nav">
-                                    <li className={this.props[0].location.pathname == '/' ? "active" : null}><Link
-                                        to='/'>{'Početna'.translate(this.props.lang)}</Link></li>
-                                    <li>
-                                        <UncontrolledDropdown>
-                                            <DropdownToggle>
-                                                {'Kategorije'.translate(this.props.lang)}
-                                            </DropdownToggle>
-                                            <DropdownMenu>
-                                                <Link to={'/account/categories'}>
-                                                    <DropdownItem>{'Lista'.translate(this.props.lang)}</DropdownItem></Link>
-                                                <Link to={'/account/categories/new'}>
-                                                    <DropdownItem>{'Dodaj'.translate(this.props.lang)}</DropdownItem></Link>
-
-                                            </DropdownMenu>
-                                        </UncontrolledDropdown>
-                                    </li>
-                                    <li className={this.props[0].location.pathname == '/account/users' ? "active" : null}>
-                                        <Link to='/account/users'>{'Korisnici'.translate(this.props.lang)}</Link></li>
-                                    <li>
-                                        <UncontrolledDropdown>
-                                            <DropdownToggle>
-                                                {'Baneri'.translate(this.props.lang)}
-                                            </DropdownToggle>
-                                            <DropdownMenu>
-                                                <Link to={'/account/banners'}>
-                                                    <DropdownItem>{'Lista'.translate(this.props.lang)}</DropdownItem></Link>
-                                                <Link to={'/account/banners/new'}>
-                                                    <DropdownItem>{'Dodaj'.translate(this.props.lang)}</DropdownItem></Link>
-
-                                            </DropdownMenu>
-                                        </UncontrolledDropdown>
-                                    </li>
-                                    <li>
-                                        <UncontrolledDropdown>
-                                            <DropdownToggle>
-                                                {'Stranice'.translate(this.props.lang)}
-                                            </DropdownToggle>
-                                            <DropdownMenu>
-                                                <Link to={'/account/pages'}>
-                                                    <DropdownItem>{'Lista'.translate(this.props.lang)}</DropdownItem></Link>
-                                                <Link to={'/account/pages/new'}>
-                                                    <DropdownItem>{'Dodaj'.translate(this.props.lang)}</DropdownItem></Link>
-
-                                            </DropdownMenu>
-                                        </UncontrolledDropdown>
-                                    </li>
-                                    <li>
-                                        <UncontrolledDropdown>
-                                            <DropdownToggle>
-                                                {'Najave'.translate(this.props.lang)}
-                                            </DropdownToggle>
-                                            <DropdownMenu>
-                                                <Link to={'/account/announcements'}>
-                                                    <DropdownItem>{'Lista'.translate(this.props.lang)}</DropdownItem></Link>
-                                                <Link to={'/account/announcements/new'}>
-                                                    <DropdownItem>{'Dodaj'.translate(this.props.lang)}</DropdownItem></Link>
-
-                                            </DropdownMenu>
-                                        </UncontrolledDropdown>
-                                    </li>
-                                    <li>
-                                        <UncontrolledDropdown>
-                                            <DropdownToggle>
-                                                {'Slajder'.translate(this.props.lang)}
-                                            </DropdownToggle>
-                                            <DropdownMenu>
-                                                <Link to={'/account/slides'}>
-                                                    <DropdownItem>{'Lista'.translate(this.props.lang)}</DropdownItem></Link>
-                                                <Link to={'/account/slides/new'}>
-                                                    <DropdownItem>{'Dodaj'.translate(this.props.lang)}</DropdownItem></Link>
-
-                                            </DropdownMenu>
-                                        </UncontrolledDropdown>
-                                    </li>
-                                    <li>
-                                        <UncontrolledDropdown>
-                                            <DropdownToggle>
-                                                {'FAQ'.translate(this.props.lang)}
-                                            </DropdownToggle>
-                                            <DropdownMenu>
-                                                <Link to={'/account/faqCategories'}>
-                                                    <DropdownItem>{'Lista kategorija'.translate(this.props.lang)}</DropdownItem></Link>
-                                                <Link to={'/account/faqCategories/new'}>
-                                                    <DropdownItem>{'Dodaj kategoriju'.translate(this.props.lang)}</DropdownItem></Link>
-                                                <Link to={'/account/faq'}>
-                                                    <DropdownItem>{'Lista pitanja'.translate(this.props.lang)}</DropdownItem></Link>
-                                                <Link to={'/account/faq/new'}>
-                                                    <DropdownItem>{'Dodaj pitanje'.translate(this.props.lang)}</DropdownItem></Link>
-
-                                            </DropdownMenu>
-                                        </UncontrolledDropdown>
-                                    </li>
-                                    <li>
-                                        <UncontrolledDropdown>
-                                            <DropdownToggle>
-                                                {'Newsletter'.translate(this.props.lang)}
-                                            </DropdownToggle>
-                                            <DropdownMenu>
-                                                <Link to={'/account/newsletter'}>
-                                                    <DropdownItem>{'Lista newslettera'.translate(this.props.lang)}</DropdownItem></Link>
-                                                <Link to={'/account/subscribers'}>
-                                                    <DropdownItem>{'Lista prijavljenih'.translate(this.props.lang)}</DropdownItem></Link>
-                                                <Link to={'/account/newsletter/new'}>
-                                                    <DropdownItem>{'Dodaj newsletter'.translate(this.props.lang)}</DropdownItem></Link>
-                                                <Link to={'/account/subscribers/import'}>
-                                                    <DropdownItem>{'Import subscribers'.translate(this.props.lang)}</DropdownItem></Link>
-                                            </DropdownMenu>
-                                        </UncontrolledDropdown>
-                                    </li>
-
-                                    <li className={this.props[0].location.pathname == '/account/settings' ? "active" : null}>
-                                        <Link to='/account/settings'>{'Podešavanja'.translate(this.props.lang)}</Link>
-                                    </li>
-
-                                    <li>
-                                        <UncontrolledDropdown>
-                                            <DropdownToggle>
-                                                {'Logovi'.translate(this.props.lang)}
-                                            </DropdownToggle>
-                                            <DropdownMenu>
-
-
-                                                <Link to={'/account/today-visits'}>
-                                                    <DropdownItem>{'Najpregledanije stranice danas'.translate(this.props.lang)}</DropdownItem></Link>
-                                                <Link to={'/account/gallery-stats'}>
-                                                    <DropdownItem>{'Statistika galerija'.translate(this.props.lang)}</DropdownItem></Link>
-
-                                                <Link to={'/account/photographer-stats'}>
-                                                    <DropdownItem>{'Statistika fotografa'.translate(this.props.lang)}</DropdownItem></Link>
-                                                <Link to={'/account/banner-stats'}>
-                                                    <DropdownItem>{'Statistika bannera'.translate(this.props.lang)}</DropdownItem></Link>
-
-                                                <Link to={'/account/archive-stats'}>
-                                                    <DropdownItem>{'Arhiva od početka rada'.translate(this.props.lang)}</DropdownItem></Link>
-
-                                                <Link to={'/account/watermarks'}>
-                                                    <DropdownItem>{'Žig na fotografijama'.translate(this.props.lang)}</DropdownItem></Link>
-
-                                                <Link to={'/account/download-logs'}>
-                                                    <DropdownItem>{'Transakcije'.translate(this.props.lang)}</DropdownItem></Link>
-                                                <Link to={'/account/logs'}>
-                                                    <DropdownItem>{'Logovi'.translate(this.props.lang)}</DropdownItem></Link>
-                                            </DropdownMenu>
-                                        </UncontrolledDropdown>
-                                    </li>
-
-                                </ul>
-                                :
-                                null
-                            }
-                    </div>
-                    : null}
+                {/* Stara vodoravna traka `account-nav` je uklonjena.
+                    Navigacija naloga sada stoji u bočnom panelu: administrator
+                    je ima u `components/adminOkvir.js`, fotograf i kupac u
+                    `components/nalogOkvir.js`. Traka je na stranama naloga
+                    stajala uporedo sa panelom i pokazivala isto dvaput. */}
 
             </header>
         );

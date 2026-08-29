@@ -2,6 +2,9 @@ import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 import Isvg from 'react-inlinesvg';
 import Page from '../../containers/page';
+import AdminOkvir from '../../components/adminOkvir';
+import Tabela from '../../components/admin/Tabela';
+import { Potvrda, Obavestenja, napraviPoruke } from '../../components/admin/Stanja';
 
 
 import {
@@ -37,8 +40,13 @@ class CategoriesPage extends Component {
 
         this.state = {
             ...props.initialData,
+            ucitavanje: true,
+            zaBrisanje: null,
+            poruke: [],
             categories: []
         };
+
+        this.poruke = napraviPoruke(this);
     }
 
     componentDidMount() {
@@ -64,100 +72,126 @@ class CategoriesPage extends Component {
             },
         }).then(res => res.json()).then((result) => {
             this.setState({
-                items: result
+                items: result,
+                ucitavanje: false
             })
-        })
+        }).catch(() => this.setState({ ucitavanje: false }))
 
     }
 
 
 
+    osvezi() {
+        fetch(`${API_ENDPOINT}/announcements/all`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            },
+        }).then((res) => res.json()).then((result) => {
+            this.setState({ items: result });
+        });
+    }
+
+    obrisi(zapis) {
+        const l = this.props.lang;
+        this.setState({ zaBrisanje: null });
+
+        fetch(`${API_ENDPOINT}/announcements/delete/` + zapis._id, {
+            method: 'DELETE',
+            headers: {
+                Accept: 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            },
+        }).then((res) => {
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return res.text();
+        }).then(() => {
+            this.poruke.dodaj('uspeh', 'Najava je obrisana.'.translate(l));
+            this.osvezi();
+        }).catch(() => {
+            this.poruke.dodaj('greska', 'Brisanje nije uspjelo. Pokušajte ponovo.'.translate(l));
+        });
+    }
+
     render() {
+        const l = this.props.lang;
+        const b = this.state.zaBrisanje;
 
         return (
-            <div className="account-wrap">
-                <div className="into-wrap">
-                </div>
+            <AdminOkvir
+                lang={l}
+                uData={this.props.uData}
+                settings={this.props.settings}
+                putanja={this.props[0] && this.props[0].location ? this.props[0].location.pathname : ''}
+                signOut={this.props.signOut}
+                naslov={'Najave'.translate(l)}
+                radnja={<Link to="/account/announcements/new" className="z-adminokvir__radnja">{'Dodaj najavu'.translate(l)}</Link>}
+            >
+                <Tabela
+                    lang={l}
+                    ucitavanje={this.state.ucitavanje}
+                    kolone={[
+                        { kljuc: 'naslov', naziv: 'Naslov' },
+                        { kljuc: 'period', naziv: 'Prikazuje se' },
+                    ]}
+                    redovi={this.state.items || []}
+                    kljucReda={(r) => r._id}
+                    ukupnoStavki={(this.state.items || []).length}
+                    prazno={{
+                        znak: '◔',
+                        naslov: 'Nema nijedne najave',
+                        tekst: 'Najava se pokazuje u traci iznad sajta, u periodu koji joj zadate.',
+                        radnja: <Link to="/account/announcements/new" className="z-dugme z-dugme--glavno">{'Dodaj najavu'.translate(l)}</Link>,
+                    }}
+                    celija={(r, k) => {
+                        if (k.kljuc === 'naslov') return Object.translate(r, 'content', l) || '—';
 
-                <section className="edit-account-section">
-                    <Container>
-                        <Row>
-                            <Col lg="12" className="page-top-wrapper">
-                                <h2>{'Najave'.translate(this.props.lang)}</h2>
-                                <ul>
-                                    <li><Link to='/'>{'Početna'.translate(this.props.lang)}</Link></li>
-                                    <li><Link to='/account/profile'>{'Profil'.translate(this.props.lang)}</Link></li>
-                                    <li><Link>{'Najave'.translate(this.props.lang)}</Link></li>
-                                </ul>
+                        /* Datumi se do sada nisu videli u spisku, iako SAMO oni
+                           odlučuju da li je najava vidljiva. */
+                        const d = (t) => t ? new Date(Number(t) * 1000).toLocaleDateString('sr-RS') : '—';
+                        const sada = Math.floor(Date.now() / 1000);
+                        const aktivna = r.from && r.to && Number(r.from) <= sada && Number(r.to) >= sada;
+                        return (
+                            <span>
+                                {d(r.from)} — {d(r.to)}
+                                {aktivna
+                                    ? <span className="z-oznaka z-oznaka--uspeh" style={{ marginLeft: 8 }}>{'aktivna'.translate(l)}</span>
+                                    : <span className="z-tabela__tiho" style={{ marginLeft: 8 }}>{'van perioda'.translate(l)}</span>}
+                            </span>
+                        );
+                    }}
+                    radnje={(r) => (
+                        <>
+                            <Link to={`/account/announcements/${r._id}`} className="z-tabela__radnja" title={'Izmijeni'.translate(l)}>
+                                <svg viewBox="0 0 24 24"><path d="M3 17.2V21h3.8L17.8 10 14 6.2 3 17.2zM20.7 7.1a1 1 0 000-1.4l-2.4-2.4a1 1 0 00-1.4 0l-1.8 1.8L18.9 9l1.8-1.9z" fill="currentColor"/></svg>
+                            </Link>
+                            <button type="button" className="z-tabela__radnja z-tabela__radnja--opasno"
+                                    title={'Obriši'.translate(l)}
+                                    onClick={() => this.setState({ zaBrisanje: r })}>
+                                <svg viewBox="0 0 24 24"><path d="M6 7h12l-1 14H7L6 7zm3-4h6l1 2h4v2H4V5h4l1-2z" fill="currentColor"/></svg>
+                            </button>
+                        </>
+                    )}
+                />
 
-                            </Col>
+                <Potvrda
+                    lang={l}
+                    otvoren={!!b}
+                    opasno
+                    naslov={'Brisanje najave'}
+                    natpisPotvrde={'Obriši'}
+                    tekst={b ? (<>{'Najava'.translate(l)} <strong>{Object.translate(b, 'content', l)}</strong> {'se briše trajno.'.translate(l)}</>) : null}
+                    naPotvrdu={() => this.obrisi(b)}
+                    naOdustani={() => this.setState({ zaBrisanje: null })}
+                />
 
-                            <Col lg="12">
-                                <div className="table">
-                                    <div>
-                                        <table>
-                                            <tr>
-                                                <th>{'Tekst'.translate(this.props.lang)}</th>
-                                                <th>{'Akcije'.translate(this.props.lang)}</th>
-                                            </tr>
-
-                                            {
-                                                this.state.items && this.state.items.length && this.state.items.map((item, idx) => {
-                                                    return (
-                                                        <tr>
-                                                            <td>{Object.translate(item, 'content', this.props.lang)}</td>
-                                                            <td>
-                                                                <Link to={`/account/announcements/${item._id}`}><button><Isvg src={penIcon} /></button></Link>
-                                                                <button onClick={() => {
-                                                                    this.props.handleDelete(() => {
-                                                                        fetch(`${API_ENDPOINT}/announcements/delete/` + item._id, {
-                                                                            method: 'DELETE',
-                                                                            headers: {
-                                                                                Accept: 'application/json',
-                                                                                //'Content-Type': 'multipart/form-data',
-                                                                                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-
-                                                                            },
-                                                                        }).then((res) => res.text()).then((img) => {
-                                                                            fetch(`${API_ENDPOINT}/announcements/all`, {
-                                                                                method: 'GET',
-                                                                                headers: {
-                                                                                    'Content-Type': 'application/json',
-                                                                                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-                                                                                },
-                                                                            }).then(res => res.json()).then((result) => {
-                                                                                this.setState({
-                                                                                    items: result
-                                                                                })
-                                                                            })
-
-                                                                        });
-
-                                                                    })
-                                                                }}><Isvg src={trashIcon} /></button>
-                                                            </td>
-
-                                                        </tr>
-
-                                                    )
-                                                })
-                                            }
-                                        </table>
-                                    </div>
-
-                                </div>                            </Col>
-
-                        </Row>
-
-                    </Container>
-
-                </section>
-
-
-
-
-
-            </div>
+                <Obavestenja
+                    lang={l}
+                    poruke={this.state.poruke}
+                    naZatvaranje={(id) => this.poruke.skloni(id)}
+                />
+            </AdminOkvir>
         );
     }
 }

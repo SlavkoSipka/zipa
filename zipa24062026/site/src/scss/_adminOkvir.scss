@@ -1,0 +1,528 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   ADMINISTRACIJA — zajednički okvir
+   ═══════════════════════════════════════════════════════════════════════════
+   Pravac „tamna traka", ali obrnuto od javnog sajta: ovde je tamno sa STRANE,
+   a ne na vrhu. Radna površina desno ostaje bela, jer se u njoj gledaju
+   fotografije i čitaju tabele.
+
+   Sve boje idu iz tokena. Amber je i ovde SAMO površina glavne radnje, crvena
+   samo aktivno stanje i oznake.
+
+   Tri širine:
+     ≥1024   bočni meni pun, 240px
+     768–1023 meni se skuplja na ikonice, 64px
+     ≤767    meni izlazi iz kadra i kliže sa strane kao fioka
+*/
+
+/* ── Javno zaglavlje i podnožje se sklanjaju dok traje administracija ──────
+ * Klasu na <body> postavlja `components/adminOkvir.js` pri montiranju i skida
+ * je pri napuštanju. Radi se ovako da se `defaultLayout.js` ne dira — tamo
+ * stoje i rute i provere prava.
+ */
+body.u-administraciji {
+    header:where(.zaglavlje-sajta),
+    footer:where(.podnozje-sajta),
+
+    /* Red sa ikonicama („info blokovi") koji `components/footer.js` crta IZVAN
+       oznake <footer>, pa ga pravilo iznad nije hvatalo. U administraciji je
+       ostajao na dnu strane, ispod bočnog menija: strana bi time postala viša
+       od okvira, pa bi meni pri skrolovanju otišao van kadra. */
+    .section-info-blocks,
+    .iskacuca-reklama {
+        display: none;
+    }
+
+    // Zatečeni omotač ima svoje razmake koje okvir ne želi.
+    .wrapper { padding: 0; margin: 0; }
+}
+
+.z-adminokvir {
+    --admin-meni: 240px;
+
+    display: grid;
+    grid-template-columns: var(--admin-meni) minmax(0, 1fr);
+    min-height: 100vh;
+    background: var(--boja-podloga);
+
+    @include tablet        { --admin-meni: 64px; }
+    @include mobile        { --admin-meni: 0px; grid-template-columns: minmax(0, 1fr); }
+
+    /* ── BOČNI MENI ───────────────────────────────────────────────────── */
+
+    &__meni {
+        display: flex;
+        flex-direction: column;
+        background: var(--boja-traka);
+        color: var(--boja-traka-tekst);
+
+        /* Isto preusmeravanje kao u zaglavlju i podnožju: tokeni se u opsegu
+           menija okreću na svetle vrednosti, pa veze, linije i okvir fokusa
+           rade bez ijednog dodatnog pravila. */
+        --boja-tekst:        var(--boja-traka-tekst);
+        --boja-tekst-tiho:   var(--boja-traka-tekst-tiho);
+        --boja-linija:       var(--boja-traka-linija);
+        --boja-veza:         var(--boja-veza-traka);
+        --boja-fokus:        var(--boja-fokus-traka);
+        --boja-povrsina:     var(--boja-traka);
+
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+
+        @include mobile {
+            position: fixed;
+            top: 0; left: 0; bottom: 0;
+            width: 260px;
+            z-index: var(--sloj-prozor);
+            transform: translateX(-100%);
+            @include z-prelaz(transform);
+            transition-duration: var(--prelaz-obicno);
+        }
+    }
+
+    &--fioka &__meni {
+        @include mobile { transform: translateX(0); }
+    }
+
+    &__zavesa {
+        display: none;
+
+        @include mobile {
+            .z-adminokvir--fioka & {
+                display: block;
+                position: fixed;
+                inset: 0;
+                z-index: var(--sloj-zavesa);
+                background: var(--boja-zavesa);
+            }
+        }
+    }
+
+    /* ── logo u vrhu ──────────────────────────────────────────────────── */
+
+    &__logo {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        padding: var(--razmak-5) var(--razmak-4) var(--razmak-4);
+        border-bottom: 1px solid var(--boja-traka-linija);
+
+        @include tablet { align-items: center; padding: var(--razmak-4) var(--razmak-2); }
+    }
+
+    &__logo-natpis {
+        font-family: var(--pismo-naslov);
+        font-size: var(--slovo-md);
+        font-weight: var(--tezina-jaka);
+        letter-spacing: .02em;
+        color: var(--boja-traka-tekst);
+    }
+
+    &__logo-uz {
+        font-size: var(--slovo-oznaka);
+        line-height: var(--red-oznaka);
+        letter-spacing: .14em;
+        text-transform: uppercase;
+        color: var(--boja-traka-tekst-tiho);
+
+        @include tablet { display: none; }
+    }
+
+    /* ── grupe i stavke ───────────────────────────────────────────────── */
+
+    &__grupe {
+        flex: 1 1 auto;
+        padding: var(--razmak-3) 0 var(--razmak-5);
+    }
+
+    &__grupa + &__grupa { margin-top: var(--razmak-2); }
+
+    &__naslov-grupe {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        padding: var(--razmak-2) var(--razmak-4);
+
+        border: 0;
+        background: transparent;
+        cursor: pointer;
+
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-oznaka);
+        line-height: var(--red-oznaka);
+        font-weight: var(--tezina-jaka);
+        letter-spacing: .12em;
+        color: var(--boja-traka-tekst-tiho);
+
+        @include z-fokus;
+
+        &:hover { color: var(--boja-traka-tekst); }
+
+        // Na tabletu meni je uzan; naslov grupe se svodi na crticu.
+        @include tablet {
+            justify-content: center;
+            padding: var(--razmak-2) 0;
+            span:first-child { display: none; }
+        }
+
+        /* Grupa koja se ne sklapa (jedna stavka, bez podstavki) — isti izgled
+           naslova, ali bez strelice, bez pokazivača i bez odziva na hover. */
+        &--tih {
+            cursor: default;
+
+            &:hover { color: var(--boja-traka-tekst-tiho); }
+        }
+    }
+
+    &__strelica {
+        width: 0; height: 0;
+        border-left: 4px solid transparent;
+        border-right: 4px solid transparent;
+        border-top: 4px solid currentColor;
+        @include z-prelaz(transform);
+
+        &--sklopljena { transform: rotate(-90deg); }
+
+        @include tablet { display: none; }
+    }
+
+    &__stavke,
+    &__podstavke {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    &__stavka {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: var(--razmak-3);
+        padding: var(--razmak-2) var(--razmak-4);
+
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        font-weight: var(--tezina-srednja);
+        color: var(--boja-traka-tekst);
+        text-decoration: none;
+
+        @include z-prelaz(background-color, color);
+        @include z-fokus;
+
+        &:hover {
+            background: var(--boja-traka-povrsina);
+            color: var(--boja-traka-tekst);
+            text-decoration: none;
+        }
+
+        /* Aktivna stavka — crvena traka uz levu ivicu. Crvena je na sajtu
+           boja aktivnog stanja; amber je rezervisan za radnju. */
+        &--ovde {
+            background: var(--boja-traka-povrsina);
+            color: var(--boja-traka-tekst);
+
+            &::before {
+                content: '';
+                position: absolute;
+                left: 0; top: 0; bottom: 0;
+                width: 3px;
+                background: var(--boja-oznaka-traka);
+            }
+        }
+
+        @include tablet {
+            justify-content: center;
+            padding: var(--razmak-3) 0;
+            gap: 0;
+        }
+    }
+
+    &__ikona {
+        flex: 0 0 auto;
+        width: 18px;
+        height: 18px;
+        opacity: .9;
+    }
+
+    &__natpis {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+
+        @include tablet { display: none; }
+    }
+
+    /* Podstavke — statistika ispod Nadzorne ploče. Bez ikonice, uvučene. */
+    &__podstavke {
+        padding: var(--razmak-1) 0 var(--razmak-2);
+
+        @include tablet { display: none; }
+    }
+
+    &__podstavka {
+        display: block;
+        padding: var(--razmak-1) var(--razmak-4) var(--razmak-1) calc(var(--razmak-4) + 18px + var(--razmak-3));
+
+        font-size: var(--slovo-xs);
+        line-height: var(--red-sm);
+        color: var(--boja-traka-tekst-tiho);
+        text-decoration: none;
+
+        @include z-prelaz(color);
+        @include z-fokus;
+
+        &:hover { color: var(--boja-traka-tekst); text-decoration: none; }
+
+        &--ovde {
+            color: var(--boja-traka-tekst);
+            font-weight: var(--tezina-srednja);
+        }
+    }
+
+    /* ── dno menija ───────────────────────────────────────────────────── */
+
+    &__dno {
+        flex: 0 0 auto;
+        padding: var(--razmak-4);
+        border-top: 1px solid var(--boja-traka-linija);
+
+        @include tablet { padding: var(--razmak-3) var(--razmak-2); }
+    }
+
+    &__ko {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: var(--razmak-3);
+        min-width: 0;
+
+        @include tablet { display: none; }
+    }
+
+    &__ko-ime {
+        font-size: var(--slovo-sm);
+        font-weight: var(--tezina-srednja);
+        color: var(--boja-traka-tekst);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    &__ko-uloga {
+        font-size: var(--slovo-oznaka);
+        line-height: var(--red-oznaka);
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        color: var(--boja-traka-tekst-tiho);
+    }
+
+    &__odjava {
+        width: 100%;
+        padding: var(--razmak-2) var(--razmak-3);
+
+        border: 1px solid var(--boja-traka-linija);
+        border-radius: var(--radijus-panel);
+        background: transparent;
+
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-sm);
+        font-weight: var(--tezina-srednja);
+        color: var(--boja-traka-tekst);
+        cursor: pointer;
+
+        @include z-prelaz(border-color, background-color);
+        @include z-fokus;
+
+        &:hover { border-color: var(--boja-traka-tekst-tiho); }
+
+        @include tablet { font-size: var(--slovo-oznaka); padding: var(--razmak-2) 0; }
+    }
+
+    /* ── DESNA STRANA ─────────────────────────────────────────────────── */
+
+    &__desno {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Gornja traka — tanka i bela. Namerno nosi samo naslov i „Vidi sajt". */
+    &__traka {
+        position: sticky;
+        top: 0;
+        z-index: var(--sloj-lepljivo);
+
+        display: flex;
+        align-items: center;
+        gap: var(--razmak-4);
+
+        min-height: 64px;
+        padding: var(--razmak-3) var(--razmak-6);
+
+        background: var(--boja-podloga);
+        border-bottom: 1px solid var(--boja-linija);
+
+        @include mobile { padding: var(--razmak-3) var(--razmak-4); gap: var(--razmak-3); }
+    }
+
+    &__hamburger {
+        display: none;
+        flex: 0 0 auto;
+        width: 40px; height: 40px;
+        padding: 0;
+        border: 1px solid var(--boja-linija-kontrola);
+        border-radius: var(--radijus-panel);
+        background: transparent;
+        cursor: pointer;
+
+        @include z-fokus;
+
+        span {
+            display: block;
+            width: 18px; height: 2px;
+            margin: 3px auto;
+            background: var(--boja-tekst);
+        }
+
+        @include mobile { display: block; }
+    }
+
+    &__gde {
+        min-width: 0;
+        flex: 1 1 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+    }
+
+    &__putanja {
+        font-size: var(--slovo-oznaka);
+        line-height: var(--red-oznaka);
+        letter-spacing: .1em;
+        text-transform: uppercase;
+        color: var(--boja-tekst-tiho);
+    }
+
+    &__naslov {
+        margin: 0;
+        font-family: var(--pismo-naslov);
+        font-size: var(--slovo-lg-plus);
+        line-height: 1.2;
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-tekst);
+
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+
+        @include mobile { font-size: var(--slovo-lg); }
+    }
+
+    &__traka-desno {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        gap: var(--razmak-3);
+    }
+
+    /* Glavna radnja ekrana — jedino mesto gde amber sme da bude površina. */
+    &__radnja {
+        display: inline-flex;
+        align-items: center;
+        min-height: var(--visina-radnja);
+        padding: 0 var(--razmak-4);
+
+        border: 0;
+        border-radius: var(--radijus-radnja);
+        background: var(--boja-akcenat);
+
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-sm);
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-akcenat-tekst);
+        text-decoration: none;
+        white-space: nowrap;
+        cursor: pointer;
+
+        @include z-prelaz(background-color);
+        @include z-fokus;
+
+        &:hover { background: var(--boja-akcenat-jako); text-decoration: none; color: var(--boja-akcenat-tekst); }
+    }
+
+    &__vidi-sajt {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--razmak-2);
+
+        font-size: var(--slovo-sm);
+        font-weight: var(--tezina-srednja);
+        color: var(--boja-tekst);
+        white-space: nowrap;
+
+        @include z-veza-meni;
+        @include z-fokus;
+
+        @include mobile { .z-adminokvir__van { display: none; } }
+    }
+
+    // Znak „otvara se u novoj kartici".
+    &__van {
+        flex: 0 0 auto;
+        width: 13px;
+        height: 13px;
+        opacity: .55;
+    }
+
+    /* ── radna površina ───────────────────────────────────────────────── */
+
+    &__sadrzaj {
+        flex: 1 1 auto;
+        min-width: 0;
+        padding: var(--razmak-6);
+
+        @include small-desktop { padding: var(--razmak-5); }
+        @include mobile-tablet { padding: var(--razmak-4); }
+
+        /*
+         * Zatečeni ekrani nose svoje omotače iz starog rasporeda. Ovde im se
+         * skida spoljni razmak da se ne udvaja sa razmakom okvira; sve
+         * unutrašnje ostaje netaknuto.
+         */
+        > .account-wrap,
+        .edit-account-section {
+            padding: 0;
+            margin: 0;
+        }
+
+        .container,
+        .container-fluid {
+            max-width: 100%;
+            padding-left: 0;
+            padding-right: 0;
+        }
+
+        // Naslov i mrvice starog rasporeda — gornja traka ih je preuzela.
+        .page-top-wrapper {
+            display: none;
+        }
+    }
+}
+
+/* Tiha radnja u gornjoj traci — „Nazad na spisak" na obrascima. Nije glavna
+   radnja, pa ne sme da nosi amber. */
+.z-adminokvir__radnja--tiha {
+    background: transparent;
+    border: 1px solid var(--boja-linija-kontrola);
+    color: var(--boja-tekst);
+    font-weight: var(--tezina-srednja);
+
+    &:hover {
+        background: var(--boja-podloga-tiha);
+        color: var(--boja-tekst);
+        border-color: var(--boja-tekst-tiho);
+    }
+}

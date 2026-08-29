@@ -2,6 +2,9 @@ import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 import Isvg from 'react-inlinesvg';
 import Page from '../../containers/page';
+import AdminOkvir from '../../components/adminOkvir';
+import Tabela from '../../components/admin/Tabela';
+import { Potvrda, Obavestenja, napraviPoruke } from '../../components/admin/Stanja';
 
 
 import {
@@ -37,8 +40,13 @@ class CategoriesPage extends Component {
 
         this.state = {
             ...props.initialData,
+            ucitavanje: true,
+            zaBrisanje: null,
+            poruke: [],
             categories: []
         };
+
+        this.poruke = napraviPoruke(this);
     }
 
     componentDidMount() {
@@ -64,104 +72,112 @@ class CategoriesPage extends Component {
             },
         }).then(res => res.json()).then((result) => {
             this.setState({
-                items: result
+                items: result,
+                ucitavanje: false
             })
-        })
+        }).catch(() => this.setState({ ucitavanje: false }))
 
     }
 
 
 
+    osvezi() {
+        fetch(`${API_ENDPOINT}/faqCategories/all`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            },
+        }).then((res) => res.json()).then((result) => {
+            this.setState({ items: result });
+        });
+    }
+
+    obrisi(zapis) {
+        const l = this.props.lang;
+        this.setState({ zaBrisanje: null });
+
+        fetch(`${API_ENDPOINT}/faqCategories/delete/` + zapis._id, {
+            method: 'DELETE',
+            headers: {
+                Accept: 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            },
+        }).then((res) => {
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return res.text();
+        }).then(() => {
+            this.poruke.dodaj('uspeh', 'Kategorija je obrisana.'.translate(l));
+            this.osvezi();
+        }).catch(() => {
+            this.poruke.dodaj('greska', 'Brisanje nije uspjelo. Pokušajte ponovo.'.translate(l));
+        });
+    }
+
     render() {
+        const l = this.props.lang;
+        const b = this.state.zaBrisanje;
 
         return (
-            <div className="account-wrap">
-                <div className="into-wrap">
-                </div>
+            <AdminOkvir
+                lang={l}
+                uData={this.props.uData}
+                settings={this.props.settings}
+                putanja={this.props[0] && this.props[0].location ? this.props[0].location.pathname : ''}
+                signOut={this.props.signOut}
+                naslov={'FAQ kategorije'.translate(l)}
+                radnja={<Link to="/account/faqCategories/new" className="z-adminokvir__radnja">{'Dodaj kategoriju'.translate(l)}</Link>}
+            >
+                <Tabela
+                    lang={l}
+                    ucitavanje={this.state.ucitavanje}
+                    kolone={[
+                        { kljuc: 'naziv',    naziv: 'Naziv' },
+                        { kljuc: 'pozicija', naziv: 'Pozicija', broj: true },
+                    ]}
+                    redovi={this.state.items || []}
+                    kljucReda={(r) => r._id}
+                    ukupnoStavki={(this.state.items || []).length}
+                    prazno={{
+                        znak: '▣',
+                        naslov: 'Nema nijedne kategorije',
+                        tekst: 'Kategorije razvrstavaju pitanja na strani Pomoć.',
+                        radnja: <Link to="/account/faqCategories/new" className="z-dugme z-dugme--glavno">{'Dodaj kategoriju'.translate(l)}</Link>,
+                    }}
+                    celija={(r, k) => k.kljuc === 'pozicija'
+                        ? (r.position != null ? r.position : <span className="z-tabela__tiho">{'nije zadata'.translate(l)}</span>)
+                        : (Object.translate(r, 'name', l) || '—')}
+                    radnje={(r) => (
+                        <>
+                            <Link to={`/account/faqCategories/${r._id}`} className="z-tabela__radnja" title={'Izmijeni'.translate(l)}>
+                                <svg viewBox="0 0 24 24"><path d="M3 17.2V21h3.8L17.8 10 14 6.2 3 17.2zM20.7 7.1a1 1 0 000-1.4l-2.4-2.4a1 1 0 00-1.4 0l-1.8 1.8L18.9 9l1.8-1.9z" fill="currentColor"/></svg>
+                            </Link>
+                            <button type="button" className="z-tabela__radnja z-tabela__radnja--opasno"
+                                    title={'Obriši'.translate(l)}
+                                    onClick={() => this.setState({ zaBrisanje: r })}>
+                                <svg viewBox="0 0 24 24"><path d="M6 7h12l-1 14H7L6 7zm3-4h6l1 2h4v2H4V5h4l1-2z" fill="currentColor"/></svg>
+                            </button>
+                        </>
+                    )}
+                />
 
-                <section className="edit-account-section">
-                    <Container>
-                        <Row>
-                            <Col lg="12" className="page-top-wrapper">
-                                <h2>{'FAQ Kategorija'.translate(this.props.lang)}</h2>
-                                <ul>
-                                    <li><Link to='/'>{'Početna'.translate(this.props.lang)}</Link></li>
-                                    <li><Link to='/account/profile'>{'Profil'.translate(this.props.lang)}</Link></li>
-                                    <li><Link>{'FAQ Kategorija'.translate(this.props.lang)}</Link></li>
-                                </ul>
+                <Potvrda
+                    lang={l}
+                    otvoren={!!b}
+                    opasno
+                    naslov={'Brisanje kategorije'}
+                    natpisPotvrde={'Obriši'}
+                    tekst={b ? (<>{'Kategorija'.translate(l)} <strong>{Object.translate(b, 'name', l)}</strong> {'se briše trajno. Pitanja koja su u njoj ostaju bez kategorije.'.translate(l)}</>) : null}
+                    naPotvrdu={() => this.obrisi(b)}
+                    naOdustani={() => this.setState({ zaBrisanje: null })}
+                />
 
-                            </Col>
-
-                            <Col lg="12">
-                                <div className="table">
-                                    <div>
-                                        <table>
-                                            <tr>
-                                                <th>{'Naziv'.translate(this.props.lang)}</th>
-                                                <th>{'Pozicija'.translate(this.props.lang)}</th>
-
-                                                <th>{'Akcije'.translate(this.props.lang)}</th>
-                                            </tr>
-
-                                            {
-                                                this.state.items && this.state.items.length && this.state.items.map((item, idx) => {
-                                                    return (
-                                                        <tr>
-                                                            <td>{Object.translate(item, 'name', this.props.lang)}</td>
-                                                            <td>{item.position}</td>
-
-                                                            <td>
-                                                                <Link to={`/account/faqCategories/${item._id}`}><button><Isvg src={penIcon} /></button></Link>
-                                                                <button onClick={() => {
-                                                                    this.props.handleDelete(() => {
-                                                                        fetch(`${API_ENDPOINT}/faqCategories/delete/` + item._id, {
-                                                                            method: 'DELETE',
-                                                                            headers: {
-                                                                                Accept: 'application/json',
-                                                                                //'Content-Type': 'multipart/form-data',
-                                                                                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-
-                                                                            },
-                                                                        }).then((res) => res.text()).then((img) => {
-                                                                            fetch(`${API_ENDPOINT}/faqCategories/all`, {
-                                                                                method: 'GET',
-                                                                                headers: {
-                                                                                    'Content-Type': 'application/json',
-                                                                                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-                                                                                },
-                                                                            }).then(res => res.json()).then((result) => {
-                                                                                this.setState({
-                                                                                    items: result
-                                                                                })
-                                                                            })
-
-                                                                        });
-
-                                                                    })
-                                                                }}><Isvg src={trashIcon} /></button>
-                                                            </td>
-
-                                                        </tr>
-
-                                                    )
-                                                })
-                                            }
-                                        </table>
-                                    </div>
-
-                                </div>                            </Col>
-
-                        </Row>
-
-                    </Container>
-
-                </section>
-
-
-
-
-
-            </div>
+                <Obavestenja
+                    lang={l}
+                    poruke={this.state.poruke}
+                    naZatvaranje={(id) => this.poruke.skloni(id)}
+                />
+            </AdminOkvir>
         );
     }
 }

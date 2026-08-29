@@ -83,6 +83,15 @@ app.use(compression());
 app.use(bodyParser.json({ limit: '20mb' }));
 app.use('/uploads', express.static('uploads'))
 
+/*
+ * Slike koje idu U POŠTI (logo u zaglavlju i podnožju poruke).
+ *
+ * Ranije su stajale na `zipa-mail-assets.novamedia.agency`, koji više ne
+ * odgovara, pa su sve poruke stizale bez logotipa. Sada ih servira sam API,
+ * iz `mail-assets/` — jedno mesto manje koje može da otkaže.
+ */
+app.use('/mail-assets', express.static('mail-assets'))
+
 // Pregledi fotografija (sa watermarkom) se streamuju iz Cloudflare R2.
 // Bucket je privatan — originali se NIKAD ne serviraju ovuda, samo kroz
 // /gallery/download rute nakon provere prava.
@@ -114,7 +123,23 @@ function servePreview(size) {
 app.use('/photos/350x', servePreview('350x'));
 app.use('/photos/700x', servePreview('700x'));
 
-app.use(fileUpload());
+/*
+ * Granica veličine postavljenog fajla.
+ *
+ * `fileUpload()` je bez `limits` NEOGRANIČEN — jedan zahtev je mogao da
+ * pojede memoriju procesa. Ovde stoji VEĆA od dve granice (original u
+ * galeriji, 40 MB), jer je ovo zajednički filter za sve rute. Stroža granica
+ * za slike sadržaja (5 MB) proverava se u `admin/slike.js` i vraća jasnu
+ * poruku umesto prekinute veze.
+ *
+ * `abortOnLimit` prekida vezu umesto da tiho preseče fajl — presečena
+ * fotografija bi prošla proveru zaglavlja a bila neupotrebljiva.
+ */
+app.use(fileUpload({
+    limits: { fileSize: require('./admin/slike').NAJVECA_ORIGINAL },
+    abortOnLimit: true,
+    responseOnLimit: 'Fajl je prevelik.',
+}));
 //app.use(logger);
 
 
@@ -123,11 +148,32 @@ const server = http.createServer(app);
 server.listen(port, () => console.log(`Listening on port ${port}`));
 
 
-app.post('/upload', permissionMiddleware(), function (req, res) {
-    console.log(req.files);
+/*
+ * Postavljanje slika za sadržaj sajta — SAMO administrator.
+ *
+ * Do 2026-08-28 je ovde stajalo `permissionMiddleware()` BEZ imena prava, a
+ * `users/auth.js` na `if (!permission) return next()` propušta svakog
+ * prijavljenog. Izmereno: običan kupac je uspešno postavio `.txt` i dobio
+ * javnu adresu. Sada važi isto pravilo kao za ostale administratorske rute.
+ */
+app.post('/upload', permissionMiddleware('*'), function (req, res) {
+    if (!req.files || !req.files.file) {
+        res.status(400).send('Nije poslat nijedan fajl.');
+        return;
+    }
 
-    if (!req.files || Object.keys(req.files).length === 0) {
-        res.status(400).send('No files were uploaded.');
+    adminModule.upload(req.files.file, res)
+});
+
+/*
+ * Slika profila — jedina slika koju postavlja OBIČAN korisnik, na
+ * `/account/edit`. Zato ima svoju rutu: prava su šira (svaki prijavljen), ali
+ * provera sadržaja je POTPUNO ISTA kao gore. Bez ove rute bi zaključavanje
+ * `/upload` na administratora oborilo promenu slike profila svim korisnicima.
+ */
+app.post('/upload/avatar', permissionMiddleware(), function (req, res) {
+    if (!req.files || !req.files.file) {
+        res.status(400).send('Nije poslat nijedan fajl.');
         return;
     }
 
@@ -276,6 +322,21 @@ app.post('/products/get/:storeAlias', permissionMiddleware('store-products'), as
 
 
 app.get('/settings', async (req, res) => {
+    /*
+     * Podesavanja se NE smeju kesirati u pregledacu.
+     *
+     * Odgovor je do sada isao bez ijednog zaglavlja o kesu, pa je pregledac
+     * primenjivao svoje pravilo i drzao staru vrednost. Posledica je bila
+     * ozbiljna: administrator promeni izgled naslovne, server pocne da crta
+     * novi (on dovlaci sam, sa svojim kesom od 60s), a posetilac sa starom
+     * vrednoscu u kesu crta STARI — dva razlicita stabla nad istim HTML-om,
+     * pa hidracija pokvari raspored. Isto vazi za logo, telefon i sve ostalo
+     * iz podesavanja.
+     *
+     * `no-cache` ne znaci „ne cuvaj" nego „pitaj svaki put": uz `ETag` koji
+     * Express vec salje, nepromenjena podesavanja se vracaju kao 304 bez tela.
+     */
+    res.set('Cache-Control', 'no-cache');
     res.send(await adminModule.fetchSettings());
 });
 
@@ -448,6 +509,11 @@ app.post('/banners/update/:id', permissionMiddleware('*'), async (req, res) => {
 
 app.get('/banners/get/:id', permissionMiddleware('*'), async (req, res) => {
     res.send(await adminModule.fetchBanner(req.params.id));
+});
+
+// Brisanje banera — istim pravilom i istim oblikom kao slajdovi i najave.
+app.delete('/banners/delete/:id', permissionMiddleware('*'), async (req, res) => {
+    res.send(await adminModule.deleteBanner(req.params.id));
 });
 
 app.post('/newsletter/import', permissionMiddleware('*'), async (req, res) => {
@@ -653,6 +719,11 @@ app.post('/users/all', permissionMiddleware('*'), async (req, res) => {
     res.send(result);
 })
 
+// Koliko galerija odlazi sa korisnikom — čita ga potvrda pre brisanja.
+app.get('/users/gallery-count/:id', permissionMiddleware('*'), async (req, res) => {
+    res.send(await adminModule.brojGalerija(req.params.id));
+});
+
 app.delete('/users/delete/:id', permissionMiddleware('*'), async (req, res) => {
     res.send(await adminModule.deleteUser(req.params.id));
 });
@@ -769,6 +840,14 @@ app.delete('/watermarks/delete/:id', permissionMiddleware('*'), async (req, res)
     res.status(result.status).send(result.response);
 });
 
+
+/*
+ * Nadzorna ploča. Laka ruta — namerno odvojena od `/admin/statistics`, koji
+ * traje ~2 s i vraća paket od kog ploča koristi mali deo.
+ */
+app.get('/admin/dashboard', permissionMiddleware('*'), async (req, res) => {
+    res.send(await adminModule.dashboard(req.query.dana));
+});
 
 // Pregled arhive od početka rada — po godinama, i najplodniji fotografi.
 app.get('/admin/archive-stats', permissionMiddleware('*'), async (req, res) => {

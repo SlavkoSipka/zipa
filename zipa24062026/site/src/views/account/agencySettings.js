@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 import Isvg from 'react-inlinesvg';
 import Page from '../../containers/page';
+import AdminOkvir from '../../components/adminOkvir';
 
 
 import {
@@ -114,9 +115,16 @@ class AgencySettings extends Component {
         console.log(this.getSearchParams())
 
         return (
-            <div className="account-wrap">
-                <div className="into-wrap">
-                </div>
+            <AdminOkvir
+                lang={this.props.lang}
+                uData={this.props.uData}
+                settings={this.props.settings}
+                putanja={this.props[0] && this.props[0].location ? this.props[0].location.pathname : ''}
+                signOut={this.props.signOut}
+                naslov={'Podešavanja agencije'.translate(this.props.lang)}
+                radnja={<Link to="/account/users" className="z-adminokvir__radnja z-adminokvir__radnja--tiha">{'Nazad na spisak'.translate(this.props.lang)}</Link>}
+            >
+                <div className="account-wrap">
 
                 <section className="edit-account-section">
                     <Container>
@@ -158,7 +166,8 @@ class AgencySettings extends Component {
 
 
 
-            </div>
+                </div>
+            </AdminOkvir>
         );
     }
 }

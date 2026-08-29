@@ -2,6 +2,8 @@ import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 import Isvg from 'react-inlinesvg';
 import Page from '../../containers/page';
+import AdminOkvir from '../../components/adminOkvir';
+import NalogOkvir from '../../components/nalogOkvir';
 
 
 import {
@@ -22,6 +24,19 @@ import ReactPaginate from 'react-paginate';
 import moment from 'moment';
 import ToggleSwitch from '../../components/forms/fields/toggleCheckbox';
 import { API_ENDPOINT } from '../../constants';
+/*
+ * Pravilan oblik uz broj: 1 galerija, 2–4 galerije, 5+ galerija.
+ * Izuzetak 11–14, koji uvek idu sa „galerija".
+ */
+function oblikGalerija(n) {
+    const zadnja = n % 10;
+    const zadnjeDve = n % 100;
+    if (zadnjeDve >= 11 && zadnjeDve <= 14) return 'galerija';
+    if (zadnja === 1) return 'galerija';
+    if (zadnja >= 2 && zadnja <= 4) return 'galerije';
+    return 'galerija';
+}
+
 class UsersPage extends Component {
     constructor(props) {
         super(props);
@@ -112,10 +127,24 @@ class UsersPage extends Component {
 
 
     render() {
+        /*
+         * Isti ekran koriste administrator i fotograf. Administrator ga vidi
+         * u administratorskom okviru, fotograf u okviru svog naloga — uloga
+         * se samo čita, prava i pozivi ka API-ju su nepromenjeni.
+         */
+        const Okvir = this.props.uData && this.props.uData.userRole === 'admin'
+            ? AdminOkvir : NalogOkvir;
+
         return (
-            <div className="account-wrap">
-                <div className="into-wrap">
-                </div>
+            <Okvir
+                lang={this.props.lang}
+                uData={this.props.uData}
+                settings={this.props.settings}
+                putanja={this.props[0] && this.props[0].location ? this.props[0].location.pathname : ''}
+                signOut={this.props.signOut}
+                naslov={'Korisnici'.translate(this.props.lang)}
+            >
+                <div className="account-wrap">
                 <section className="edit-account-section">
                     <Container>
                         <Row>
@@ -254,6 +283,27 @@ class UsersPage extends Component {
                                                                 {
                                                                     this.props.uData.userRole != 'photographer' || this.props.uData.permissions[0] != '*' ?
                                                                         <button onClick={() => {
+                                                                            /*
+                                                                             * Brisanje korisnika briše I SVE NJEGOVE GALERIJE.
+                                                                             * Potvrda je do 2026-08-28 pisala samo „Potvrdite
+                                                                             * brisanje", pa se to nigde nije videlo. Sada se broj
+                                                                             * galerija dovlači pre pitanja i ulazi u njega.
+                                                                             */
+                                                                            fetch(`${API_ENDPOINT}/users/gallery-count/` + item._id, {
+                                                                                method: 'GET',
+                                                                                headers: {
+                                                                                    'Content-Type': 'application/json',
+                                                                                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                                                                                },
+                                                                            }).then(res => res.json()).catch(() => ({ broj: null })).then((r) => {
+                                                                                const n = r && typeof r.broj === 'number' ? r.broj : null;
+                                                                                const ime = item.name || item.email || '';
+                                                                                const pitanje = n === null
+                                                                                    ? `Obrisati korisnika ${ime}? Brišu se i sve njegove galerije.`
+                                                                                    : (n === 0
+                                                                                        ? `Obrisati korisnika ${ime}? Nema nijednu galeriju.`
+                                                                                        : `Obrisati korisnika ${ime}? Sa njim se TRAJNO briše i ${n} ${oblikGalerija(n)}.`);
+
                                                                             this.props.handleDelete(() => {
                                                                                 fetch(`${API_ENDPOINT}/users/delete/` + item._id, {
                                                                                     method: 'DELETE',
@@ -267,7 +317,8 @@ class UsersPage extends Component {
                                                                                     this.init();
                                                                                 });
 
-                                                                            })
+                                                                            }, pitanje);
+                                                                            });
                                                                         }}> <Isvg src={trashIcon} /></button>
                                                                         :
                                                                         null
@@ -313,7 +364,8 @@ class UsersPage extends Component {
 
 
 
-            </div>
+                </div>
+            </Okvir>
         );
     }
 }

@@ -2,6 +2,9 @@ import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 import Isvg from 'react-inlinesvg';
 import Page from '../../containers/page';
+import AdminOkvir from '../../components/adminOkvir';
+import Tabela from '../../components/admin/Tabela';
+import { Obavestenja, napraviPoruke } from '../../components/admin/Stanja';
 import { API_ENDPOINT } from '../../constants';
 
 import {
@@ -38,8 +41,12 @@ class CategoriesPage extends Component {
 
         this.state = {
             ...props.initialData,
+            ucitavanje: true,
+            poruke: [],
             categories: []
         };
+
+        this.poruke = napraviPoruke(this);
     }
 
     componentDidMount() {
@@ -65,9 +72,10 @@ class CategoriesPage extends Component {
             },
         }).then(res => res.json()).then((result) => {
             this.setState({
-                items: result
+                items: result,
+                ucitavanje: false
             })
-        })
+        }).catch(() => this.setState({ ucitavanje: false }))
 
     }
 
@@ -77,164 +85,126 @@ class CategoriesPage extends Component {
     }
 
 
+    /*
+     * Prekidači i pozicija u redu — LOGIKA JE NEPROMENJENA. I dalje se šalje
+     * ceo zapis na `/categories/update/:id`, kao i ranije; jedino se sada
+     * javlja ishod obaveštenjem umesto da radnja prođe nemo.
+     */
+    sacuvaj(item, poruka) {
+        const l = this.props.lang;
+        fetch(`${API_ENDPOINT}/categories/update/` + item._id, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            },
+            body: JSON.stringify(item)
+        }).then((res) => {
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return res.json();
+        }).then(() => {
+            if (poruka) this.poruke.dodaj('uspeh', poruka.translate(l));
+            this.osvezi();
+        }).catch(() => {
+            this.poruke.dodaj('greska', 'Izmjena nije sačuvana. Pokušajte ponovo.'.translate(l));
+        });
+    }
+
+    osvezi() {
+        fetch(`${API_ENDPOINT}/all-cateogires`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            },
+        }).then((res) => res.json()).then((result) => {
+            this.setState({ items: result });
+        });
+    }
+
     render() {
+        const l = this.props.lang;
 
         return (
-            <div className="account-wrap">
-                <div className="into-wrap">
-                </div>
+            <AdminOkvir
+                lang={l}
+                uData={this.props.uData}
+                settings={this.props.settings}
+                putanja={this.props[0] && this.props[0].location ? this.props[0].location.pathname : ''}
+                signOut={this.props.signOut}
+                naslov={'Kategorije'.translate(l)}
+                radnja={<Link to="/account/categories/new" className="z-adminokvir__radnja">{'Dodaj kategoriju'.translate(l)}</Link>}
+            >
+                <Tabela
+                    lang={l}
+                    ucitavanje={this.state.ucitavanje}
+                    kolone={[
+                        { kljuc: 'naziv',     naziv: 'Naziv' },
+                        { kljuc: 'broj',      naziv: 'Fotografija', broj: true },
+                        { kljuc: 'vidljiva',  naziv: 'Vidljiva' },
+                        { kljuc: 'pocetna',   naziv: 'Na početnoj' },
+                        { kljuc: 'pozicija',  naziv: 'Pozicija', broj: true },
+                    ]}
+                    redovi={this.state.items || []}
+                    kljucReda={(r) => r._id}
+                    ukupnoStavki={(this.state.items || []).length}
+                    prazno={{
+                        znak: '▦',
+                        naslov: 'Nema nijedne kategorije',
+                        tekst: 'Kategorije razvrstavaju galerije u arhivi i u meniju sajta.',
+                        radnja: <Link to="/account/categories/new" className="z-dugme z-dugme--glavno">{'Dodaj kategoriju'.translate(l)}</Link>,
+                    }}
+                    celija={(r, k, idx) => {
+                        if (k.kljuc === 'naziv') return Object.translate(r, 'name', l) || '—';
+                        if (k.kljuc === 'broj')  return (r.photosCount || 0).toLocaleString('sr-RS');
 
-                <section className="edit-account-section">
-                    <Container>
-                        <Row>
-                            <Col lg="12" className="page-top-wrapper">
-                                <h2>{'Kategorije'.translate(this.props.lang)}</h2>
-                                <ul>
-                                    <li><Link to='/'>{'Početna'.translate(this.props.lang)}</Link></li>
-                                    <li><Link to='/account/profile'>{'Profil'.translate(this.props.lang)}</Link></li>
-                                    <li><Link>{'Kategorije'.translate(this.props.lang)}</Link></li>
-                                </ul>
+                        if (k.kljuc === 'vidljiva' || k.kljuc === 'pocetna') {
+                            const polje = k.kljuc === 'vidljiva' ? 'isVisible' : 'isVisibleOnHome';
+                            return (
+                                <ToggleSwitch
+                                    value={r[polje]}
+                                    onChange={() => {
+                                        let items = this.state.items;
+                                        items[idx][polje] = !items[idx][polje];
+                                        this.setState({ items }, () => this.sacuvaj(items[idx], 'Izmjena je sačuvana.'));
+                                    }}
+                                />
+                            );
+                        }
 
-                            </Col>
+                        return (
+                            <div className="sort-field">
+                                <input
+                                    type="number"
+                                    value={r.position != null ? r.position : ''}
+                                    aria-label={'Pozicija'.translate(l)}
+                                    onChange={(e) => {
+                                        let items = this.state.items;
+                                        items[idx].position = e.target.value === '' ? null : parseInt(e.target.value, 10);
+                                        this.setState({ items });
+                                    }}
+                                />
+                                <button type="button"
+                                        title={'Sačuvaj poziciju'.translate(l)}
+                                        onClick={() => this.sacuvaj(r, 'Pozicija je sačuvana.')}>
+                                    <Isvg src={save} />
+                                </button>
+                            </div>
+                        );
+                    }}
+                    radnje={(r) => (
+                        <Link to={`/account/categories/${r._id}`} className="z-tabela__radnja" title={'Izmijeni'.translate(l)}>
+                            <svg viewBox="0 0 24 24"><path d="M3 17.2V21h3.8L17.8 10 14 6.2 3 17.2zM20.7 7.1a1 1 0 000-1.4l-2.4-2.4a1 1 0 00-1.4 0l-1.8 1.8L18.9 9l1.8-1.9z" fill="currentColor"/></svg>
+                        </Link>
+                    )}
+                />
 
-                            <Col lg="12">
-                                <div className="table">
-                                    <div>
-                                        <table>
-                                            <tr>
-                                                <th>{'Naziv'.translate(this.props.lang)}</th>
-                                                <th>{'Broj fotografija'.translate(this.props.lang)}</th>
-                                                <th>{'Vidljiva'.translate(this.props.lang)}</th>
-                                                <th>{'Vidljiva na pocetnoj'.translate(this.props.lang)}</th>
-                                                <th>{'Pozicija'.translate(this.props.lang)}</th>
-                                                <th>{'Akcije'.translate(this.props.lang)}</th>
-                                            </tr>
-
-                                            {
-                                                this.state.items && this.state.items.length && this.state.items.map((item, idx) => {
-                                                    return (
-                                                        <tr>
-                                                            <td>{Object.translate(item, 'name', this.props.lang)}</td>
-                                                            <td>{item.photosCount}</td>
-
-                                                            <td><ToggleSwitch value={item.isVisible} onChange={() => {
-
-                                                                let items = this.state.items;
-                                                                items[idx].isVisible = !items[idx].isVisible
-                                                                this.setState({ items }, () => {
-                                                                    fetch(`${API_ENDPOINT}/categories/update/` + item._id, {
-                                                                        method: 'POST',
-                                                                        headers: {
-                                                                            'Content-Type': 'application/json',
-                                                                            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-                                                                        },
-                                                                        body: JSON.stringify(item)
-                                                                    }).then(res => res.json()).then((result) => {
-                                                                        fetch(`${API_ENDPOINT}/all-cateogires`, {
-                                                                            method: 'GET',
-                                                                            headers: {
-                                                                                'Content-Type': 'application/json',
-                                                                                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-                                                                            },
-                                                                        }).then(res => res.json()).then((result) => {
-                                                                            this.setState({
-                                                                                items: result
-                                                                            })
-                                                                        })
-                                                                    })
-                                                                })
-
-
-                                                            }} /></td>
-
-
-                                                            <td><ToggleSwitch value={item.isVisibleOnHome} onChange={() => {
-
-                                                                let items = this.state.items;
-                                                                items[idx].isVisibleOnHome = !items[idx].isVisibleOnHome
-                                                                this.setState({ items }, () => {
-                                                                    fetch(`${API_ENDPOINT}/categories/update/` + item._id, {
-                                                                        method: 'POST',
-                                                                        headers: {
-                                                                            'Content-Type': 'application/json',
-                                                                            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-                                                                        },
-                                                                        body: JSON.stringify(item)
-                                                                    }).then(res => res.json()).then((result) => {
-                                                                        fetch(`${API_ENDPOINT}/all-cateogires`, {
-                                                                            method: 'GET',
-                                                                            headers: {
-                                                                                'Content-Type': 'application/json',
-                                                                                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-                                                                            },
-                                                                        }).then(res => res.json()).then((result) => {
-                                                                            this.setState({
-                                                                                items: result
-                                                                            })
-                                                                        })
-                                                                    })
-                                                                })
-
-
-                                                            }} /></td>
-
-                                                            <td><div className="sort-field">
-                                                                <input type="text" value={item.position} onChange={(e) => {
-                                                                    let items = this.state.items;
-                                                                    items[idx].position = parseInt(e.target.value);
-                                                                    this.setState({ items })
-
-                                                                }} />
-                                                                <button onClick={() => {
-                                                                    fetch(`${API_ENDPOINT}/categories/update/` + item._id, {
-                                                                        method: 'POST',
-                                                                        headers: {
-                                                                            'Content-Type': 'application/json',
-                                                                            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-                                                                        },
-                                                                        body: JSON.stringify(item)
-                                                                    }).then(res => res.json()).then((result) => {
-                                                                        fetch(`${API_ENDPOINT}/all-cateogires`, {
-                                                                            method: 'GET',
-                                                                            headers: {
-                                                                                'Content-Type': 'application/json',
-                                                                                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-                                                                            },
-                                                                        }).then(res => res.json()).then((result) => {
-                                                                            this.setState({
-                                                                                items: result
-                                                                            })
-                                                                        })
-                                                                    })
-
-                                                                }}><Isvg src={save} /></button>
-                                                            </div></td>
-
-                                                            <td>
-                                                                <Link to={`/account/categories/${item._id}`}><button><Isvg src={penIcon} /></button></Link>
-                                                            </td>
-
-                                                        </tr>
-
-                                                    )
-                                                })
-                                            }
-                                        </table>
-                                    </div>
-
-                                </div>                            </Col>
-
-                        </Row>
-
-                    </Container>
-
-                </section>
-
-
-
-
-
-            </div>
+                <Obavestenja
+                    lang={l}
+                    poruke={this.state.poruke}
+                    naZatvaranje={(id) => this.poruke.skloni(id)}
+                />
+            </AdminOkvir>
         );
     }
 }

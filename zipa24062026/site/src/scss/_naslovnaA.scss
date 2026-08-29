@@ -11,30 +11,6 @@
    `scss/_odjava.scss` — obe su zasebne strane i nemaju veze sa predlogom A
    naslovne, u kom su stajale samo zato što je fajl bio pri ruci. */
 
-/* Glavni meni u predlogu A: prve tri stavke su vrste sadržaja i istaknute su
- * krupnije od ostalih, po nacrtu. */
-header .navigation ul.meni-a {
-    li.istaknuto > a {
-        font-weight: $bold;
-        letter-spacing: 0.06em;
-        font-size: 15px;
-    }
-
-    li.istaknuto + li:not(.istaknuto) {
-        // razdvaja vrste sadržaja od ostatka menija
-        margin-left: 14px;
-        padding-left: 26px;
-        border-left: 1px solid #DDE1EA;
-    }
-
-    @include mobile {
-        li.istaknuto > a { font-size: 13px; }
-        li.istaknuto + li:not(.istaknuto) {
-            margin-left: 6px; padding-left: 12px;
-        }
-    }
-}
-
 .naslovna-a {
 
     $razmak: 16px;
@@ -55,8 +31,8 @@ header .navigation ul.meni-a {
             width: 100%;
             padding-top: 66.6%;
             overflow: hidden;
-            border-radius: 8px;
-            background-color: #DFE2E8;
+            border-radius: var(--radijus-panel);
+            background-color: var(--boja-podloga-tiha);
 
             img {
                 position: absolute;
@@ -76,10 +52,10 @@ header .navigation ul.meni-a {
             z-index: 2;
             background-color: $red;
             color: $white;
-            font-size: 11px;
+            font-size: var(--slovo-sitno);
             font-weight: $semiBold;
             padding: 3px 9px;
-            border-radius: 3px;
+            border-radius: var(--radijus-oznaka);
         }
 
         // natpis preko dna fotografije
@@ -88,11 +64,11 @@ header .navigation ul.meni-a {
             left: 0; right: 0; bottom: 0;
             z-index: 2;
             padding: 42px 14px 13px;
-            background-image: linear-gradient(transparent, rgba(9, 12, 22, 0.9));
+            background-image: linear-gradient(transparent, var(--boja-zastor-foto));
             color: $white;
 
             h4 {
-                font-size: 14.5px;
+                font-size: var(--slovo-sm);
                 font-weight: $semiBold;
                 line-height: 1.28;
                 color: $white;
@@ -104,9 +80,9 @@ header .navigation ul.meni-a {
             }
 
             .meta {
-                font-size: 11.5px;
+                font-size: var(--slovo-sitno);
                 font-weight: $light;
-                color: rgba(255, 255, 255, 0.8);
+                color: var(--boja-traka-tekst-tiho);
                 margin: 0;
                 white-space: nowrap;
                 overflow: hidden;
@@ -134,17 +110,22 @@ header .navigation ul.meni-a {
             margin-bottom: 16px;
 
             h3 {
-                font-size: 21px;
+                font-size: var(--slovo-lg-plus);
                 font-weight: $semiBold;
                 color: $black;
                 margin: 0;
-                @include mobile { font-size: 18px; }
+                @include mobile { font-size: var(--slovo-lg); }
             }
 
             a {
                 margin-left: auto;
-                font-size: 14px;
+                font-size: var(--slovo-sm);
                 @include z-veza-meni;
+                // `z-veza-meni` pod fokusom samo PODVLAČI, a podvlačenje je
+                // isto što i na hover — korisniku tastature to nije znak.
+                // Bez ovoga je ostajao samo podrazumevani okvir pregledača
+                // (1px, njegova boja), koji se razlikuje od ostatka sajta.
+                @include z-fokus;
                 white-space: nowrap;
             }
         }
@@ -494,14 +475,16 @@ header .navigation ul.meni-a {
         gap: $razmak;
         flex-wrap: wrap;
 
-        a { display: block; max-width: 980px; width: 100%; }
+        // Reklama je slika bez teksta; bez ovoga je nosila samo
+        // podrazumevani okvir pregledača.
+        a { display: block; max-width: 980px; width: 100%; @include z-fokus; }
 
         img {
             display: block;
             width: 100%;
             max-width: 980px;
             height: auto;
-            border-radius: 8px;
+            border-radius: var(--radijus-panel);
         }
     }
 
@@ -521,19 +504,19 @@ header .navigation ul.meni-a {
             z-index: 2;
             width: 46px; height: 46px;
             display: flex; align-items: center; justify-content: center;
-            background-color: rgba(0, 0, 0, 0.58);
+            background-color: var(--boja-zastor-dugme);
             color: $white;
             border-radius: 50%;
-            font-size: 16px;
+            font-size: var(--slovo-md);
             padding-left: 3px;
         }
     }
 
     .alert {
         background-color: $red;
-        border-radius: 15px;
+        border-radius: var(--radijus-panel);
         color: $white;
-        font-size: 16px;
+        font-size: var(--slovo-md);
         font-weight: $medium;
         margin-bottom: 21px;
         padding: 12px 18px;
@@ -545,9 +528,9 @@ header .navigation ul.meni-a {
 
 /* ── Pregled arhive od početka rada (administracija) ───────────────────── */
 .arhiva-stat {
-    h1 { font-size: 28px; font-weight: $bold; color: $black; margin-bottom: 8px; }
-    h2 { font-size: 19px; font-weight: $semiBold; color: $black; margin: 34px 0 14px; }
-    .uvod { color: #6B7280; font-size: 15px; margin-bottom: 20px; }
+    h1 { font-size: var(--slovo-xl); font-weight: $bold; color: $black; margin-bottom: 8px; }
+    h2 { font-size: var(--slovo-lg); font-weight: $semiBold; color: $black; margin: 34px 0 14px; }
+    .uvod { color: var(--boja-tekst-tiho); font-size: var(--slovo-md); margin-bottom: 20px; }
 
     // tri broja u vrhu
     .zbir {
@@ -559,35 +542,35 @@ header .navigation ul.meni-a {
         @include mobile { grid-template-columns: 1fr; }
 
         .stavka {
-            background-color: #F4F6FA;
-            border-radius: 10px;
+            background-color: var(--boja-podloga-tiha);
+            border-radius: var(--radijus-panel);
             padding: 18px 20px;
 
             .broj {
                 display: block;
-                font-size: 27px;
+                font-size: var(--slovo-xl);
                 font-weight: $bold;
                 color: var(--boja-tekst);
                 font-variant-numeric: tabular-nums;
                 line-height: 1.15;
             }
-            .opis { font-size: 13px; color: #6B7280; }
+            .opis { font-size: var(--slovo-sm); color: var(--boja-tekst-tiho); }
         }
     }
 
     .napomena.upozorenje {
-        border-left-color: #C99A16;
-        background-color: #FDF6E7;
-        color: #6B5518;
+        border-left-color: var(--boja-upozorenje);
+        background-color: var(--boja-podloga-tiha);
+        color: var(--boja-upozorenje);
     }
 
     .napomena {
         border-left: 3px solid $darkBlue;
-        background-color: #EEF1FB;
+        background-color: var(--boja-podloga-tiha);
         padding: 14px 18px;
-        border-radius: 0 8px 8px 0;
-        font-size: 14px;
-        color: #4B5162;
+        border-radius: 0 var(--radijus-panel) var(--radijus-panel) 0;
+        font-size: var(--slovo-sm);
+        color: var(--boja-tekst-tiho);
         margin-bottom: 10px;
     }
 
@@ -599,30 +582,30 @@ header .navigation ul.meni-a {
     .tabela {
         width: 100%;
         border-collapse: collapse;
-        font-size: 14px;
+        font-size: var(--slovo-sm);
 
         th, td {
             padding: 9px 12px;
-            border-bottom: 1px solid #E8EBF2;
+            border-bottom: 1px solid var(--boja-linija);
             text-align: left;
             white-space: nowrap;
         }
-        th { font-weight: $semiBold; color: #4B5162; background-color: #F7F8FC; }
+        th { font-weight: $semiBold; color: var(--boja-tekst-tiho); background-color: var(--boja-podloga-tiha); }
         td.d, th.d { text-align: right; font-variant-numeric: tabular-nums; }
-        tbody tr:hover { background-color: #FAFBFE; }
+        tbody tr:hover { background-color: var(--boja-podloga-tiha); }
     }
 }
 
 /* ── Zbirka žigova (administracija) ──────────────────────────────────────── */
 .zigovi-strana {
-    h1 { font-size: 28px; font-weight: $bold; color: $black; margin-bottom: 8px; }
-    .uvod { color: #6B7280; font-size: 15px; margin-bottom: 18px; max-width: 78ch; }
-    .prazno { color: #6B7280; font-size: 15px; padding: 26px 0; }
+    h1 { font-size: var(--slovo-xl); font-weight: $bold; color: $black; margin-bottom: 8px; }
+    .uvod { color: var(--boja-tekst-tiho); font-size: var(--slovo-md); margin-bottom: 18px; max-width: 78ch; }
+    .prazno { color: var(--boja-tekst-tiho); font-size: var(--slovo-md); padding: 26px 0; }
 
     .napomena.uspeh {
-        border-left-color: #1C7A52;
-        background-color: #EAF6F0;
-        color: #17553B;
+        border-left-color: var(--boja-uspeh);
+        background-color: var(--boja-podloga-tiha);
+        color: var(--boja-uspeh);
     }
 
     .dodavanje {
@@ -634,20 +617,20 @@ header .navigation ul.meni-a {
         input[type="text"] {
             flex: 1;
             min-width: 240px;
-            border: 1px solid #D6DAE4;
-            border-radius: 8px;
+            border: 1px solid var(--boja-linija-kontrola);
+            border-radius: var(--radijus-panel);
             padding: 10px 14px;
-            font-size: 14px;
+            font-size: var(--slovo-sm);
             outline: none;
             &:focus { border-color: $darkBlue; }
         }
 
         .dugme-fajl {
             background-color: $darkBlue;
-            color: $white;
-            border-radius: 8px;
+            color: var(--boja-tekst-na-akcentu);
+            border-radius: var(--radijus-panel);
             padding: 10px 20px;
-            font-size: 14px;
+            font-size: var(--slovo-sm);
             font-weight: $semiBold;
             cursor: pointer;
             white-space: nowrap;
@@ -667,8 +650,8 @@ header .navigation ul.meni-a {
         @include mobile { grid-template-columns: 1fr; }
 
         .zig {
-            border: 1px solid #E2E6EF;
-            border-radius: 10px;
+            border: 1px solid var(--boja-linija);
+            border-radius: var(--radijus-panel);
             overflow: hidden;
             background-color: $white;
 
@@ -680,10 +663,10 @@ header .navigation ul.meni-a {
                 align-items: center;
                 justify-content: center;
                 // šahovnica, da se vidi providnost PNG-a
-                background-color: #F4F6FA;
+                background-color: var(--boja-podloga-tiha);
                 background-image:
-                    linear-gradient(45deg, #E4E8F0 25%, transparent 25%, transparent 75%, #E4E8F0 75%),
-                    linear-gradient(45deg, #E4E8F0 25%, transparent 25%, transparent 75%, #E4E8F0 75%);
+                    linear-gradient(45deg, var(--boja-linija) 25%, transparent 25%, transparent 75%, var(--boja-linija) 75%),
+                    linear-gradient(45deg, var(--boja-linija) 25%, transparent 25%, transparent 75%, var(--boja-linija) 75%);
                 background-size: 16px 16px;
                 background-position: 0 0, 8px 8px;
 
@@ -696,15 +679,15 @@ header .navigation ul.meni-a {
                 align-items: center;
                 gap: 9px;
 
-                b { font-size: 14.5px; color: $black; }
+                b { font-size: var(--slovo-sm); color: $black; }
 
                 .oznaka {
                     background-color: $darkBlue;
-                    color: $white;
-                    font-size: 10.5px;
+                    color: var(--boja-tekst-na-akcentu);
+                    font-size: var(--slovo-oznaka);
                     font-weight: $semiBold;
                     padding: 2px 8px;
-                    border-radius: 3px;
+                    border-radius: var(--radijus-oznaka);
                 }
             }
 
@@ -716,10 +699,10 @@ header .navigation ul.meni-a {
 
                 button {
                     background-color: $white;
-                    border: 1px solid #D6DAE4;
-                    border-radius: 6px;
+                    border: 1px solid var(--boja-linija);
+                    border-radius: var(--radijus-panel);
                     padding: 6px 14px;
-                    font-size: 13px;
+                    font-size: var(--slovo-sm);
                     font-weight: $medium;
                     cursor: pointer;
                     transition: border-color 0.2s, color 0.2s;
@@ -728,7 +711,7 @@ header .navigation ul.meni-a {
                     &.brisi:hover { border-color: $red; color: $red; }
                 }
 
-                .napomena-mala { font-size: 12px; color: #8A90A0; }
+                .napomena-mala { font-size: var(--slovo-xs); color: var(--boja-tekst-tiho); }
             }
         }
     }

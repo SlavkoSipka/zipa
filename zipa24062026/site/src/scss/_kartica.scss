@@ -79,11 +79,11 @@
         // pri izjednačenju pobeđivala.
 
         padding: 1px var(--razmak-1);
-        border-radius: 3px;
+        border-radius: var(--radijus-oznaka);
         background: var(--boja-oznaka);
         color: var(--boja-podloga);
 
-        font-size: 10px;
+        font-size: var(--slovo-oznaka);
         line-height: 1.5;
         font-weight: var(--tezina-jaka);
         letter-spacing: .02em;
@@ -103,16 +103,19 @@
         gap: 3px;
 
         padding: 1px var(--razmak-1);
-        border-radius: 3px;
-        background: var(--boja-zavesa);
-        color: var(--boja-traka-tekst);
+        border-radius: var(--radijus-oznaka);
+        background: var(--boja-zastor-oznaka);
+        // Zastor je taman pod SVIM temama, pa i tekst na njemu mora da bude
+        // beo pod svim temama. `--boja-traka-tekst` se pod „trenutni" prevrne
+        // u tamnu i davala je 2,36:1 na ovom zastoru (izmereno 2026-08-27).
+        color: var(--boja-tekst-na-oznaci);
 
-        font-size: 10px;
+        font-size: var(--slovo-oznaka);
         line-height: 1.5;
         font-weight: var(--tezina-srednja);
 
         svg { width: 10px; height: 10px; display: block; }
-        svg path, svg circle, svg rect { fill: var(--boja-traka-tekst); }
+        svg path, svg circle, svg rect { fill: var(--boja-tekst-na-oznaci); }
     }
 
     /* ── tekst ispod slike — dva reda, ne tri ─────────────────────────── */
@@ -127,7 +130,7 @@
     &__naslov {
         margin: 0;
         font-family: var(--pismo-naslov);
-        font-size: 15px;
+        font-size: var(--slovo-md);
         line-height: 1.34;
         font-weight: var(--tezina-srednja);
 
@@ -151,7 +154,7 @@
 
     &__mesto {
         margin: 0;
-        font-size: 12px;
+        font-size: var(--slovo-xs);
         line-height: 1.4;
         color: var(--boja-tekst-tiho);
     }
@@ -184,7 +187,7 @@
 
     &--veliko {
         .z-kartica-galerije__slika  { aspect-ratio: 16 / 9; }
-        .z-kartica-galerije__naslov { font-size: 18px; }
+        .z-kartica-galerije__naslov { font-size: var(--slovo-lg); }
     }
 }
 

@@ -94,7 +94,7 @@
         border-left: 20px solid var(--boja-podloga);
 
         // Trougao sam po sebi nestaje na svetloj fotografiji — senka ga drži.
-        filter: drop-shadow(0 1px 3px rgba(0, 0, 0, .55));
+        filter: drop-shadow(var(--senka-preko-foto));
     }
 
     // Dužina trajanja — polje `duration` danas ne postoji, vidi komentar u

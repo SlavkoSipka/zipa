@@ -47,25 +47,6 @@ button {
 }
 
 
-.article-col {
-  flex: 0 0 20%;
-  max-width: 20%;
-  @include mobile {
-    flex: 0 0 50%;
-    max-width: 50%;
-  }
-
-  @include tablet {
-    flex: 0 0 50%;
-    max-width: 50%;
-  }
-
-  @include small-desktop {
-    flex: 0 0 33.3333333%;
-    max-width: 33.3333333%;
-  }
-
-}
 
 /* ČETVRTA GOLA ZAMKA — bila je `a { text-decoration: none !important; }`.
    Gasila je podvlačenje na celom sajtu, pa je u pravcu „tamna traka" veza
@@ -146,343 +127,16 @@ header:where(.zaglavlje-sajta) {
   }
 
 
-  .header-top {
-
-    padding-bottom: 10px;
-    margin-bottom: 10px;
-    border-bottom: 1px solid #C7D1E6;
-    @include mobile {
-      display: none;
-
-    }
-
-    @include tablet {
-      display: none;
-    }
-
-    .row {
-      align-items: center;
-
-    }
-
-    .left {
-      display: flex;
-      align-items: center;
-      justify-content: flex-start;
-
-      div {
-        font-size: 14px;
-        color: $black;
-        margin-right: 40px;
-
-        a {
-          color: $black;
-        }
-
-        svg {
-          margin-right: 10px;
-        }
-      }
-    }
-
-    .right {
-      ul {
-        list-style: none;
-        margin: 0;
-        padding: 0;
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-
-        li {
-          padding: 0 20px;
-          font-size: 14px;
-          color: $black;
-
-          border-right: 1px solid var(--boja-tekst-tiho);
-
-          &:last-child {
-            border-right: 0;
-
-            a {
-              margin: 0 10px;
-            }
-
-          }
-
-          a {
-            color: $black;
-          }
-        }
-      }
-    }
-  }
 
   @include mobile {
     padding: 16px 0;
   }
 
 
-  .mobile-menu-wrap {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    transform: translateX(-110%);
-
-    .overlay {
-      background-color: rgba(31, 31, 31, 0.8);
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      cursor: pointer;
-
-    }
 
 
-    .mobile-menu {
-      width: 300px;
-      background-color: $white;
-      height: 100%;
-
-      position: fixed;
-      top: 0;
-      left: 0;
-      transition: transform 0.3s;
-
-      transform: translateX(-110%);
-
-      .langs-select {
-        margin-right: 10px;
-        position: absolute !important;
-        top: 20px;
-        left: 160px;
-
-        > button {
-          background-color: transparent !important;
-          color: $black !important;
-          border: 0 !important;
-          padding-left: 19px;
-          padding-right: 19px;
-          border-radius: 0 !important;
-          box-shadow: none !important;
-          display: flex;
-          align-items: center;
-
-          img {
-            width: 32px;
-          }
-
-          &::after {
-            content: ' ';
-            display: block;
-            border-bottom: 2px solid $white;
-            border-right: 2px solid $white;
-            transform: rotate(45deg);
-            width: 10px;
-            height: 10px;
-            margin-left: 10px;
-            margin-top: -7px;
-          }
-
-        }
-
-        .dropdown-menu {
-          img {
-            width: 32px;
-          }
-        }
-      }
 
 
-      .user-info {
-        background-color: $darkBlue;
-        padding: 22px;
-        position: relative;
-
-        svg {
-          width: 32px;
-          height: 36px;
-          margin-bottom: 12px;
-        }
-
-        h6 {
-          color: $white;
-          font-size: 18px;
-          font-weight: $semiBold;
-          margin-bottom: 5px;
-        }
-
-        p {
-          font-size: 12px;
-          font-weight: $regular;
-          color: $white;
-          margin-bottom: 18px;
-        }
-
-        .buttons {
-          display: flex;
-          justify-content: space-between;
-
-          button {
-            font-size: 12px;
-            color: $white;
-            background-color: transparent;
-            border: 1px solid $white;
-            border-radius: 25px;
-            padding: 1px 10px;
-          }
-        }
-
-        .buttons-login {
-          justify-content: flex-start;
-
-          button {
-            margin-right: 15px;
-          }
-        }
-      }
-
-
-      .menu-button {
-        display: flex;
-        align-items: center;
-
-        &::after {
-          content: ' ';
-          display: block;
-          width: 8px;
-          height: 8px;
-          border-right: 2px solid $black;
-          border-bottom: 2px solid $black;
-          transform: rotate(45deg);
-          margin-left: 10px;
-          margin-top: -2px;
-        }
-      }
-
-      > ul {
-        padding: 0;
-        margin: 0;
-        list-style: none;
-        padding-top: 10px;
-        max-height: calc(100vh - 180px);
-        overflow-y: auto;
-
-        li {
-          padding: 10px 28px;
-
-          a {
-            color: $black;
-            font-size: 14px;
-            font-weight: $semiBold;
-          }
-
-          button {
-            background-color: transparent;
-            border: 0;
-            padding: 0;
-            color: $black;
-            font-size: 14px;
-            font-weight: $semiBold;
-
-          }
-
-          ul {
-            padding: 0;
-            margin: 0;
-            list-style: none;
-            padding-top: 10px;
-
-            li {
-              padding: 10px 15px;
-            }
-
-          }
-        }
-      }
-    }
-  }
-
-  .mobile-menu-open {
-    transform: translateX(0);
-
-    .mobile-menu {
-      transform: translateX(0);
-
-    }
-  }
-
-  .header-page-title {
-    color: $white;
-    font-size: 32px;
-    font-weight: $regular;
-    margin-bottom: 0;
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    margin-left: 22px;
-    @include mobile {
-      display: none;
-    }
-
-    &::before {
-      content: ' ';
-      display: block;
-      height: 50px;
-      width: 1px;
-      background-color: $white;
-      margin-right: 16px;
-    }
-  }
-
-
-  .mobile-actions {
-    display: none;
-    @include mobile {
-      display: flex;
-      align-items: center;
-      button {
-        border: 0;
-        outline: none;
-        background-color: transparent;
-      }
-
-      .cart {
-        svg {
-          path, circle {
-            stroke: $darkBlue;
-          }
-        }
-      }
-
-
-    }
-
-    @include tablet {
-      display: flex;
-      align-items: center;
-      button {
-        border: 0;
-        outline: none;
-        background-color: transparent;
-      }
-
-      .cart {
-        svg {
-          path, circle {
-            stroke: $darkBlue;
-          }
-        }
-      }
-
-
-    }
-
-  }
 
   .logo {
     display: flex;
@@ -608,15 +262,6 @@ header:where(.zaglavlje-sajta) {
 
     }
 
-    &.white-logo {
-      svg {
-        path {
-          @include desktop-i-vise {
-            fill: $white;
-          }
-        }
-      }
-    }
   }
 
   .links {
@@ -701,45 +346,6 @@ header:where(.zaglavlje-sajta) {
       }
     }
 
-    .desktop-search {
-      //width: 250px;
-      padding-right: 20px;
-      position: relative;
-      display: flex;
-      align-items: center;
-
-      input {
-        width: 0;
-        background-color: #F4F6FA;
-        border-radius: 25px;
-        border: 0;
-        outline: none;
-        padding: 0;
-        //transition: width 0.3s;
-      }
-
-      button {
-
-        border: 0;
-        outline: none;
-        background-color: transparent;
-      }
-
-      &.desktop-search-visible {
-        input {
-          width: 350px;
-          padding: 8px 20px;
-
-
-        }
-
-        button {
-          position: absolute;
-          top: 6px;
-          right: 28px;
-        }
-      }
-    }
 
     .login {
       color: var(--boja-tekst-tiho);
@@ -901,49 +507,6 @@ header:where(.zaglavlje-sajta) {
     }
   }
 
-  .hamburger-animation {
-
-
-    button {
-      transform: translateX(240px);
-      position: relative;
-      height: 28px;
-
-      > div {
-        background-color: $white;
-        //position: absolute;
-        //left: 0;
-        //top: 50%;
-        margin-top: 0px;
-        display: block;
-
-        &:nth-child(2) {
-          background-color: transparent !important;
-        }
-
-        &:nth-child(1) {
-          transform: rotate(-45deg);
-          transform-origin: top right;
-          top: 1px;
-          //animation-name: hamburger-animation1;
-          //animation-duration: 1s;
-
-        }
-
-        &:nth-child(3) {
-          transform: rotate(45deg);
-          transform-origin: bottom right;
-          bottom: 4px;
-          width: 100% !important;
-          //animation-name: hamburger-animation2;
-          //animation-duration: 1s;
-
-        }
-
-      }
-
-    }
-  }
 
   @keyframes hamburger-animation1 {
     from {
@@ -991,11 +554,6 @@ header:where(.zaglavlje-sajta) {
     }
 
 
-    .hide-on-mobile {
-      @include mobile {
-        display: none;
-      }
-    }
 
     > ul {
       list-style: none;
@@ -1042,41 +600,6 @@ header:where(.zaglavlje-sajta) {
           }
         }
 
-        .desktop-search {
-          position: relative;
-
-          @include mobile-tablet {
-            display: none;
-          }
-
-          input {
-            border-radius: 23px;
-            padding: 5px 30px;
-            background-color: $white;
-            outline: none;
-            border: 0;
-
-          }
-
-          .btn1 {
-            position: absolute;
-            right: 39px;
-            border: 0;
-            outline: none;
-            background-color: transparent;
-            padding: 5px;
-
-          }
-
-          .btn2 {
-            position: absolute;
-            right: 5px;
-            border: 0;
-            outline: none;
-            background-color: transparent;
-            padding: 5px;
-          }
-        }
 
         a {
           color: $black;
@@ -1181,72 +704,6 @@ header:where(.zaglavlje-sajta) {
               }
 
 
-              &.submenu {
-                position: relative;
-
-                > button {
-                  background-color: transparent !important;
-                  color: $black !important;
-                  font-weight: $medium;
-                  border: 0 !important;
-                  border-radius: 0 !important;
-                  box-shadow: none !important;
-                  display: flex;
-                  align-items: center;
-                  padding-left: 0;
-
-                  &::after {
-                    content: ' ';
-                    display: block;
-                    border-bottom: 2px solid $black;
-                    border-right: 2px solid $black;
-                    transform: rotate(-45deg);
-                    width: 8px;
-                    height: 8px;
-                    margin-left: 10px;
-                    margin-top: 0px;
-                  }
-
-                }
-
-                > ul {
-                  display: none;
-                  position: absolute;
-                  top: 0;
-                  left: 100%;
-                  background-color: $white;
-                  z-index: 9999;
-                  list-style: none;
-                  padding: 0 !important;
-                  font-size: 1rem;
-                  color: #212529;
-                  text-align: left;
-                  list-style: none;
-                  background-color: #fff;
-                  border: 1px solid rgba(0, 0, 0, .15);
-                  border-radius: .25rem;
-                  min-width: 15rem;
-                  max-height: 400px;
-                  overflow-y: auto;
-
-                  li {
-                    padding: .25rem 1.5rem;
-                    width: 100%;
-                    float: left;
-
-                    &:hover {
-                      background-color: #F8F9FA;
-                    }
-                  }
-                }
-
-                &:hover {
-                  > ul {
-                    display: block;
-                  }
-                }
-
-              }
 
             }
           }
@@ -1258,11 +715,6 @@ header:where(.zaglavlje-sajta) {
           }
         }
 
-        &.nav-category {
-          a {
-            color: $red;
-          }
-        }
 
 
         &.button-li {
@@ -1292,21 +744,6 @@ header:where(.zaglavlje-sajta) {
       }
 
 
-      .mobile-visible {
-        @include mobile {
-          display: none;
-          a {
-            svg {
-              width: 14px;
-              margin-right: 6px;
-            }
-          }
-        }
-
-        @include tablet {
-          display: flex;
-        }
-      }
 
       .active {
         position: relative;
@@ -1363,18 +800,7 @@ header:where(.zaglavlje-sajta) {
 
 }
 
-.scroll-header {
-  background-color: $white
-}
 
-.hide-header {
-  top: 0px;
-  background-color: $white;
-
-  .navigation {
-    display: none;
-  }
-}
 
 
 /* Podnožje sajta — isti razlog i isti postupak kao kod zaglavlja gore. */
@@ -1423,111 +849,8 @@ footer:where(.podnozje-sajta) {
   position: relative;
 
 
-  .f-col-1 {
-    svg {
-      margin-bottom: 52px;
-    }
 
-    .contact {
-      margin-bottom: 52px;
 
-      > div {
-        color: $white;
-        font-size: 14px;
-        font-weight: $regular;
-        display: flex;
-        align-items: center;
-        margin-bottom: 4px;;
-
-        svg {
-          margin-right: 10px;
-          margin-bottom: 0;
-        }
-      }
-
-      p {
-        color: $white;
-        font-size: 16px;
-        margin-bottom: 0;
-
-        &:nth-child(2) {
-          font-weight: $semiBold;
-          font-size: 18px;
-        }
-      }
-    }
-  }
-
-  .f-col-2 {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-
-    h6 {
-      font-size: 18px;
-      font-weight: $semiBold;
-      color: $red;
-      margin-bottom: 18px;
-    }
-
-    ul {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-
-      li {
-        width: 50%;
-        float: left;
-        margin-bottom: 15px;
-
-        a {
-          font-size: 16px;
-          font-weight: $regular;
-          color: $white;
-        }
-      }
-    }
-
-    .social {
-      margin: 0 -15px;
-
-      a {
-        margin: 0 15px;
-      }
-    }
-  }
-
-  .f-col-3 {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-
-    h6 {
-      font-size: 18px;
-      font-weight: $semiBold;
-      color: $red;
-      margin-bottom: 18px;
-    }
-
-    ul {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-
-      li {
-        width: 100%;
-        float: left;
-        margin-bottom: 8px;
-
-        a {
-          font-size: 16px;
-          font-weight: $regular;
-          color: $white;
-        }
-      }
-    }
-
-  }
 
 
   .spacer {
@@ -1655,33 +978,11 @@ footer:where(.podnozje-sajta) {
 
     }
 
-    .full-image {
-      display: none;
-      position: absolute;
-      background-color: $white;
-      padding: 6px 6px;
-      z-index: 9;
-      border-radius: 10px;
-      min-width: 500px;
-      top: 0;
-      -webkit-box-shadow: 0px 14px 24px 0px rgba(0, 0, 0, 0.1);
-      -moz-box-shadow: 0px 14px 24px 0px rgba(0, 0, 0, 0.1);
-      box-shadow: 0px 14px 24px 0px rgba(0, 0, 0, 0.1);
-
-      img {
-        height: auto;
-        border-radius: 0;
-      }
-
-    }
 
     .image-wrap {
       position: relative;
 
       &:hover {
-        .full-image {
-          display: block;
-        }
 
         /*img {
             position: absolute;
@@ -1726,9 +1027,6 @@ footer:where(.podnozje-sajta) {
 
     .image-wrap {
       &:hover {
-        .full-image {
-          display: none !important;
-        }
       }
     }
 
@@ -1774,9 +1072,6 @@ footer:where(.podnozje-sajta) {
 
 
     &:hover {
-      .full-image {
-        display: none !important;
-      }
 
     }
 
@@ -1784,9 +1079,6 @@ footer:where(.podnozje-sajta) {
 
   .image-article {
 
-    .full-image {
-      display: none !important;
-    }
 
     .wrap {
       display: none;
@@ -1866,36 +1158,8 @@ footer:where(.podnozje-sajta) {
       outline: none;
     }
 
-    .download-button {
-      svg {
-        path[stroke="#fff"] {
-          stroke: $blue;
-        }
-
-        line[stroke="#fff"] {
-          stroke: $blue;
-        }
-
-      }
-    }
   }
 
-  .list-articles {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    margin-bottom: 30px;
-    @include mobile {
-      margin-bottom: 0;
-    }
-
-    article {
-      margin-bottom: 0;
-      @include mobile {
-        margin-bottom: 30px;
-      }
-    }
-  }
 
 }
 
@@ -2077,137 +1341,6 @@ footer:where(.podnozje-sajta) {
   }
 }
 
-.section-newsletter {
-  padding: 30px 0;
-  position: relative;
-  @media print {
-    display: none;
-  }
-
-
-  .content {
-    background-color: #9DA5BE;
-
-    position: relative;
-    padding: 29px 40px;
-    border-radius: 20px;
-    @include mobile {
-      padding: 29px 15px;
-    }
-
-
-    svg {
-      position: absolute;
-      left: 50%;
-      top: 0;
-      margin-left: -259px;
-    }
-  }
-
-  @include mobile {
-    padding: 22px 5px;
-    text-align: center;
-  }
-
-  @include small-desktop {
-    padding: 22px 30px;
-    text-align: center;
-  }
-
-  h3 {
-    color: $white;
-    font-size: 34px;
-    font-weight: $regular;
-    margin-bottom: 0px;
-
-    span {
-      font-weight: $bold;
-    }
-
-    @include mobile {
-      font-size: 20px;
-      margin-bottom: 20px;
-    }
-  }
-
-  p {
-    color: $black;
-    font-size: 18px;
-    margin-bottom: 0;
-    font-weight: $regular;
-    @include mobile {
-      font-size: 12px;
-      margin-bottom: 21px;
-    }
-  }
-
-
-  .err {
-    color: $red;
-    font-size: 14px;
-    padding: 8px 20px;
-  }
-
-  .row {
-    align-items: center;
-  }
-
-  .input {
-    padding: 5px 5px 5px 30px;
-    border-radius: 15px;
-    background-color: $white;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-
-    input {
-      border: 0;
-      outline: none;
-      width: 100%;
-      @include mobile {
-        font-size: 12px;
-      }
-    }
-
-    button {
-      margin-left: 30px;
-      background-color: $red;
-      color: $white;
-      border: 0;
-      outline: none;
-      display: flex;
-      align-items: center;
-      border-radius: 10px;
-      padding: 14px 27px 14px 40px;
-      transition: background-color 0.3s;
-      font-size: 18px;
-      font-weight: $medium;
-      white-space: nowrap;
-
-      @include mobile {
-        font-size: 12px;
-        padding: 12px 15px;
-        min-width: 110px;
-
-        margin-left: 15px;
-        svg {
-          display: none;
-        }
-      }
-
-      &:hover {
-        background-color: $blue;
-      }
-
-      svg {
-        margin-left: 16px;
-        @include mobile {
-          margin-left: 10px;
-        }
-      }
-    }
-  }
-}
 
 
 .modal-wrap {
@@ -2450,11 +1583,15 @@ footer:where(.podnozje-sajta) {
   }
 
   .active {
-    color: $white;
+    /* `$darkBlue` je mostom preusmeren na `--boja-akcenat` (amber), a belo
+       na amberu daje 2:1. `--boja-tekst-na-akcentu` je tamna uz amber, a pod
+       temom „trenutni" i dalje bela uz plavu — zatečeni izgled se ne menja.
+       Izmereno 2026-08-27 na `/account/users`. */
+    color: var(--boja-tekst-na-akcentu);
     background-color: $darkBlue;
 
     a {
-      color: $white;
+      color: var(--boja-tekst-na-akcentu);
     }
   }
 
@@ -2534,64 +1671,6 @@ footer:where(.podnozje-sajta) {
 .form-wrapper {
 
 
-  .categories-tree {
-    list-style: none;
-
-    li {
-      padding: 8px 15px;
-      margin: 8px 0;
-      border-radius: 15px;
-
-      background-color: $bgColor;
-
-      .head {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-
-        font-size: 18px;
-        font-weight: $medium;
-
-        button {
-          border: 0;
-          outline: none;
-          background-color: transparent;
-        }
-      }
-
-      ul {
-        list-style: none;
-        position: relative;
-
-        &::after {
-          content: ' ';
-          position: absolute;
-          top: 0px;
-          left: 20px;
-          border-left: 1px solid $darkBlue;
-          //border-bottom: 2px solid $darkBlue;
-          width: 20px;
-          height: 100%;
-          height: calc(100% - 20px);
-        }
-
-        li {
-          position: relative;
-
-          &::after {
-            content: ' ';
-            position: absolute;
-            top: 23px;
-            left: -20px;
-            height: 2px;
-            width: 20px;
-            border-bottom: 1px solid $darkBlue;
-          }
-        }
-      }
-    }
-
-  }
 
   .top {
     display: flex;
@@ -4058,24 +3137,6 @@ footer:where(.podnozje-sajta) {
   }
 }
 
-.error-404 {
-  text-align: center;
-  padding: 50px 0;
-
-  h1 {
-    font-weight: $bold;
-
-    span {
-      color: $red;
-
-    }
-  }
-
-  a {
-    font-size: 18px;
-    @include z-veza;
-  }
-}
 
 .table-label {
   margin-top: 50px;

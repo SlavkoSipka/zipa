@@ -82,7 +82,7 @@
     /* ── sporedno ─────────────────────────────────────────────────────── */
     &--sporedno {
         background: var(--boja-povrsina);
-        border-color: var(--boja-linija);
+        border-color: var(--boja-linija-kontrola);
         color: var(--boja-tekst);
 
         &:hover {
@@ -107,7 +107,7 @@
     /* ── uništavajuća radnja ──────────────────────────────────────────── */
     &--opasno {
         background: var(--boja-povrsina);
-        border-color: var(--boja-linija);
+        border-color: var(--boja-linija-kontrola);
         color: var(--boja-oznaka-tekst);
 
         &:hover {
@@ -189,7 +189,7 @@
         padding: var(--razmak-3) var(--razmak-4);
 
         background: var(--boja-povrsina);
-        border: 1px solid var(--boja-linija);
+        border: 1px solid var(--boja-linija-kontrola);
         border-radius: var(--radijus-panel);
 
         font-family: var(--pismo-tekst);
@@ -327,9 +327,9 @@
     white-space: nowrap;
 
     &--akcenat { background: var(--boja-akcenat); color: var(--boja-tekst-na-akcentu); }
-    &--oznaka  { background: var(--boja-oznaka);  color: var(--boja-tekst-na-akcentu); }
-    &--uspeh   { background: var(--boja-uspeh);   color: var(--boja-tekst-na-akcentu); }
-    &--upozorenje { background: var(--boja-upozorenje); color: var(--boja-tekst-na-akcentu); }
+    &--oznaka  { background: var(--boja-oznaka);  color: var(--boja-tekst-na-oznaci); }
+    &--uspeh   { background: var(--boja-uspeh);   color: var(--boja-tekst-na-oznaci); }
+    &--upozorenje { background: var(--boja-upozorenje); color: var(--boja-tekst-na-oznaci); }
 
     // Kataloški broj i drugi podaci koji se prepisuju — u pismu za podatke,
     // gde se 0 i O razlikuju.
@@ -355,7 +355,7 @@
     padding: var(--razmak-2) var(--razmak-4);
 
     background: var(--boja-povrsina);
-    border: 1px solid var(--boja-linija);
+    border: 1px solid var(--boja-linija-kontrola);
     border-radius: var(--radijus-pun);
 
     font-family: var(--pismo-tekst);
@@ -373,7 +373,7 @@
     &--ukljuceno {
         background: var(--boja-oznaka);
         border-color: var(--boja-oznaka);
-        color: var(--boja-tekst-na-akcentu);
+        color: var(--boja-tekst-na-oznaci);
         font-weight: var(--tezina-srednja);
 
         &:hover { border-color: var(--boja-oznaka); }
@@ -384,7 +384,7 @@
         font-size: var(--slovo-xs);
         color: var(--boja-tekst-tiho);
     }
-    &--ukljuceno &__broj { color: var(--boja-tekst-na-akcentu); }
+    &--ukljuceno &__broj { color: var(--boja-tekst-na-oznaci); }
 
     // Krstić za skidanje uslova.
     &__skini {
@@ -743,4 +743,585 @@
 
         > li { margin-right: 0; }
     }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TABELA — zajednički oblik za spiskove u administraciji
+   ═══════════════════════════════════════════════════════════════════════════
+   Koristi je oko 25 ekrana, pa je ovo najvažniji od tri oblika.
+
+   Na uskom ekranu tabela NE prelazi u vodoravni skrol nego u kartice, jedna
+   po redu. Skrol na telefonu znači da se pola podataka ne vidi dok se ne
+   prevuče, a u administraciji se najčešće traži baš ono što je van kadra.
+   Kartice se prave iz istih ćelija: `data-naziv` na `<td>` nosi naziv kolone
+   i ispisuje se u kartici ispred vrednosti.
+*/
+
+.z-tabela {
+    width: 100%;
+    background: var(--boja-povrsina);
+    border: 1px solid var(--boja-linija);
+    border-radius: var(--radijus-panel);
+    overflow: hidden;
+
+    &__okvir {
+        width: 100%;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+    }
+
+    /* ── zaglavlje — tiho, sitno, verzalom ───────────────────────────── */
+
+    thead th {
+        padding: var(--razmak-3) var(--razmak-4);
+        text-align: left;
+        vertical-align: middle;
+
+        font-size: var(--slovo-oznaka);
+        line-height: var(--red-oznaka);
+        font-weight: var(--tezina-jaka);
+        letter-spacing: .1em;
+        text-transform: uppercase;
+        color: var(--boja-tekst-tiho);
+        white-space: nowrap;
+
+        background: var(--boja-podloga-tiha);
+        border-bottom: 1px solid var(--boja-linija);
+    }
+
+    /* Zaglavlje po kome se sortira je dugme, ne samo tekst — da se do njega
+       može doći tastaturom kao i mišem. */
+    &__sort {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--razmak-1);
+
+        padding: 0;
+        border: 0;
+        background: transparent;
+        cursor: pointer;
+
+        font: inherit;
+        letter-spacing: inherit;
+        text-transform: inherit;
+        color: inherit;
+
+        @include z-fokus;
+        &:hover { color: var(--boja-tekst); }
+    }
+
+    &__strelica {
+        width: 0; height: 0;
+        border-left: 3px solid transparent;
+        border-right: 3px solid transparent;
+        border-top: 4px solid currentColor;
+        opacity: .35;
+
+        &--gore   { transform: rotate(180deg); opacity: 1; }
+        &--dole   { opacity: 1; }
+    }
+
+    /* ── redovi ──────────────────────────────────────────────────────── */
+
+    tbody td {
+        padding: var(--razmak-3) var(--razmak-4);
+        vertical-align: middle;
+        border-bottom: 1px solid var(--boja-linija);
+        color: var(--boja-tekst);
+    }
+
+    // Bez zebre — linija je dovoljna, a zebra u dugačkoj tabeli umara.
+    tbody tr:last-child td { border-bottom: 0; }
+
+    tbody tr {
+        @include z-prelaz(background-color);
+        &:hover { background: var(--boja-podloga-tiha); }
+    }
+
+    /* ── kolona sa radnjama ──────────────────────────────────────────── */
+
+    &__radnje {
+        width: 1%;
+        white-space: nowrap;
+        text-align: right;
+    }
+
+    &__radnja {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        margin-left: var(--razmak-1);
+
+        border: 1px solid transparent;
+        border-radius: var(--radijus-panel);
+        background: transparent;
+        cursor: pointer;
+
+        color: var(--boja-tekst-tiho);
+
+        @include z-prelaz(color, border-color, background-color);
+        @include z-fokus;
+
+        svg { width: 16px; height: 16px; }
+
+        // Ikonice su tihe dok se ne pređe mišem — u tabeli od 100 redova
+        // 200 tamnih ikonica je šum.
+        &:hover {
+            color: var(--boja-tekst);
+            border-color: var(--boja-linija-kontrola);
+            background: var(--boja-povrsina);
+        }
+
+        &--opasno:hover {
+            color: var(--boja-oznaka);
+            border-color: var(--boja-oznaka);
+        }
+    }
+
+    /* ── podaci koji se poravnavaju desno (brojevi) ──────────────────── */
+
+    &__broj {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* ── dno: straničenje ────────────────────────────────────────────── */
+
+    &__dno {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--razmak-4);
+        flex-wrap: wrap;
+
+        padding: var(--razmak-3) var(--razmak-4);
+        border-top: 1px solid var(--boja-linija);
+        background: var(--boja-podloga-tiha);
+    }
+
+    &__ukupno {
+        font-size: var(--slovo-sm);
+        color: var(--boja-tekst-tiho);
+    }
+
+    /* ── KARTICE NA USKOM EKRANU ─────────────────────────────────────── */
+
+    @include mobile-tablet {
+        border: 0;
+        background: transparent;
+        overflow: visible;
+
+        table, thead, tbody, tr, td { display: block; width: 100%; }
+
+        // Zaglavlje se ne prikazuje — naziv kolone ide uz svaku vrednost.
+        thead { display: none; }
+
+        tbody tr {
+            margin-bottom: var(--razmak-3);
+            padding: var(--razmak-2) 0;
+
+            background: var(--boja-povrsina);
+            border: 1px solid var(--boja-linija);
+            border-radius: var(--radijus-panel);
+
+            &:hover { background: var(--boja-povrsina); }
+        }
+
+        tbody td {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: var(--razmak-4);
+
+            padding: var(--razmak-2) var(--razmak-4);
+            border-bottom: 0;
+            text-align: left;
+
+            // Naziv kolone dolazi iz `data-naziv` na samoj ćeliji.
+            &::before {
+                content: attr(data-naziv);
+                flex: 0 0 auto;
+
+                font-size: var(--slovo-oznaka);
+                line-height: var(--red-oznaka);
+                font-weight: var(--tezina-jaka);
+                letter-spacing: .08em;
+                text-transform: uppercase;
+                color: var(--boja-tekst-tiho);
+            }
+
+            // Ćelija bez naziva (npr. radnje) ne pravi prazan levi stubac.
+            &:not([data-naziv])::before { content: none; }
+        }
+
+        &__radnje {
+            width: auto;
+            justify-content: flex-end;
+            border-top: 1px solid var(--boja-linija);
+            margin-top: var(--razmak-2);
+            padding-top: var(--razmak-3);
+        }
+
+        &__broj { text-align: right; }
+
+        &__dno {
+            border: 1px solid var(--boja-linija);
+            border-radius: var(--radijus-panel);
+        }
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   OBRAZAC — zajednički oblik za unos
+   ═══════════════════════════════════════════════════════════════════════════
+   Oznaka IZNAD polja, pomoćni tekst ispod tiho, greška ispod SA TEKSTOM.
+
+   Do sada je greška bila samo crvena boja na natpisu, bez ijedne reči — što
+   pada i na WCAG 1.4.1 (boja kao jedini nosilac informacije) i, prostije,
+   ne kaže korisniku šta da popravi.
+*/
+
+.z-obrazac {
+    max-width: 860px;
+
+    &__grupa {
+        padding-bottom: var(--razmak-6);
+        margin-bottom: var(--razmak-6);
+        border-bottom: 1px solid var(--boja-linija);
+
+        &:last-of-type { border-bottom: 0; margin-bottom: 0; }
+    }
+
+    &__naslov-grupe {
+        margin: 0 0 var(--razmak-1);
+        font-family: var(--pismo-naslov);
+        font-size: var(--slovo-lg);
+        line-height: var(--red-lg);
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-tekst);
+    }
+
+    &__opis-grupe {
+        margin: 0 0 var(--razmak-5);
+        font-size: var(--slovo-sm);
+        line-height: var(--red-md);
+        color: var(--boja-tekst-tiho);
+    }
+
+    /* Dva polja u redu na širokom, jedno na uskom. */
+    &__red {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--razmak-4);
+
+        @include mobile { grid-template-columns: minmax(0, 1fr); }
+    }
+
+    &__polje {
+        margin-bottom: var(--razmak-4);
+        min-width: 0;
+    }
+
+    &__oznaka {
+        display: block;
+        margin-bottom: var(--razmak-2);
+
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        font-weight: var(--tezina-srednja);
+        color: var(--boja-tekst);
+    }
+
+    // Zvezdica uz obavezno polje. Neobavezna se PIŠU rečju — vidi `__uz`.
+    &__obavezno {
+        color: var(--boja-oznaka);
+        margin-left: 2px;
+    }
+
+    &__uz {
+        font-weight: var(--tezina-obicna);
+        color: var(--boja-tekst-tiho);
+        margin-left: var(--razmak-2);
+    }
+
+    &__pomoc {
+        margin: var(--razmak-2) 0 0;
+        font-size: var(--slovo-xs);
+        line-height: var(--red-md);
+        color: var(--boja-tekst-tiho);
+    }
+
+    /* Greška — crvena, ali uz nju UVEK stoji tekst. */
+    &__greska {
+        display: flex;
+        align-items: flex-start;
+        gap: var(--razmak-2);
+
+        margin: var(--razmak-2) 0 0;
+        font-size: var(--slovo-xs);
+        line-height: var(--red-md);
+        color: var(--boja-oznaka);
+
+        &::before {
+            content: '!';
+            flex: 0 0 auto;
+
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 14px;
+            height: 14px;
+            margin-top: 1px;
+
+            border-radius: var(--radijus-pun);
+            background: var(--boja-oznaka);
+            color: var(--boja-tekst-na-oznaci);
+            font-size: var(--slovo-oznaka);
+            font-weight: var(--tezina-jaka);
+        }
+    }
+
+    // Polje u grešci dobija crvenu ivicu — uz tekst, ne umesto njega.
+    &__polje--greska {
+        input, textarea, select, .z-polje__unos {
+            border-color: var(--boja-oznaka);
+        }
+    }
+
+    /* ── kvačica ─────────────────────────────────────────────────────── */
+
+    &__kvacica {
+        display: flex;
+        align-items: flex-start;
+        gap: var(--razmak-3);
+        margin-bottom: var(--razmak-3);
+        cursor: pointer;
+
+        input[type="checkbox"] {
+            flex: 0 0 auto;
+            width: 18px;
+            height: 18px;
+            margin: 1px 0 0;
+            accent-color: var(--boja-oznaka);
+            cursor: pointer;
+
+            @include z-fokus;
+        }
+    }
+
+    &__kvacica-tekst {
+        min-width: 0;
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        color: var(--boja-tekst);
+    }
+
+    &__kvacica-pomoc {
+        display: block;
+        margin-top: 2px;
+        font-size: var(--slovo-xs);
+        line-height: var(--red-md);
+        color: var(--boja-tekst-tiho);
+    }
+
+    /* ── dno sa dugmadima — zalepljeno ───────────────────────────────── */
+
+    &__dno {
+        position: sticky;
+        bottom: 0;
+        z-index: var(--sloj-lepljivo);
+
+        display: flex;
+        align-items: center;
+        gap: var(--razmak-3);
+
+        margin-top: var(--razmak-6);
+        padding: var(--razmak-4) 0;
+
+        background: var(--boja-podloga);
+        border-top: 1px solid var(--boja-linija);
+
+        @include mobile { flex-direction: column-reverse; align-items: stretch; }
+    }
+
+    &__poruka-uspeha {
+        display: flex;
+        align-items: center;
+        gap: var(--razmak-3);
+        flex-wrap: wrap;
+
+        margin-left: auto;
+        font-size: var(--slovo-sm);
+        color: var(--boja-uspeh);
+        font-weight: var(--tezina-srednja);
+
+        @include mobile { margin-left: 0; }
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   OBAVEŠTENJA U UGLU
+   ═══════════════════════════════════════════════════════════════════════════
+   Uspeh, greška, upozorenje. Same nestaju; klikom se sklanjaju ranije.
+*/
+
+.z-obavestenja {
+    position: fixed;
+    right: var(--razmak-5);
+    bottom: var(--razmak-5);
+    z-index: var(--sloj-poruka);
+
+    display: flex;
+    flex-direction: column;
+    gap: var(--razmak-2);
+    max-width: 380px;
+
+    @include mobile {
+        left: var(--razmak-4);
+        right: var(--razmak-4);
+        bottom: var(--razmak-4);
+        max-width: none;
+    }
+}
+
+.z-obavestenje {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--razmak-3);
+
+    padding: var(--razmak-3) var(--razmak-4);
+
+    background: var(--boja-povrsina);
+    border: 1px solid var(--boja-linija);
+    border-left: var(--razmak-1) solid var(--boja-tekst-tiho);
+    border-radius: var(--radijus-panel);
+    box-shadow: var(--senka-lebdi);
+
+    font-size: var(--slovo-sm);
+    line-height: var(--red-md);
+    color: var(--boja-tekst);
+
+    &--uspeh      { border-left-color: var(--boja-uspeh); }
+    &--greska     { border-left-color: var(--boja-oznaka); }
+    &--upozorenje { border-left-color: var(--boja-upozorenje); }
+
+    &__tekst { flex: 1 1 auto; min-width: 0; }
+
+    &__zatvori {
+        flex: 0 0 auto;
+        width: 24px; height: 24px;
+        padding: 0;
+        border: 0;
+        border-radius: var(--radijus-panel);
+        background: transparent;
+        color: var(--boja-tekst-tiho);
+        font-size: var(--slovo-md);
+        line-height: 1;
+        cursor: pointer;
+
+        @include z-fokus;
+        &:hover { color: var(--boja-tekst); }
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PROZOR ZA POTVRDU
+   ═══════════════════════════════════════════════════════════════════════════
+   Naslov, posledica napisana konkretno, opasna radnja crvena, odustajanje
+   tiho. Zatečeni `.delete-modal` je pisao samo „Potvrdite brisanje" i nije
+   govorio šta se briše.
+*/
+
+.z-potvrda {
+    position: fixed;
+    inset: 0;
+    z-index: var(--sloj-prozor);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--razmak-4);
+
+    background: var(--boja-zavesa);
+
+    &__okvir {
+        width: 100%;
+        max-width: 460px;
+        padding: var(--razmak-5);
+
+        background: var(--boja-povrsina);
+        border-radius: var(--radijus-panel);
+        box-shadow: var(--senka-prozor);
+    }
+
+    &__naslov {
+        margin: 0 0 var(--razmak-3);
+        font-family: var(--pismo-naslov);
+        font-size: var(--slovo-lg);
+        line-height: var(--red-lg);
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-tekst);
+    }
+
+    &__tekst {
+        margin: 0 0 var(--razmak-5);
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
+        color: var(--boja-tekst-tiho);
+
+        strong { color: var(--boja-tekst); font-weight: var(--tezina-jaka); }
+    }
+
+    &__dugmad {
+        display: flex;
+        gap: var(--razmak-3);
+        justify-content: flex-end;
+
+        @include mobile { flex-direction: column-reverse; }
+    }
+}
+
+
+/* ── Zatečena kvačica: pravi `input` je sakriven, kvadratić ostaje ukras ───
+ * `fields/check.js` je od 2026-08-28 pravi `<input type=checkbox>` unutar
+ * `<label>`. Sam unos se sklanja iz vida, ali OSTAJE u toku fokusa — sakriva
+ * se providnošću, ne sa `display: none`, jer se do skrivenog polja ne može
+ * doći tastaturom. Okvir fokusa se prenosi na kvadratić.
+ */
+.checkbox-wrap {
+    position: relative;
+    cursor: pointer;
+
+    .checkbox-unos {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 18px;
+        height: 18px;
+        margin: 0;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+    .checkbox-unos:focus-visible ~ .checkbox {
+        outline: 2px solid var(--boja-fokus);
+        outline-offset: 2px;
+    }
+}
+
+/* Tiha vrednost u ćeliji tabele — npr. „nije raspoređen". */
+.z-tabela__tiho {
+    color: var(--boja-tekst-tiho);
+    font-style: italic;
 }

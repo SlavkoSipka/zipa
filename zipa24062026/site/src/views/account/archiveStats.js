@@ -3,6 +3,7 @@ import { Container, Row, Col } from 'reactstrap';
 import { Bar } from 'react-chartjs-2';
 
 import Page from '../../containers/page';
+import AdminOkvir from '../../components/adminOkvir';
 import { API_ENDPOINT } from '../../constants';
 
 /**
@@ -80,11 +81,18 @@ class ArchiveStats extends Component {
         };
 
         return (
-            <div className="account-wrap arhiva-stat">
+            <AdminOkvir
+                lang={this.props.lang}
+                uData={this.props.uData}
+                settings={this.props.settings}
+                putanja={this.props[0] && this.props[0].location ? this.props[0].location.pathname : ''}
+                signOut={this.props.signOut}
+                naslov={'Statistika arhive'.translate(this.props.lang)}
+            >
+                <div className="account-wrap arhiva-stat">
                 <Container>
                     <Row>
                         <Col lg="12">
-                            <h1>Arhiva od početka rada</h1>
 
                             {ucitava ? <p className="uvod">Učitavam…</p> : greska ? (
                                 <div className="napomena upozorenje">{greska}</div>
@@ -172,7 +180,8 @@ class ArchiveStats extends Component {
                         </Col>
                     </Row>
                 </Container>
-            </div>
+                </div>
+            </AdminOkvir>
         );
     }
 }

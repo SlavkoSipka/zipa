@@ -10,6 +10,7 @@ import {
 import Isvg from 'react-inlinesvg';
 import image from '../../../assets/svg/picture.svg';
 import { API_ENDPOINT } from '../../../constants';
+import { proveriSliku, ACCEPT } from './proveraSlike';
 
 class Image extends Component {
     constructor(props) {
@@ -24,8 +25,16 @@ class Image extends Component {
     selectFile(e) {
         let input = e.target;
         if (input.files && input.files[0]) {
+            const greska = proveriSliku(input.files[0], this.props.lang);
+            if (greska) {
+                this.setState({ _greska: greska, _loading: null });
+                input.value = '';
+                return;
+            }
+
             this.setState({
-                _loading: true
+                _loading: true,
+                _greska: null
             })
 
             let formData = new FormData();
@@ -40,7 +49,16 @@ class Image extends Component {
 
                 },
                 body: formData
-            }).then((res) => res.text()).then((img) => {
+            }).then((res) => {
+                if (!res.ok) {
+                    return res.text().then((poruka) => {
+                        this.setState({ _greska: poruka || 'Slanje nije uspjelo.', _loading: null });
+                        return null;
+                    });
+                }
+                return res.text();
+            }).then((img) => {
+                if (img === null || img === undefined) return;
                 this.props.onChange(img);
                 this.setState({
                     _loading: null
@@ -66,7 +84,7 @@ class Image extends Component {
                 <label>{this.props.label}</label>
 
                 <div className="image-picker single-image-picker">
-                    <input type="file" onChange={this.selectFile} />
+                    <input type="file" accept={ACCEPT} onChange={this.selectFile} />
                     {this.props.value ?
                         <img src={this.props.value} />
                         :
@@ -85,6 +103,10 @@ class Image extends Component {
 
 
                 </div>
+
+                {this.state._greska ?
+                    <p className="greska-slike" role="alert">{this.state._greska}</p>
+                    : null}
 
             </div>
 

@@ -28,6 +28,18 @@
     --boja-tekst-tiho:    #6B7079;   /* 4.98:1 na beloj, 4.60:1 na tihoj */
     --boja-linija:        #E6E8EB;   /* svako razdvajanje u toku strane */
 
+    /* Ivica KONTROLE — polja, pilula, obrubljena dugmad. Dodato 2026-08-27.
+     *
+     * `--boja-linija` daje 1,23:1 na beloj. Za razdvajanje u toku teksta to je
+     * dovoljno (i namerno tiho), ali kad je ivica JEDINO što pokazuje gde
+     * počinje polje za unos, WCAG 1.4.11 traži 3:1. Bez ovoga su prijava,
+     * registracija, kontakt i svi filteri imali polja koja se od bele strane
+     * razlikuju za jedva primetnu nijansu.
+     *
+     * 3,39:1 na beloj i 3,14:1 na tihoj podlozi (`#F5F6F8`) — prolazi na obe,
+     * a ostaje u istoj hladnoj sivoj porodici kao `--boja-linija`. */
+    --boja-linija-kontrola: #868C93;
+
     /* ── TRAKA ────────────────────────────────────────────────────────────
      * Zaglavlje i naslovni blok. Jedina tamna površina na sajtu.
      * Ovo je jedina grupa koju teme A, B i C razlikuju.
@@ -36,6 +48,14 @@
     --boja-traka-tekst:       #FFFFFF;   /* 18.62:1 */
     --boja-traka-tekst-tiho:  #B4B9C0;   /* 9.44:1 — podnaslov, brojač */
     --boja-traka-linija:      #3A3E44;   /* razdvajanje unutar trake */
+
+    /* Ivica KONTROLE koja stoji na traci ili na tamnom panelu (dugmad za
+     * rezoluciju, strelice uz fotografiju). Dok je traka tamna, obično
+     * razdvajanje je dovoljno kontrastno i ovo pokazuje na njega. Pod temom
+     * „trenutni" je traka BELA a `--boja-traka-linija` svetla (`#EDEFF5`),
+     * pa su te kontrole davale 1,06:1 i 1,15:1 — nisu se videle uopšte.
+     * Dodato 2026-08-27. */
+    --boja-traka-linija-kontrola: var(--boja-traka-linija);
 
     /* Površina koja stoji NA tamnoj traci — panel sa cenama u prozoru
      * fotografije. Malo svetlija od trake, da se odvoji a ostane deo istog
@@ -53,6 +73,19 @@
     --boja-oznaka:        #D60006;   /* crvena identiteta — oznake, aktivno */
     --boja-najava:        #2877A3;   /* traka najave — svetlija plava sa uzora */
 
+    /* Traka najave je PLAVA i pod temom „trenutni" — ona je jedina površina
+     * koja se ne menja sa temom. Zato njen tekst ne sme da ide preko
+     * `--boja-traka-tekst`: ta boja se pod „trenutni" prevrne u tamnu i na
+     * plavoj daje 3,34:1. Dodato 2026-08-27. Belo na `#2877A3` je 5,40:1. */
+    --boja-najava-tekst:  #FFFFFF;
+
+    /* Tekst na PILULI KOJA STOJI NA TRACI (dugme „Prijava", dugme u traci
+     * najave). Pilula je svetla, tekst uzima boju same trake — to je obrtanje
+     * koje radi dok je traka tamna. Pod „trenutni" je traka BELA, pa bi tekst
+     * ispao beo na svetloj piluli (1,09:1, izmereno). Zato ima svoje ime i
+     * pod tom temom pokazuje na tamnu. Dodato 2026-08-27. */
+    --boja-pilula-tekst:  var(--boja-traka);
+
     --boja-uspeh:         #166A41;   /* 6.62:1 na beloj */
     --boja-upozorenje:    #8A5A0F;   /* 5.92:1 na beloj */
 
@@ -66,6 +99,21 @@
      * sivoj podlozi nije prolazila. Na beloj daje 5.44:1, pa je ista boja. */
     --boja-tekst-na-akcentu: var(--boja-akcenat-tekst);
     --boja-oznaka-tekst:     var(--boja-oznaka);
+
+    /* Tekst na OZNACI — crvenoj, zelenoj, braon. Dodato 2026-08-27.
+     *
+     * Ovo nije isto što i tekst na amberu. `--boja-akcenat-tekst` je tamna
+     * (`#3A2B0C`) jer amber je svetao; na tamnim podlogama oznake ista ta
+     * boja daje 2,52:1 (crvena), 2,07:1 (zelena) i 2,32:1 (braon) — sve palo.
+     * Do 2026-08-27 su sve tri oznake i uključena pilula filtera koristile
+     * `--boja-tekst-na-akcentu` i zato bile nečitljive.
+     *
+     * Belo na istim podlogama: 5,44:1 / 6,62:1 / 5,92:1. */
+    --boja-tekst-na-oznaci:  #FFFFFF;
+
+    /* Podloga sitne oznake koja stoji PREKO fotografije. `--boja-zavesa` je
+     * na .55 davala 4,36:1 za belo nad svetlim kadrom — ispod praga. */
+    --boja-zastor-oznaka: rgba(9, 12, 22, .66);   /* belo na njoj: 6,04:1 */
 
     /* ── VEZA ─────────────────────────────────────────────────────────────
      * Amber je površina i nikad tekst, pa veza ne može da se razlikuje bojom
@@ -104,6 +152,19 @@
     --boja-oznaka-traka: #FF4D52;
     --boja-zavesa:           rgba(17, 19, 21, .55);
 
+    /* ── ZASTOR PREKO FOTOGRAFIJE ─────────────────────────────────────────
+     * Ovo NISU boje palete nego zatamnjenje koje se stavlja PREKO snimka da
+     * bi belo na njemu ostalo čitljivo. Nemaju parnjaka među bojama strane i
+     * zato imaju svoja imena. Do 2026-08-27 su stajale zakucane kao
+     * `rgba(9, 12, 22, …)` po fajlovima naslovne i video-strane.
+     *
+     * `--boja-zavesa` se ne koristi za ovo: ona zatamnjuje CELU stranu iza
+     * prozora i na .55 je preslaba da natpis preko svetle fotografije ostane
+     * čitljiv. */
+    --boja-zastor-foto:  rgba(9, 12, 22, .9);    /* natpis preko dna snimka */
+    --boja-zastor-dugme: rgba(9, 12, 22, .58);   /* okruglo dugme na snimku */
+    --senka-preko-foto:  0 1px 3px rgba(9, 12, 22, .55);  /* znak na snimku */
+
     /* ── SLOVA ────────────────────────────────────────────────────────────
      * Figtree nosi ceo sajt — i naslove i tekst i podatke. Mono pisma nema
      * u ovom pravcu; kataloški broj se izdvaja težinom 500, ne pismom.
@@ -115,10 +176,27 @@
     --pismo-tekst:   'Figtree', system-ui, -apple-system, sans-serif;
     --pismo-podaci:  'Figtree', system-ui, -apple-system, sans-serif;
 
+    /* Tri koraka su dodata 2026-08-27, u kontrolnom prolazu: nisu nove
+     * odluke o izgledu nego vrednosti koje su već bile zakucane po fajlovima
+     * i sad imaju ime. Bez njih se zakucane mere nisu imale u šta prevesti.
+     *
+     *   `--slovo-oznaka` — oznaka preko fotografije („NOVO", broj snimaka).
+     *      Verzal sa razmakom slova na 12px izgleda krupnije od 12px teksta,
+     *      pa lestvica tu ide ispod `xs`.
+     *   `--slovo-sitno`  — gust panel sa cenama u prozoru fotografije, gde
+     *      red podatka mora da stane uz vrednost bez prelamanja.
+     *   `--slovo-lg-plus` — korak koji je NEDOSTAJAO između `lg` (18) i
+     *      `xl` (24). `_alatnaTraka.scss` je zbog te rupe imao zapisano
+     *      „ne poklapa tačno (24 ili 32 najbliži), pa ide direktna vrednost".
+     */
+    --slovo-oznaka:  0.625rem;    --red-oznaka:  1.3;   /* 10px */
+    --slovo-sitno:   0.71875rem;  --red-sitno:   1.45;  /* 11,5px */
+
     --slovo-xs:   0.75rem;    --red-xs:   1.4;   /* oznaka kategorije, brojač */
     --slovo-sm:   0.875rem;   --red-sm:   1.45;  /* podaci uz fotografiju */
     --slovo-md:   1rem;       --red-md:   1.55;  /* tekst */
     --slovo-lg:   1.125rem;   --red-lg:   1.4;   /* naslov kartice */
+    --slovo-lg-plus: 1.375rem; --red-lg-plus: 1.25; /* 22px — naslov strane */
     --slovo-xl:   1.5rem;     --red-xl:   1.3;   /* naslov odeljka */
     --slovo-2xl:  2rem;       --red-2xl:  1.2;   /* naslov strane */
     --slovo-3xl:  2.75rem;    --red-3xl:  1.1;   /* naslovni blok u traci */
@@ -174,6 +252,12 @@
     --radijus-panel:  6px;                     /* kartica, polje, lista, oznaka */
     --radijus-mali:   var(--radijus-panel);    /* zadržano ime, ista vrednost */
     --radijus-pun:    999px;                   /* pilula filtera */
+
+    /* Sitna oznaka preko fotografije je visoka svega 14–16px; na njoj se
+     * osnovnih 6px vidi kao gotovo pun krug i pojede uglove natpisa. Ovo je
+     * jedini izuzetak od „dva radijusa" i postoji samo zbog te razmere.
+     * Dodato 2026-08-27 — dotad je 2px/3px stajalo zakucano na osam mesta. */
+    --radijus-oznaka: 3px;
 
     /* ── SENKE ────────────────────────────────────────────────────────────
      * PRAVILO: sve što stoji u toku strane razdvaja se LINIJOM.
@@ -280,7 +364,22 @@
      * nasledio vezu u boji teksta i izgubio plavu — opet promena
      * zatečenog izgleda. */
     --boja-veza:       #3C59B9;
-    --boja-veza-traka: #FFFFFF;
+
+    /* `--boja-veza-traka` je BELA u novom pravcu, jer je traka tamna. Pod
+     * ovom temom je traka BELA (`--boja-traka: #FFFFFF` ispod), pa je bela
+     * veza značila belo na belom — 1:1.
+     *
+     * Izmereno pre popravke (2026-08-27, sveže učitavanje pod „trenutni"):
+     * `.z-podnozje__veza` na 19 od 20 strana i `.z-zaglavlje__trazi-se-pojam`
+     * na naslovnoj — celo podnožje se nije videlo. Zaglavlje i podnožje su
+     * zajednički i pod ovom temom, pa je to obaralo ceo sajt, ne jednu stranu.
+     *
+     * Ista plava kao `--boja-veza`: pod ovom temom traka i strana su iste
+     * boje, pa nema razloga da se veze na njima razlikuju. */
+    --boja-veza-traka: #3C59B9;
+
+    /* Traka je bela, pa tekst na svetloj piluli mora da bude taman. */
+    --boja-pilula-tekst: #1F1F1F;
 
     /* Zatečeni okvir fokusa je bio u boji akcenta, dakle plav. Zadržava se. */
     --boja-fokus:       #3C59B9;
@@ -297,16 +396,25 @@
     --boja-traka-tekst:      #1F1F1F;
     --boja-traka-tekst-tiho: #6D7587;
     --boja-traka-linija:     #EDEFF5;
+    /* Traka je pod ovom temom bela, pa kontrole na njoj uzimaju istu
+     * vidljivu ivicu kao kontrole na strani. */
+    --boja-traka-linija-kontrola: var(--boja-linija-kontrola);
     --boja-oznaka-traka:     #D60006;
 
     --pismo-naslov:  'Poppins', sans-serif;
     --pismo-tekst:   'Poppins', sans-serif;
     --pismo-podaci:  'Poppins', sans-serif;
 
+    /* Zatečeni sajt je ceo pisan u px, pa i dodati koraci ovde idu u px —
+     * u rem bi se pod ovom temom pomerili. */
+    --slovo-oznaka:  10px;    --red-oznaka:  1.3;
+    --slovo-sitno:   11.5px;  --red-sitno:   1.45;
+
     --slovo-xs:   12px;   --red-xs:   1.4;
     --slovo-sm:   14px;   --red-sm:   1.45;
     --slovo-md:   16px;   --red-md:   1.5;
     --slovo-lg:   18px;   --red-lg:   1.4;
+    --slovo-lg-plus: 22px; --red-lg-plus: 1.25;
     --slovo-xl:   24px;   --red-xl:   1.3;
     --slovo-2xl:  32px;   --red-2xl:  1.2;
     --slovo-3xl:  42px;   --red-3xl:  1.1;
@@ -314,6 +422,10 @@
     --radijus-mali:   10px;
     --radijus-panel:  15px;
     --radijus-pun:    122px;
+
+    /* Zatečeni sajt nije imao sitne oznake preko fotografije — one dolaze sa
+     * redizajnom i pod ovom temom zadržavaju svoj oblik. */
+    --radijus-oznaka: 3px;
 
     --senka-lebdi:  0px 14px 24px 0px rgba(0, 0, 0, .1);
     --senka-prozor: 0px 14px 24px 0px rgba(0, 0, 0, .1);
@@ -329,5 +441,24 @@
         --prelaz-brzo:   0ms;
         --prelaz-obicno: 0ms;
         --prelaz-sporo:  0ms;
+    }
+}
+
+/* ── TELEFON: sitna slova se dižu ─────────────────────────────────────────
+ * Na 375px su oznake preko fotografije bile 10px, a gust red podataka 11,5px.
+ * Na ekranu koji se drži u ruci to je ispod granice udobnog čitanja, a arhiva
+ * se upravo tako i pregleda. Menjaju se SAMO dva najsitnija koraka i SAMO na
+ * telefonu — lestvica iznad njih ostaje ista, pa se raspored ne pomera.
+ *
+ * Prelomna tačka je ispisana, ne kroz mixin: `_settings.scss` (gde mixini
+ * stoje) uvozi se POSLE ovog fajla, pa mixin ovde još ne postoji.
+ *
+ * Tema „trenutni" ovo ne dobija — njen blok je specifičniji (`[data-tema]`),
+ * pa zatečeni izgled ostaje slovo do slova isti.
+ */
+@media (max-width: 767px) {
+    :root {
+        --slovo-oznaka:  0.6875rem;   /* 10 → 11px */
+        --slovo-sitno:   0.75rem;     /* 11,5 → 12px */
     }
 }

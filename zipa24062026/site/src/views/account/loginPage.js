@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 import Page from '../../containers/page';
+import { posleprijave } from '../../posleprijave';
 
 import { API_ENDPOINT, PHOTOS_ENDPOINT } from '../../constants';
 import moment from 'moment';
@@ -90,8 +91,17 @@ class LoginPage extends Component {
             } else {
                 localStorage.setItem('authToken', result.token);
                 localStorage.removeItem('cart');
-                this.props.verifyUser();
-                this.props[0].history.push('/account/profile')
+
+                /*
+                 * Kuda posle prijave zavisi od uloge: administrator ide na
+                 * nadzornu ploču u administratorskom okviru, svi ostali na
+                 * svoj nalog. Zato se čeka `verifyUser` — do tada se uloga
+                 * još ne zna. Ako provera padne, ide se na nalog, kao i do
+                 * sada.
+                 */
+                Promise.resolve(this.props.verifyUser()).then((u) => {
+                    this.props[0].history.push(posleprijave(u));
+                });
             }
         }).catch(() => {
             this.setState({

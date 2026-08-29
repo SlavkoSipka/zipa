@@ -194,6 +194,11 @@ class EditAccountPage extends Component {
                             <SlikaProfila
                                 value={this.state.podaci.profilePhoto}
                                 onChange={(v) => this.postavi('profilePhoto', v)}
+                                lang={l}
+                                /* `/upload` je od 2026-08-28 zaključan na
+                                   administratora; slika profila ide svojom
+                                   rutom, sa istom provjerom sadržaja. */
+                                ruta="/upload/avatar"
                             />
                             <p className="z-nalog__napomena">
                                 {'Slika profila se vidi uz vaše galerije. Kliknite na kvadrat da je zamijenite.'.translate(l)}

@@ -1,0 +1,227 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   NADZORNA PLOČA ADMINISTRACIJE
+   ═══════════════════════════════════════════════════════════════════════════
+   Bela radna površina, podatak je glavni. Bez senki, bez preliva, bez treće
+   dimenzije — grafikon ima samo liniju i mrežu iz `--boja-linija`.
+
+   Amber se ovde NE pojavljuje: na ploči nema glavne radnje. Crvena samo kad
+   promena pada.
+*/
+
+.z-ploca {
+
+    /* ── 1. ključni brojevi ───────────────────────────────────────────── */
+
+    &__brojevi {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: var(--razmak-4);
+        margin-bottom: var(--razmak-6);
+    }
+
+    &__kartica {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+
+        padding: var(--razmak-4);
+        background: var(--boja-povrsina);
+        border: 1px solid var(--boja-linija);
+        border-radius: var(--radijus-panel);
+    }
+
+    &__kartica-naziv {
+        font-size: var(--slovo-oznaka);
+        line-height: var(--red-oznaka);
+        font-weight: var(--tezina-jaka);
+        letter-spacing: .1em;
+        text-transform: uppercase;
+        color: var(--boja-tekst-tiho);
+    }
+
+    &__kartica-broj {
+        font-family: var(--pismo-podaci);
+        font-size: var(--slovo-2xl);
+        line-height: var(--red-2xl);
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-tekst);
+        font-variant-numeric: tabular-nums;
+    }
+
+    // Kad podatka nema, stoji rečenica — ne nula.
+    &__kartica-prazno {
+        font-size: var(--slovo-sm);
+        line-height: var(--red-md);
+        color: var(--boja-tekst-tiho);
+        padding: var(--razmak-2) 0;
+    }
+
+    &__kartica-uz {
+        font-size: var(--slovo-xs);
+        line-height: var(--red-md);
+        color: var(--boja-tekst-tiho);
+    }
+
+    &__promena {
+        margin-top: var(--razmak-1);
+        font-size: var(--slovo-xs);
+        line-height: var(--red-md);
+        font-weight: var(--tezina-srednja);
+
+        &--gore { color: var(--boja-uspeh); }
+        &--dole { color: var(--boja-oznaka); }
+    }
+
+    /* ── paneli ───────────────────────────────────────────────────────── */
+
+    &__glavni,
+    &__panel {
+        padding: var(--razmak-5);
+        margin-bottom: var(--razmak-5);
+
+        background: var(--boja-povrsina);
+        border: 1px solid var(--boja-linija);
+        border-radius: var(--radijus-panel);
+    }
+
+    &__zaglavlje {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: var(--razmak-4);
+        flex-wrap: wrap;
+        margin-bottom: var(--razmak-4);
+    }
+
+    &__naslov {
+        margin: 0;
+        font-family: var(--pismo-naslov);
+        font-size: var(--slovo-lg);
+        line-height: var(--red-lg);
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-tekst);
+    }
+
+    /* Odakle podatak dolazi — piše uz svaki grafikon, ne samo u kodu. */
+    &__izvor {
+        margin: 2px 0 0;
+        font-size: var(--slovo-xs);
+        line-height: var(--red-md);
+        color: var(--boja-tekst-tiho);
+    }
+
+    &__veza {
+        font-size: var(--slovo-sm);
+        font-weight: var(--tezina-srednja);
+        white-space: nowrap;
+        @include z-veza-meni;
+        @include z-fokus;
+    }
+
+    /* ── izbor perioda ────────────────────────────────────────────────── */
+
+    &__periodi {
+        display: flex;
+        gap: var(--razmak-1);
+        flex: 0 0 auto;
+    }
+
+    &__period {
+        padding: var(--razmak-2) var(--razmak-3);
+
+        border: 1px solid var(--boja-linija-kontrola);
+        border-radius: var(--radijus-panel);
+        background: var(--boja-povrsina);
+
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-xs);
+        font-weight: var(--tezina-srednja);
+        color: var(--boja-tekst);
+        cursor: pointer;
+        white-space: nowrap;
+
+        @include z-prelaz(background-color, border-color, color);
+        @include z-fokus;
+
+        &:hover { border-color: var(--boja-tekst-tiho); }
+
+        // Izabrani period — crvena je boja aktivnog stanja na celom sajtu.
+        &--ovde {
+            background: var(--boja-oznaka);
+            border-color: var(--boja-oznaka);
+            color: var(--boja-tekst-na-oznaci);
+        }
+    }
+
+    /* ── grafikoni ────────────────────────────────────────────────────── */
+
+    &__grafikon {
+        position: relative;
+        height: 260px;
+
+        // Kostur zauzima isto mesto kao grafikon, da se ploča ne pomera
+        // kad podaci stignu.
+        > .z-kostur--slika { height: 100%; aspect-ratio: auto; }
+    }
+
+    &__grafikon--veliki {
+        height: 340px;
+
+        @include mobile { height: 240px; }
+    }
+
+    &__par {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--razmak-5);
+
+        @include mobile-tablet { grid-template-columns: minmax(0, 1fr); }
+
+        // U paru paneli nose svoj razmak kroz mrežu.
+        > .z-ploca__panel { margin-bottom: 0; }
+    }
+
+    /* ── 4. poslednja aktivnost ───────────────────────────────────────── */
+
+    &__spisak {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    &__stavka {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 2px var(--razmak-4);
+        align-items: baseline;
+
+        padding: var(--razmak-3) 0;
+        border-bottom: 1px solid var(--boja-linija);
+
+        &:last-child { border-bottom: 0; }
+    }
+
+    &__stavka-naziv {
+        grid-column: 1;
+        font-size: var(--slovo-sm);
+        font-weight: var(--tezina-srednja);
+        color: var(--boja-tekst);
+        overflow-wrap: anywhere;
+    }
+
+    &__stavka-uz {
+        grid-column: 1;
+        font-size: var(--slovo-xs);
+        color: var(--boja-tekst-tiho);
+    }
+
+    &__stavka-datum {
+        grid-column: 2;
+        grid-row: 1 / span 2;
+        font-family: var(--pismo-podaci);
+        font-size: var(--slovo-xs);
+        color: var(--boja-tekst-tiho);
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+    }
+}

@@ -173,7 +173,7 @@
         cursor: pointer;
         opacity: .55;
 
-        img { display: block; border-radius: 2px; }
+        img { display: block; border-radius: var(--radijus-oznaka); }
 
         transition: opacity var(--prelaz-brzo) var(--prelaz-kriva),
                     box-shadow var(--prelaz-brzo) var(--prelaz-kriva);
@@ -349,7 +349,20 @@
         left: auto;
         right: 0;
         min-width: calc(var(--razmak-8) * 4);
+        max-width: calc(var(--razmak-8) * 5);
         padding: var(--razmak-3);
+
+        /*
+         * Panel je `flex` red, a u njemu stoji samo jedna grupa. Bez ovoga se
+         * grupa svede na širinu najduže reči („Preuzimanja", 105px), pa su
+         * stavke — i njihova podloga na hover — stajale na levoj polovini
+         * panela širokog 256px. Sa `flex: 1 1 auto` grupa popuni panel, a
+         * `width: 100%` na samoj stavci konačno znači punu širinu.
+         */
+        > .z-zaglavlje__grupa { flex: 1 1 auto; }
+
+        /* Duga adresa e-pošte ne sme da razvuče panel. */
+        .z-zaglavlje__naslov-grupe { overflow-wrap: anywhere; }
     }
 
     &__stubovi {
@@ -402,6 +415,10 @@
         break-inside: avoid;
 
         width: 100%;
+        // Razmak unutra se računa U širinu — inače `width: 100%` znači „puna
+        // širina PA JOŠ 16px", pa stavka viri iz panela. Do sada je to krio
+        // Bootstrap-ov opšti `border-box`; ovde stoji izričito.
+        box-sizing: border-box;
         padding: var(--razmak-2);
         border: 0;
         border-radius: var(--radijus-mali);
@@ -698,7 +715,9 @@
         font-size: var(--slovo-najava);
         line-height: var(--red-najava);
         font-weight: var(--tezina-poludebela);
-        color: var(--boja-traka-tekst);
+        // Ne `--boja-traka-tekst`: traka najave je plava pod SVIM temama, a
+        // ta boja se pod „trenutni" prevrne u tamnu i padne na 3,34:1.
+        color: var(--boja-najava-tekst);
     }
 
     // Naziv galerije uz natpis — tiši, da natpis vodi.
@@ -717,7 +736,10 @@
         border-radius: var(--radijus-pun);
 
         background: var(--boja-podloga);
-        color: var(--boja-traka);
+        // `--boja-pilula-tekst` je `--boja-traka` dok je traka tamna, a pod
+        // temom „trenutni" tamna vrednost — tamo je traka bela, pa bi ovo
+        // inače bilo belo na svetloj piluli.
+        color: var(--boja-pilula-tekst);
 
         font-size: var(--slovo-najava);
         line-height: var(--red-najava);
@@ -785,7 +807,10 @@
 
         // Ne `--boja-tekst`: u opsegu zaglavlja je preusmerena na belu.
         background: var(--boja-podloga);
-        color: var(--boja-traka);
+        // `--boja-pilula-tekst` je `--boja-traka` dok je traka tamna, a pod
+        // temom „trenutni" tamna vrednost — tamo je traka bela, pa bi ovo
+        // inače bilo belo na svetloj piluli.
+        color: var(--boja-pilula-tekst);
 
         font-size: var(--slovo-radnja);
         line-height: var(--red-radnja);
@@ -1263,4 +1288,107 @@
     }
 
     .z-zaglavlje__natpis { font-size: var(--slovo-md); }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ZATEČENI RED MENIJA NALOGA — svetla traka unutar tamnog zaglavlja
+   ═══════════════════════════════════════════════════════════════════════════
+   Na stranama naloga i administracije (`/account/*`) zaglavlje ispod svoja
+   dva reda crta i ZATEČENI red (`.navigation > ul`, klase `account-nav` i
+   `admin-nav` iz `components/header.js`). Taj red ima svoju SVETLU podlogu
+   `#F4F6FA`, koja stiže iz `_global.scss` i nije menjana redizajnom.
+
+   `.z-zaglavlje` gore preusmerava `--boja-tekst` na `--boja-traka-tekst`
+   (belu), jer je traka tamna. Nasleđivanjem je ta bela stigla i u ovaj
+   svetli red, pa je ispalo BELO NA #F4F6FA:
+
+     „Preuzimanja", „Pretplata"      1,08:1
+     dugme „Profil" (btn-secondary)  1,08:1
+     stavke padajuće liste           belo na belom
+
+   Izmereno 2026-08-27 pod temom „a", na svakoj strani naloga.
+
+   Rešenje je isto ono koje već postoji za belo polje pretrage u tamnoj traci:
+   `--boja-polje-tekst` i `--boja-polje-tekst-tiho` se NE preusmeravaju, pa
+   nose boje za svetlu podlogu pod svakom temom. Ovde se vraćaju u opsegu tog
+   reda, pa se popravljaju sve tri stavke odjednom, bez novog pravila po
+   stavci. Bootstrap-ov `.btn-secondary` je pokriven jer i njega gazi
+   `header:where(.zaglavlje-sajta) .navigation > ul > li > .dropdown > button`,
+   koje čita `--boja-tekst`.
+
+   Padajuća lista se iscrtava UNUTAR istog `ul`, pa je nasleđivanje pokriva.
+*/
+header:where(.zaglavlje-sajta) .navigation > ul {
+    --boja-tekst:        var(--boja-polje-tekst);
+    --boja-tekst-tiho:   var(--boja-polje-tekst-tiho);
+    --boja-veza:         var(--boja-polje-tekst);
+    --boja-povrsina:     var(--boja-podloga);
+
+    // Okvir fokusa je u traci amber (za tamno); ovde je podloga svetla, pa
+    // se vraća tamni okvir sa strane.
+    --boja-fokus:        var(--boja-polje-tekst);
+
+    /* Veze u ovom redu („Početna", „Preuzimanja", „Pretplata") su bile jedina
+       tri mesta na stranama naloga bez ijednog pravila za fokus — nosile su
+       samo podrazumevani okvir pregledača, koji se razlikuje od ostatka sajta.
+       Izmereno 2026-08-27. */
+    > li a,
+    > li > .dropdown > button {
+        @include z-fokus;
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ZAGLAVLJE BEZ FIOKE NA TELEFONU — strane naloga i fotografa
+   ═══════════════════════════════════════════════════════════════════════════
+   Sklanjanje u fioku (gore, `--sa-fiokom`) namerno NE važi ovde: bez fioke
+   nema gde da se skloni, pa bi cjenovnik, pomoć i prekidač jezika nestali bez
+   zamene. Posledica je bila da se na tim stranama preliv vratio.
+
+   Izmereno 2026-08-27 na 320px, `/account/profile`:
+
+     raspoloživo   ~290px
+     traženo        344px  →  preliv 230px na celoj strani
+       POMOĆ         47
+       jezici        56
+       korpa         40
+       dugme naloga 177   ← ime korisnika u punoj dužini
+
+   Rešenje je da desna strana SME da se prelomi u drugi red umesto da gura
+   stranu iz kadra. Nijedna kontrola se ne gubi — zaglavlje samo naraste.
+   Uz to se ime na dugmetu ograničava, da dugačko ime ne napravi red koji se
+   ne može prelomiti.
+*/
+@include telefon-mali {
+    .z-zaglavlje:not(.z-zaglavlje--sa-fiokom) {
+        .z-zaglavlje__desno {
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            row-gap: var(--razmak-1);
+
+            // Osnovno pravilo ima `flex: 0 0 auto`, pa se desna strana NE
+            // skuplja nego se razvuče po sadržaju i izađe iz reda — na 320px
+            // je tako ostajalo 2px preliva i posle prelamanja.
+            flex: 1 1 auto;
+            min-width: 0;
+            max-width: 100%;
+        }
+
+        // Ime korisnika na dugmetu — najviše 9ch, ostatak sa tri tačke.
+        // Puno ime i adresa stoje u bočnom meniju same strane naloga, pa se
+        // skraćivanjem ovde ne gubi nijedan podatak.
+        .z-zaglavlje__nalog .z-zaglavlje__stavka--panel {
+            display: inline-flex;
+            align-items: center;
+            min-width: 0;
+            max-width: 11ch;
+            overflow: hidden;
+            white-space: nowrap;
+
+            // Strelica ne sme da se skuplja ni da se iseče — skuplja se ime.
+            .z-zaglavlje__strelica { flex: 0 0 auto; }
+        }
+    }
 }

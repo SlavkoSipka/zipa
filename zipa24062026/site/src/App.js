@@ -201,9 +201,18 @@ class App extends Component {
         } catch (e) { /* privatni režim — jezik onda važi samo do osvežavanja */ }
     }
 
-    handleDelete(func) {
+    /*
+     * Potvrda pre nepovratne radnje.
+     *
+     * `poruka` je dodata 2026-08-28: prozor je do tada uvek pisao „Potvrdite
+     * brisanje", pa se nije mogao upotrebiti ni za šta drugo. Slanje
+     * newslettera je zbog toga išlo BEZ ijedne potvrde, na prvi klik, na 62
+     * stvarne adrese. Bez drugog argumenta ponašanje je nepromenjeno.
+     */
+    handleDelete(func, poruka) {
         this.setState({
-            deletePrompt: func
+            deletePrompt: func,
+            deletePoruka: poruka || null
         });
     }
 
@@ -477,8 +486,13 @@ class App extends Component {
     }
 
 
+    /*
+     * Vraća OBEĆANJE sa podacima korisnika. Prijava iz njega saznaje ulogu, pa
+     * zna gde da odvede — administratora na nadzornu ploču, ostale na njihov
+     * nalog. Ko ne treba povratnu vrednost, zove je kao i do sada.
+     */
     verifyUser() {
-        fetch(`${API_ENDPOINT}/user/verify`, {
+        return fetch(`${API_ENDPOINT}/user/verify`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -493,8 +507,10 @@ class App extends Component {
                 this.setState({
                     uData: result
                 }, this.postaviTemu)
+                return result;
             }
-        })
+            return null;
+        }).catch(() => null)
 
     }
 
@@ -636,6 +652,18 @@ class App extends Component {
                 <Routes
                     {...this.state}
                     {...this.props}
+                    /*
+                     * Podaci sa servera važe samo za stranu za koju su
+                     * dovučeni. Posle prvog prelaska na drugu stranu ta strana
+                     * dovlači svoje kroz `loadData`, a ovi bi joj samo useli
+                     * tuđe vrednosti u početno stanje.
+                     */
+                    initialData={
+                        !this.props.pocetnaPutanja
+                        || this.props.pocetnaPutanja === this.props.location.pathname
+                            ? this.props.initialData
+                            : undefined
+                    }
                     signOut={() => {
                         localStorage.removeItem('authToken');
                         this.setState({uData: null})
@@ -674,14 +702,15 @@ class App extends Component {
                 {this.state.deletePrompt ?
                     <div className="delete-modal">
                         <div>
-                            <Isvg src={trashIcon}/>
-                            <h6>Potvrdite brisanje</h6>
+                            {this.state.deletePoruka ? null : <Isvg src={trashIcon}/>}
+                            <h6>{this.state.deletePoruka || 'Potvrdite brisanje'}</h6>
                             <div className="buttons">
-                                <button onClick={() => this.setState({deletePrompt: null})}>NE</button>
+                                <button onClick={() => this.setState({deletePrompt: null, deletePoruka: null})}>NE</button>
                                 <button onClick={() => {
                                     this.state.deletePrompt();
                                     this.setState({
-                                        deletePrompt: null
+                                        deletePrompt: null,
+                                        deletePoruka: null
                                     })
                                 }
                                 }>DA

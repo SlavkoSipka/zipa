@@ -137,6 +137,57 @@
         }
     }
 
+    /* ── okvir trake i dugme za pauzu ─────────────────────────────────────
+     * WCAG 2.2.2: sadržaj koji se sam pomera duže od pet sekundi mora da ima
+     * VIDLJIVU kontrolu za zaustavljanje. Pauza na hover i na fokus, koju
+     * `components/traka.js` već ima, ne ispunjava uslov — korisnik tastature
+     * i čitača ekrana ne vidi u njoj kontrolu.
+     *
+     * Dugme stoji ispod trake, uz desnu ivicu: iznad je već naslov odeljka sa
+     * vezom „Sve galerije →", pa bi druga kontrola u istom redu bila gužva.
+     */
+    .traka-okvir {
+        position: relative;
+    }
+
+    .traka-pauza {
+        display: flex;
+        align-items: center;
+        gap: var(--razmak-2);
+        margin-left: auto;
+        margin-top: var(--razmak-1);
+
+        padding: var(--razmak-1) var(--razmak-3);
+        border: 1px solid var(--boja-linija);
+        border-radius: var(--radijus-pun);
+        background: var(--boja-povrsina);
+        color: var(--boja-tekst);
+
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-xs);
+        line-height: var(--red-xs);
+        font-weight: var(--tezina-srednja);
+        cursor: pointer;
+
+        @include z-prelaz(border-color, background-color);
+        @include z-fokus;
+
+        &:hover { border-color: var(--boja-tekst-tiho); }
+
+        &__znak {
+            font-size: var(--slovo-sm);
+            line-height: 1;
+        }
+
+        /* Traka se pod „manje kretanja" ne pomera uopšte, pa nema šta da se
+         * zaustavi. Dugme se sklanja iz PRIKAZA, a ne iz markupa: da ga
+         * `traka.js` izostavlja, prikaz sa servera i prvi prikaz u pregledaču
+         * ne bi bili isti i hidracija bi prijavila neslaganje. */
+        @media (prefers-reduced-motion: reduce) {
+            display: none;
+        }
+    }
+
     /* ── traka koja se pomera vodoravno ───────────────────────────────────
      * Ovo je glavna razlika u odnosu na druga dva predloga: kategorija ne
      * zauzima ceo red niz stranu nego se lista u stranu.
@@ -180,9 +231,12 @@
             @include small-desktop { flex-basis: calc((100% - 3 * #{$razmak}) / 4); }
             @include tablet        { flex-basis: calc((100% - 2 * #{$razmak}) / 3); }
             @include mobile        { flex-basis: calc((100% - #{$razmak}) / 2); }
-            // Ispod 480px staje tačno jedna kartica, bez virka sledeće —
-            // tražено je da nijedna ne ostane presečena.
-            @include telefon-mali  { flex-basis: 100%; }
+            // Ispod 480px staje jedna kartica i VIRAK sledeće — 14px njene
+            // ivice. Bez tog virka traka na telefonu izgleda kao obična
+            // slika: ivica sledeće kartice je jedini znak da sadržaj ide
+            // dalje udesno, jer pokazivača za pomeranje na dodir nema.
+            // (Ranije je ovde stajalo `100%`, pa se ništa nije nazíralo.)
+            @include telefon-mali  { flex-basis: calc(100% - #{$razmak}); }
         }
     }
 

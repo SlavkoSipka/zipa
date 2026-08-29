@@ -295,7 +295,7 @@
         display: block;
         margin: 0 0 var(--razmak-2);
 
-        font-size: 10px;
+        font-size: var(--slovo-oznaka);
         line-height: 1.6;
         font-weight: var(--tezina-jaka);
         letter-spacing: .1em;
@@ -372,7 +372,7 @@
 
     &__rez-opis {
         display: block;
-        font-size: 11px;
+        font-size: var(--slovo-sitno);
         line-height: 1.4;
         color: var(--boja-traka-tekst-tiho);
     }
@@ -452,7 +452,7 @@
         width: 40px;
         min-height: 40px;
 
-        border: 1px solid var(--boja-traka-linija);
+        border: 1px solid var(--boja-traka-linija-kontrola);
         border-radius: var(--radijus-panel);
         background: transparent;
         cursor: pointer;
@@ -467,7 +467,7 @@
 
     &__napomena {
         margin: 0 0 var(--razmak-4);
-        font-size: 11.5px;
+        font-size: var(--slovo-sitno);
         line-height: 1.5;
         color: var(--boja-traka-tekst-tiho);
 
@@ -480,7 +480,7 @@
     // gde je ceo pasus razvlačio panel.
     &__opis {
         margin: 0 0 var(--razmak-2);
-        font-size: 11.5px;
+        font-size: var(--slovo-sitno);
         line-height: 1.55;
         color: var(--boja-traka-tekst-tiho);
 
@@ -500,7 +500,7 @@
         background: transparent;
 
         font-family: var(--pismo-tekst);
-        font-size: 11.5px;
+        font-size: var(--slovo-sitno);
         font-weight: var(--tezina-srednja);
         color: var(--boja-veza-traka);
         text-decoration: underline;
@@ -526,7 +526,7 @@
         dt {
             flex: 0 0 auto;
             margin: 0;
-            font-size: 11.5px;
+            font-size: var(--slovo-sitno);
             line-height: 1.5;
             color: var(--boja-traka-tekst-tiho);
         }
@@ -537,7 +537,7 @@
             margin: 0;
             text-align: right;
 
-            font-size: 11.5px;
+            font-size: var(--slovo-sitno);
             line-height: 1.5;
             color: var(--boja-traka-tekst);
             overflow-wrap: anywhere;
@@ -567,7 +567,7 @@
         padding-top: var(--razmak-3);
         border-top: 1px solid var(--boja-traka-linija);
 
-        font-size: 11.5px;
+        font-size: var(--slovo-sitno);
         line-height: 1.5;
     }
 

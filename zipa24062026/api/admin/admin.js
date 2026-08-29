@@ -1,6 +1,7 @@
 const fs = require('fs');
 const constants = require('./constants');
 const ObjectID = require('../objectid');
+const slike = require('./slike');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const uuidv4 = require('uuid/v4');
@@ -213,7 +214,20 @@ class Admin {
         let startTimestamp = from;
         let endTimestamp = to;
 
-        res.photosCount = await db.collection('gallery').countDocuments({ isActive: true, userDisabled: { $ne: true } });
+        /*
+         * Do sada je `photosCount` bio BROJ GALERIJA, a ploča ga je prikazivala
+         * kao „Fotografija u arhivi" — 9.694 umesto 202.411, dvadeset puta manje.
+         * Sada se vraćaju oba broja, svaki pod svojim imenom.
+         */
+        const arhivaBrojevi = await db.query(
+            `select count(*)::int                                        as galerija,
+                    coalesce(sum(jsonb_array_length(
+                        coalesce("photos", '[]'::jsonb)))::int, 0)       as fotografija
+               from gallery
+              where "isActive" = true and coalesce("userDisabled", false) = false`
+        );
+        res.galleriesCount = arhivaBrojevi.rows[0].galerija;
+        res.photosCount    = arhivaBrojevi.rows[0].fotografija;
 
         res.photographersCount = await db.collection('users').countDocuments({ userRole: 'photographer', accountEnabled: true });
 
@@ -326,6 +340,167 @@ class Admin {
      * koja galerija snimljena, koliko nosi fotografija i koji ih je fotograf
      * napravio. Za foto-agenciju je to i korisniji podatak od broja poseta.
      */
+    /*
+     * NADZORNA PLOČA — /admin/dashboard
+     *
+     * Zasebna, LAGANA ruta. Namerno se ne zove `statistics()`: taj poziv traje
+     * 1,6–2,4 s, radi desetak upita i vraća paket od kog ploča koristi mali
+     * deo (vidi `docs/admin-popis.md`, 3.2 i 5.9).
+     *
+     * Svaki podatak ovde ima naveden izvor. Ničega izmišljenog nema — ako
+     * izvor ne postoji, polje se ne vraća i ploča crta prazno stanje.
+     *
+     * `dana` bira period: 7, 30 ili 365.
+     */
+    async dashboard(dana = 30) {
+        const raspon = [7, 30, 365].indexOf(Number(dana)) !== -1 ? Number(dana) : 30;
+        const sada = Math.floor(Date.now() / 1000);
+        const od = sada - raspon * 86400;
+        const odPrethodnog = od - raspon * 86400;   // isti tako dug period pre ovog
+
+        /* ── ključni brojevi ──────────────────────────────────────────────
+         * Izvor: tabela `gallery` (9.965 redova) i `users`. Dva `count`-a i
+         * jedan `sum` nad `jsonb_array_length` — isti upit koji već radi
+         * `archiveStats()`, pa je poznato da traje ispod sekunde.
+         */
+        const arhiva = await db.query(
+            `select count(*)::int                                        as galerija,
+                    coalesce(sum(jsonb_array_length(
+                        coalesce("photos", '[]'::jsonb)))::int, 0)       as fotografija
+               from gallery`
+        );
+
+        const korisnici = await db.query(
+            `select count(*)::int as ukupno,
+                    count(*) filter (where "userRole" = 'photographer')::int as fotografa
+               from users`
+        );
+
+        /* ── posete po danima ─────────────────────────────────────────────
+         * Izvor: tabela `logs` (doc-mode, `doc->>'timestamp'`). Beleženje radi
+         * tek od 13.07.2026 — starije istorije NEMA, i to ploča i kaže.
+         */
+        const posete = await db.query(
+            `select to_char(to_timestamp((doc->>'timestamp')::bigint), 'YYYY-MM-DD') as dan,
+                    count(*)::int                                                    as broj
+               from logs
+              where (doc->>'timestamp')::bigint >= $1
+              group by 1
+              order by 1`,
+            [od]
+        );
+
+        // Za poređenje sa prethodnim jednako dugim periodom.
+        const posetePoredjenje = await db.query(
+            `select count(*) filter (where (doc->>'timestamp')::bigint >= $1)::int                                as sada,
+                    count(*) filter (where (doc->>'timestamp')::bigint >= $2
+                                       and (doc->>'timestamp')::bigint <  $1)::int                                as prethodno,
+                    min((doc->>'timestamp')::bigint)::bigint                                                      as najstarije
+               from logs`,
+            [od, odPrethodnog]
+        );
+
+        // Posete danas — od ponoći po serverskom vremenu.
+        const ponoc = Math.floor(new Date(new Date().setHours(0, 0, 0, 0)).getTime() / 1000);
+        const danas = await db.query(
+            `select count(*)::int as broj from logs where (doc->>'timestamp')::bigint >= $1`,
+            [ponoc]
+        );
+
+        /* ── preuzimanja ──────────────────────────────────────────────────
+         * Izvor: tabela `downloads`. UPOZORENJE: ima svega 10 redova, poslednji
+         * iz 2024. Vraća se i `najnovije`, da ploča može da kaže koliko je
+         * podatak star umesto da prikaže nulu bez objašnjenja.
+         */
+        const preuzimanja = await db.query(
+            `select count(*)::int                                                   as ukupno,
+                    count(*) filter (where "timestamp" >= $1)::int                  as "uPeriodu",
+                    count(*) filter (where "timestamp" >= $2 and "timestamp" < $1)::int as prethodno,
+                    max("timestamp")::bigint                                        as najnovije
+               from downloads`,
+            [od, odPrethodnog]
+        );
+
+        /* ── kategorije po posetama ───────────────────────────────────────
+         * Izvor: `logs`, adrese sa `category=`. Danas ih ima svega 12 u 45
+         * dana, pa se uz podatak vraća i UKUPAN broj — ploča sama odlučuje da
+         * li ga uopšte ima smisla crtati.
+         */
+        const kategorije = await db.query(
+            `select substring(doc->>'url' from 'category=([^&]+)') as alias,
+                    count(*)::int                                  as broj
+               from logs
+              where doc->>'url' like '%category=%'
+                and (doc->>'timestamp')::bigint >= $1
+              group by 1
+              having substring(doc->>'url' from 'category=([^&]+)') is not null
+              order by broj desc
+              limit 8`,
+            [od]
+        );
+
+        /* ── najaktivniji fotografi ───────────────────────────────────────
+         * Izvor: `gallery."user"` — isti upit koji već koristi `archiveStats()`.
+         * Meri VELIČINU DOPRINOSA arhivi, ne posete.
+         */
+        const fotografi = await db.query(
+            `select g."user"                                             as ime,
+                    count(*)::int                                        as galerija,
+                    coalesce(sum(jsonb_array_length(
+                        coalesce(g."photos", '[]'::jsonb)))::int, 0)     as fotografija
+               from gallery g
+              where g."user" is not null and g."user" <> ''
+              group by 1
+              order by fotografija desc
+              limit 8`
+        );
+
+        /* ── poslednje dodate galerije ────────────────────────────────────
+         * Izvor: `gallery."published"`. Poslednja u arhivi je iz maja 2026.
+         */
+        const poslednje = await db.query(
+            `select "_id", "name", "user", "published",
+                    jsonb_array_length(coalesce("photos", '[]'::jsonb))::int as fotografija
+               from gallery
+              where "published" is not null
+              order by "published" desc
+              limit 6`
+        );
+
+        return {
+            raspon,
+            ukupno: {
+                galerija:    arhiva.rows[0].galerija,
+                fotografija: arhiva.rows[0].fotografija,
+                korisnika:   korisnici.rows[0].ukupno,
+                fotografa:   korisnici.rows[0].fotografa,
+            },
+            posete: {
+                poDanima:   posete.rows,
+                uPeriodu:   posetePoredjenje.rows[0].sada,
+                prethodno:  posetePoredjenje.rows[0].prethodno,
+                najstarije: posetePoredjenje.rows[0].najstarije,
+                danas:      danas.rows[0].broj,
+
+                /*
+                 * Da li poređenje sa prethodnim periodom UOPŠTE nešto znači.
+                 *
+                 * Beleženje poseta radi tek od 13.07.2026 — starije istorije
+                 * nema. Za period od 30 dana prethodni prozor pada pre tog
+                 * datuma, pa bi „porast" ispao +4.600%, što nije rast nego
+                 * početak merenja. Ploča zato prikazuje promenu SAMO kad je
+                 * ceo prethodni prozor pokriven podacima.
+                 */
+                poredjenjeMoguce: posetePoredjenje.rows[0].najstarije != null
+                    && Number(posetePoredjenje.rows[0].najstarije) <= odPrethodnog,
+            },
+            preuzimanja: preuzimanja.rows[0],
+            kategorije:  kategorije.rows,
+            fotografi:   fotografi.rows,
+            poslednje:   poslednje.rows,
+        };
+    }
+
     async archiveStats() {
         const godine = await db.query(
             `select extract(year from to_timestamp(g."date"))::int   as godina,
@@ -395,7 +570,20 @@ class Admin {
         const startTimestamp = from || (to - 5 * 24 * 60 * 60);
         const endTimestamp = to;
 
-        res.photosCount = await db.collection('gallery').countDocuments({ isActive: true, userDisabled: { $ne: true } });
+        /*
+         * Do sada je `photosCount` bio BROJ GALERIJA, a ploča ga je prikazivala
+         * kao „Fotografija u arhivi" — 9.694 umesto 202.411, dvadeset puta manje.
+         * Sada se vraćaju oba broja, svaki pod svojim imenom.
+         */
+        const arhivaBrojevi = await db.query(
+            `select count(*)::int                                        as galerija,
+                    coalesce(sum(jsonb_array_length(
+                        coalesce("photos", '[]'::jsonb)))::int, 0)       as fotografija
+               from gallery
+              where "isActive" = true and coalesce("userDisabled", false) = false`
+        );
+        res.galleriesCount = arhivaBrojevi.rows[0].galerija;
+        res.photosCount    = arhivaBrojevi.rows[0].fotografija;
 
         res.photographersCount = await db.collection('users').countDocuments({ userRole: 'photographer', accountEnabled: true });
 
@@ -506,7 +694,20 @@ class Admin {
         const startTimestamp = from || (to - 5 * 24 * 60 * 60);
         const endTimestamp = to;
 
-        res.photosCount = await db.collection('gallery').countDocuments({ isActive: true, userDisabled: { $ne: true } });
+        /*
+         * Do sada je `photosCount` bio BROJ GALERIJA, a ploča ga je prikazivala
+         * kao „Fotografija u arhivi" — 9.694 umesto 202.411, dvadeset puta manje.
+         * Sada se vraćaju oba broja, svaki pod svojim imenom.
+         */
+        const arhivaBrojevi = await db.query(
+            `select count(*)::int                                        as galerija,
+                    coalesce(sum(jsonb_array_length(
+                        coalesce("photos", '[]'::jsonb)))::int, 0)       as fotografija
+               from gallery
+              where "isActive" = true and coalesce("userDisabled", false) = false`
+        );
+        res.galleriesCount = arhivaBrojevi.rows[0].galerija;
+        res.photosCount    = arhivaBrojevi.rows[0].fotografija;
 
         res.photographersCount = await db.collection('users').countDocuments({ userRole: 'photographer', accountEnabled: true });
 
@@ -756,9 +957,35 @@ class Admin {
     }
 
 
+    /*
+     * Čuvanje podešavanja sajta.
+     *
+     * Do 2026-08-28 je ovde stajalo `deleteMany({})` pa `insertOne(data)` —
+     * dakle ceo zapis se ZAMENJIVAO onim što obrazac pošalje. Sve što obrazac
+     * ne prikazuje tiho je nestajalo pri svakom čuvanju:
+     *
+     *   priceOnRequestBefore — granica ispod koje galerija ide na „cijena na
+     *                          upit" (`products.js`, `isPriceOnRequest`).
+     *                          Brisanjem su SVE starije galerije odjednom
+     *                          dobijale direktnu cenu.
+     *   izdvojenoNaslov      — naslov odeljka „Izdvajamo" na sve tri naslovne.
+     *
+     * Dovoljno je bilo promeniti telefon da se to desi.
+     *
+     * Sada se postojeći zapis spaja sa novim — isti obrazac koji dva reda
+     * niže već koristi prebacivanje žiga (`setWatermark`). Polja koja obrazac
+     * ne šalje ostaju netaknuta.
+     */
     async updateSettings(data) {
+        const postojeca = await db.collection('settings').find({}).toArray();
+        const staro = postojeca.length ? postojeca[0] : {};
+
+        // `_id` se ne prenosi — novi zapis dobija svoj.
+        const { _id, ...bezId } = staro;
+        const spojeno = Object.assign({}, bezId, data);
+
         await db.collection('settings').deleteMany({});
-        await db.collection('settings').insertOne(data);
+        await db.collection('settings').insertOne(spojeno);
 
         return {
             response: {},
@@ -1160,7 +1387,15 @@ class Admin {
             galleries = await db.collection('gallery').find({ _id: { $in: newsletter.galleries.map(item => ObjectID(item)) } }).toArray();;
         }
 
-        await db.collection('newsletters').updateOne({ _id: ObjectID(id) }, { $set: { status: 'Poslato' } });
+        /*
+         * PROBNO slanje NE menja status.
+         *
+         * Do 2026-08-28 je i ono upisivalo „Poslato", pa se u spisku nije
+         * moglo razaznati šta je stvarno otišlo pretplatnicima a šta je samo
+         * probano — od pet newslettera četiri su bila u tom stanju. Otkad
+         * dugme za pravo slanje bude onemogućeno na „Poslato", ovo bi uz to
+         * značilo i da se posle probe ne može poslati.
+         */
 
         let emails = ['info@zipaphoto.net', 'zipaphoto@gmail.com', 'stanojevic.milan97@gmail.com'];
         // let emails = {};
@@ -1226,9 +1461,18 @@ class Admin {
             galleries = await db.collection('gallery').find({ _id: { $in: newsletter.galleries.map(item => ObjectID(item)) } }).toArray();;
         }
 
-        await db.collection('newsletters').updateOne({ _id: ObjectID(id) }, { $set: { status: 'Poslato' } });
-
         let subscribers = await db.collection('subscribers').find().toArray();
+
+        // Uz status se pamti i KADA je poslato i na koliko adresa — spisak je
+        // do sada imao samo reč „Poslato", bez ijednog traga o slanju.
+        await db.collection('newsletters').updateOne({ _id: ObjectID(id) }, {
+            $set: {
+                status: 'Poslato',
+                sentAt: Math.floor(new Date().getTime() / 1000),
+                sentCount: subscribers.length
+            }
+        });
+
         let emails = {};
         for (let i = 0; i < subscribers.length; i++) {
             emails[subscribers[i].email] = subscribers[i].email;
@@ -1255,6 +1499,17 @@ class Admin {
          *
          * Svaka poruka nosi svoju vezu za odjavu — po adresi primaoca.
          */
+        /*
+         * Otkad `sendMail` vraća `Promise` koji se odbija na grešci (prelazak
+         * na Resend, 2026-08-28), `catch` ispod stvarno hvata. Do tada je bio
+         * mrtav kod: stara funkcija je koristila callback, pa je `await`
+         * prolazio odmah i newsletter se označavao „Poslato" i kad nijedna
+         * poruka nije otišla. Zato se sada broji šta je prošlo, i taj broj se
+         * upisuje uz status.
+         */
+        let uspelo = 0;
+        const neuspele = [];
+
         for (let i = 0; i < emails.length; i++) {
             const adresa = emails[i];
             const vezaOdjave =
@@ -1273,8 +1528,10 @@ class Admin {
                         vezaOdjave
                     )
                 );
+                uspelo++;
             } catch (e) {
                 // Jedna adresa koja ne prolazi ne sme da zaustavi ostale.
+                neuspele.push(adresa);
                 console.error('[newsletter] neuspelo slanje na', adresa, '-', e.message);
             }
 
@@ -1283,6 +1540,22 @@ class Admin {
             }
         }
 
+        /*
+         * Stvarni ishod, ne pretpostavka. `sentCount` je gore upisan pre
+         * slanja (koliko je pokušano); ovde se prepisuje na koliko je STVARNO
+         * otišlo, i pamti se koliko nije. Ako nije prošlo ništa, status se
+         * vraća na „Na čekanju" — inače bi spisak tvrdio da je poslato.
+         */
+        await db.collection('newsletters').updateOne({ _id: ObjectID(id) }, {
+            $set: {
+                status: uspelo ? 'Poslato' : 'Na čekanju',
+                sentCount: uspelo,
+                failedCount: neuspele.length
+            }
+        });
+
+        console.log(`[newsletter] "${newsletter.title.ba}" — poslato ${uspelo}/${emails.length}` +
+            (neuspele.length ? `, neuspelo ${neuspele.length}` : ''));
     }
 
     async fetchNewsletter(id) {
@@ -1525,6 +1798,22 @@ class Admin {
 
     }
 
+    /*
+     * Brisanje banera. Dodato 2026-08-28.
+     *
+     * Ova funkcija nije postojala, ni ruta uz nju — a u spisku banera je
+     * stajala ikona kante koja je bila `<Link to='/'>` i samo izbacivala
+     * administratora na javnu naslovnu. Baner se, jednom napravljen, nije
+     * mogao ukloniti. Pravljeno po uzoru na `deleteSlide`.
+     */
+    async deleteBanner(id) {
+        await db.collection('banners').deleteOne({ _id: ObjectID(id) });
+        return {
+            response: {},
+            status: 200
+        }
+    }
+
     async allBanners() {
         let items = await db.collection('banners').find().sort({ position: 1 }).toArray();
         return items;
@@ -1587,31 +1876,34 @@ class Admin {
     }
 
 
+    /*
+     * Postavljanje slike.
+     *
+     * Ime fajla se NE koristi za odluku šta se snima — ekstenzija se izvodi iz
+     * sadržaja (`admin/slike.js`). Time `zlo.html` preimenovan u `slika.png`
+     * ne može da završi kao HTML u `uploads/`, koji se servira statički.
+     *
+     * Ranije je ova funkcija imala i grešku sa dva odgovora: kod `err` se
+     * slalo 500 BEZ `return`, pa je odmah zatim išlo i 200 — drugi `send`
+     * baca `ERR_HTTP_HEADERS_SENT`. Sada se izlazi odmah.
+     */
     upload(file, res) {
-
-
-        let fname = uuidv4();
-        let extension = '.' + file.name.split('.').pop();
-
-        if (extension.indexOf('svg') != -1) {
-            extension = '.svg';
+        const nalaz = slike.proveri(file);
+        if (nalaz.greska) {
+            res.status(400).send(nalaz.greska);
+            return;
         }
 
-        //let base64Image = base64.split(';base64,').pop();
-        let filename = fname + extension;
+        const filename = uuidv4() + nalaz.ext;
 
         file.mv('./uploads/' + filename, (err) => {
             if (err) {
-                res.status(500).send('Error');
+                console.error('[upload] snimanje nije uspelo:', err.message);
+                res.status(500).send('Snimanje fajla nije uspjelo.');
+                return;
             }
 
-            /*if (extension == '.png' || extension == '.jpg' || extension == '.jpeg') {
-                this.generateImages('./uploads/', filename, fname, extension);
-            }*/
-
             res.status(200).send(`${API_ENDPOINT}/uploads/` + filename);
-
-
         })
     }
 
@@ -1749,10 +2041,29 @@ class Admin {
     }
 
 
+    /*
+     * Brisanje korisnika briše I SVE NJEGOVE GALERIJE.
+     *
+     * To je bilo tako i ranije, ali se nigde nije govorilo — potvrda u
+     * administraciji je pisala samo „Potvrdite brisanje". Kod fotografa sa
+     * više stotina galerija jedan promašen klik odnosi ceo njegov doprinos
+     * arhivi, bez povratka.
+     *
+     * Sam postupak se ne menja (agencija to i traži kad uklanja nalog), ali
+     * se sada vraća KOLIKO je obrisano, a `brojGalerija` ispod daje taj broj
+     * unapred, da potvrda može da ga pokaže.
+     */
     async deleteUser(id) {
+        const galerije = await db.collection('gallery').find({ uid: ObjectID(id) }).toArray();
         await db.collection('gallery').deleteMany({ uid: ObjectID(id) })
         await db.collection('users').deleteOne({ _id: ObjectID(id) });
-        return {}
+        return { obrisanoGalerija: galerije.length }
+    }
+
+    /** Koliko galerija ima korisnik — za upozorenje pre brisanja. */
+    async brojGalerija(id) {
+        const galerije = await db.collection('gallery').find({ uid: ObjectID(id) }).toArray();
+        return { broj: galerije.length };
     }
 
 
@@ -1815,7 +2126,7 @@ class Admin {
             object.emailVerified = false;
             object.emailVerificationCode = uuidv4();
             object.email = data.email;
-            sendMail(data.email, 'Verifikujte E-mail Adresu', String.format(fs.readFileSync('./emails/verify.html', 'utf-8'), data.email, `https://zipa.novamedia.agency/account/verify/${uid}/${object.emailVerificationCode}`))
+            sendMail(data.email, 'Verifikujte E-mail Adresu', String.format(fs.readFileSync('./emails/verify.html', 'utf-8'), data.email, `${SITE_URL}/account/verify/${uid}/${object.emailVerificationCode}`))
         }
 
         if (hash) {

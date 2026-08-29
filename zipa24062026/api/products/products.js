@@ -1,5 +1,6 @@
 const fs = require('fs');
 const ObjectID = require('../objectid');
+const slike = require('../admin/slike');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const uuidv4 = require('uuid/v4');
@@ -196,8 +197,42 @@ class ProductsModule {
 
         let fname = file.name.split('.')[0];
         let extension = file.name.split('.').pop();
-        if (['jpg', 'jpeg'].indexOf(extension.toLowerCase()) === -1) {
-            res.status(500).send('Error');
+
+        /*
+         * PROVERA FAJLA — 2026-08-28.
+         *
+         * Ranije je stajala samo provera NASTAVKA U IMENU, i to sa odgovorom
+         * `500 Error`, bez ijedne reči o razlogu. Ime fajla je, međutim,
+         * jedino što pošiljalac slobodno bira.
+         *
+         * Sada se traži troje, kao i na `/upload`: nastavak, MIME i PRVI
+         * BAJTOVI sadržaja. Bajtovi se proveravaju PRE nego što `exiftool`
+         * dotakne fajl — do sada se sadržaj nepoznate vrste prvo upisivao u
+         * privremeni fajl i puštao kroz spoljni program, pa tek onda padao na
+         * `sharp`. Nepoznat sadržaj sada uopšte ne stigne dotle.
+         *
+         * Galerija prima SAMO JPEG: to je format u kome arhiva stoji i u kome
+         * se roba prodaje.
+         */
+        if (['jpg', 'jpeg'].indexOf(String(extension).toLowerCase()) === -1) {
+            res.status(400).send('Galerija prima samo JPG fotografije.');
+            return;
+        }
+        if (String(file.mimetype || '').toLowerCase() !== 'image/jpeg') {
+            res.status(400).send('Vrsta fajla ne odgovara nastavku — očekuje se JPG.');
+            return;
+        }
+        if (file.size > slike.NAJVECA_ORIGINAL) {
+            res.status(400).send('Fotografija je prevelika. Najviše 40 MB.');
+            return;
+        }
+
+        const prviBajtovi = file.data && file.data.length
+            ? file.data
+            : (file.tempFilePath ? fs.readFileSync(file.tempFilePath) : null);
+
+        if (slike.vrstaIzSadrzaja(prviBajtovi) !== 'jpg') {
+            res.status(400).send('Sadržaj fajla nije JPG fotografija.');
             return;
         }
 
@@ -367,6 +402,24 @@ class ProductsModule {
             }
         }
 
+        /*
+         * `homeRows` i `homeStyle` — koliko redova kategorija zauzima na
+         * naslovnoj i kojim rasporedom. Do 2026-08-27 se NIJEDNO nije upisivalo:
+         * obrazac ih je slao, a ni `insertOne` ni `$set` ih nisu nabrajali, pa
+         * su tiho padali i sve 43 kategorije su ostajale na 1 / „redovni".
+         *
+         * Čita ih samo `views/naslovna/predlogB.js` — predlozi A i C imaju po
+         * jedan način prikaza kategorije, pa im ova dva polja ne znače ništa.
+         *
+         * Vrednosti se ovde sužavaju na dozvoljene: iz obrasca stižu kao tekst
+         * („1", „traka"), iz spiska kategorija kao broj (toggle šalje ceo zapis
+         * nazad), a iz ruke može stići bilo šta.
+         */
+        const homeRows = parseInt(obj.homeRows, 10) === 2 ? 2 : 1;
+        const homeStyle = ['redovni', 'krupni', 'traka'].indexOf(obj.homeStyle) !== -1
+            ? obj.homeStyle
+            : 'redovni';
+
 
         if (id == 'new') {
             await db.collection('categories').insertOne({
@@ -378,6 +431,8 @@ class ProductsModule {
                 isRecommended: obj.isRecommended ? true : false,
                 isSpecial: obj.isSpecial ? true : false,
                 position: obj.position ? parseInt(obj.position) : 0,
+                homeRows: homeRows,
+                homeStyle: homeStyle,
 
             });
         } else {
@@ -402,6 +457,8 @@ class ProductsModule {
                     isRecommended: obj.isRecommended ? true : false,
                     isSpecial: obj.isSpecial ? true : false,
                     position: obj.position ? parseInt(obj.position) : 0,
+                    homeRows: homeRows,
+                    homeStyle: homeStyle,
                 }
             })
         }

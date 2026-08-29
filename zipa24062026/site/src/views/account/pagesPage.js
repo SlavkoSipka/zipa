@@ -2,6 +2,9 @@ import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 import Isvg from 'react-inlinesvg';
 import Page from '../../containers/page';
+import AdminOkvir from '../../components/adminOkvir';
+import Tabela from '../../components/admin/Tabela';
+import { Potvrda, Obavestenja, napraviPoruke } from '../../components/admin/Stanja';
 
 
 import {
@@ -23,8 +26,13 @@ class PagesPage extends Component {
 
         this.state = {
             ...props.initialData,
+            ucitavanje: true,
+            zaBrisanje: null,
+            poruke: [],
             items: []
         };
+
+        this.poruke = napraviPoruke(this);
     }
 
     componentDidMount() {
@@ -50,73 +58,78 @@ class PagesPage extends Component {
             },
         }).then(res => res.json()).then((result) => {
             this.setState({
-                items: result
+                items: result,
+                ucitavanje: false
             })
-        })
+        }).catch(() => this.setState({ ucitavanje: false }))
 
     }
 
 
+    osvezi() {
+        fetch(`${API_ENDPOINT}/pages/all`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            },
+        }).then((res) => res.json()).then((result) => {
+            this.setState({ items: result });
+        });
+    }
+
     render() {
+        const l = this.props.lang;
+        const b = this.state.zaBrisanje;
+
         return (
-            <div className="account-wrap">
-                <div className="into-wrap">
-                </div>
+            <AdminOkvir
+                lang={l}
+                uData={this.props.uData}
+                settings={this.props.settings}
+                putanja={this.props[0] && this.props[0].location ? this.props[0].location.pathname : ''}
+                signOut={this.props.signOut}
+                naslov={'Stranice'.translate(l)}
+                radnja={<Link to="/account/pages/new" className="z-adminokvir__radnja">{'Dodaj stranicu'.translate(l)}</Link>}
+            >
+                <Tabela
+                    lang={l}
+                    ucitavanje={this.state.ucitavanje}
+                    kolone={[
+                        { kljuc: 'naziv', naziv: 'Naziv' },
+                        { kljuc: 'adresa', naziv: 'Adresa' },
+                    ]}
+                    redovi={this.state.items || []}
+                    kljucReda={(r) => r._id}
+                    ukupnoStavki={(this.state.items || []).length}
+                    prazno={{
+                        znak: '▤',
+                        naslov: 'Nema sadržajnih stranica',
+                        tekst: 'Ovdje se uređuju „O nama", „Uslovi korišćenja", „Impresum" i slične strane.',
+                        radnja: <Link to="/account/pages/new" className="z-dugme z-dugme--glavno">{'Dodaj stranicu'.translate(l)}</Link>,
+                    }}
+                    celija={(r, k) => {
+                        if (k.kljuc === 'naziv') return Object.translate(r, 'name', l) || '—';
+                        const alias = r.alias && (r.alias.ba || r.alias.en) ? (r.alias.ba || r.alias.en) : null;
+                        return alias
+                            ? <a href={`/page/${alias}`} target="_blank" rel="noopener noreferrer">/page/{alias}</a>
+                            : <span className="z-tabela__tiho">{'nema adrese'.translate(l)}</span>;
+                    }}
+                    radnje={(r) => (
+                        <>
+                            <Link to={`/account/pages/${r._id}`} className="z-tabela__radnja" title={'Izmijeni'.translate(l)}>
+                                <svg viewBox="0 0 24 24"><path d="M3 17.2V21h3.8L17.8 10 14 6.2 3 17.2zM20.7 7.1a1 1 0 000-1.4l-2.4-2.4a1 1 0 00-1.4 0l-1.8 1.8L18.9 9l1.8-1.9z" fill="currentColor"/></svg>
+                            </Link>
+                        </>
+                    )}
+                />
 
-                <section className="edit-account-section">
-                    <Container>
-                        <Row>
-                            <Col lg="12" className="page-top-wrapper">
-                                <h2>{'Stranice'.translate(this.props.lang)}</h2>
-                                <ul>
-                                    <li><Link to='/'>{'Početna'.translate(this.props.lang)}</Link></li>
-                                    <li><Link to='/account/profile'>{'Profil'.translate(this.props.lang)}</Link></li>
-                                    <li><Link>{'Kategorije'.translate(this.props.lang)}</Link></li>
-                                </ul>
-
-                            </Col>
-
-                            <Col lg="12">
-                                <div className="table">
-                                    <div>
-                                        <table>
-                                            <tr>
-                                                <th>{'Naziv'.translate(this.props.lang)}</th>
-                                                <th>{'Akcije'.translate(this.props.lang)}</th>
-                                            </tr>
-
-                                            {
-                                                this.state.items && this.state.items.length && this.state.items.map((item, idx) => {
-                                                    return (
-                                                        <tr>
-                                                            <td>{Object.translate(item, 'name', this.props.lang)}</td>
-                                                            <td>
-                                                                <Link to={`/account/pages/${item._id}`}><button><Isvg src={penIcon} /></button></Link>
-                                                                <Link to='/'><button><Isvg src={trashIcon} /></button></Link>
-                                                            </td>
-
-                                                        </tr>
-
-                                                    )
-                                                })
-                                            }
-                                        </table>
-                                    </div>
-
-                                </div>                            </Col>
-
-                        </Row>
-
-                    </Container>
-
-                </section>
-
-
-
-
-
-            </div>
-
+                <Obavestenja
+                    lang={l}
+                    poruke={this.state.poruke}
+                    naZatvaranje={(id) => this.poruke.skloni(id)}
+                />
+            </AdminOkvir>
         );
     }
 }

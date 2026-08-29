@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { Container, Row, Col } from 'reactstrap';
 
 import Page from '../../containers/page';
+import AdminOkvir from '../../components/adminOkvir';
 import { API_ENDPOINT } from '../../constants';
 
 /**
@@ -101,11 +102,18 @@ class WatermarksPage extends Component {
         const { zigovi, ucitava, greska, poruka, salje } = this.state;
 
         return (
-            <div className="account-wrap zigovi-strana">
+            <AdminOkvir
+                lang={this.props.lang}
+                uData={this.props.uData}
+                settings={this.props.settings}
+                putanja={this.props[0] && this.props[0].location ? this.props[0].location.pathname : ''}
+                signOut={this.props.signOut}
+                naslov={'Žigovi'.translate(this.props.lang)}
+            >
+                <div className="account-wrap zigovi-strana">
                 <Container>
                     <Row>
                         <Col lg="12">
-                            <h1>Žig na preglednim fotografijama</h1>
                             <p className="uvod">
                                 Ovdje čuvate više žigova i prebacujete koji se koristi.
                                 Uključeni žig se ugrađuje u pregledne fotografije
@@ -170,7 +178,8 @@ class WatermarksPage extends Component {
                         </Col>
                     </Row>
                 </Container>
-            </div>
+                </div>
+            </AdminOkvir>
         );
     }
 }

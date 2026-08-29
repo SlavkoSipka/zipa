@@ -30,6 +30,15 @@ services:
         sync: false
       - key: ADMIN_JWT_SECRET
         sync: false
+      # Pošta ide preko Resend HTTPS API-ja, ne preko SMTP-a.
+      # Render blokira odlazni port 25, pa SMTP na produkciji ionako ne radi.
+      # Ključ se NE upisuje ovde — postavlja se u Render nadzornoj ploči.
+      - key: RESEND_API_KEY
+        sync: false
+      - key: MAIL_FROM
+        value: ZIPA PHOTO <noreply@zipaphoto.net>
+      # SMTP_* više ništa ne čita; ostavljeno dok se ne potvrdi da Resend radi
+      # u produkciji, pa se onda briše.
       - key: SMTP_HOST
         value: mail.zipaphoto.net
       - key: SMTP_PORT
@@ -39,6 +48,12 @@ services:
       - key: SMTP_PASSWORD
         sync: false
       - key: API_ENDPOINT          # javni URL ovog servisa (posle prvog deploya)
+        sync: false
+      # Javni URL SAJTA. Ulazi u svaku poslatu poruku — veza za potvrdu
+      # e-pošte, za novu lozinku i za odjavu sa newslettera. Bez njega
+      # `constants.js` pada na `http://localhost:10016`, pa bi primaoci
+      # dobijali veze koje nikuda ne vode.
+      - key: SITE_URL
         sync: false
 
   # ---------------------------------------------------------------- SAJT

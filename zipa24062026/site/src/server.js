@@ -2,6 +2,7 @@ import App from './App';
 import React from 'react';
 import { StaticRouter, matchPath } from 'react-router-dom';
 import express from 'express';
+import compression from 'compression';
 import { renderToString } from 'react-dom/server';
 import { routes } from './routesList';
 
@@ -63,6 +64,13 @@ async function seoFetch(lang, url) {
 const server = express();
 server
   .disable('x-powered-by')
+  /*
+   * Sazimanje odgovora. Strana naslovne je 170 KB, a galerija sa 156
+   * fotografija 279 KB — najveci deo toga su podaci koje server salje uz
+   * markup (`window.__POCETNI_PODACI__`), a takav tekst se sazima oko pet
+   * puta. Na mobilnoj mrezi je to najveca pojedinacna usteda na sajtu.
+   */
+  .use(compression())
   .use(express.static(process.env.RAZZLE_PUBLIC_DIR))
   .get('/*', async (req, res) => {
     const context = {};
@@ -162,6 +170,15 @@ server
              onim koji je server vec iscrtao — bez treptaja i bez razlike
              pri hidraciji. -->
         <script>window.__PODESAVANJA__ = ${JSON.stringify(podesavanja).replace(/</g, '\\u003c')};</script>
+
+        <!-- Podaci strane koje je server vec dovukao, isti oni sa kojima je
+             iscrtao markup ispod. Bez njih klijent prvi put crta PRAZNU stranu
+             pa se hidracija ne poklopi: React usvoji zatecene cvorove sa
+             pogresnim klasama, i traka sa naslovne C zavrsi preko naslovne
+             fotografije. Polje "putanja" cuva stranu za koju su dovuceni, pa
+             se ne useljavaju u neku drugu.
+             su dovuceni. -->
+        <script>window.__POCETNI_PODACI__ = ${JSON.stringify({ putanja: req.path, podaci: initialData }).replace(/</g, '\\u003c')};</script>
 
         <!-- Tema izgleda se postavlja PRE prvog iscrtavanja, iz istog
              podesavanja kojim se bira naslovna. Rezerva je pamcenje

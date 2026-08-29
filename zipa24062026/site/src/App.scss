@@ -27,7 +27,6 @@
 
 /* ── 2. zatečene strane ────────────────────────────────────────────────── */
 @import 'scss/home.scss';
-@import 'scss/page.scss';
 @import 'scss/category.scss';
 @import 'scss/detail.scss';
 @import 'scss/account.scss';
@@ -54,6 +53,8 @@
 @import 'scss/login.scss';
 @import 'scss/cart.scss';
 @import 'scss/nalog.scss';
+@import 'scss/adminOkvir.scss';
+@import 'scss/ploca.scss';
 @import 'scss/photographer.scss';
 @import 'scss/contact.scss';
 @import 'scss/stranice.scss';
@@ -64,6 +65,9 @@
 @import 'scss/potvrda.scss';
 @import 'scss/nemastrane.scss';
 @import 'scss/stilovi.scss';
+
+// mere za telefon — posle svih komponenti, da im nadjaca vrednosti
+@import 'scss/telefon.scss';
 
 // izgled pri stampi / cuvanju u PDF — mora poslednji, da nadjaca ostale
 @import 'scss/print.scss';

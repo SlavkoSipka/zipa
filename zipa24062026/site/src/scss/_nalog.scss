@@ -13,12 +13,19 @@
 
     &__raspored {
         display: grid;
-        grid-template-columns: 220px 1fr;
+        /* `minmax(0, 1fr)`, ne golo `1fr` — pravilo iz CLAUDE.md, i ovde se
+           obistinilo: najmanja mera golog `1fr` je `min-content`, a red stavki
+           menija (`&__stavke`) je na telefonu vodoravan i sa `nowrap` stavkama.
+           Njegov `min-content` je na 375px iznosio 535px, pa je stubac izašao
+           iz okvira i cela strana naloga se prelivala za 175px. Da `__stavke`
+           ima `overflow-x: auto` nije pomoglo — granicu postavlja sam stubac,
+           ne dete. Izmereno 2026-08-27. */
+        grid-template-columns: 220px minmax(0, 1fr);
         gap: var(--razmak-7);
         align-items: start;
 
         @include mobile-tablet {
-            grid-template-columns: 1fr;
+            grid-template-columns: minmax(0, 1fr);
             gap: var(--razmak-5);
         }
     }
@@ -26,6 +33,10 @@
     /* ── bočni meni ───────────────────────────────────────────────────── */
 
     &__meni {
+        // Bez ovoga meni kao element mreže i dalje traži svoju `min-content`
+        // širinu i poništava `minmax(0, 1fr)` iznad.
+        min-width: 0;
+
         position: sticky;
         top: var(--razmak-5);
 
@@ -61,6 +72,33 @@
         line-height: var(--red-sm);
         color: var(--boja-tekst-tiho);
         overflow-wrap: anywhere;
+    }
+
+    /* Glavna radnja fotografa — „Dodaj fotografiju". Amber je površina, nikad
+       tekst; tekst na njemu ide iz `--boja-akcenat-tekst`. */
+    &__radnja {
+        display: block;
+        margin-bottom: var(--razmak-3);
+        padding: var(--razmak-2) var(--razmak-3);
+
+        border-radius: var(--radijus-panel);
+        background: var(--boja-akcenat);
+
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-akcenat-tekst);
+        text-align: center;
+        text-decoration: none;
+
+        @include z-prelaz(background-color);
+        @include z-fokus;
+
+        &:hover {
+            background: var(--boja-akcenat-jako);
+            color: var(--boja-akcenat-tekst);
+            text-decoration: none;
+        }
     }
 
     &__stavke {
@@ -128,12 +166,36 @@
 
     &__sadrzaj {
         min-width: 0;
+
+        /*
+         * Zatečeni ekrani (galerije fotografa, pregledi, korisnici) nose svoje
+         * omotače iz starog rasporeda. Isti ustupak koji već postoji u
+         * `_adminOkvir.scss`: spoljni razmak se skida da se ne udvaja sa
+         * razmakom okvira, sve unutrašnje ostaje netaknuto.
+         */
+        .account-wrap,
+        .edit-account-section {
+            padding: 0;
+            margin: 0;
+        }
+
+        .container,
+        .container-fluid {
+            max-width: 100%;
+            padding-left: 0;
+            padding-right: 0;
+        }
+
+        // Naslov i mrvice starog rasporeda — okvir ih je preuzeo.
+        .page-top-wrapper {
+            display: none;
+        }
     }
 
     &__naslov {
         margin: 0 0 var(--razmak-5);
         font-family: var(--pismo-naslov);
-        font-size: 24px;
+        font-size: var(--slovo-xl);
         line-height: 1.25;
         font-weight: var(--tezina-jaka);
         color: var(--boja-tekst);
@@ -149,7 +211,7 @@
 
     &__odeljak-naslov {
         margin: 0 0 var(--razmak-4);
-        font-size: 10px;
+        font-size: var(--slovo-oznaka);
         line-height: 1.6;
         font-weight: var(--tezina-jaka);
         letter-spacing: .1em;
@@ -217,7 +279,7 @@
     &__pregled-broj {
         display: block;
         font-family: var(--pismo-podaci);
-        font-size: 24px;
+        font-size: var(--slovo-xl);
         line-height: 1.2;
         font-weight: var(--tezina-jaka);
         color: var(--boja-tekst);
@@ -289,6 +351,24 @@
         margin-bottom: var(--razmak-5);
 
         @include mobile { flex-direction: column; align-items: flex-start; }
+
+        /* Birač slike je zatečen (`.image-picker` iz `_account.scss`) i u sebi
+           nosi go `input[type=file]`, koji ima svoju urođenu širinu (~349px).
+           Zbog njega se birač na 320px nije mogao skupiti ispod okvira, pa je
+           `/account/edit` prelazilo 44px. Izmereno 2026-08-27.
+
+           Ograničava se SAMO unos. Prvi pokušaj je bio `min-width: 0` na samom
+           biraču — to je poništilo njegov `min-width: 128px` iz `_account.scss`
+           i ceo birač se skupio na nulu, pa ga nije bilo. Zato ovde ide samo
+           unos, a birač zadržava svoju meru. */
+        .image-picker {
+            // Samo GORNJA granica. `min-width` se NE dira: `_account.scss`
+            // drži `min-width: 128px` kao donju meru, a kad je prvi pokušaj
+            // postavio `min-width: 0`, birač se skupio na nulu i nestao.
+            max-width: 100%;
+
+            input[type="file"] { max-width: 100%; }
+        }
     }
 
     &__napomena {
@@ -555,7 +635,7 @@
 
     &__pod-naslov {
         margin: 0 0 var(--razmak-4);
-        font-size: 10px;
+        font-size: var(--slovo-oznaka);
         line-height: 1.6;
         font-weight: var(--tezina-jaka);
         letter-spacing: .1em;
@@ -584,7 +664,7 @@
     &__kartica-naziv {
         display: block;
         margin-bottom: 2px;
-        font-size: 11.5px;
+        font-size: var(--slovo-sitno);
         line-height: 1.4;
         color: var(--boja-tekst-tiho);
     }

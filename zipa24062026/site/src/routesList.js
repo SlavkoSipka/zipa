@@ -1,3 +1,4 @@
+import { posleprijave } from './posleprijave';
 import HomePage from './views/homePage';
 import CategoryPage from './views/categoryPage';
 import DetailPage from './views/detailPage';
@@ -72,6 +73,7 @@ import VideoPage from './views/videoPage';
 import OdjavaPage from './views/odjavaPage';
 import StiloviPage from './views/stiloviPage';
 import ArchiveStats from './views/account/archiveStats';
+import DashboardPage from './views/account/dashboardPage';
 import WatermarksPage from './views/account/watermarksPage';
 import {API_ENDPOINT, PHOTOS_ENDPOINT} from './constants'
 
@@ -302,6 +304,15 @@ export const routes = [
         component: WatermarksPage,
         exact: true,
         generateSeoTags: () => ({ title: 'Žig na fotografijama' }),
+        loadData: []
+    },
+    {
+        // Nadzorna ploca administracije. Podaci se dovlace u samoj stranici,
+        // sa `GET /admin/dashboard` — laka ruta, odvojena od `/admin/statistics`.
+        path: "/account/dashboard",
+        component: DashboardPage,
+        exact: true,
+        generateSeoTags: () => ({ title: 'Nadzorna ploča' }),
         loadData: []
     },
     {
@@ -1335,7 +1346,7 @@ export const routes = [
     }, {
         path: "/login",
         exact: true,
-        redirectUser: '/account/orders',
+        redirectUser: posleprijave,
         component: LoginPage,
         generateSeoTags: (data) => {
             return {
@@ -1347,7 +1358,7 @@ export const routes = [
     }, {
         path: "/account/verify/:uid/:emailVerificationCode",
         exact: true,
-        redirectUser: '/account/orders',
+        redirectUser: posleprijave,
         component: EmailVerifyPage,
         generateSeoTags: (data) => {
             return {
@@ -1359,7 +1370,7 @@ export const routes = [
     }, {
         path: "/register",
         exact: true,
-        redirectUser: '/account/orders',
+        redirectUser: posleprijave,
         generateSeoTags: (data) => {
             return {
                 title: 'Registracija',
@@ -1371,7 +1382,7 @@ export const routes = [
     }, {
         path: "/reset-password",
         exact: true,
-        redirectUser: '/account/orders',
+        redirectUser: posleprijave,
         generateSeoTags: (data) => {
             return {
                 title: 'Resetuj lozinku',
@@ -1383,7 +1394,7 @@ export const routes = [
     }, {
         path: "/reset-password/:uid/:resetPasswordVerificationCode",
         exact: true,
-        redirectUser: '/account/orders',
+        redirectUser: posleprijave,
         generateSeoTags: (data) => {
             return {
                 title: 'Reset lozinke',

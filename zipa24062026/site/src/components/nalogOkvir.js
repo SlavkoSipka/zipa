@@ -40,10 +40,36 @@ const STAVKE = [
     { putanja: '/account/change-password', naziv: 'Promjena lozinke' },
 ];
 
+/*
+ * Fotograf ima svoje strane — galerije koje postavlja i pregledi njegovih
+ * fotografija. Do sada su stajale u vodoravnoj traci `account-nav` u
+ * zaglavlju; spisak je prenesen ovde NEPROMENJEN, uključujući i uslov da se
+ * „Korisnici" vide samo uz dozvolu `*`. Okvir ne proverava prava — samo
+ * pokazuje iste veze koje je i traka pokazivala.
+ */
+const STAVKE_FOTOGRAF = [
+    { putanja: '/account/profile',         naziv: 'Profil' },
+    { putanja: '/account/galleries',       naziv: 'Fotografije' },
+    { putanja: '/account/photo-visits',    naziv: 'Pregledi' },
+    { putanja: '/account/users',           naziv: 'Korisnici', samoSaSvimPravima: true },
+    { putanja: '/account/edit',            naziv: 'Izmjena podataka' },
+    { putanja: '/account/change-password', naziv: 'Promjena lozinke' },
+];
+
+function stavkeZa(u) {
+    if (!u || u.userRole !== 'photographer') return STAVKE;
+
+    const svaPrava = !!(u.permissions && u.permissions.indexOf('*') !== -1);
+    return STAVKE_FOTOGRAF.filter((s) => !s.samoSaSvimPravima || svaPrava);
+}
+
 class NalogOkvir extends Component {
     render() {
         const l = this.props.lang;
         const putanja = this.props.putanja || '';
+        const u = this.props.uData;
+        const stavke = stavkeZa(u);
+        const jeFotograf = !!(u && u.userRole === 'photographer');
 
         return (
             <div className="account-wrap z-nalog">
@@ -52,19 +78,25 @@ class NalogOkvir extends Component {
 
                         {/* ── bočni meni ─────────────────────────────── */}
                         <nav className="z-nalog__meni" aria-label={'Meni naloga'.translate(l)}>
-                            {this.props.uData ? (
+                            {u ? (
                                 <div className="z-nalog__korisnik">
                                     <span className="z-nalog__korisnik-ime">
-                                        {this.props.uData.name}
+                                        {u.name}
                                     </span>
                                     <span className="z-nalog__korisnik-mejl">
-                                        {this.props.uData.email}
+                                        {u.email}
                                     </span>
                                 </div>
                             ) : null}
 
+                            {jeFotograf ? (
+                                <Link to="/account/gallery/new" className="z-nalog__radnja">
+                                    {'Dodaj fotografiju'.translate(l)}
+                                </Link>
+                            ) : null}
+
                             <ul className="z-nalog__stavke">
-                                {STAVKE.map((s) => (
+                                {stavke.map((s) => (
                                     <li key={s.putanja}>
                                         <Link
                                             to={s.putanja}

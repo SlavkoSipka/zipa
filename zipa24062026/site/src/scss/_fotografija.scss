@@ -89,7 +89,7 @@
         height: 44px;
         padding: 0;
 
-        border: 1px solid var(--boja-traka-linija);
+        border: 1px solid var(--boja-traka-linija-kontrola);
         border-radius: var(--radijus-pun);
         background: var(--boja-traka);
         cursor: pointer;
@@ -134,6 +134,10 @@
            zaglavlje. Bez ovoga bi okvir fokusa ostao tamni `--boja-fokus`,
            koji se na tamnom panelu ne vidi. */
         --boja-fokus: var(--boja-fokus-traka);
+
+        /* Ovde je podloga tamna, pa oznaka grupe uzima tihu boju TRAKE.
+           Van panela ostaje `--boja-tekst-tiho` iz osnovnog pravila. */
+        .z-fotografija__oznaka-grupe { color: var(--boja-traka-tekst-tiho); }
     }
 
     // Isto važi za kadar — strelice stoje na tamnoj podlozi.
@@ -165,7 +169,10 @@
         font-weight: var(--tezina-jaka);
         letter-spacing: .1em;
         text-transform: uppercase;
-        color: var(--boja-traka-tekst-tiho);
+        // Podrazumevano je na BELOJ strani — `--boja-traka-tekst-tiho`
+        // (#B4B9C0) tu daje 1,97:1. Tiha boja za tamni panel se dodaje samo
+        // unutar `&__panel`, gde podloga i jeste tamna.
+        color: var(--boja-tekst-tiho);
     }
 
     /* ── rezolucije ───────────────────────────────────────────────────── */
@@ -186,7 +193,7 @@
         min-height: 44px;
         padding: 0 var(--razmak-3);
 
-        border: 1px solid var(--boja-traka-linija);
+        border: 1px solid var(--boja-traka-linija-kontrola);
         border-radius: var(--radijus-mali);
         background: transparent;
 
@@ -228,7 +235,7 @@
         min-height: var(--visina-radnja);
         padding: 0 var(--razmak-4);
 
-        border: 1px solid var(--boja-traka-linija);
+        border: 1px solid var(--boja-traka-linija-kontrola);
         border-radius: var(--radijus-panel);
         background: transparent;
 
@@ -354,8 +361,6 @@
     &__dijeljenje {
         margin-top: var(--razmak-7);
 
-        // Oznaka grupe je crtana za tamni panel; ovde je na beloj.
-        .z-fotografija__oznaka-grupe { color: var(--boja-tekst-tiho); }
     }
 
     &__mreze {

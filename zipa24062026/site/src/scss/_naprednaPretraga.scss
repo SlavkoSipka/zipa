@@ -192,7 +192,7 @@
         // Sličica oblika — pravougaonik u odnosu koji stavka predstavlja.
         &-oblik {
             border: 2px solid var(--boja-tekst-tiho);
-            border-radius: 2px;
+            border-radius: var(--radijus-oznaka);
             @include z-prelaz(border-color);
         }
 

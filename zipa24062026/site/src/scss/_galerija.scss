@@ -42,11 +42,11 @@
         margin-bottom: var(--razmak-2);
         padding: 2px var(--razmak-2);
 
-        border-radius: 3px;
+        border-radius: var(--radijus-oznaka);
         background: var(--boja-oznaka);
         color: var(--boja-podloga);
 
-        font-size: 10px;
+        font-size: var(--slovo-oznaka);
         line-height: 1.5;
         font-weight: var(--tezina-jaka);
         letter-spacing: .02em;
@@ -56,7 +56,7 @@
     &__naslov {
         margin: 0 0 var(--razmak-2);
         font-family: var(--pismo-naslov);
-        font-size: 24px;
+        font-size: var(--slovo-xl);
         line-height: 1.25;
         font-weight: var(--tezina-jaka);
         color: var(--boja-tekst);
@@ -292,6 +292,39 @@
             @include z-prelaz(transform);
         }
 
+        /*
+         * Dok slika ne stigne, pločica je tiha podloga koja lagano diše — znak
+         * da nešto dolazi. Sloj se gasi čim slika stigne (`--stigla` postavlja
+         * `detailPage.js` direktno na čvor).
+         *
+         * Traka svetla ide preko `transform`, ne preko `background-position`:
+         * pomeranje pozadine se preračunava i boji pri svakom kadru, a pomeranje
+         * sloja ne — na galeriji sa dvesta pločica to je razlika koja se vidi.
+         */
+        &::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+                90deg,
+                transparent 0%,
+                var(--boja-podloga) 50%,
+                transparent 100%
+            );
+            opacity: .55;
+            transform: translateX(-100%);
+            animation: z-plocica-dise 1.6s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        /* Slika se ne krije unapred — ako skripta zakaže, fotografije se i
+           dalje vide. Preliv ide tek kad stigne. */
+        &--stigla {
+            &::after { content: none; }
+
+            img { animation: z-slika-dolazi var(--prelaz-obicno) ease-out both; }
+        }
+
         &:hover img { transform: scale(1.02); }
     }
 
@@ -376,4 +409,22 @@
         font-weight: var(--tezina-jaka);
         color: var(--boja-tekst);
     }
+}
+
+/* Dolazak fotografije u mreži galerije — vidi `&__foto` iznad. */
+@keyframes z-slika-dolazi {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+@keyframes z-plocica-dise {
+    from { transform: translateX(-100%); }
+    to   { transform: translateX(100%); }
+}
+
+/* Ko je tražio manje pokreta, dobija istu stvar bez ijedne animacije:
+   pločica je mirna podloga, fotografija se prosto pojavi. */
+@media (prefers-reduced-motion: reduce) {
+    .z-galerija__foto::after { animation: none; }
+    .z-galerija__foto--stigla img { animation: none; }
 }

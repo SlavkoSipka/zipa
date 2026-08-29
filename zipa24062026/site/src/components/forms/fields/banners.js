@@ -20,6 +20,7 @@ import {
 import Text from './text1';
 import Textarea from './textarea';
 import { API_ENDPOINT } from '../../../constants';
+import { proveriSliku, ACCEPT, NAJVECA_BAJTOVA } from './proveraSlike';
 
 class Gallery extends Component {
     constructor(props) {
@@ -33,6 +34,7 @@ class Gallery extends Component {
             files: [],
             imagesLayout: [],
             _uploading: [],
+            _greska: null,
         };
     }
 
@@ -109,11 +111,32 @@ class Gallery extends Component {
     }
 
 
+    /*
+     * Dropzone odbija fajl po `accept` i `maxSize` i tada zove ovo — bez
+     * njega je odbijen fajl nestajao bez ijedne reči.
+     */
+    odbijeni = (fajlovi) => {
+        const prvi = fajlovi && fajlovi[0];
+        this.setState({
+            _greska: proveriSliku(prvi, this.props.lang) || 'Fajl nije prihvaćen.'
+        });
+    };
+
     async onDrop(imageFiles) {
 
         let imagesLayout = [];
         let images = [];
         let _uploading = [];
+
+        // Ista provera i ovde: `accept` u pregledaču ume da se zaobiđe.
+        for (let i = 0; i < imageFiles.length; i++) {
+            const greska = proveriSliku(imageFiles[i], this.props.lang);
+            if (greska) {
+                this.setState({ _greska: greska });
+                return;
+            }
+        }
+        this.setState({ _greska: null });
 
         for (let i = 0; i < imageFiles.length; i++) {
             let formData = new FormData();
@@ -129,8 +152,16 @@ class Gallery extends Component {
 
                 },
                 body: formData
-            }).then((res) => res.text()).then((img) => {
-                this.props.onChange(img);
+            }).then((res) => {
+                if (!res.ok) {
+                    return res.text().then((poruka) => {
+                        this.setState({ _greska: poruka || 'Slanje nije uspjelo.', _loading: null });
+                        return null;
+                    });
+                }
+                return res.text();
+            }).then((img) => {
+                if (img === null || img === undefined) return;
                 this.setState({
                     _loading: null
                 })
@@ -248,6 +279,9 @@ class Gallery extends Component {
 
                     <Dropzone
                         onDrop={this.onDrop}
+                        onDropRejected={this.odbijeni}
+                        accept={ACCEPT}
+                        maxSize={NAJVECA_BAJTOVA}
                         className='dropzone'
                         activeClassName='active-dropzone'
                         multiple={true}>
@@ -258,6 +292,10 @@ class Gallery extends Component {
 
 
                     </Dropzone>
+
+                    {this.state._greska ?
+                        <p className="greska-slike" role="alert">{this.state._greska}</p>
+                        : null}
 
                     <div className="bottom-content">
                         <Isvg src={image} />
