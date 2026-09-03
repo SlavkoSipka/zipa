@@ -599,16 +599,23 @@
         width: 100%;
         background-color: $white;
         border-radius: 12px;
-        overflow: hidden;
         box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
 
-        img { display: block; width: 100%; height: auto; }
+        /*
+         * NAMERNO BEZ `overflow: hidden`.
+         *
+         * Sa njim je dugme za zatvaranje bilo odsečeno kad slika ne stigne:
+         * okvir se svede na visinu nula, a dugme je unutar njega. Posetilac na
+         * telefonu je ostajao na zatamnjenom ekranu bez ijednog dugmeta.
+         * Zaobljenje sada nosi sama slika, a dugme se vidi uvek.
+         */
+        img { display: block; width: 100%; height: auto; border-radius: 12px; }
 
         .zatvori {
             position: absolute;
             right: 6px; top: 6px;
             z-index: 3;
-            width: 32px; height: 32px;
+            width: 44px; height: 44px;
             border: 0;
             border-radius: 50%;
             background-color: rgba(8, 11, 20, 0.66);
