@@ -292,16 +292,24 @@ class ProfilePage extends Component {
                                                                                     <th>{'Broj uploadovanih slika'.translate(this.props.lang)}</th>
                                                                                 </tr>
                                                                                 {
+                                                                                    /*
+                                                                                     * SVI registrovani fotografi, i oni bez ijedne
+                                                                                     * galerije — kod njih stoji 0.
+                                                                                     *
+                                                                                     * Ovde je stajalo `if (item.uploadedGalleryCount)`,
+                                                                                     * pa je pogled odbacivao red iako podatak stiže:
+                                                                                     * upit u `admin.js` je `left join` i vraća svih 70
+                                                                                     * fotografa, od kojih 22 nemaju nijednu galeriju.
+                                                                                     * Spisak je zato izgledao kraći nego što jeste.
+                                                                                     */
                                                                                     this.state.adminStatistics.photographers && this.state.adminStatistics.photographers.map((item, idx) => {
-                                                                                        if (item.uploadedGalleryCount)
-                                                                                            return (
-                                                                                                <tr>
-                                                                                                    <td>{item.name ? item.name : '/'}</td>
-                                                                                                    <td>{item.uploadedGalleryCount}</td>
-                                                                                                    <td>{item.uploadedPhotosCount}</td>
-                                                                                                </tr>
-
-                                                                                            )
+                                                                                        return (
+                                                                                            <tr key={item._id || idx}>
+                                                                                                <td>{item.name ? item.name : '/'}</td>
+                                                                                                <td>{item.uploadedGalleryCount || 0}</td>
+                                                                                                <td>{item.uploadedPhotosCount || 0}</td>
+                                                                                            </tr>
+                                                                                        )
                                                                                     })
                                                                                 }
                                                                             </table>

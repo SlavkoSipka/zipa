@@ -120,14 +120,22 @@ create table if not exists transactions (
 create table if not exists subscribers (
     "_id"       text primary key,
     "email"     text not null,
-    "timestamp" bigint
+    -- kada se prijavio
+    "timestamp" bigint,
+    -- kada se odjavio; NULL = i dalje prima poruke. Zapis se pri odjavi NE
+    -- brise, da bi se znalo ko se i kada odjavio (2026-09-09).
+    "unsubscribedAt" bigint
 );
+
+-- Za bazu koja vec postoji:
+alter table subscribers add column if not exists "unsubscribedAt" bigint;
 
 -- ============ userResolutions ============
 -- (pretplatnički paketi: koliko preuzimanja po rezoluciji, koje kategorije/fotografi, period)
 create table if not exists "userResolutions" (
     "_id"             text primary key,
     "uid"             text,
+    -- PAZI: ovo su BROJEVI besplatnih preuzimanja, ne cene.
     "resolution3000px" int default 0,
     "resolution1500px" int default 0,
     "resolution800px"  int default 0,
@@ -135,8 +143,22 @@ create table if not exists "userResolutions" (
     "categories"      text[],
     "photographers"   text[],
     "from"            bigint,
-    "to"              bigint
+    "to"              bigint,
+    -- Nacin naplate (2026-09-09). `true` = pretplata, kao i do sada;
+    -- `false` = placa po fotografiji, po dogovorenoj ceni ispod.
+    "naPretplati"     boolean default true,
+    -- Dogovorena cena po rezoluciji, u KM. NULL = nema dogovora za tu
+    -- rezoluciju, pa vazi osnovna cena galerije.
+    "cena3000px"      numeric,
+    "cena1500px"      numeric,
+    "cena800px"       numeric
 );
+
+-- Za bazu koja vec postoji:
+alter table "userResolutions" add column if not exists "naPretplati" boolean default true;
+alter table "userResolutions" add column if not exists "cena3000px"  numeric;
+alter table "userResolutions" add column if not exists "cena1500px"  numeric;
+alter table "userResolutions" add column if not exists "cena800px"   numeric;
 create index if not exists userresolutions_uid_idx on "userResolutions" ("uid");
 
 -- ============ banners ============
@@ -244,8 +266,21 @@ create table if not exists settings (
     "priceOnRequestBefore" bigint, -- galerije starije od ovog datuma idu "na upit"
     "enableInfoBlocks" boolean default true,
     "showSlider"       boolean default true,
-    "showBanner"       boolean default true
+    "showBanner"       boolean default true,
+    -- Cetiri kolone ispod su dodate posle prve migracije, pa ih ova datoteka
+    -- do sada nije imala — sveza baza po njoj nije radila.
+    "homepageLayout"        text,      -- trenutni | a | b | c
+    "homepageLayoutPreview" boolean,   -- novi izgled vidi samo administrator
+    "izdvojenoNaslov"       text,
+    "mobilePopup"           boolean,
+    -- galerija cija fotografija stoji uz obrazac na /login i /register;
+    -- bira se u administraciji (Stranice -> Prijava i registracija).
+    -- Prazno = najnovija galerija. Oblik: {"id": "...", "alias": "..."}
+    "loginGallery"     jsonb
 );
+
+-- Za bazu koja vec postoji (kolone se dodaju bez diranja podataka):
+alter table settings add column if not exists "loginGallery" jsonb;
 
 -- ============ gallerySettings ============
 -- (obaveštenja: koji korisnik prati koju galeriju)

@@ -2,10 +2,8 @@ import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 import { Container } from 'reactstrap';
 
-import Traka from '../../components/traka';
 import Isvg from 'react-inlinesvg';
 
-import infoIcon from '../../assets/svg/info.svg';
 import { PHOTOS_ENDPOINT } from '../../constants';
 
 /**
@@ -116,15 +114,9 @@ class PredlogC extends Component {
         return (
             <div className="naslovna-c">
 
-                {(this.props.announcements || []).map((item, idx) => (
-                    <Container key={idx}>
-                        <Link to={`/najave/${item._id}`}>
-                            <div className="alert">
-                                <Isvg src={infoIcon} /> {Object.translate(item, 'content', lang)}
-                            </div>
-                        </Link>
-                    </Container>
-                ))}
+                {/* Najave se vise NE iscrtavaju ovde. Od 2026-09-08 stoje u
+                    traci na vrhu zaglavlja (`header.js`), koja se vidi na
+                    svakoj strani — ovde su bile drugi prikaz iste stvari. */}
 
                 {/* ── Naslovna traka: jedan snimak preko cele širine ────── */}
                 {glavna ? (
@@ -148,7 +140,7 @@ class PredlogC extends Component {
                     </section>
                 ) : null}
 
-                {/* ── Najnovije, u traci koja se pomera ─────────────────── */}
+                {/* ── Najnovije ────────────────────────────────────────── */}
                 <section className="odeljak">
                     <Container>
                         <div className="naslov-odeljka">
@@ -157,9 +149,9 @@ class PredlogC extends Component {
                         </div>
                     </Container>
                     <Container>
-                        <Traka lang={lang}>
+                        <div className="mreza-galerija">
                             {najnovije.slice(1).map((g, i) => this.kartica(g, `n${i}`))}
-                        </Traka>
+                        </div>
                     </Container>
                 </section>
 
@@ -185,7 +177,7 @@ class PredlogC extends Component {
                     </section>
                 ) : null}
 
-                {/* ── Kategorije, svaka u svojoj traci ──────────────────── */}
+                {/* ── Kategorije, svaka u svojoj mreži ──────────────────── */}
                 {kategorije.map((k, idx) => {
                     const galerije = (k.photos || []).slice(0, 10);
                     if (!galerije.length) return null;
@@ -205,9 +197,9 @@ class PredlogC extends Component {
                                     </div>
                                 </Container>
                                 <Container>
-                                    <Traka lang={lang}>
+                                    <div className="mreza-galerija">
                                         {galerije.map((g, i) => this.kartica(g, `${idx}-${i}`))}
-                                    </Traka>
+                                    </div>
                                 </Container>
                             </section>
 
@@ -239,7 +231,7 @@ class PredlogC extends Component {
                             </div>
                         </Container>
                         <Container>
-                            <Traka lang={lang}>
+                            <div className="mreza-galerija">
                                 {this.props.videos.slice(0, 8).map((v, i) => {
                                     const naslovVidea = Object.translate(v, 'title', lang) || '';
                                     return (
@@ -252,7 +244,7 @@ class PredlogC extends Component {
                                         </a>
                                     );
                                 })}
-                            </Traka>
+                            </div>
                         </Container>
                     </section>
                 ) : null}

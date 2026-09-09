@@ -108,7 +108,7 @@ export const MENI = [
         grupa: 'LJUDI',
         stavke: [
             { putanja: '/account/users',       naziv: 'Korisnici',    ikona: 'korisnik' },
-            { putanja: '/account/subscribers', naziv: 'Pretplatnici', ikona: 'pretplata' },
+            { putanja: '/account/subscribers', naziv: 'Pretplaćeni na newsletter', ikona: 'pretplata' },
         ],
     },
     {
@@ -354,7 +354,34 @@ class AdminOkvir extends Component {
                         <button
                             type="button"
                             className="z-adminokvir__odjava"
-                            onClick={() => this.props.signOut && this.props.signOut()}
+                            onClick={() => {
+                                            /*
+                                             * Odjava mora i da ODVEDE korisnika.
+                                             *
+                                             * `signOut` samo brise token i cisti
+                                             * `uData`. Vecina strana pod
+                                             * `/account` ima `loginNeeded`, pa se
+                                             * tada same prebace na prijavu — ali
+                                             * pet ih nema (`/account/dashboard`,
+                                             * `/account/archive-stats`,
+                                             * `/account/watermarks`,
+                                             * `/account/subscription`). Tamo se
+                                             * posle klika NISTA nije menjalo:
+                                             * strana ostaje, okvir i dalje stoji,
+                                             * pa dugme deluje kao da ne radi.
+                                             *
+                                             * `location.href` namerno, ne
+                                             * `history.push`: odjava treba da
+                                             * baci i sve sto je ostalo u memoriji
+                                             * (dovucene galerije, korpa, podaci
+                                             * korisnika), a ne samo da promeni
+                                             * adresu.
+                                             */
+                                            if (this.props.signOut) this.props.signOut();
+                                            if (typeof window !== 'undefined') {
+                                                window.location.href = '/';
+                                            }
+                                        }}
                         >
                             {'Odjava'.translate(l)}
                         </button>

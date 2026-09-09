@@ -1708,57 +1708,105 @@
                     padding-left: 0;
                 }
 
+                /*
+                 * PROZOR ZA IZMENU FOTOGRAFIJE
+                 *
+                 * Prekrojen 2026-09-09. Bio je na `z-index: 9`, a bocni okvir
+                 * administracije stoji na `--sloj-lepljivo` (100) — pa je
+                 * navbar prelazio PREKO prozora i sekao mu naslov. Sada ide na
+                 * `--sloj-prozor`, iznad svega osim poruka.
+                 *
+                 * Panel ima svoju visinu i svoj skrol, sa razmakom do ivica
+                 * ekrana — ranije je rastao koliko i sadrzaj, pa su dugmad na
+                 * dnu umela da odu ispod ivice.
+                 */
                 .exif-modal{
                     position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background-color: rgba(0,0,0,0.6);
-                    z-index: 9;
+                    inset: 0;
+                    z-index: var(--sloj-prozor);
+
                     display: flex;
                     align-items: center;
                     justify-content: center;
+                    padding: var(--razmak-6) var(--razmak-5);
+
+                    background-color: var(--boja-zavesa);
+                    overflow-y: auto;
+                    overscroll-behavior: contain;
+
+                    @include mobile {
+                        padding: 0;
+                        align-items: stretch;
+                    }
+
                     > div {
                         width: 100%;
+                        max-width: 980px;
+                        margin: auto;
+
                         .container{
                             background-color: $white;
-                            padding: 30px 30px;
-                            border-radius: 20px;
-                            
+                            padding: var(--razmak-5);
+                            border-radius: var(--radijus-panel);
+                            box-shadow: var(--senka-lebdi);
+
+                            display: flex;
+                            flex-direction: column;
+                            max-height: 100%;
+
+                            @include mobile {
+                                border-radius: 0;
+                                min-height: 100%;
+                            }
+
                             .row{
-                                max-height: 90vh;
+                                // Skroluje SADRZAJ, ne ceo prozor.
                                 overflow-y: auto;
-    
+                                min-height: 0;
+                                flex: 1 1 auto;
                             }
 
                             h3 {
-                                margin-bottom: 52px;
-                                font-size: 30px;
-                                font-weight: $bold;
-                                color: $black
+                                margin-bottom: var(--razmak-5);
+                                font-family: var(--pismo-naslov);
+                                font-size: var(--slovo-xl);
+                                line-height: var(--red-xl);
+                                font-weight: var(--tezina-jaka);
+                                color: var(--boja-tekst);
                             }
+
                             img {
                                 width: 100%;
-                                border-radius: 15px;
+                                border-radius: var(--radijus-panel);
                                 max-height: 436px;
                                 object-fit: contain;
+                                background: var(--boja-podloga-tiha);
                             }
+
                             textarea{
                                 height: 120px;
                             }
 
                             .buttons{
+                                position: sticky;
+                                bottom: 0;
+                                // Dugmad ostaju u kadru dok sadrzaj skroluje.
+                                background-color: $white;
+                                padding-top: var(--razmak-4);
+                                margin-top: var(--razmak-4);
+                                border-top: 1px solid var(--boja-linija);
+
                                 button {
-                                    border-radius: 23px;
-                                    font-size: 14px;
+                                    border-radius: var(--radijus-pun);
+                                    font-size: var(--slovo-sm);
                                     font-weight: $medium;
                                     padding: 10px 27px;
                                     color: var(--boja-tekst-na-akcentu);
                                     border: 0;
                                     background-color: $blue;
                                     margin-right: 20px;
-                                    &:last-child{
+
+                                    &:last-child {
                                         background-color: $red;
                                     }
                                 }
@@ -2022,6 +2070,44 @@
                                right: -13px;
                                top: -13px;
                                cursor: pointer;
+
+                               // Sada je pravo dugme, ne `div` — gasi se
+                               // zatečeni izgled dugmeta, izgled ostaje isti.
+                               border: 0;
+                               padding: 0;
+                               z-index: 2;
+                            }
+
+                            /* Izmjena fotografije — natpis, ne pogađanje.
+                               Vidi se stalno, ne samo na hover: na dodiru
+                               hover ne postoji. */
+                            .z-slika-radnje {
+                               position: absolute;
+                               left: 0;
+                               right: 0;
+                               bottom: 0;
+                               z-index: 2;
+
+                               display: flex;
+                               justify-content: center;
+                               padding: var(--razmak-1);
+                            }
+
+                            .z-slika-radnje__izmeni {
+                               border: 0;
+                               border-radius: var(--radijus-pun);
+                               padding: 3px var(--razmak-3);
+
+                               background: var(--boja-zavesa);
+                               color: var(--boja-traka-tekst);
+
+                               font-family: var(--pismo-tekst);
+                               font-size: var(--slovo-oznaka);
+                               line-height: 1.6;
+                               font-weight: var(--tezina-srednja);
+                               cursor: pointer;
+
+                               &:hover { background: var(--boja-traka); }
                             }
                         
                         }

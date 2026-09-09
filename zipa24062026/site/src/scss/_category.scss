@@ -4,6 +4,70 @@
         padding-top: var(--zaglavlje-visina);
     }
 
+    /*
+     * ŠIRA STRANA I KRUPNIJE FOTOGRAFIJE (traženo 2026-09-09).
+     *
+     * Bootstrap-ov `.container` staje na 1140px, pa je kartica na ekranu od
+     * 1440 bila 263px široka a fotografija 263×175 — sitno za stranu koja
+     * postoji zbog fotografija. Prvo je granica podignuta na 1360 (kartica
+     * 318px), sada strana ide skoro od ivice do ivice.
+     *
+     * Podiže se SVIM containerima ove strane, ne samo mreži — naslov i
+     * alatna traka moraju da ostanu poravnati sa karticama ispod. Pravilo je
+     * zatvoreno u `.category-wrap`, pa ostatak sajta ostaje na 1140.
+     */
+    @include desktop-i-vise {
+        .container { max-width: 1360px; }
+    }
+
+    @include veliki-ekran {
+        .container {
+            max-width: none;
+            width: calc(100vw - var(--razmak-6) * 2);
+        }
+    }
+
+    /*
+     * MREŽA GALERIJA — broj kartica u redu se PRILAGOĐAVA ekranu.
+     *
+     * Bootstrap je držao tačno četiri u redu (`col-lg-3`), pa je na širokom
+     * monitoru kartica rasla preko svake mere, a na 1440 bila manja nego što
+     * može. Ovde meru diktira kartica, ne broj stupaca: najmanja je 300px, a
+     * koliko ih stane — stane.
+     *
+     * Zašto baš 300: oštra verzija fotografije je 700px široka. Kartica od
+     * ~340px znači uvećanje 2,06× — taman za retina ekran. Na 450px (tri u
+     * redu) uvećanje pada na 1,55× i fotografija vidno omekša, pa se tri u
+     * redu ne isplate dok se u Worker ne doda veća verzija.
+     *
+     * Mereno na 1440: 4 u redu, kartica 336px (bilo 318).
+     * Mereno na 1920: 5 u redu, kartica 358px — peta kolona dođe sama.
+     *
+     * `minmax(0, 1fr)` u `auto-fill` obliku: donja granica je 300px, ne
+     * `min-content` — pravilo projekta protiv golog `1fr`.
+     */
+    .z-mreza-galerija {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: var(--razmak-5);
+        margin-left: 0;
+        margin-right: 0;
+
+        // Bootstrap-ove mere stupca se gase — širinu sada daje mreža.
+        > [class*='col-'] {
+            width: 100%;
+            max-width: none;
+            flex: none;
+            padding-left: 0;
+            padding-right: 0;
+        }
+
+        @include mobile {
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: var(--razmak-4);
+        }
+    }
+
     .into-wrap{
         position: relative;
         //height: 380px;

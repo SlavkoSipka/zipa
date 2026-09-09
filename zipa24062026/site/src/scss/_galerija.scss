@@ -11,6 +11,81 @@
 
 .z-galerija {
 
+    /* ── kostur dok podaci ne stignu ──────────────────────────────────── */
+
+    /*
+     * Mere prate pravu stranu: naslov je iste visine kao `--slovo-xl` red,
+     * pločice idu u istu zidanu mrežu. Zato se pri dolasku podataka ništa
+     * ne pomeri.
+     */
+    &__k-kategorija {
+        display: block;
+        width: 120px;
+        height: 20px;
+        margin-bottom: var(--razmak-2);
+        border-radius: var(--radijus-oznaka);
+    }
+
+    &__k-naslov {
+        display: block;
+        width: 100%;
+        max-width: 28ch;   // `min()` ne prolazi kroz gradnju — vidi CLAUDE.md
+        height: 30px;
+        margin-bottom: var(--razmak-2);
+    }
+
+    &__k-podaci {
+        display: block;
+        width: 100%;
+        max-width: 40ch;
+        height: 18px;
+    }
+
+    &__k-radnje {
+        display: flex;
+        gap: var(--razmak-2);
+        flex: 0 0 auto;
+    }
+
+    &__k-dugme {
+        display: block;
+        width: 132px;
+        height: 40px;
+        border-radius: var(--radijus-panel);
+    }
+
+    &__k-traka {
+        margin-bottom: var(--razmak-4);
+    }
+
+    &__k-broj {
+        display: block;
+        width: 160px;
+        height: 18px;
+    }
+
+    // Pločica se ponaša kao prava fotografija u poravnatom redu.
+    &__k-foto {
+        display: block;
+        height: var(--visina-reda);
+        flex-grow: var(--odnos, 1.5);
+        flex-basis: calc(var(--odnos, 1.5) * var(--visina-reda));
+        border-radius: var(--radijus-panel);
+    }
+
+    // Natpis postoji zbog čitača ekrana; oku ga kostur već govori.
+    &__k-najava {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        padding: 0;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+        border: 0;
+    }
+
     /* ── zaglavlje galerije ───────────────────────────────────────────── */
 
     &__zaglavlje {
@@ -61,10 +136,8 @@
         font-weight: var(--tezina-jaka);
         color: var(--boja-tekst);
 
-        /* U bazi naslovi stoje VELIKIM SLOVIMA — isto kao na karticama, slog
-           se popravlja u prikazu, baza se ne dira. */
-        text-transform: lowercase;
-        &::first-letter { text-transform: uppercase; }
+        // Nazivi galerija na sajtu stoje VELIKIM SLOVIMA (odluka 2026-09-08).
+        text-transform: uppercase;
 
         // Dugi naslovi se prelamaju, ne guraju radnje van reda.
         overflow-wrap: anywhere;
@@ -106,40 +179,21 @@
 
     /* ── opis ─────────────────────────────────────────────────────────── */
 
+    /*
+     * Opis stoji u svom redu ispod naslova i radnji, preko PUNE širine —
+     * iste one koju ima mreža fotografija. Ranije je bio u naslovnom stupcu
+     * pored dugmadi, pa je red bio upola kraći od fotografija ispod njega.
+     *
+     * Nema više skupljanja na tri reda: opis se vidi ceo, bez dugmeta.
+     */
     &__opis {
-        margin-top: var(--razmak-4);
-        max-width: 70ch;
+        margin-top: var(--razmak-5);
 
-        font-size: var(--slovo-md);
+        font-size: var(--slovo-lg);
         line-height: var(--red-md);
         color: var(--boja-tekst);
 
         p { margin: 0; }
-
-        // Skupljeno na tri reda dok se ne otvori.
-        &--skupljen p {
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-    }
-
-    &__vise {
-        margin-top: var(--razmak-2);
-        padding: 0;
-
-        border: 0;
-        background: transparent;
-
-        font-family: var(--pismo-tekst);
-        font-size: var(--slovo-sm);
-        font-weight: var(--tezina-srednja);
-        color: var(--boja-veza);
-        text-decoration: underline;
-        cursor: pointer;
-
-        @include z-fokus;
     }
 
     /* ── radnje (deljenje, štampa) ────────────────────────────────────── */
@@ -257,21 +311,72 @@
      * stranica (`height: auto`), pa se ništa ne iseca. Mreža sa jednakim
      * ćelijama bi ih sve svela na isti kadar.
      */
+    /*
+     * Mreža čita VODORAVNO: 1, 2, 3, 4 pa u novi red.
+     *
+     * Ranije je stajalo `column-count: 4`. CSS stupci pune odozgo nadole —
+     * prve 39 fotografija bi otišle niz prvi stubac, pa sledećih 39 niz
+     * drugi. Galerija prikazuje tok događaja, pa se time gubio redosled
+     * snimanja: čitalo se 1, 2, 3 nadole umesto udesno.
+     *
+     * Zato poravnati redovi (kao kod velikih agencija): svaki red se popuni
+     * do pune širine, svi snimci u redu imaju istu visinu, a širinu dobijaju
+     * po svom odnosu stranica — pa se ne seku na uspravne i položene.
+     * Odnos stiže kao `--odnos` sa same pločice (`detailPage.js`).
+     */
     &__mreza {
-        column-count: 4;
-        column-gap: var(--razmak-2);
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--razmak-2);
 
-        @include small-desktop { column-count: 3; }
-        @include tablet        { column-count: 3; }
-        @include mobile        { column-count: 2; }
+        /* Visina reda je izabrana tako da položena fotografija (3:2) da
+           četiri u redu na širokom ekranu i tri na užem — isto koliko je
+           davao stari raspored u stupcima. */
+        --visina-reda: 175px;
+
+        @include tablet { --visina-reda: 150px; }
+        @include mobile { --visina-reda: 130px; }
+
+        /*
+         * Ispod 480px JEDNA fotografija u redu.
+         *
+         * Sa dve u redu pločica je bila 176×110 (mereno na 390px) — premalo
+         * za stranu koja postoji zbog fotografija; sa te veličine se ne vidi
+         * šta je na snimku, pa se u arhivu ulazi naslijepo. Puna širina daje
+         * ~358px, tri puta veću površinu.
+         */
+        @include telefon-mali {
+            --visina-reda: 240px;
+
+            > .z-galerija__foto {
+                flex: 1 0 100%;
+                flex-basis: 100%;
+                height: auto;
+                aspect-ratio: 3 / 2;
+            }
+        }
+
+        /* Poslednji red se ne razvlači. Prazna stavka pojede preostalu
+           širinu, pa poslednje fotografije ostanu svoje veličine umesto da
+           se raširе preko pola strane. */
+        &::after {
+            content: '';
+            flex-grow: 999999;
+        }
     }
 
     &__foto {
         position: relative;
         display: block;
-        width: 100%;
         padding: 0;
-        margin: 0 0 var(--razmak-2);
+        margin: 0;
+
+        /* Visina je zajednička za ceo red, širina ide po odnosu stranica —
+           `--odnos` postavlja `detailPage.js` sa mera same fotografije.
+           Rezerva 1.5 važi za snimke bez upisanih mera. */
+        height: var(--visina-reda);
+        flex-grow: var(--odnos, 1.5);
+        flex-basis: calc(var(--odnos, 1.5) * var(--visina-reda));
 
         border: 0;
         border-radius: var(--radijus-panel);
@@ -279,16 +384,13 @@
         overflow: hidden;
         cursor: pointer;
 
-        // Bez ovoga `columns` preseca fotografiju na dnu stupca.
-        break-inside: avoid;
-        -webkit-column-break-inside: avoid;
-
         @include z-fokus;
 
         img {
             display: block;
             width: 100%;
-            height: auto;
+            height: 100%;
+            object-fit: cover;
             @include z-prelaz(transform);
         }
 
@@ -409,6 +511,12 @@
         font-weight: var(--tezina-jaka);
         color: var(--boja-tekst);
     }
+
+    /* Ispod fotografije stoji SAMO naziv galerije. Mesto i datum su ovde
+       višak — spisak služi da se nastavi gledanje, ne da se čita. */
+    &__srodne .z-kartica-galerije__mesto {
+        display: none;
+    }
 }
 
 /* Dolazak fotografije u mreži galerije — vidi `&__foto` iznad. */
@@ -427,4 +535,31 @@
 @media (prefers-reduced-motion: reduce) {
     .z-galerija__foto::after { animation: none; }
     .z-galerija__foto--stigla img { animation: none; }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TELEFON — strana galerije
+   ═══════════════════════════════════════════════════════════════════════════
+   Mereno na 390px: naslov 24px, opis 18px u bloku od 837px (1.096 znakova),
+   red podataka prelomljen na dva reda. Slova su spuštena kroz tokene; ovde
+   ostaje ono što tokeni ne pokrivaju. Desktop netaknut.
+*/
+@include mobile {
+    .z-galerija {
+        &__zaglavlje {
+            padding: var(--razmak-5) 0 var(--razmak-4);
+            margin-bottom: var(--razmak-5);
+        }
+
+        /* Opis na telefonu ide u meru teksta, ne u `--slovo-lg`: 18px preko
+           358px daje ~40 znakova u redu, što je predugačko za palac i
+           prekratko za oko. */
+        &__opis {
+            margin-top: var(--razmak-4);
+            font-size: var(--slovo-md);
+        }
+
+        &__podaci { font-size: var(--slovo-sm); }
+    }
 }

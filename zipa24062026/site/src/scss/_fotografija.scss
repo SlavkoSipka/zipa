@@ -153,6 +153,9 @@
         font-weight: var(--tezina-jaka);
         color: var(--boja-traka-tekst);
         overflow-wrap: anywhere;
+
+        // Nazivi galerija na sajtu stoje VELIKIM SLOVIMA (odluka 2026-09-08).
+        text-transform: uppercase;
     }
 
     &__podnaslov {

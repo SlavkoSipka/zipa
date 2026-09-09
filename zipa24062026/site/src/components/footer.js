@@ -201,7 +201,7 @@ class Footer extends Component {
                                     <div className="z-podnozje__logo"><Isvg src={p.footerLogo} /></div>
                                     : null}
                                 <p className="z-podnozje__o-nama">
-                                    {'Foto servis agencije ZIPA PHOTO iz Banjaluke. Arhiva fotografija od 1990. do danas — događaji, ljudi i mjesta Republike Srpske.'.translate(l)}
+                                    {'Prva foto agencija u Bosni i Hercegovini. Zipa Agency nudi profesionalno fotografisanje, video i dron snimanje svih događaja u zemlji i okruženju, prema potrebama medijskih kuća, pravnih i fizičkih lica. Pogledajte arhivu fotografija od 1990. godine pa do danas.'.translate(l)}
                                 </p>
 
                                 {mreze.length ?
@@ -285,8 +285,8 @@ class Footer extends Component {
                         <div className="z-podnozje__dno">
                             <p>{`Copyright © ZIPA PHOTO AGENCY — 1990–${godina}. `}{'Sva prava zadržana.'.translate(l)}</p>
                             <p>
-                                {'Izradila'.translate(l)}{' '}
-                                <a href="https://novamedia.agency" target="_blank" rel="noopener noreferrer">nova media.</a>
+                                {'Izrada'.translate(l)}{' '}
+                                <a href="https://aisajt.com" target="_blank" rel="noopener noreferrer">AiSajt</a>
                             </p>
                         </div>
                     </div>

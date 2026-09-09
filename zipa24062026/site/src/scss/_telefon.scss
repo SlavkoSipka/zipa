@@ -40,8 +40,7 @@
     .z-prijava__prikazi,          // „prikaži lozinku" u polju
     .z-korpa__ukloni,             // uklanjanje stavke iz korpe
     .z-korpa__tiho-dugme,
-    .z-galerija__redosled,        // preokretanje redosleda u galeriji
-    .traka-pauza {                // zaustavljanje trake na naslovnoj (C i B)
+    .z-galerija__redosled {       // preokretanje redosleda u galeriji
         min-height: 44px;
         display: inline-flex;
         align-items: center;
@@ -53,6 +52,52 @@
     .z-prozor__zatvori,          // prozor fotografije sa cenama
     .z-obavestenje__zatvori,
     .z-poruka__zatvori {
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+    /* ── dopuna 2026-09-09 ───────────────────────────────────────────────
+     * Merenje na 390px je naslo 34 premale mete na naslovnoj i 69 na
+     * `/galerije`. Pravilo iznad ih je pokrivalo samo delimicno — ovde su
+     * ostale, sve redom po meri koja je izmerena.
+     */
+
+    /* Filteri i prekidaci na `/galerije` — bili 36px. */
+    .z-alatna-traka__filter,
+    .z-alatna-traka__vise,
+    .z-alatna-traka__prekidac-dugme,
+    .z-alatna-traka__prikazi button {
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Prekidac „Galerije / Fotografije" u zaglavlju — bio 32px. */
+    .z-zaglavlje__vrsta-dugme {
+        min-height: 44px;
+    }
+
+    /* Dugme u traci najave — bilo 40px. */
+    .z-zaglavlje__najava-dugme {
+        min-height: 44px;
+    }
+
+    /* Logo u traci — bio 32px visine. Sirina ostaje po tekstu. */
+    .z-zaglavlje__logo {
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    /* Radnje na strani galerije — bile 36px. */
+    .z-galerija__radnja {
+        min-height: 44px;
+    }
+
+    /* Ikonice drustvenih mreza u podnozju — bile 36×36. Stoje same u redu,
+       jedna do druge, i nemaju natpis: promasaj se ne moze ispraviti citanjem. */
+    .z-podnozje__mreza {
         min-width: 44px;
         min-height: 44px;
     }
@@ -81,13 +126,15 @@
     .z-fotograf__kontakt-veza,   // isto na strani fotografa
     .z-galerija__vise,           // „prikaži cio opis" u galeriji
     .z-broj-po-strani a,
-    .pagination a,
-    .z-zaglavlje__logo,
-    .z-zaglavlje__vrsta-dugme {
+    .pagination a {
         display: inline-flex;
         align-items: center;
         min-height: 32px;
     }
+    /* `z-zaglavlje__logo` i `z-zaglavlje__vrsta-dugme` su OVDE STAJALI na
+       32px. Izmešteni su gore, na 44: logo je veza na početnu i tapka se
+       stalno, a prekidač „Galerije / Fotografije" je kontrola u polju
+       pretrage, ne veza u spisku. Traka je visoka 72px, pa 44 staje. */
 
     /* Kvadratne mete — broj strane i broj po strani su uski koliko i cifra. */
     .z-broj-po-strani a,
@@ -105,12 +152,14 @@
     }
 
     /* Veza „Sve galerije →" u naslovu odeljka, na sva tri predloga. Stoji
-     * sama u redu i bila je visoka 20px. */
+     * sama u redu i bila je visoka 20px, pa 32px. Od 2026-09-09 ide na punih
+     * 44: to je glavni put dalje sa naslovne, a meta se širi PADDINGOM, pa se
+     * naslov odeljka ne pomera. */
     .naslovna-a, .naslovna-b, .naslovna-c {
         .naslov-odeljka a {
             display: inline-flex;
             align-items: center;
-            min-height: 32px;
+            min-height: 44px;
         }
     }
 

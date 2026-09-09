@@ -237,7 +237,8 @@ const renderGalleryField = ({
     height,
     meta: { touched, error },
     uploadHandler,
-    enableSave
+    enableSave,
+    lang
 }) => (
 
     <Gallery
@@ -247,6 +248,7 @@ const renderGalleryField = ({
         height={height}
         uploadHandler={uploadHandler}
         enableSave={enableSave}
+        lang={lang}
         {...input}
     />
 )
@@ -460,6 +462,7 @@ class form extends React.Component {
                             component={renderGalleryField}
                             label={'Fotografije'.translate(this.props.lang)}
                             uploadHandler={this.props.uploadHandler}
+                            lang={this.props.lang}
                             enableSave={() => this.setState({ enableSave: true })}
                         ></Field>
 

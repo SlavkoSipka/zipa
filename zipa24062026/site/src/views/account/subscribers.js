@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import Isvg from 'react-inlinesvg';
 import Page from '../../containers/page';
 import AdminOkvir from '../../components/adminOkvir';
+import moment from 'moment';
 
 
 import {
@@ -82,7 +83,7 @@ class CategoriesPage extends Component {
                 settings={this.props.settings}
                 putanja={this.props[0] && this.props[0].location ? this.props[0].location.pathname : ''}
                 signOut={this.props.signOut}
-                naslov={'Pretplatnici'.translate(this.props.lang)}
+                naslov={'Pretplaćeni na newsletter'.translate(this.props.lang)}
             >
                 <div className="account-wrap">
 
@@ -99,12 +100,70 @@ class CategoriesPage extends Component {
 
                             </Col>
 
+                            {/*
+                              * RUCNO DODAVANJE ADRESE.
+                              *
+                              * Do sada je postojao samo masovni „Uvoz
+                              * pretplatnika" (nalepi spisak). Za jednu adresu
+                              * to je bilo preveliko sredstvo, pa je nedostajalo
+                              * ocigledno mesto da se neko doda.
+                              *
+                              * Koristi POSTOJECU javnu rutu `/newsletter/subscribe`
+                              * — ista provera adrese i ista zastita od duplikata
+                              * kao kad se covek sam prijavi sa sajta.
+                              */}
+                            <Col lg="12">
+                                <form className="z-spisak-pretraga" onSubmit={(e) => {
+                                    e.preventDefault();
+                                    const adresa = (this.state.novaAdresa || '').trim();
+                                    if (!adresa) return;
+
+                                    fetch(`${API_ENDPOINT}/newsletter/subscribe`, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ email: adresa })
+                                    }).then(res => res.json()).then((odgovor) => {
+                                        if (odgovor && odgovor.error) {
+                                            this.setState({ greskaDodavanja: 'Adresa nije ispravna.'.translate(this.props.lang) });
+                                            return;
+                                        }
+                                        this.setState({ novaAdresa: '', greskaDodavanja: null });
+                                        fetch(`${API_ENDPOINT}/subscribers/all`, {
+                                            method: 'GET',
+                                            headers: {
+                                                'Content-Type': 'application/json',
+                                                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                                            },
+                                        }).then(res => res.json()).then((result) => this.setState({ items: result }));
+                                    }).catch(() => this.setState({
+                                        greskaDodavanja: 'Adresa nije dodata. Pokušajte ponovo.'.translate(this.props.lang)
+                                    }));
+                                }}>
+                                    <input
+                                        type="email"
+                                        className="z-polje__unos"
+                                        value={this.state.novaAdresa || ''}
+                                        placeholder={'ime@primjer.com'}
+                                        aria-label={'Nova adresa'.translate(this.props.lang)}
+                                        onChange={(e) => this.setState({ novaAdresa: e.target.value })}
+                                    />
+                                    <button type="submit" className="z-dugme z-dugme--glavno">
+                                        {'Dodaj adresu'.translate(this.props.lang)}
+                                    </button>
+                                </form>
+                                {this.state.greskaDodavanja
+                                    ? <p className="error">{this.state.greskaDodavanja}</p>
+                                    : null}
+                            </Col>
+
                             <Col lg="12">
                                 <div className="table">
                                     <div>
                                         <table>
                                             <tr>
                                                 <th>{'E-mail'.translate(this.props.lang)}</th>
+                                                <th>{'Prijavljen'.translate(this.props.lang)}</th>
+                                                <th>{'Status'.translate(this.props.lang)}</th>
                                                 <th>{'Akcije'.translate(this.props.lang)}</th>
                                             </tr>
 
@@ -113,6 +172,34 @@ class CategoriesPage extends Component {
                                                     return (
                                                         <tr>
                                                             <td>{item.email}</td>
+
+                                                            {/*
+                                                              * Datum prijave. Zapisi upisani prije nego što se
+                                                              * datum počeo pratiti nemaju `timestamp` — za njih
+                                                              * kolona ostaje prazna, jer se datum ne izmišlja.
+                                                              */}
+                                                            <td>
+                                                                {item.timestamp
+                                                                    ? moment.unix(item.timestamp).format('DD.MM.YYYY.')
+                                                                    : <span className="z-tabela__tiho">&mdash;</span>}
+                                                            </td>
+
+                                                            {/*
+                                                              * Odjavljeni ostaju na spisku, sa datumom odjave —
+                                                              * ranije se zapis brisao, pa se nije znalo ni ko se
+                                                              * odjavio ni kada. Poruke im se vise ne salju.
+                                                              */}
+                                                            <td>
+                                                                {item.unsubscribedAt
+                                                                    ? <span className="z-oznaka-odjave">
+                                                                        {'Odjavljen'.translate(this.props.lang)}
+                                                                        {' '}
+                                                                        {moment.unix(item.unsubscribedAt).format('DD.MM.YYYY.')}
+                                                                      </span>
+                                                                    : <span className="z-oznaka-prijave">
+                                                                        {'Prima poruke'.translate(this.props.lang)}
+                                                                      </span>}
+                                                            </td>
 
                                                             <td>
                                                                 <button onClick={() => {

@@ -149,7 +149,10 @@ class WatermarksPage extends Component {
                             {ucitava ? <p className="uvod">Učitavam…</p> : null}
 
                             {!ucitava && !greska && !zigovi.length ? (
-                                <p className="prazno">Još nema sačuvanih žigova.</p>
+                                <p className="prazno">
+                                    Nema nijednog žiga, pa se fotografije postavljaju
+                                    <b> bez žiga</b>. Dodajte PNG iznad.
+                                </p>
                             ) : null}
 
                             <div className="mreza-zigova">
@@ -163,7 +166,20 @@ class WatermarksPage extends Component {
                                             {z.ukljucen ? <span className="oznaka">uključen</span> : null}
                                         </div>
                                         <div className="radnje">
-                                            {!z.ukljucen ? (
+                                            {/*
+                                              * „Zatečen" je žig koji stoji u podešavanjima
+                                              * još od starog sajta, a nikad nije upisan kao
+                                              * zapis. Prikazuje se da bi se vidjelo šta se
+                                              * zaista utiskuje u fotografije; ne može se
+                                              * uključiti (već jeste) ni obrisati.
+                                              */}
+                                            {z.zatecen ? (
+                                                <span className="napomena-mala">
+                                                    {z.fajlPostoji === false
+                                                        ? 'Datoteka žiga NE POSTOJI na serveru — fotografije se postavljaju bez žiga.'
+                                                        : 'Zatečen iz podešavanja, nije sačuvan kao zapis. Dodajte ga iznad ako želite da ga čuvate uz ostale.'}
+                                                </span>
+                                            ) : !z.ukljucen ? (
                                                 <>
                                                     <button type="button" onClick={() => this.ukljuci(z._id)}>Uključi</button>
                                                     <button type="button" className="brisi" onClick={() => this.obrisi(z._id)}>Obriši</button>

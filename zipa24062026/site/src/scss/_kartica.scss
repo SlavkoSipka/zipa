@@ -23,7 +23,12 @@
    To je i smisao posla: šest verzija kartice svodi se na jednu. */
 .z-kartica-galerije,
 .articles .z-kartica-galerije,
-.articles.novi-spisak .z-kartica-galerije {
+.articles.novi-spisak .z-kartica-galerije,
+/* Na strani galerije („Iz iste kategorije") ram crta
+   `.detail-wrap .section-detail article` iz `_global.scss` — dva razreda i
+   oznaka, više od `.articles .z-kartica-galerije`. Zato i taj put mora ovde,
+   inače kartica tamo ostane u sivoj kutiji. */
+.detail-wrap .section-detail .z-kartica-galerije {
     background: none;
     border: 0;
     border-radius: 0;
@@ -134,10 +139,8 @@
         line-height: 1.34;
         font-weight: var(--tezina-srednja);
 
-        /* U bazi naslovi stoje VELIKIM SLOVIMA, pa se duži ne čitaju. Baza
-           se ne dira — slog se popravlja u prikazu. */
-        text-transform: lowercase;
-        &::first-letter { text-transform: uppercase; }
+        // Nazivi galerija na sajtu stoje VELIKIM SLOVIMA (odluka 2026-09-08).
+        text-transform: uppercase;
 
         display: -webkit-box;
         -webkit-line-clamp: 2;
@@ -166,22 +169,111 @@
         .z-kartica-galerije__naslov a   { color: var(--boja-oznaka-tekst); }
     }
 
-    /* ── varijanta: spisak ────────────────────────────────────────────── */
-
+    /* ── varijanta: spisak ────────────────────────────────────────────────
+     *
+     * Prekrojena 2026-09-09. Ranije je red bio ista kartica samo polegnuta:
+     * fotografija na trećini širine (398px na 1170) i pored nje samo naslov i
+     * datum, pa je dve trećine reda ostajalo prazno.
+     *
+     * Sada red radi ono što mreža ne može — NOSI OPIS. Fotografija je uža i u
+     * odnosu 3:2, a pored nje idu kategorija, naziv, red podataka, dva reda
+     * opisa i poziv da se galerija otvori.
+     *
+     * KUTIJE NEMA ni ovde: nema sive podloge ni okvira, redove razdvaja tanka
+     * linija — isto pravilo kao za karticu u mreži.
+     */
     &--spisak {
         flex-direction: row;
-        gap: var(--razmak-4);
+        align-items: flex-start;
+        gap: var(--razmak-5);
 
-        .z-kartica-galerije__slika { flex: 0 0 34%; aspect-ratio: 4 / 3; }
-        .z-kartica-galerije__telo  { padding-top: 0; justify-content: center; }
+        padding-bottom: var(--razmak-5);
 
+        // Fotografija: uža nego pre, i u istom odnosu kao u mreži.
+        .z-kartica-galerije__slika {
+            flex: 0 0 280px;
+            aspect-ratio: 3 / 2;
+        }
+
+        .z-kartica-galerije__telo {
+            padding-top: 0;
+            gap: var(--razmak-2);
+            align-self: center;
+        }
+
+        /* Krupnije od mreže — u redu ima mesta, a spisak se ČITA, ne
+           preleće pogledom kao mreža. Traženo 2026-09-09. */
+        .z-kartica-galerije__naslov {
+            font-size: var(--slovo-lg-plus);
+            line-height: var(--red-lg-plus);
+            -webkit-line-clamp: 2;
+        }
+
+        .z-kartica-galerije__mesto {
+            font-size: var(--slovo-md);
+            line-height: var(--red-md);
+        }
+
+        @include small-desktop {
+            .z-kartica-galerije__slika { flex: 0 0 240px; }
+        }
+
+        @include tablet {
+            .z-kartica-galerije__slika { flex: 0 0 200px; }
+            .z-kartica-galerije__opis  { -webkit-line-clamp: 2; }
+        }
+
+        // Na telefanu red se uspravlja — fotografija gore, tekst ispod.
         @include mobile {
             flex-direction: column;
-            gap: 0;
-            .z-kartica-galerije__slika { flex: 0 0 auto; width: 100%; aspect-ratio: 3 / 2; }
-            .z-kartica-galerije__telo  { padding-top: var(--razmak-2); }
+            gap: var(--razmak-3);
+            padding-bottom: var(--razmak-4);
+
+            .z-kartica-galerije__slika { flex: 0 0 auto; width: 100%; }
+            .z-kartica-galerije__telo  { align-self: stretch; }
+            .z-kartica-galerije__naslov {
+                font-size: var(--slovo-lg);
+                line-height: var(--red-lg);
+            }
         }
     }
+
+    /* Kategorija kao natpis iznad naslova — samo u spisku. Na fotografiji
+       ostaje oznaka u uglu; ovde je tekst, pa se čita nezavisno od kadra. */
+    &__oznaka-reda {
+        font-size: var(--slovo-xs);
+        line-height: var(--red-xs);
+        font-weight: var(--tezina-jaka);
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: var(--boja-oznaka-tekst);
+    }
+
+    /* Opis galerije — dva reda, tiše od naslova. Širina reda je ograničena
+       na 70ch: preko toga oko gubi početak sledećeg reda. */
+    &__opis {
+        margin: 0;
+        max-width: 70ch;
+
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
+        color: var(--boja-tekst-tiho);
+
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    &__dalje {
+        margin-top: var(--razmak-1);
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
+        font-weight: var(--tezina-srednja);
+        color: var(--boja-tekst-tiho);
+    }
+
+    &--spisak:hover &__dalje { color: var(--boja-tekst); }
 
     /* ── varijanta: veliki prikaz ─────────────────────────────────────── */
 
@@ -254,4 +346,36 @@
 @media (prefers-reduced-motion: reduce) {
     .z-kartica-skelet__slika,
     .z-kartica-skelet__linija { animation: none; }
+}
+
+
+/* Razdvajač redova u spisku.
+ *
+ * Stoji ovde, a ne u `&--spisak`, zbog težine selektora: reset na vrhu ovog
+ * fajla gasi svaki okvir (`border: 0`) preko `.articles .z-kartica-galerije`
+ * — i to u dva oblika, od kojih jači nosi TRI razreda
+ * (`.articles.novi-spisak .z-kartica-galerije`). Zato su ovde navedena oba
+ * puta; sa samo dva razreda je `border-bottom` ostajao `0px`.
+ */
+.articles .z-kartica-galerije--spisak,
+.articles.novi-spisak .z-kartica-galerije--spisak {
+    border-bottom: 1px solid var(--boja-linija);
+
+    /*
+     * Mere teksta MORAJU ovde, iz istog razloga.
+     *
+     * `_naslovnaC.scss` ima `.articles.novi-spisak .home-article p` — tri
+     * razreda i oznaka — koje svakom pasusu u kartici zadaje 12px i seče ga
+     * na dva reda. To je pisano za staru karticu u mreži, ali pogađa i red u
+     * spisku: naslov je poslušao (`h3`), a mjesto i opis su ostajali na 12px.
+     * Mereno pre popravke: naslov 22px, opis i podaci 12px.
+     */
+    .z-kartica-galerije__mesto,
+    .z-kartica-galerije__opis,
+    .z-kartica-galerije__dalje {
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
+    }
+
+    .z-kartica-galerije__opis { -webkit-line-clamp: 3; }
 }

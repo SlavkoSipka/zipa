@@ -265,10 +265,60 @@ class Gallery extends Component {
 
                             <div className="image-wrap">
 
-                                <img src={this.state.files[i] && (`${PHOTOS_ENDPOINT}/photos/350x/` + this.state.files[i].image)} onClick={() => this.setState({ selectedImage: JSON.parse(JSON.stringify(this.state.files[i])), selectedImageIdx: i })} />
-                                <div className={'delete'} onClick={() => this.removeImage(i)}>
-                                    <Isvg src={deleteIcon} />
+                                <img src={this.state.files[i] && `${PHOTOS_ENDPOINT}/photos/350x/${encodeURI(this.state.files[i].image || '')}`} alt="" />
+
+                                {/*
+                                  * RADNJE NAD FOTOGRAFIJOM
+                                  *
+                                  * Do sada se izmjena otvarala klikom na SAMU
+                                  * SLIKU — nigde nije pisalo da se može kliknuti,
+                                  * a slika nije dostupna tastaturom. Sada stoji
+                                  * dugme sa natpisom.
+                                  *
+                                  * `stopPropagation` na `mousedown` je OBAVEZAN:
+                                  * pločice stoje u mreži koja se prevlači
+                                  * (`react-grid-layout`), pa pritisak na dugme
+                                  * inače počinje prevlačenje i klik ume da se
+                                  * izgubi. To je i razlog zbog kog je brisanje
+                                  * djelovalo kao da ne radi.
+                                  *
+                                  * `type="button"` takođe nije ukras — sve ovo
+                                  * stoji unutar obrasca galerije, pa bi dugme bez
+                                  * njega slalo obrazac.
+                                  */}
+                                <div className="z-slika-radnje">
+                                    <button
+                                        type="button"
+                                        className="z-slika-radnje__izmeni"
+                                        onMouseDown={(e) => e.stopPropagation()}
+                                        onTouchStart={(e) => e.stopPropagation()}
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            this.setState({
+                                                selectedImage: JSON.parse(JSON.stringify(this.state.files[i])),
+                                                selectedImageIdx: i
+                                            });
+                                        }}
+                                    >
+                                        {'Izmijeni'.translate(this.props.lang)}
+                                    </button>
                                 </div>
+
+                                <button
+                                    type="button"
+                                    className={'delete'}
+                                    aria-label={'Obriši fotografiju'.translate(this.props.lang)}
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                    onTouchStart={(e) => e.stopPropagation()}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        this.removeImage(i);
+                                    }}
+                                >
+                                    <Isvg src={deleteIcon} />
+                                </button>
                             </div>
                         </div>
                     )
@@ -286,9 +336,62 @@ class Gallery extends Component {
         }
 
 
+        const jezik = this.props.lang;
+        const koliko = this.state.files ? this.state.files.length : 0;
+
         return (
             <div className="input-wrap gallery-input-wrap">
                 <label>{this.props.label}</label>
+
+                {/*
+                  * DODAVANJE FOTOGRAFIJA — traka IZNAD okvira.
+                  *
+                  * Okvir ispod je visok 520px i sam skroluje. U galeriji sa
+                  * 156 fotografija dugme za dodavanje otkotrlja se van kadra
+                  * cim se malo skroluje, pa je izgledalo da se u vec objavljenu
+                  * galeriju ne moze nista dodati. Ova traka stoji van okvira i
+                  * uvek je na istom mestu.
+                  *
+                  * Bira se preko obicnog `input[type=file]`, ne preko
+                  * `Dropzone`-a: isti posao, bez oslanjanja na njegovo API
+                  * koje se menjalo kroz verzije. Prevlacenje na okvir ispod i
+                  * dalje radi kao i do sada.
+                  */}
+                <div className="z-dodaj-slike">
+                    <span className="z-dodaj-slike__broj">
+                        {koliko
+                            ? `${koliko} ${'fotografija u galeriji'.translate(jezik)}`
+                            : 'Galerija je prazna'.translate(jezik)}
+                    </span>
+
+                    <input
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        ref={(n) => this.izborDatoteka = n}
+                        style={{ display: 'none' }}
+                        onChange={(e) => {
+                            const datoteke = Array.prototype.slice.call(e.target.files || []);
+                            if (datoteke.length) this.onDrop(datoteke);
+                            // Bez ovoga se ista datoteka ne moze izabrati dvaput zaredom.
+                            e.target.value = '';
+                        }}
+                    />
+
+                    <button
+                        type="button"
+                        className="z-dugme z-dugme--glavno z-dodaj-slike__dugme"
+                        disabled={this.state.uploading}
+                        onClick={() => this.izborDatoteka && this.izborDatoteka.click()}
+                    >
+                        {this.state.uploading
+                            ? 'Slanje u toku…'.translate(jezik)
+                            : (koliko
+                                ? 'Dodaj još fotografija'.translate(jezik)
+                                : 'Dodaj fotografije'.translate(jezik))}
+                    </button>
+                </div>
+
                 <div className="file-drop" ref={(ref) => this.dropzone = ref}>
 
                     <Dropzone
@@ -306,7 +409,7 @@ class Gallery extends Component {
 
                     <div className="bottom-content">
                         <Isvg src={image} />
-                        <p> <span>Upload a file</span> or drag and drop</p>
+                        <p><span>{'Izaberite datoteke'.translate(jezik)}</span> {'ili ih prevucite ovdje'.translate(jezik)}</p>
                     </div>
 
                     {this.state.uploading ?
@@ -411,7 +514,12 @@ class Gallery extends Component {
 
                                     </Col>
                                     <Col lg="6">
-                                        <img src={`'${PHOTOS_ENDPOINT}/photos/700x/'` + this.state.selectedImage.image} />
+                                        {/* Adresa je imala NAVODNIKE u sebi:
+                                            `'http://…/photos/700x/'n-a/…` — pa
+                                            se pregled nikad nije ucitao. Uz to
+                                            `encodeURI`, jer imena u arhivi
+                                            imaju razmake (pravilo projekta). */}
+                                        <img src={`${PHOTOS_ENDPOINT}/photos/700x/${encodeURI(this.state.selectedImage.image || '')}`} alt="" />
                                     </Col>
                                     <Col lg="12">
                                         <Textarea label="Opis *" onChange={(e) => {

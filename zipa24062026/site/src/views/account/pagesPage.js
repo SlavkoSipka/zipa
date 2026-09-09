@@ -124,6 +124,35 @@ class PagesPage extends Component {
                     )}
                 />
 
+                {/*
+                  * SISTEMSKE STRANE
+                  *
+                  * Prijava i registracija nisu zapisi u `pages` — obrazac je
+                  * dio sajta i ne uređuje se kao tekst. Jedino što na njima
+                  * ima smisla mijenjati je fotografija uz obrazac, pa stoje
+                  * ovdje, odvojeno od sadržajnih stranica.
+                  */}
+                <div className="z-sistemske">
+                    <h3 className="z-sistemske__naslov">{'Sistemske strane'.translate(l)}</h3>
+                    <p className="z-sistemske__uvod">
+                        {'Ove strane se ne brišu i nemaju tekst koji se uređuje — mijenja se samo fotografija uz obrazac.'.translate(l)}
+                    </p>
+
+                    <div className="z-sistemske__red">
+                        <div className="z-sistemske__opis">
+                            <span className="z-sistemske__ime">{'Prijava i registracija'.translate(l)}</span>
+                            <span className="z-sistemske__adresa">
+                                <a href="/login" target="_blank" rel="noopener noreferrer">/login</a>
+                                {' · '}
+                                <a href="/register" target="_blank" rel="noopener noreferrer">/register</a>
+                            </span>
+                        </div>
+                        <Link to="/account/pages/prijava" className="z-adminokvir__radnja z-adminokvir__radnja--tiha">
+                            {'Izmijeni'.translate(l)}
+                        </Link>
+                    </div>
+                </div>
+
                 <Obavestenja
                     lang={l}
                     poruke={this.state.poruke}

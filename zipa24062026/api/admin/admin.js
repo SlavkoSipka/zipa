@@ -1172,12 +1172,50 @@ class Admin {
      * Važno: žig se ugrađuje u preglednu fotografiju u trenutku postavljanja,
      * pa promena važi za galerije postavljene od tada nadalje.
      */
+    /*
+     * Spisak zigova, uz onaj koji je STVARNO u upotrebi.
+     *
+     * Ukljucen zig ne stoji u `watermarks` nego u `settings.watermark` — a ta
+     * vrednost je tu i pre nego sto je ova strana napravljena, jos iz starog
+     * sajta. Kako u `watermarks` nema nijednog zapisa, strana je izgledala
+     * prazno iako se fotografije uredno zigosu. Zato se zatecени zig dodaje
+     * u spisak kao zapis, oznacen da nije sacuvan.
+     *
+     * Adresa se preslaguje na TEKUCI API: u podesavanjima stoji puna adresa
+     * starog hosta (`zipa-api.novamedia.agency`), pa bi se pregled gasio cim
+     * taj host padne. Sam fajl se ionako cita lokalno, iz `./uploads/`.
+     */
     async allWatermarks() {
         const spisak = await db.collection('watermarks').find({}).sort({ published: -1 }).toArray();
         const podesavanja = await db.collection('settings').find({}).toArray();
         const trenutni = podesavanja.length ? podesavanja[0].watermark : null;
 
-        return spisak.map((z) => Object.assign({}, z, { ukljucen: !!trenutni && z.image === trenutni }));
+        const naNasAPI = (adresa) => {
+            if (!adresa) return adresa;
+            const ime = String(adresa).split('/').pop();
+            return `${API_ENDPOINT}/uploads/${ime}`;
+        };
+
+        const rezultat = spisak.map((z) => Object.assign({}, z, {
+            ukljucen: !!trenutni && z.image === trenutni,
+            image: naNasAPI(z.image),
+        }));
+
+        if (trenutni && !rezultat.some((z) => z.ukljucen)) {
+            const ime = String(trenutni).split('/').pop();
+            rezultat.unshift({
+                _id: 'zatecen',
+                name: 'Žig koji je u upotrebi',
+                image: naNasAPI(trenutni),
+                ukljucen: true,
+                zatecen: true,
+                // Da li fajl uopste postoji na serveru — bez njega se
+                // fotografije postavljaju BEZ ziga, tiho.
+                fajlPostoji: fs.existsSync(`./uploads/${ime}`),
+            });
+        }
+
+        return rezultat;
     }
 
     async updateWatermark(id, data) {
@@ -1460,8 +1498,91 @@ class Admin {
             return { response: { error: 'neispravna veza' }, status: 403 };
         }
 
-        await db.collection('subscribers').deleteMany({ email: String(email).toLowerCase() });
+        /*
+         * Zapis se NE BRISE nego se OZNACAVA.
+         *
+         * Ranije je odjava radila `deleteMany`, pa je adresa nestajala bez
+         * traga: nije se moglo videti ko se odjavio ni kada, a ista osoba bi
+         * se pri sledecem uvozu liste tiho vratila na spisak. Sada zapis
+         * ostaje i nosi datum odjave; slanje ga preskace.
+         *
+         * MREZA ZA PAD: ako kolona `unsubscribedAt` jos ne postoji, sloj u
+         * `db.js` tiho preskoci nepoznato polje i vrati `matchedCount: 0` —
+         * odjava bi ispala kao da je prosla, a covek bi i dalje dobijao
+         * poruke. Zato se ishod PROVERAVA, i kad upis ne prodje, vraca se na
+         * staro ponasanje (brisanje). Bolje izgubiti podatak o odjavi nego
+         * ne odjaviti coveka.
+         */
+        const adresa = String(email).toLowerCase();
+        let oznaceno = 0;
+
+        try {
+            const ishod = await db.collection('subscribers').updateMany(
+                { email: adresa },
+                { $set: { unsubscribedAt: Math.floor(new Date().getTime() / 1000) } }
+            );
+            oznaceno = ishod && (ishod.matchedCount || 0);
+        } catch (e) {
+            console.error('[odjava] oznacavanje nije proslo:', e.message);
+        }
+
+        if (!oznaceno) {
+            console.warn('[odjava] kolona `unsubscribedAt` ne postoji — brisem zapis, kao ranije');
+            await db.collection('subscribers').deleteMany({ email: adresa });
+        }
+
         return { response: { ok: true }, status: 200 };
+    }
+
+    /*
+     * HTML jedne poruke — ISTI za pregled i za slanje.
+     *
+     * Do sada se poruka sastavljala samo unutar `sendNewsletter`, pa se pre
+     * slanja nije imalo sta da se pogleda: „Pregled newslettera" u meniju je
+     * vodio na stranu koja crta grafikon poseta, ne poruku.
+     *
+     * `adresa` sluzi samo za vezu za odjavu; u pregledu se salje primer.
+     */
+    async sastaviNewsletter(id, adresa = 'primjer@zipaphoto.net') {
+        const newsletter = await db.collection('newsletters').findOne({ _id: ObjectID(id) });
+        if (!newsletter) return null;
+
+        let galleries = [];
+        if (newsletter.galleries && newsletter.galleries.length) {
+            galleries = await db.collection('gallery')
+                .find({ _id: { $in: newsletter.galleries.map((item) => ObjectID(item)) } })
+                .toArray();
+        }
+
+        const orderItemTemplate = fs.readFileSync('./emails/orderItem.html', 'utf-8');
+        let itemsHTML = '';
+        for (let i = 0; i < galleries.length; i++) {
+            itemsHTML += String.format(
+                orderItemTemplate,
+                `${API_ENDPOINT}/photos/350x/` + encodeURI(galleries[i].photos[0].image),
+                galleries[i].name.ba,
+                galleries[i].description && galleries[i].description.ba ? galleries[i].description.ba : '',
+                galleries[i].alias.ba,
+                galleries[i]._id
+            );
+        }
+
+        const predlozak = fs.readFileSync('./emails/newsletter.html', 'utf-8');
+        const vezaOdjave =
+            `${SITE_URL}/odjava?email=${encodeURIComponent(adresa)}&k=${this.oznakaZaOdjavu(adresa)}`;
+
+        return {
+            naslov: newsletter.title.ba,
+            html: String.format(
+                predlozak,
+                newsletter.title.ba,
+                newsletter.image ? `<img src="${newsletter.image}" style="max-width: 80%;" />` : '',
+                newsletter.content ? newsletter.content : '',
+                itemsHTML,
+                vezaOdjave
+            ),
+            brojGalerija: galleries.length,
+        };
     }
 
     async sendNewsletter(id) {
@@ -1477,7 +1598,16 @@ class Admin {
             galleries = await db.collection('gallery').find({ _id: { $in: newsletter.galleries.map(item => ObjectID(item)) } }).toArray();;
         }
 
-        let subscribers = await db.collection('subscribers').find().toArray();
+        /*
+         * Odjavljeni NE dobijaju poruku.
+         *
+         * Odjava vise ne brise zapis (vidi `odjaviPretplatnika`) nego mu
+         * upisuje `unsubscribedAt`, da bi se znalo ko se i kada odjavio.
+         * Zato se ovde takvi izostavljaju — bez ovoga bi im poruka i dalje
+         * stizala.
+         */
+        let subscribers = (await db.collection('subscribers').find().toArray())
+            .filter((p) => !p.unsubscribedAt);
 
         // Uz status se pamti i KADA je poslato i na koliko adresa — spisak je
         // do sada imao samo reč „Poslato", bez ijednog traga o slanju.

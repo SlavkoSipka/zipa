@@ -38,6 +38,10 @@
         flex-direction: column;
         max-height: 100%;
 
+        /* Bez ovoga sadržaj koji ne stane iscuri IZVAN zaobljenog okvira i
+           odlazi ispod donje ivice ekrana. */
+        overflow: hidden;
+
         @include mobile-tablet {
             max-width: none;
             border-radius: 0;
@@ -89,10 +93,31 @@
 
     /* ── telo ─────────────────────────────────────────────────────────── */
 
+    /*
+     * OBRAZAC JE DEO STUPCA, NE OBIČAN BLOK.
+     *
+     * `__okvir` je flex stubac (zaglavlje, telo, dno), ali između njega i
+     * tela stoji `<form>`. Dok forma nije bila flex, `__telo` nije imalo
+     * prema čemu da se skupi: raslo je do pune visine sadržaja (mereno:
+     * 1.071px u okviru od 654px), pa je ceo obrazac visio ispod prozora i
+     * dugmad na dnu se nisu videla. Skrolovala je ZAVESA, ne telo.
+     *
+     * `min-height: 0` je obavezan i na formi i na telu — bez njega se flex
+     * dete ne sme smanjiti ispod svog sadržaja i ograničenje visine nema
+     * dejstva.
+     */
+    .detail-search-form {
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
+        min-height: 0;
+    }
+
     &__telo {
         padding: var(--razmak-5);
         overflow-y: auto;
         flex: 1 1 auto;
+        min-height: 0;
     }
 
     /* ── grupe polja ──────────────────────────────────────────────────── */
@@ -214,6 +239,7 @@
     /* ── dno ──────────────────────────────────────────────────────────── */
 
     &__dno {
+        flex: 0 0 auto;      // dugmad ostaju u kadru dok telo skroluje
         display: flex;
         align-items: center;
         justify-content: flex-end;

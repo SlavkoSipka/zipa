@@ -492,17 +492,26 @@ odluku ili podatak. Ovo je spisak koji ide klijentu.
 Traka najave i fotografija u naslovnom bloku su u međuvremenu **rešene** —
 obe se hrane najnovijom galerijom, kroz jedno dovlačenje u `App.js`.
 
-### 1. ~~Dovlačenje najava~~ — REŠENO drugačije (2026-08-23)
+### 1. ~~Dovlačenje najava~~ — ZATVORENO (2026-09-08)
 
-Traka najave **radi**, ali ne preko najava iz administracije nego preko
-**najnovije galerije**: `App.js` dovlači `/gallery/latest` i istu galeriju
-koristi i za fotografiju u naslovnom bloku i za traku („Pogledajte novu
-galeriju" + dugme koje vodi na nju).
+Traka na vrhu zaglavlja ima **dva izvora, jedan izgled**:
 
-Ostaje otvoreno samo ako klijent želi da traka pokazuje **ručno zakačenu
-najavu** umesto najnovije galerije. Tada treba: dovlačenje ka
-`/announcements`, oznaku „zakačeno u zaglavlje" na najavi (kategorije već
-imaju istu takvu, `isVisibleOnNav`), i prosleđivanje kao `najava={...}`.
+1. **Najava iz administracije** — ima prednost. `App.js` dovlači
+   `/announcements` i prosleđuje kao `najavaAdmin`. Traka tada nosi crvenu
+   identiteta (`--boja-oznaka`), piše „Obavještenje" + `content` najave, a
+   dugme „Pročitaj" vodi na `/najave/:id`.
+2. **Najnovija galerija** — kad nijedna najava nije važeća. Plava traka,
+   „Pogledajte novu galeriju" + naziv, dugme vodi na galeriju. Kao i pre.
+
+**Nema polja „prikaži u zaglavlju" i ne treba ga.** Ruta `/announcements`
+već vraća samo najave kod kojih je današnji dan između `from` i `to`, a ta
+dva polja se zadaju u *Administracija → Najave* (OD i DO). **Prozor važenja
+JE prekidač** — najava se sama pojavi i sama nestane. Ako ih je više
+važećih, ide poslednja objavljena.
+
+Provereno kroz posrednika koji menja samo odgovor `/announcements` (baza
+nije dirana): sa važećom najavom traka je `rgb(214, 0, 6)` sa vezom ka
+`/najave/:id`, bez nje `rgb(40, 119, 163)` sa vezom ka galeriji.
 
 ### 2. Polje za obrisnu pilulu u podešavanjima
 

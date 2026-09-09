@@ -475,24 +475,44 @@ class CategoryPage extends Component {
                                                                     onClick={() => this.prebaciFilter('kategorija')}>
                                                                 {this.nazivKategorije(params.category, categories) || 'Kategorija'.translate(this.props.lang)}
                                                             </button>
+                                                            {/*
+                                                              * Spisak umesto padajuće liste U padajućem panelu.
+                                                              *
+                                                              * Ovde je stajao stari `Select` (bootstrap `dropdown`):
+                                                              * pilula je otvarala panel od 260×106 u kom je stajala
+                                                              * JOŠ JEDNA kontrola koju treba kliknuti, a njen
+                                                              * `dropdown-menu` sa 43 kategorije se apsolutno
+                                                              * postavlja — izlazi iz panela, pada preko kartica i
+                                                              * nema ograničenu visinu. Otud „ide ispod i preko".
+                                                              *
+                                                              * Sada je jedan klik: panel odmah pokaže spisak koji
+                                                              * skroluje u sebi. Poziv je NEPROMENJEN — ista
+                                                              * `generateSearchLink('category', …)`.
+                                                              */}
                                                             {this.state.otvoreniFilter === 'kategorija' ?
-                                                                <div className="z-alatna-traka__panel">
-                                                                    <Select
-                                                                        label={'Kategorija'.translate(this.props.lang)}
-                                                                        value={params.category}
-                                                                        onChange={(val) => {
-                                                                            this.props[0].history.push(this.generateSearchLink('category', val));
-                                                                            this.setState({otvoreniFilter: null});
-                                                                        }}>
-                                                                        {
-                                                                            categories.map((item, idx) => {
-                                                                                return (
-                                                                                    <option key={idx}
-                                                                                            value={Object.translate(item, 'alias', this.props.lang)}>{Object.translate(item, 'name', this.props.lang)}</option>
-                                                                                )
-                                                                            })
-                                                                        }
-                                                                    </Select>
+                                                                <div className="z-alatna-traka__panel z-alatna-traka__panel--spisak">
+                                                                    <p className="z-alatna-traka__panel-naslov">
+                                                                        {'Kategorija'.translate(this.props.lang)}
+                                                                    </p>
+                                                                    <div className="z-alatna-traka__opcije">
+                                                                        {categories.map((item, idx) => {
+                                                                            const vrednost = Object.translate(item, 'alias', this.props.lang);
+                                                                            const izabrana = (params.category || null) === (vrednost || null);
+                                                                            return (
+                                                                                <button
+                                                                                    type="button"
+                                                                                    key={idx}
+                                                                                    aria-pressed={izabrana}
+                                                                                    className={'z-alatna-traka__opcija' + (izabrana ? ' z-alatna-traka__opcija--izabrana' : '')}
+                                                                                    onClick={() => {
+                                                                                        this.props[0].history.push(this.generateSearchLink('category', vrednost));
+                                                                                        this.setState({otvoreniFilter: null});
+                                                                                    }}>
+                                                                                    {Object.translate(item, 'name', this.props.lang)}
+                                                                                </button>
+                                                                            );
+                                                                        })}
+                                                                    </div>
                                                                 </div>
                                                                 : null}
                                                         </div>
@@ -555,12 +575,6 @@ class CategoryPage extends Component {
                                                                 aria-label={'Spisak'.translate(this.props.lang)}
                                                                 className={this.state.displayStyle == 'list' ? 'active' : ''}>
                                                             <Isvg src={list}/>
-                                                        </button>
-                                                        <button type="button"
-                                                                onClick={() => this.setState({displayStyle: 'image'})}
-                                                                aria-label={'Fotografije, jedna do druge'.translate(this.props.lang)}
-                                                                className={this.state.displayStyle == 'image' ? 'active' : ''}>
-                                                            <Isvg src={grid}/>
                                                         </button>
                                                     </div>
                                                 </div>
@@ -635,7 +649,14 @@ class CategoryPage extends Component {
                                                                 })}
                                                             </Row>
                                                             :
-                                                        <Row className={noviPrikaz ? 'articles novi-spisak' : 'articles'}>
+                                                        /* `z-mreza-galerija` samo u mreži: spisak i „fotografije
+                                                           jedna do druge" imaju svoj raspored, pa ne smeju u istu
+                                                           tečnu mrežu. Komentar je JS, ne JSX — ovde smo u grani
+                                                           trojnog izraza, gde JSX komentar nije izraz. */
+                                                        <Row className={
+                                                            (noviPrikaz ? 'articles novi-spisak' : 'articles')
+                                                            + (this.state.displayStyle == 'grid' ? ' z-mreza-galerija' : '')
+                                                        }>
                                                             {
                                                                 this.state.items && this.state.items.map((article, idx) => {
                                                                     return (
@@ -655,8 +676,9 @@ class CategoryPage extends Component {
                                                                                 location={article.location}
                                                                                 published={article.date}
                                                                                 homeArticle
+                                                                                lang={this.props.lang}
+                                                                                author={article.user}
                                                                                 listView={this.state.displayStyle == 'list'}
-                                                                                imageArticle={this.state.displayStyle == 'image'}
                                                                             ></Article>
                                                                         </Col>
                                                                     )

@@ -35,7 +35,6 @@ import banner2 from '../assets/images/banner2.png';
 import banner3 from '../assets/images/banner3.png';
 import searchIcon from '../assets/svg/search-icon-btn.svg';
 import picture from '../assets/svg/picture-icon.svg';
-import infoIcon from '../assets/svg/account-info.svg';
 import {API_ENDPOINT} from '../constants';
 import PretragaSaPrijedlozima from '../components/pretragaSaPrijedlozima';
 import PredlogA from './naslovna/predlogA';
@@ -55,7 +54,6 @@ class HomePage extends Component {
             searchCategory: 'Sve kategorije',
             slides: [],
             activeIndex: 0,
-            announcements: [],
             ...props.initialData
         };
     }
@@ -97,19 +95,12 @@ class HomePage extends Component {
                 slides: result
             })
         })
-        fetch(`${API_ENDPOINT}/announcements`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-            },
-        }).then(res => res.json()).then((result) => {
-            this.setState({
-                announcements: result
-            })
-        })
 
-
+        /*
+         * Najave se ovde vise ne dovlace. Traku na vrhu zaglavlja hrani
+         * `App.js`, jednim pozivom za ceo sajt — ovaj je bio drugi poziv
+         * ka istoj adresi, za prikaz koga vise nema.
+         */
     }
 
     componentDidUpdate(prevProps, prevState) {
@@ -179,7 +170,6 @@ class HomePage extends Component {
                     homeCategories={this.state.homeCategories}
                     latest={this.state.latest}
                     izdvojeno={this.state.izdvojeno}
-                    announcements={this.state.announcements}
                     banners={this.props.banners}
                     videos={this.state.videos}
                     bannerClick={this.props.bannerClick}
@@ -212,24 +202,10 @@ class HomePage extends Component {
             <div className="home-wrap">
                 <div className="into-wrap">
                     <Container>
-                        <Row>
-                            <Col lg="12">
-                                {
-                                    this.state.announcements.map((item, idx) => {
-                                        return (
-                                            <Link to={`/najave/${item._id}`}>
-                                                <div className="alert">
-                                                    <Isvg
-                                                        src={infoIcon}/> {Object.translate(item, 'content', this.props.lang)}
-                                                </div>
-                                            </Link>
-
-                                        )
-                                    })
-                                }
-
-                            </Col>
-                        </Row>
+                        {/* Najave se vise NE iscrtavaju ovde. Od 2026-09-08 stoje
+                            u traci na vrhu zaglavlja (`header.js`), koja se vidi
+                            na svakoj strani — ovde su bile drugi prikaz iste
+                            stvari, pa se ista najava videla dvaput. */}
                         {this.props.settings.showSlider ?
 
                             <Row>

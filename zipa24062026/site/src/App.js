@@ -304,6 +304,35 @@ class App extends Component {
         }
     }
 
+    /*
+     * Galerija cija fotografija stoji uz obrazac na `/login` i `/register`.
+     *
+     * Bira se u administraciji (*Stranice → Prijava i registracija*) i pamti
+     * u podesavanjima kao `loginGallery: { id, alias }`. Kad izbora nema —
+     * a to je zatecено stanje — strane i dalje uzimaju najnoviju galeriju,
+     * pa se nista ne menja dok se izbor ne napravi.
+     *
+     * Cuva se samo ID i alias, ne i naziv i slika: tako izmena same galerije
+     * odmah stigne i na prijavu, bez ponovnog biranja.
+     */
+    dovuciPrijavaGaleriju = () => {
+        const izbor = this.state.settings && this.state.settings.loginGallery;
+        if (!izbor || !izbor.id || !izbor.alias) return;
+
+        // Ista galerija se ne dovlaci dvaput.
+        if (this.prijavaGalerijaZa === String(izbor.id)) return;
+        this.prijavaGalerijaZa = String(izbor.id);
+
+        fetch(`${API_ENDPOINT}/gallery/get/${this.state.lang}/${izbor.alias}/${izbor.id}`, {
+            method: 'GET',
+            headers: {
+                'content-type': 'application/json'
+            },
+        }).then(res => res.json()).then((g) => {
+            if (g && g._id) this.setState({ prijavaGalerija: g });
+        }).catch(() => {});
+    };
+
     componentDidMount() {
         // Vraćamo jezik koji je posetilac ranije izabrao.
         try {
@@ -372,6 +401,34 @@ class App extends Component {
                     najnovije: (result || []).slice(0, 4)
                 });
             }
+        }).catch(() => {});
+
+        /*
+         * Najava ili obavestenje iz administracije — traka na vrhu zaglavlja.
+         *
+         * `/announcements` vraca SAMO one koje su u ovom trenutku vazece:
+         * ruta filtrira po poljima `from` i `to`, koja se zadaju u
+         * *Administracija → Najave*. Zato ovde nema nikakve dodatne provere
+         * ni novog polja u bazi — prozor vazenja JE prekidac.
+         *
+         * Kad nijedna najava nije vazeca, odgovor je prazan i traka pada na
+         * najnoviju galeriju (vidi `header.js`).
+         */
+        fetch(`${API_ENDPOINT}/announcements`, {
+            method: 'GET',
+            headers: {
+                'content-type': 'application/json'
+            },
+        }).then(res => res.json()).then((result) => {
+            const spisak = Array.isArray(result) ? result : [];
+            if (!spisak.length) return;
+
+            // Ako ih ima vise vazecih, ide poslednja objavljena.
+            const najnovija = spisak
+                .slice()
+                .sort((a, b) => (b.published || 0) - (a.published || 0))[0];
+
+            this.setState({ najavaAdmin: najnovija });
         }).catch(() => {});
 
         fetch(`${API_ENDPOINT}/banners`, {
@@ -450,7 +507,10 @@ class App extends Component {
             // Tema izgleda dolazi iz istog podešavanja kojim se bira naslovna.
             this.setState({
                 settings: result
-            }, this.postaviTemu)
+            }, () => {
+                this.postaviTemu();
+                this.dovuciPrijavaGaleriju();
+            })
         })
 
 

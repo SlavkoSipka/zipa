@@ -98,9 +98,8 @@
         line-height: var(--red-md);
         font-weight: var(--tezina-jaka);
 
-        // Nazivi u bazi stoje VELIKIM SLOVIMA — slog se popravlja u prikazu.
-        text-transform: lowercase;
-        &::first-letter { text-transform: uppercase; }
+        // Nazivi galerija na sajtu stoje VELIKIM SLOVIMA (odluka 2026-09-08).
+        text-transform: uppercase;
 
         display: -webkit-box;
         -webkit-line-clamp: 2;

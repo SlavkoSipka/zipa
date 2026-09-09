@@ -471,32 +471,49 @@ class ProductsModule {
     }
 
 
+    /*
+     * Dva nacina naplate, i uvek vazi samo jedan.
+     *
+     *   - PRETPLATA (`naPretplati: true`) — zatecено ponasanje. Polja
+     *     `resolution*px` su BROJ BESPLATNIH PREUZIMANJA po rezoluciji, ne
+     *     cena (sabiraju se u `freePhotos`, vidi `users/users.js`). Kad se
+     *     kvota potrosi, dalje se placa osnovna cena galerije.
+     *   - PO FOTOGRAFIJI (`naPretplati: false`) — dogovorena cena po
+     *     rezoluciji (`cena*px`, u KM) umesto `cena galerije × mnozilac`.
+     *
+     * Prazna cena znaci „nema dogovora za tu rezoluciju" i tada vazi osnovna
+     * cena; zato `null`, a ne nula — nula bi znacila besplatno.
+     */
     async updateUserResolutions(uid, obj) {
         let check = await db.collection('userResolutions').find({ uid: uid }).toArray();
 
+        const broj = (v) => {
+            if (v === undefined || v === null || v === '') return null;
+            const n = parseFloat(String(v).replace(',', '.'));
+            return isNaN(n) ? null : n;
+        };
+
+        const polja = {
+            'resolution3000px': parseInt(obj['resolution3000px']) || 0,
+            'resolution1500px': parseInt(obj['resolution1500px']) || 0,
+            'resolution800px': parseInt(obj['resolution800px']) || 0,
+            categories: obj.categories,
+            photographers: obj.photographers,
+            from: parseInt(obj.from),
+            to: parseInt(obj.to),
+
+            // Podrazumevano JESTE pretplata — tako se zatecени korisnici
+            // ponasaju isto kao pre nego sto je ovo polje uvedeno.
+            naPretplati: obj.naPretplati === undefined ? true : !!obj.naPretplati,
+            'cena3000px': broj(obj['cena3000px']),
+            'cena1500px': broj(obj['cena1500px']),
+            'cena800px': broj(obj['cena800px']),
+        };
+
         if (check.length) {
-            await db.collection('userResolutions').updateOne({ _id: check[0]._id }, {
-                $set: {
-                    'resolution3000px': parseInt(obj['resolution3000px']),
-                    'resolution1500px': parseInt(obj['resolution1500px']),
-                    'resolution800px': parseInt(obj['resolution800px']),
-                    categories: obj.categories,
-                    photographers: obj.photographers,
-                    from: parseInt(obj.from),
-                    to: parseInt(obj.to)
-                }
-            });
+            await db.collection('userResolutions').updateOne({ _id: check[0]._id }, { $set: polja });
         } else {
-            await db.collection('userResolutions').insertOne({
-                uid: uid,
-                'resolution3000px': parseInt(obj['resolution3000px']),
-                'resolution1500px': parseInt(obj['resolution1500px']),
-                'resolution800px': parseInt(obj['resolution800px']),
-                categories: obj.categories,
-                photographers: obj.photographers,
-                from: parseInt(obj.from),
-                to: parseInt(obj.to)
-            })
+            await db.collection('userResolutions').insertOne({ uid: uid, ...polja });
         }
 
         return {
@@ -850,10 +867,11 @@ class ProductsModule {
 
             });
         } else {
-            await db.collection('gallery').updateOne({
-                _id: ObjectID(id),
-                uid: ObjectID(uid)
-            }, {
+            // Isto pravilo kao u `fetchGallery`: administrator nije vlasnik.
+            const upit = { _id: ObjectID(id) };
+            if (!(await this.jeAdmin(uid))) upit.uid = ObjectID(uid);
+
+            const ishod = await db.collection('gallery').updateOne(upit, {
                 $set: {
                     name: obj.name,
                     alias: obj.alias,
@@ -873,7 +891,26 @@ class ProductsModule {
                     orientationPortrait: obj.orientationPortrait,
                     orientationHorizontal: obj.orientationHorizontal,
                 }
-            })
+            });
+
+            /*
+             * TIHI NEUSPEH SE VISE NE PROPUSTA.
+             *
+             * `updateOne` koji ne nadje nijedan red ne baca gresku — vrati
+             * `matchedCount: 0`. Strana je do sada svejedno javljala uspeh i
+             * vracala korisnika na spisak, pa se izmena „izgubila" bez ijedne
+             * poruke. Sada se to kaze naglas.
+             */
+            const pogodjeno = ishod && (ishod.matchedCount !== undefined
+                ? ishod.matchedCount
+                : (ishod.result && ishod.result.n));
+
+            if (pogodjeno === 0) {
+                return {
+                    response: { error: 'Galerija nije pronađena ili nemate pravo izmjene.' },
+                    status: 404
+                };
+            }
         }
 
         this.setPhotosCountToCategories();
@@ -931,8 +968,31 @@ class ProductsModule {
     }
 
 
+    /*
+     * ADMINISTRATOR NIJE VLASNIK.
+     *
+     * Upit je do sada uvek trazio i `uid`, pa je administrator koji otvori
+     * tudju galeriju dobijao 404 i PRAZAN obrazac — bez naziva, opisa i bez
+     * ijedne fotografije. Odatle „ne moze da se doda fotografija u vec
+     * objavljenu galeriju": nije se imalo cemu dodati.
+     *
+     * Vlasnistvo i dalje vazi za fotografa; administratoru se samo ne
+     * postavlja to ogranicenje. Ko sme da dodje dovde vec je provereno u
+     * `roleAndPermissionMiddleware`.
+     */
+    async jeAdmin(uid) {
+        if (!uid) return false;
+        const k = await db.collection('users').find({ _id: ObjectID(uid) }).toArray();
+        if (!k.length) return false;
+        return k[0].userRole === 'admin'
+            || (k[0].permissions && k[0].permissions.indexOf('*') !== -1);
+    }
+
     async fetchGallery(uid, id) {
-        let product = await db.collection('gallery').find({ _id: ObjectID(id), uid: ObjectID(uid) }).toArray();
+        const upit = { _id: ObjectID(id) };
+        if (!(await this.jeAdmin(uid))) upit.uid = ObjectID(uid);
+
+        let product = await db.collection('gallery').find(upit).toArray();
         if (product.length) {
             for (let i = 0; i < product[0].photos.length; i++) {
                 try {

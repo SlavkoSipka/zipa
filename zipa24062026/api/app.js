@@ -252,7 +252,8 @@ app.get('/user/downloads/:page/:sort', permissionMiddleware(), async (req, res) 
 });
 
 app.post('/user/gallery', roleAndPermissionMiddleware('photographer', 'change-gallery'), async (req, res) => {
-    res.send(await usersModule.userGallery(res.locals.uid, req.body.page));
+    // `search` je strana slala od pocetka, a ruta ga nije prosledjivala.
+    res.send(await usersModule.userGallery(res.locals.uid, req.body.page, req.body.search));
 });
 
 
@@ -555,6 +556,16 @@ app.get('/newsletter/send/:id', permissionMiddleware('*'), async (req, res) => {
     res.send(await adminModule.sendNewsletter(req.params.id));
 });
 
+
+/*
+ * Pregled newslettera — vraca ISTI HTML koji ce dobiti primalac.
+ * Zasticeno kao i slanje: predlozak otkriva unutrasnje adrese.
+ */
+app.get('/newsletter/preview/:id', permissionMiddleware('*'), async (req, res) => {
+    const sastavljeno = await adminModule.sastaviNewsletter(req.params.id);
+    if (!sastavljeno) return res.status(404).send({ error: 'Newsletter nije pronađen.' });
+    res.send(sastavljeno);
+});
 
 app.get('/newsletter/get/:id', permissionMiddleware('*'), async (req, res) => {
     res.send(await adminModule.fetchNewsletter(req.params.id));

@@ -21,7 +21,7 @@ import { PHOTOS_ENDPOINT } from '../../constants';
  */
 
 /*
- * Kataloški broj — ZP-GGGG-MMDD-XXXX.
+ * Kataloški broj — ZPA-GGGG-MMDD-XXXX.
  *
  * Izvodi se u prikazu, ne čuva se u bazi. Bez datuma nema broja: 66 galerija
  * u arhivi nema datum (`docs/galerije-bez-datuma.md`) i za njih se ovaj red
@@ -36,8 +36,23 @@ export const kataloskiBroj = (datum, id) => {
     const rep = String(id || '').slice(-4).toUpperCase();
     if (!rep) return null;
 
-    return `ZP-${d.format('YYYY')}-${d.format('MMDD')}-${rep}`;
+    return `ZPA-${d.format('YYYY')}-${d.format('MMDD')}-${rep}`;
 };
+
+/*
+ * Opis galerije za prikaz u redu (spisak).
+ *
+ * U bazi je slobodan HTML iz administracije, a ovde ide kao ČIST TEKST — u
+ * uskom redu se ne crtaju ni naslovi ni spiskovi, a `dangerouslySetInnerHTML`
+ * bi ubacio tuđe oznake u karticu. `&nbsp;` i prelome svodimo na razmak, pa
+ * se odsecanje na dva reda računa nad onim što se stvarno vidi.
+ */
+const cistOpis = (tekst) => String(tekst || '')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/\s+/g, ' ')
+    .trim();
 
 class Article extends Component {
     constructor(props) {
@@ -103,6 +118,13 @@ class Article extends Component {
                     u mreži šum — kataloški broj je prešao na stranu galerije,
                     gde i služi (navođenje izvora). */}
                 <div className="z-kartica-galerije__telo">
+                    {/* U spisku kategorija stoji kao NATPIS iznad naslova, ne kao
+                        oznaka na fotografiji: u redu ima mesta, a natpis se
+                        čita i kad je kadar taman. */}
+                    {p.listView && p.categoryName ?
+                        <span className="z-kartica-galerije__oznaka-reda">{p.categoryName}</span>
+                        : null}
+
                     <h3 className="z-kartica-galerije__naslov">
                         <Link to={putanja}>{naslov}</Link>
                     </h3>
@@ -111,7 +133,21 @@ class Article extends Component {
                         {p.location ? p.location : null}
                         {p.location && p.published ? ' · ' : null}
                         {p.published ? moment.unix(p.published).format('DD.MM.YYYY.') : null}
+                        {p.listView && p.author ? ' · ' : null}
+                        {p.listView && p.author ? p.author : null}
                     </p>
+
+                    {/* Opis se vidi SAMO u spisku — u mreži za njega nema reda,
+                        a i tamo bi se sveo na dve reči i tri tačke. */}
+                    {p.listView && cistOpis(p.shortDescription) ?
+                        <p className="z-kartica-galerije__opis">{cistOpis(p.shortDescription)}</p>
+                        : null}
+
+                    {p.listView ?
+                        <span className="z-kartica-galerije__dalje">
+                            {'Otvorite galeriju'.translate(p.lang)} &rarr;
+                        </span>
+                        : null}
                 </div>
             </article>
         );

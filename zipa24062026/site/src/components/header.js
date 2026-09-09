@@ -7,7 +7,9 @@ import cart from '../assets/svg/cart.svg';
 import search from '../assets/svg/search.svg';
 import filterIcon from '../assets/svg/filters.svg';
 
-import ba from '../assets/images/basr.png';
+// Zastavica za `ba` je crtez, ne slika: leva polovina je srpska trobojka
+// (bez grba), desna ostaje zastava BiH. Kao SVG je ostra na svakoj meri.
+import ba from '../assets/svg/jezik-ba.svg';
 import en from '../assets/images/en.png';
 import PretragaSaPrijedlozima from './pretragaSaPrijedlozima';
 import naslovnaIlustracija from '../assets/images/naslovna-ilustracija.png';
@@ -227,14 +229,14 @@ class Header extends Component {
                         aria-pressed={l === 'ba'}
                         aria-label={'Bosanski'.translate(l)}
                         onClick={this.setLangBa}>
-                    <img src={ba} alt="" width="20" height="12"/>
+                    <img src={ba} alt="" width="30" height="18"/>
                 </button>
                 <button type="button"
                         className={'z-zaglavlje__jezik' + (l === 'en' ? ' z-zaglavlje__jezik--izabran' : '')}
                         aria-pressed={l === 'en'}
                         aria-label={'English'.translate(l)}
                         onClick={this.setLangEn}>
-                    <img src={en} alt="" width="20" height="12"/>
+                    <img src={en} alt="" width="30" height="18"/>
                 </button>
             </span>
         );
@@ -265,7 +267,7 @@ class Header extends Component {
                 <div className="z-zaglavlje__polje">
                     <PretragaSaPrijedlozima
                         value={this.state.pretraga}
-                        placeholder={'Pretraži arhivu…'.translate(l)}
+                        placeholder={'Pretražite arhivu…'.translate(l)}
                         onChange={(v) => this.setState({pretraga: v})}
                         onSearch={this.pokreniPretragu}
                         renderInput={(svojstva) => (
@@ -397,6 +399,7 @@ class Header extends Component {
         // Naslovna dobija visoku traku, sve ostale nisku. Ista komponenta.
         const naslovna = putanja === '/';
 
+
         // Kategorije zakačene u administraciji hrane red „Traži se:".
         const trazi = (this.props.categories || []).filter((k) => k.isVisibleOnNav);
 
@@ -406,14 +409,40 @@ class Header extends Component {
         );
 
         /*
-         * Traka najave — najnovija galerija iz arhive. `App.js` je dovuče
-         * zajedno sa fotografijom za naslovni blok, pa nema drugog poziva.
+         * TRAKA NA VRHU ZAGLAVLJA — dva izvora, jedan izgled.
+         *
+         *   1. Najava ili obavestenje iz *Administracija → Najave*. Ima
+         *      prednost. Vazi dok je danasnji dan izmedju polja OD i DO —
+         *      ruta `/announcements` sama filtrira po tome, pa je taj prozor
+         *      i prekidac: nema posebnog polja „prikazi u zaglavlju".
+         *   2. Kad nijedna najava nije vazeca — najnovija galerija iz
+         *      arhive, kao i do sada, da traka nikad ne ostane prazna.
+         *
+         * Oba izvora dovlaci `App.js`; zaglavlje ovde samo bira.
          */
-        const najava = this.props.najava;
-        // Galerija nosi naziv u `name`, ne u `title`.
-        const najavaNaslov = najava ? (Object.translate(najava, 'name', l) || '') : '';
+        const najavaAdmin = this.props.najavaAdmin;
+        const najava = najavaAdmin || this.props.najava;
+
+        // Najava nosi natpis u `content`, galerija naziv u `name`.
+        const najavaNaslov = najava
+            ? (najavaAdmin
+                ? (Object.translate(najava, 'content', l) || '')
+                : (Object.translate(najava, 'name', l) || ''))
+            : '';
+
+        // Uvodna rec se menja uz izvor: obavestenje se cita, galerija gleda.
+        const najavaUvod = najavaAdmin
+            ? 'Obavještenje'.translate(l)
+            : 'Pogledajte novu galeriju'.translate(l);
+
+        const najavaDugme = najavaAdmin
+            ? 'Pročitaj'.translate(l)
+            : 'Pogledaj'.translate(l);
+
         const najavaPutanja = najava && najava._id
-            ? `/galerija/${Object.translate(najava, 'alias', l) || najava.alias || 'galerija'}/${najava._id}`
+            ? (najavaAdmin
+                ? `/najave/${najava._id}`
+                : `/galerija/${Object.translate(najava, 'alias', l) || najava.alias || 'galerija'}/${najava._id}`)
             : null;
 
         // Pilula levo i dalje čeka polje u podešavanjima.
@@ -481,19 +510,18 @@ class Header extends Component {
 
 
                 {/* ── RED 1 — traka najave ─────────────────────────────
-                    Iscrtava se samo kad iz administracije stigne zakačena
-                    najava. Danas prop `najava` ne stiže (vidi CLAUDE.md,
-                    „ČEKA ODLUKU KLIJENTA"), pa reda nema. */}
+                    Najava iz administracije ima prednost; kad je nema, ide
+                    najnovija galerija. Izgled je isti za oba. */}
                 {najava ?
-                    <div className="z-zaglavlje__najava">
+                    <div className={'z-zaglavlje__najava' + (najavaAdmin ? ' z-zaglavlje__najava--obavestenje' : '')}>
                         <div className="z-zaglavlje__sirina">
                             <span className="z-zaglavlje__najava-tekst">
-                                {'Pogledajte novu galeriju'.translate(l)}
+                                {najavaUvod}
                                 {najavaNaslov ? <span className="z-zaglavlje__najava-naslov">{najavaNaslov}</span> : null}
                             </span>
                             {najavaPutanja ?
                                 <Link className="z-zaglavlje__najava-dugme" to={najavaPutanja}>
-                                    {'Pogledaj'.translate(l)}
+                                    {najavaDugme}
                                 </Link>
                                 : null}
                         </div>
@@ -692,7 +720,7 @@ class Header extends Component {
                         <div className="z-zaglavlje__sirina z-zaglavlje__naslovni-red">
                             <div className="z-zaglavlje__naslovni-tekst">
                                 <h1 className="z-zaglavlje__naslov">
-                                    {'Arhiva Banja Luke, od 1990.'.translate(l)}
+                                    {'Fotografije iz zemlje i sveta, od 1990.'.translate(l)}
                                 </h1>
                                 <p className="z-zaglavlje__podnaslov">
                                     {'Pretražite fotografije iz arhive agencije ZIPA PHOTO.'.translate(l)}

@@ -591,3 +591,471 @@ body.u-administraciji {
         border-color: var(--boja-tekst-tiho);
     }
 }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SISTEMSKE STRANE — spisak u „Stranice"
+   ═══════════════════════════════════════════════════════════════════════════
+   Prijava i registracija nisu zapisi u bazi kao ostale stranice, pa ne mogu u
+   istu tabelu. Stoje ispod nje, odvojene linijom, kao poseban blok.
+*/
+.z-sistemske {
+    margin-top: var(--razmak-7);
+    padding-top: var(--razmak-5);
+    border-top: 1px solid var(--boja-linija);
+
+    &__naslov {
+        margin: 0 0 var(--razmak-1);
+        font-family: var(--pismo-naslov);
+        font-size: var(--slovo-lg);
+        line-height: var(--red-lg);
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-tekst);
+    }
+
+    &__uvod {
+        margin: 0 0 var(--razmak-4);
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        color: var(--boja-tekst-tiho);
+    }
+
+    &__red {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--razmak-4);
+
+        padding: var(--razmak-3) var(--razmak-4);
+        border: 1px solid var(--boja-linija);
+        border-radius: var(--radijus-panel);
+        background: var(--boja-povrsina);
+
+        @include mobile {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: var(--razmak-3);
+        }
+    }
+
+    &__opis { min-width: 0; }
+
+    &__ime {
+        display: block;
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
+        font-weight: var(--tezina-srednja);
+        color: var(--boja-tekst);
+    }
+
+    &__adresa {
+        display: block;
+        font-family: var(--pismo-podaci);
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        color: var(--boja-tekst-tiho);
+
+        a { @include z-veza; }
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   IZBOR GALERIJE ZA PRIJAVU — /account/pages/prijava
+   ═══════════════════════════════════════════════════════════════════════════
+*/
+.z-prijava-strana {
+
+    &__uvod {
+        margin: 0 0 var(--razmak-5);
+        max-width: 65ch;
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
+        color: var(--boja-tekst-tiho);
+    }
+
+    &__oznaka {
+        display: block;
+        margin-bottom: var(--razmak-2);
+
+        font-size: var(--slovo-oznaka);
+        line-height: 1.6;
+        font-weight: var(--tezina-jaka);
+        letter-spacing: .1em;
+        text-transform: uppercase;
+        color: var(--boja-tekst-tiho);
+    }
+
+    &__trenutno {
+        margin-bottom: var(--razmak-6);
+        padding-bottom: var(--razmak-5);
+        border-bottom: 1px solid var(--boja-linija);
+    }
+
+    &__izbor {
+        display: flex;
+        align-items: center;
+        gap: var(--razmak-3);
+        flex-wrap: wrap;
+    }
+
+    &__slicica {
+        width: 96px;
+        height: 64px;
+        object-fit: cover;
+        border-radius: var(--radijus-panel);
+        background: var(--boja-podloga-tiha);
+    }
+
+    &__naziv {
+        min-width: 0;
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
+        font-weight: var(--tezina-srednja);
+        color: var(--boja-tekst);
+        text-transform: uppercase;
+    }
+
+    &__ukloni {
+        padding: 0;
+        border: 0;
+        background: transparent;
+
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-sm);
+        font-weight: var(--tezina-srednja);
+        color: var(--boja-veza);
+        text-decoration: underline;
+        cursor: pointer;
+
+        @include z-fokus;
+    }
+
+    &__prazno {
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
+        color: var(--boja-tekst-tiho);
+    }
+
+    &__trazenje {
+        display: flex;
+        gap: var(--razmak-2);
+        margin-bottom: var(--razmak-4);
+
+        .z-polje__unos { flex: 1 1 auto; min-width: 0; }
+    }
+
+    /* Mreza galerija — nikad golo `1fr`, pravilo projekta. */
+    &__mreza {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: var(--razmak-3);
+
+        @include small-desktop { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        @include tablet        { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        @include mobile        { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    &__kostur {
+        display: block;
+        width: 100%;
+        padding-top: 66%;
+        border-radius: var(--radijus-panel);
+    }
+
+    &__stavka {
+        display: block;
+        width: 100%;
+        padding: 0;
+        border: 2px solid transparent;
+        border-radius: var(--radijus-panel);
+        background: transparent;
+        text-align: left;
+        cursor: pointer;
+
+        @include z-prelaz(border-color);
+        @include z-fokus;
+
+        img {
+            display: block;
+            width: 100%;
+            aspect-ratio: 3 / 2;
+            object-fit: cover;
+            border-radius: var(--radijus-panel);
+            background: var(--boja-podloga-tiha);
+        }
+
+        &--izabrana {
+            border-color: var(--boja-akcenat);
+        }
+    }
+
+    &__stavka-naziv {
+        display: block;
+        margin-top: var(--razmak-2);
+
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        font-weight: var(--tezina-srednja);
+        color: var(--boja-tekst);
+        text-transform: uppercase;
+
+        // Dva reda, kao na kartici galerije.
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    &__napomena {
+        margin: var(--razmak-5) 0 0;
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        color: var(--boja-tekst-tiho);
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   NAČIN NAPLATE — Podešavanja agencije
+   ═══════════════════════════════════════════════════════════════════════════
+   Dva režima, uvek važi samo jedan: pretplata (broj odobrenih preuzimanja)
+   ili dogovorena cijena po fotografiji. Onaj koji ne važi se ZAMRZAVA —
+   `<fieldset disabled>` gasi svako polje u sebi, a ovde dobija i izgled
+   koji to pokazuje, jer samo isključeno polje nije dovoljno vidljivo.
+*/
+.z-naplata {
+    margin: 0 0 var(--razmak-5);
+    padding: var(--razmak-4);
+    border: 1px solid var(--boja-linija);
+    border-radius: var(--radijus-panel);
+
+    @include z-prelaz(opacity, border-color);
+
+    &__naslov {
+        width: auto;
+        padding: 0 var(--razmak-2);
+        margin: 0;
+
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-xs);
+        line-height: var(--red-xs);
+        font-weight: var(--tezina-jaka);
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: var(--boja-tekst-tiho);
+    }
+
+    &__uputa {
+        margin: var(--razmak-2) 0 0;
+        max-width: 70ch;
+        font-size: var(--slovo-sm);
+        line-height: var(--red-md);
+        color: var(--boja-tekst-tiho);
+    }
+
+    /* Zamrznuta celina ostaje ČITLJIVA — ne gasi se do nevidljivosti, jer
+       administrator treba da vidi šta tamo piše i kad ne važi. */
+    &--zamrznuta {
+        opacity: .45;
+        border-style: dashed;
+    }
+
+    /* Razdvaja način naplate od opsega ugovora (kategorije i fotografi). */
+    &__crta {
+        margin: var(--razmak-4) 0 var(--razmak-5);
+        border: 0;
+        border-top: 1px solid var(--boja-linija);
+    }
+}
+
+
+/* Pretraga iznad tabele u administraciji (spisak galerija). */
+.z-spisak-pretraga {
+    display: flex;
+    gap: var(--razmak-2);
+    margin-bottom: var(--razmak-4);
+
+    .z-polje__unos { flex: 1 1 auto; min-width: 0; }
+
+    @include mobile {
+        flex-direction: column;
+        .z-dugme { width: 100%; }
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DODAVANJE FOTOGRAFIJA U GALERIJU
+   ═══════════════════════════════════════════════════════════════════════════
+   Traka stoji IZNAD okvira sa fotografijama. Okvir je visok 520px i sam
+   skroluje, pa je dugme koje stoji u njemu nestajalo iz kadra čim se malo
+   skroluje — u galeriji sa 156 fotografija to je izgledalo kao da se ništa
+   ne može dodati. Ovde je uvek na istom mestu.
+*/
+.z-dodaj-slike {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--razmak-4);
+    margin-bottom: var(--razmak-3);
+
+    &__broj {
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        color: var(--boja-tekst-tiho);
+    }
+
+    &__dugme {
+        flex: 0 0 auto;
+
+        &:disabled {
+            opacity: .55;
+            cursor: default;
+        }
+    }
+
+    @include mobile {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--razmak-2);
+
+        &__dugme { width: 100%; }
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PREGLED NEWSLETTERA
+   ═══════════════════════════════════════════════════════════════════════════
+   Poruka se crta u `iframe`-u: predložak nosi svoje `<style>`, `<table>`
+   raspored i pisma iz e-pošte. Ubačen pravo u stranu, mijenjao bi joj izgled
+   — a i sam bi se pokvario od njenih pravila.
+*/
+.z-pregled-poruke {
+
+    &__traka {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--razmak-4);
+        flex-wrap: wrap;
+        margin-bottom: var(--razmak-2);
+    }
+
+    &__podaci { min-width: 0; }
+
+    &__naslov {
+        display: block;
+        font-family: var(--pismo-naslov);
+        font-size: var(--slovo-lg);
+        line-height: var(--red-lg);
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-tekst);
+    }
+
+    &__uz {
+        display: block;
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        color: var(--boja-tekst-tiho);
+    }
+
+    &__radnje {
+        display: flex;
+        align-items: center;
+        gap: var(--razmak-2);
+        flex-wrap: wrap;
+    }
+
+    &__mere {
+        display: inline-flex;
+        border: 1px solid var(--boja-linija-kontrola);
+        border-radius: var(--radijus-pun);
+        overflow: hidden;
+
+        button {
+            border: 0;
+            background: transparent;
+            padding: var(--razmak-2) var(--razmak-3);
+
+            font-family: var(--pismo-tekst);
+            font-size: var(--slovo-sm);
+            font-weight: var(--tezina-srednja);
+            color: var(--boja-tekst-tiho);
+            cursor: pointer;
+
+            &.aktivan {
+                background: var(--boja-traka);
+                color: var(--boja-traka-tekst);
+            }
+        }
+    }
+
+    &__uputa {
+        margin: 0 0 var(--razmak-4);
+        font-size: var(--slovo-sm);
+        line-height: var(--red-md);
+        color: var(--boja-tekst-tiho);
+    }
+
+    &__okvir {
+        border: 1px solid var(--boja-linija);
+        border-radius: var(--radijus-panel);
+        background: var(--boja-podloga-tiha);
+        padding: var(--razmak-4);
+
+        display: flex;
+        justify-content: center;
+
+        &--telefon .z-pregled-poruke__ram { max-width: 390px; }
+    }
+
+    &__ram {
+        width: 100%;
+        max-width: 720px;
+        height: 70vh;
+        border: 0;
+        border-radius: var(--radijus-panel);
+        background: var(--boja-povrsina);
+    }
+
+    &__kostur {
+        display: block;
+        width: 100%;
+        max-width: 720px;
+        height: 70vh;
+        border-radius: var(--radijus-panel);
+    }
+
+    &__prazno {
+        margin: 0;
+        padding: var(--razmak-7) 0;
+        color: var(--boja-tekst-tiho);
+    }
+}
+
+
+/* Status pretplatnika u spisku. */
+.z-oznaka-prijave,
+.z-oznaka-odjave {
+    display: inline-block;
+    padding: 2px var(--razmak-2);
+    border-radius: var(--radijus-oznaka);
+
+    font-size: var(--slovo-oznaka);
+    line-height: 1.6;
+    font-weight: var(--tezina-srednja);
+    white-space: nowrap;
+}
+
+.z-oznaka-prijave {
+    background: var(--boja-podloga-tiha);
+    color: var(--boja-tekst-tiho);
+}
+
+/* Odjava je stanje koje se prati, ne greška — zato tiha crvena, ne puna. */
+.z-oznaka-odjave {
+    background: var(--boja-podloga-tiha);
+    color: var(--boja-oznaka-tekst);
+}

@@ -823,6 +823,14 @@ class UsersModule {
                 user[0].freePhotos += userResolutions[0].resolution1500px;
                 user[0].freePhotos += userResolutions[0].resolution800px;
             }
+
+            /*
+             * Dogovorene cene idu uz korisnika, da prozor sa cenama na strani
+             * galerije pokaze ono sto ce se stvarno naplatiti. Racun i dalje
+             * pada u `cart()` na serveru — ovo je samo prikaz.
+             */
+            const cene = await this.dogovoreneCene(uid);
+            if (cene) user[0].dogovoreneCene = cene;
         }
 
         if (user[0].userRole == 'photographer') {
@@ -1369,12 +1377,55 @@ class UsersModule {
         return { error: null }
     }
 
+    /*
+     * CENA SE RACUNA OVDE, NA SERVERU — nikad u pregledacu.
+     *
+     * Podrazumevano: `cena galerije × mnozilac za rezoluciju`.
+     *
+     * Izuzetak je korisnik sa DOGOVORENOM CENOM: u *Podesavanja agencije* se
+     * moze iskljuciti pretplata i upisati cena po rezoluciji (npr. 3000px =
+     * 10 KM). Tada ta cena zamenjuje racunicu, i to samo dok je ugovor u
+     * vaznosti (`from`–`to`) — isti prozor koji vec vazi za pretplatu.
+     *
+     * Pretplatnik (`naPretplati`) NE dobija ovu cenu: kad potrosi kvotu,
+     * placa osnovnu cenu, kako je i do sada bilo (odluka 2026-09-09).
+     */
+    async dogovoreneCene(uid) {
+        if (!uid) return null;
+
+        const sada = Math.floor(new Date().getTime() / 1000);
+        const nadjeno = await db.collection('userResolutions').find({
+            uid: uid,
+            from: { $lte: sada },
+            to: { $gte: sada },
+        }).toArray();
+
+        if (!nadjeno.length) return null;
+
+        const u = nadjeno[0];
+        if (u.naPretplati !== false) return null;   // pretplatnik ili stari zapis
+
+        const cene = {
+            3000: u['cena3000px'],
+            1500: u['cena1500px'],
+            800: u['cena800px'],
+        };
+
+        // Prazno polje = nema dogovora za tu rezoluciju, vazi osnovna cena.
+        const imaBar = Object.keys(cene).some(
+            (k) => cene[k] !== null && cene[k] !== undefined && cene[k] !== ''
+        );
+        return imaBar ? cene : null;
+    }
+
     async cart(uid, localCart) {
         let priceMap = {
             3000: 1,
             1500: 0.5,
             800: 0.15,
         };
+
+        const cene = await this.dogovoreneCene(uid);
 
 
         let cart = [];
@@ -1397,11 +1448,18 @@ class UsersModule {
         for (let i = 0; i < cart.length; i++) {
             let gallery = await db.collection('gallery').find({ _id: cart[i].galleryId }).toArray();
             if (gallery.length) {
+                const dogovorena = cene ? cene[cart[i].resolution] : null;
+                const cena = (dogovorena !== null && dogovorena !== undefined && dogovorena !== '')
+                    ? parseFloat(dogovorena)
+                    : gallery[0].price * priceMap[cart[i].resolution];
+
                 newCart.push({
                     ...cart[i],
                     ...gallery[0],
                     cartId: cart[i]._id,
-                    price: gallery[0].price * priceMap[cart[i].resolution]
+                    price: cena,
+                    // Prikaz u korpi sme da kaze da cena nije osnovna.
+                    dogovorenaCena: dogovorena !== null && dogovorena !== undefined && dogovorena !== ''
                 })
             }
         }
@@ -1716,15 +1774,52 @@ class UsersModule {
         }
     }
 
-    async userGallery(uid, page = 0) {
-        let total = await db.collection('gallery').find({ uid: ObjectID(uid) }).count();
-        let items = [];
+    /*
+     * SPISAK GALERIJA U ADMINISTRACIJI.
+     *
+     * Upit je do sada UVEK trazio `uid: <prijavljeni>`, pa je administrator
+     * video NULU: svih 9.965 galerija pripada fotografima, ne njemu. Ista
+     * zamka kao u `fetchGallery`/`updateGallery` — administrator nije vlasnik.
+     *
+     * Fotografu se ogranicenje zadrzava: on i dalje vidi samo svoje.
+     *
+     * Uz to:
+     *  - `search` je stizao sa strane, a ovde se NIJE koristio. Sa hiljadama
+     *    galerija u spisku pretraga nije ukras nego jedini nacin snalazenja.
+     *  - broj strana je bio `total / 20` — necio broj, pa je poslednja strana
+     *    umela da nedostaje. Sada se zaokruzuje navise.
+     */
+    async userGallery(uid, page = 0, search = null) {
+        const korisnik = await db.collection('users').find({ _id: ObjectID(uid) }).toArray();
+        const jeAdmin = korisnik.length && (
+            korisnik[0].userRole === 'admin'
+            || (korisnik[0].permissions && korisnik[0].permissions.indexOf('*') !== -1)
+        );
 
+        const upit = {};
+        if (!jeAdmin) upit.uid = ObjectID(uid);
 
-        items = await db.collection('gallery').find({ uid: ObjectID(uid) }).skip(page * 20).limit(20).sort({ published: -1 }).toArray();
+        if (search) {
+            const izraz = new RegExp(String(search).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+            upit['$or'] = [
+                { 'name.ba': izraz },
+                { 'name.en': izraz },
+                { 'alias.ba': izraz },
+                { location: izraz },
+                { user: izraz },
+            ];
+        }
+
+        const total = await db.collection('gallery').find(upit).count();
+        const items = await db.collection('gallery')
+            .find(upit)
+            .skip(page * 20)
+            .limit(20)
+            .sort({ published: -1 })
+            .toArray();
 
         return {
-            total: total / 20,
+            total: Math.ceil(total / 20),
             items: items
         }
     }

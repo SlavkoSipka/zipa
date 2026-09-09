@@ -75,11 +75,15 @@ const oznaciStiglu = (slika) => {
     if (plocica && plocica.classList) plocica.classList.add('z-galerija__foto--stigla');
 };
 
-// Odnos stranica pločice, dok slika ne stigne. Bez mera se ne postavlja ništa
-// — pločica se tada ponaša kao i do sada.
+/*
+ * Odnos stranica pločice. Mreža čita vodoravno i poravnava redove, pa joj
+ * treba GOL BROJ (širina/visina) da po njemu podeli širinu reda — otud
+ * `--odnos`, a ne `aspect-ratio`. Bez upisanih mera se ne postavlja ništa i
+ * SCSS uzima svoju rezervu.
+ */
 const odnosStranica = (foto) =>
     foto && foto.width && foto.height
-        ? { aspectRatio: `${foto.width} / ${foto.height}` }
+        ? { '--odnos': (foto.width / foto.height).toFixed(3) }
         : undefined;
 
 /*
@@ -95,10 +99,20 @@ class DetailPage extends Component {
         super(props);
         this.init = this.init.bind(this);
 
+        /* `loadData` i nekadašnji `fetchGallery` gađaju ISTU adresu
+           (`/gallery/get/:lang/:alias/:id`) i vraćaju isti odgovor. Strana je
+           ipak čekala drugo dovlačenje, pa je i posle iscrtavanja sa servera
+           pisalo „Loading…". Sada `galleryContent` kreće od onoga što je
+           server već dovukao — na prvo učitavanje nema nijednog čekanja. */
+        const saServera = props.initialData && props.initialData.gallery;
+
         this.state = {
             ...props.initialData,
             modalOpen: false,
-            galleryContent: null,
+            galleryContent:
+                saServera && saServera.photos && saServera.photos.length
+                    ? saServera
+                    : null,
             selectedImageIndex: 0,
             resolution: 800,
             touchStartX: null,
@@ -109,7 +123,6 @@ class DetailPage extends Component {
             // Traženo uz novi prikaz, po uzoru na Pixsell.
             obrnutRedosled: false,
 
-            opisOtvoren: false,
             deljenjeOtvoreno: false,
             srodne: [],
 
@@ -131,14 +144,25 @@ class DetailPage extends Component {
                 null,
                 this.props.lang
             ).then((data) => {
+                // Isti odgovor hrani i `gallery` i `galleryContent` — jedno
+                // dovlačenje umesto dva.
+                const stigla =
+                    data && data.gallery && data.gallery.photos && data.gallery.photos.length
+                        ? data.gallery
+                        : null;
+
                 this.setState(
-                    {
+                    (prethodno) => ({
                         ...data,
-                    },
+                        galleryContent: prethodno.galleryContent || stigla,
+                    }),
                     () => {
                         this.props.updateMeta(
                             this.props.generateSeoTags(this.state)
                         );
+                        // Mreža za pad: ako odgovor nije doneo fotografije,
+                        // ide staro, posebno dovlačenje.
+                        if (!this.state.galleryContent) this.fetchGallery();
                     }
                 );
             });
@@ -172,7 +196,6 @@ class DetailPage extends Component {
     componentDidMount() {
         window.scrollTo(0, 0);
         this.init();
-        this.fetchGallery();
         this.setState({ isMobile: window.innerWidth < 1024 });
         window.addEventListener("resize", this.updateScreenWidth);
         document.addEventListener("mousedown", this.naKlikVanDeljenja);
@@ -355,13 +378,15 @@ class DetailPage extends Component {
         fetch(`${API_ENDPOINT}/gallery/search/${this.props.lang}`, {
             method: "POST",
             headers: { "content-type": "application/json" },
-            body: JSON.stringify({ query: { category: [alias], ipp: 8 } }),
+            // Devet se traži, osam se prikazuje: jedna od njih je galerija
+            // koja je otvorena, pa ispada iz spiska.
+            body: JSON.stringify({ query: { category: [alias], ipp: 9 } }),
         })
             .then((res) => res.json())
             .then((result) => {
                 const stavke = (result && result.items ? result.items : [])
                     .filter((g) => g && g._id !== gallery._id)
-                    .slice(0, 4);
+                    .slice(0, 8);
                 this.setState({ srodne: stavke });
             })
             .catch(() => {});
@@ -372,6 +397,64 @@ class DetailPage extends Component {
             modalOpen: !prevState.modalOpen,
         }));
     };
+
+    /*
+     * Kostur strane dok podaci ne stignu. Crta se isti raspored koji dolazi
+     * posle — zaglavlje i zidana mreža — pa strana ne poskoči kad podaci
+     * stignu. Odnosi pločica se ponavljaju po nizu, da mreža izgleda kao
+     * arhiva, a ne kao red jednakih kvadrata.
+     *
+     * `z-kostur` iz `_komponente.scss` nosi prelivanje i sam se gasi pod
+     * `prefers-reduced-motion`.
+     */
+    kosturGalerije() {
+        const odnosi = [
+            1.5, 0.67, 1.5, 1.5,
+            0.67, 1.5, 1.33, 0.67,
+            1.5, 1.5, 0.67, 1.5,
+        ];
+
+        return (
+            <div className="detail-wrap z-galerija z-galerija--kostur" aria-busy="true">
+                <div className="z-galerija__zaglavlje">
+                    <Container>
+                        <div className="z-galerija__vrh">
+                            <div className="z-galerija__naslovni">
+                                <span className="z-kostur z-galerija__k-kategorija" />
+                                <span className="z-kostur z-galerija__k-naslov" />
+                                <span className="z-kostur z-galerija__k-podaci" />
+                            </div>
+                            <div className="z-galerija__k-radnje">
+                                <span className="z-kostur z-galerija__k-dugme" />
+                                <span className="z-kostur z-galerija__k-dugme" />
+                            </div>
+                        </div>
+                    </Container>
+                </div>
+
+                <Container>
+                    <div className="z-galerija__k-traka">
+                        <span className="z-kostur z-galerija__k-broj" />
+                    </div>
+
+                    <div className="z-galerija__mreza">
+                        {odnosi.map((odnos, i) => (
+                            <span
+                                key={i}
+                                className="z-kostur z-galerija__k-foto"
+                                style={{ '--odnos': odnos }}
+                            />
+                        ))}
+                    </div>
+                </Container>
+
+                {/* Za čitače ekrana — kostur im ništa ne govori. */}
+                <p className="z-galerija__k-najava" role="status">
+                    {"Učitavanje galerije".translate(this.props.lang)}
+                </p>
+            </div>
+        );
+    }
 
     render() {
         let content = null;
@@ -410,7 +493,7 @@ class DetailPage extends Component {
             !galleryContent.photos ||
             galleryContent.photos.length === 0
         ) {
-            return <div>Loading...</div>;
+            return this.kosturGalerije();
         }
         const selectedImage = galleryContent.photos[selectedImageIndex];
 
@@ -423,6 +506,29 @@ class DetailPage extends Component {
 
         if (this.state.modalOpen && this.state.galleryContent) {
             const ukupno = galleryContent.photos.length;
+
+            /*
+             * Cena koju OVAJ korisnik plaća.
+             *
+             * Podrazumevano je `cena galerije × množilac`. Korisnik sa
+             * dogovorenom cenom po fotografiji (*Podešavanja agencije*)
+             * plaća svoju, i onda mora i ovde da je vidi — inače bi prozor
+             * pokazivao jedan iznos, a korpa naplaćivala drugi.
+             *
+             * Merodavan račun ostaje NA SERVERU (`users.js`, `cart`); ovo je
+             * samo prikaz istog pravila.
+             */
+            const dogovorene = this.props.uData && this.props.uData.dogovoreneCene;
+            const cenaZa = (r) => {
+                const svoja = dogovorene ? dogovorene[r.px] : null;
+                if (svoja !== null && svoja !== undefined && svoja !== '') {
+                    return { iznos: parseFloat(svoja), dogovorena: true };
+                }
+                return {
+                    iznos: galleryContent.price ? galleryContent.price * r.mnozilac : 0,
+                    dogovorena: false,
+                };
+            };
 
             /* Namena rezolucije običnim jezikom — kupac ne bira „1500 px",
                bira „za štampu do A5". Cene i pragovi su NEPROMENJENI. */
@@ -597,24 +703,28 @@ class DetailPage extends Component {
                                                         }
                                                     >
                                                         <span className="z-prozor__rez-levo">
+                                                            {/* Prvi red je uvek naziv i mera,
+                                                                drugi uvek namena — pa sva tri
+                                                                reda imaju istu visinu. */}
                                                             <span className="z-prozor__rez-naziv">
                                                                 {r.naziv}
+                                                                <span className="z-prozor__rez-mera">
+                                                                    {visina
+                                                                        ? ` – ${r.px} × ${visina} px`
+                                                                        : ` – ${r.px} px`}
+                                                                </span>
                                                             </span>
                                                             <span className="z-prozor__rez-opis">
-                                                                {visina
-                                                                    ? `${r.px} × ${visina} px · `
-                                                                    : `${r.px} px · `}
                                                                 {r.namena}
                                                             </span>
                                                         </span>
                                                         <span className="z-prozor__rez-cena">
-                                                            {galleryContent.price
-                                                                ? (
-                                                                      galleryContent.price *
-                                                                      r.mnozilac
-                                                                  ).formatPrice(2)
-                                                                : "0"}{" "}
-                                                            KM
+                                                            {cenaZa(r).iznos.formatPrice(2)} KM
+                                                            {cenaZa(r).dogovorena ? (
+                                                                <span className="z-prozor__rez-dogovor">
+                                                                    {"Dogovorena cijena".translate(this.props.lang)}
+                                                                </span>
+                                                            ) : null}
                                                         </span>
                                                     </button>
                                                 );
@@ -969,38 +1079,6 @@ class DetailPage extends Component {
                                     ) : null}
                                 </p>
 
-                                {opisTekst ? (
-                                    <>
-                                        <div
-                                            className={
-                                                "z-galerija__opis" +
-                                                (this.state.opisOtvoren
-                                                    ? ""
-                                                    : " z-galerija__opis--skupljen")
-                                            }
-                                        >
-                                            <p
-                                                dangerouslySetInnerHTML={{
-                                                    __html: opisTekst.replace(/\n/g, "<br/>"),
-                                                }}
-                                            ></p>
-                                        </div>
-                                        <button
-                                            type="button"
-                                            className="z-galerija__vise"
-                                            aria-expanded={this.state.opisOtvoren}
-                                            onClick={() =>
-                                                this.setState({
-                                                    opisOtvoren: !this.state.opisOtvoren,
-                                                })
-                                            }
-                                        >
-                                            {this.state.opisOtvoren
-                                                ? "Prikaži manje".translate(this.props.lang)
-                                                : "Prikaži više".translate(this.props.lang)}
-                                        </button>
-                                    </>
-                                ) : null}
                             </div>
 
                             {/* ── radnje ──────────────────────────────── */}
@@ -1109,6 +1187,21 @@ class DetailPage extends Component {
                                 ) : null}
                             </div>
                         </div>
+
+                        {/* Opis ide ISPOD reda sa radnjama, preko pune širine
+                            strane — u naslovnom stupcu je delio red sa
+                            dugmadima, pa je stajao u upola užem stupcu od
+                            mreže fotografija ispod. Prikazuje se ceo; dugmeta
+                            „Prikaži više" više nema. */}
+                        {opisTekst ? (
+                            <div className="z-galerija__opis">
+                                <p
+                                    dangerouslySetInnerHTML={{
+                                        __html: opisTekst.replace(/\n/g, "<br/>"),
+                                    }}
+                                ></p>
+                            </div>
+                        ) : null}
                     </Container>
                 </div>
 
@@ -1146,6 +1239,10 @@ class DetailPage extends Component {
                                             type="button"
                                             className="z-galerija__foto"
                                             key={idx}
+                                            /* Odnos ide na PLOČICU, ne na sliku:
+                                               pločica je ta koja u poravnatom
+                                               redu deli širinu. */
+                                            style={odnosStranica(item)}
                                             aria-label={`${"Fotografija".translate(
                                                 this.props.lang
                                             )} ${idx + 1}`}
@@ -1172,7 +1269,6 @@ class DetailPage extends Component {
                                                 alt={item.description || ""}
                                                 width={item.width || null}
                                                 height={item.height || null}
-                                                style={odnosStranica(item)}
                                                 /* Prvih dvanaest je ono što se vidi bez
                                                    skrolovanja — ona idu odmah, ostala kad
                                                    dođu na red. */
@@ -1224,7 +1320,10 @@ class DetailPage extends Component {
                                         <Col lg="3" md="4" xs="6" key={idx}>
                                             <Article
                                                 _id={srodna._id}
-                                                categoryName={Object.translate(srodna, "categoryName", this.props.lang)}
+                                                /* Bez oznake kategorije: ceo
+                                                   odeljak je jedna kategorija,
+                                                   pa bi je svaka kartica samo
+                                                   ponavljala. */
                                                 image={srodna.photos && srodna.photos[0] && srodna.photos[0].image}
                                                 name={Object.translate(srodna, "name", this.props.lang)}
                                                 shortDescription={Object.translate(srodna, "description", this.props.lang)}

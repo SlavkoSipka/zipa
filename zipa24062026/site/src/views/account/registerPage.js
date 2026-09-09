@@ -155,7 +155,9 @@ class RegisterPage extends Component {
 
         const ispunjeni = USLOVI_LOZINKE.filter((u) => u.vazi(this.state.password)).length;
 
-        const galerija = this.props.najava;
+        /* Galerija izabrana u administraciji (*Stranice → Prijava i
+           registracija*); bez izbora ide najnovija, kao i do sada. */
+        const galerija = this.props.prijavaGalerija || this.props.najava;
         const slika = galerija && galerija.photos && galerija.photos[0]
             ? `${PHOTOS_ENDPOINT}/photos/700x/${galerija.photos[0].image}`
             : null;

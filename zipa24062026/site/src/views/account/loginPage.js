@@ -117,7 +117,9 @@ class LoginPage extends Component {
 
         /* Fotografija dolazi iz najnovije galerije — iste koju `App.js` već
            dovlači za traku najave i naslovni blok. Bez novog poziva. */
-        const galerija = this.props.najava;
+        /* Galerija izabrana u administraciji (*Stranice → Prijava i
+           registracija*); bez izbora ide najnovija, kao i do sada. */
+        const galerija = this.props.prijavaGalerija || this.props.najava;
         const slika = galerija && galerija.photos && galerija.photos[0]
             ? `${PHOTOS_ENDPOINT}/photos/700x/${galerija.photos[0].image}`
             : null;

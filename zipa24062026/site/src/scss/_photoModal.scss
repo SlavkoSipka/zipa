@@ -105,6 +105,9 @@
         font-weight: var(--tezina-jaka);
         color: var(--boja-traka-tekst);
 
+        // Nazivi galerija na sajtu stoje VELIKIM SLOVIMA (odluka 2026-09-08).
+        text-transform: uppercase;
+
         // Dugi nazivi galerija ne smeju da guraju brojač i zatvaranje.
         overflow: hidden;
         text-overflow: ellipsis;
@@ -166,7 +169,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: var(--razmak-5);
+        padding: var(--razmak-2);
 
         // Na telefonu scena dobija svoju visinu; panel ide ispod nje.
         @include mobile-tablet {
@@ -179,26 +182,34 @@
         min-height: 0;
     }
 
+    /* Okvir uzima CELU scenu, ne prirodnu meru fotografije. Bez ovoga se
+       oštra verzija (700px široka) crtala u svojoj veličini i stajala kao
+       marka usred visokog prozora. Sada `object-fit: contain` na slici
+       popuni raspoloživu visinu, a odnos stranica ostaje netaknut. */
     &__slika-okvir {
         position: relative;
         display: flex;
         align-items: center;
         justify-content: center;
-        max-width: 100%;
-        // Visinu daje scena (flex), ne prozor — pa se ne meri u `vh`.
-        max-height: 100%;
+        width: 100%;
+        height: 100%;
+        min-height: 0;
     }
 
     /*
-     * Postepeno učitavanje: mala verzija ide u pozadinu razmazana, oštra
-     * preko nje. Kad oštra stigne, `--stigla` je otkriva.
+     * Postepeno učitavanje: mala verzija stoji u pozadini, oštra preko nje.
+     * Kad oštra stigne, `--stigla` je otkriva.
+     *
+     * Mala verzija se NE razmazuje. Blur je bežao preko ivica okvira i
+     * pravio oreol oko fotografije — izgledalo je kao svetlucanje ispod
+     * slike, a ne kao kadar koji se učitava.
      */
     &__slika {
         display: block;
+        width: 100%;
+        height: 100%;
         max-width: 100%;
         max-height: 100%;
-        width: auto;
-        height: auto;
         object-fit: contain;
     }
 
@@ -207,8 +218,6 @@
         inset: 0;
         width: 100%;
         height: 100%;
-        filter: blur(12px);
-        transform: scale(1.02);   // da razmazane ivice ne otkriju rub
     }
 
     &__slika--puna {
@@ -221,7 +230,10 @@
 
     /* ── strelice ─────────────────────────────────────────────────────── */
 
-    // Uvek na istom mestu, bez obzira na odnos stranica fotografije.
+    /* Uvek na istom mestu, bez obzira na odnos stranica fotografije.
+       Sada stoje PREKO fotografije (scena je bez razmaka), pa im providna
+       zavesa nije bila dovoljna — na svetlom kadru se strelica gubila.
+       Zato pun tamni krug, svetla ivica i krupniji znak. */
     &__strelica {
         position: absolute;
         top: 50%;
@@ -231,27 +243,35 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 48px;
-        height: 48px;
+        width: 60px;
+        height: 60px;
 
-        border: 0;
+        border: 1px solid var(--boja-traka-tekst-tiho);
         border-radius: var(--radijus-pun);
-        background: var(--boja-zavesa);
+        background: var(--boja-traka);
         color: var(--boja-traka-tekst);
-        font-size: var(--slovo-lg);
+        font-size: var(--slovo-xl);
         line-height: 1;
         cursor: pointer;
 
         @include z-prelaz(background-color);
-        &:hover { background: var(--boja-traka-linija); }
+
+        // Amber je površina, ne tekst — na hover krug postaje amber, znak
+        // se prevrne u tamni tekst sa amberove skale.
+        &:hover {
+            background: var(--boja-akcenat);
+            border-color: var(--boja-akcenat);
+            color: var(--boja-akcenat-tekst);
+        }
         @include z-fokus;
 
-        &--nazad   { left: var(--razmak-3); }
-        &--napred  { right: var(--razmak-3); }
+        &--nazad   { left: var(--razmak-4); }
+        &--napred  { right: var(--razmak-4); }
 
         @include mobile {
-            width: 40px;
-            height: 40px;
+            width: 48px;
+            height: 48px;
+            font-size: var(--slovo-lg);
         }
     }
 
@@ -357,8 +377,20 @@
 
     &__rez-levo { min-width: 0; }
 
-    &__rez-naziv {
+    /* Oba reda su ZAKLJUČANA na jedan red teksta. Namene nisu jednake
+       dužine („za veb i društvene mreže" je dvostruko duže od „za štampu
+       do A3"), pa je duži red prelamao i njegovo dugme je bilo više od
+       ostala dva. Sada se višak skraćuje tačkicama i sva tri reda imaju
+       istu visinu. */
+    &__rez-naziv,
+    &__rez-opis {
         display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    &__rez-naziv {
         font-size: var(--slovo-sm);
         line-height: 1.3;
         font-weight: var(--tezina-srednja);
@@ -370,15 +402,35 @@
         }
     }
 
+    // Mera stoji uz naziv, ali tiše — naziv je ono što se bira.
+    &__rez-mera {
+        font-weight: var(--tezina-knjiga);
+        color: var(--boja-traka-tekst-tiho);
+    }
+
     &__rez-opis {
-        display: block;
         font-size: var(--slovo-sitno);
         line-height: 1.4;
         color: var(--boja-traka-tekst-tiho);
     }
 
+    // Napomena da cena nije osnovna nego ugovorena za ovog korisnika.
+    &__rez-dogovor {
+        display: block;
+        margin-top: 2px;
+
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-oznaka);
+        line-height: 1.4;
+        font-weight: var(--tezina-srednja);
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        color: var(--boja-akcenat);
+    }
+
     &__rez-cena {
         flex: 0 0 auto;
+        text-align: right;
         font-size: var(--slovo-sm);
         line-height: 1.3;
         font-weight: var(--tezina-srednja);
@@ -582,9 +634,8 @@
         text-decoration: underline;
         text-underline-offset: .15em;
 
-        // Nazivi u bazi stoje VELIKIM SLOVIMA — slog se popravlja u prikazu.
-        text-transform: lowercase;
-        &::first-letter { text-transform: uppercase; }
+        // Nazivi galerija na sajtu stoje VELIKIM SLOVIMA (odluka 2026-09-08).
+        text-transform: uppercase;
 
         @include z-fokus;
     }
@@ -640,5 +691,66 @@
         padding: var(--razmak-8);
         text-align: center;
         color: var(--boja-traka-tekst-tiho);
+    }
+
+    /* ── zbijanje kad je vidno polje nisko ────────────────────────────── */
+
+    /*
+     * Uvećanje strane u pregledaču ne menja odnose — ono SMANJUJE vidno
+     * polje u CSS pikselima: ekran od 900px je na 150% visok 600px, na
+     * 200% svega 450px. Panel je zato vezan za visinu vidnog polja i
+     * skuplja se, da cene, dugme i podaci ostanu u kadru bez skrolovanja.
+     *
+     * Mere po visini rade i ovde, jer `max-height` upiti gledaju CSS
+     * piksele — isti onaj broj koji uvećanje menja.
+     */
+    @include nizak-ekran {
+        &__vrh        { padding: var(--razmak-2) var(--razmak-4); }
+        &__panel-telo { padding: var(--razmak-3); }
+        &__rezolucije { margin-bottom: var(--razmak-3); }
+
+        &__rezolucija {
+            min-height: 38px;
+            padding: 5px var(--razmak-3);
+        }
+
+        &__radnje {
+            padding: var(--razmak-2) var(--razmak-3);
+            margin: var(--razmak-3) calc(-1 * var(--razmak-3)) 0;
+        }
+
+        &__opis-vise { margin-bottom: var(--razmak-3); }
+        &__podaci    { padding-top: var(--razmak-2); }
+        &__red       { padding: 1px 0; }
+
+        &__traka    { padding: var(--razmak-1) var(--razmak-3); }
+        &__umanjena { width: 52px; height: 36px; }
+    }
+
+    @include vrlo-nizak-ekran {
+        &__panel-telo { padding: var(--razmak-2); }
+        &__rezolucije { margin-bottom: var(--razmak-2); }
+
+        &__rezolucija {
+            min-height: 32px;
+            padding: 3px var(--razmak-2);
+        }
+
+        &__radnje {
+            padding: var(--razmak-1) var(--razmak-2);
+            margin: var(--razmak-2) calc(-1 * var(--razmak-2)) 0;
+        }
+
+        // Opis se skuplja na dva reda; ceo tekst i dalje otvara „više".
+        &__opis--skupljen { -webkit-line-clamp: 2; }
+        &__opis-vise      { margin-bottom: var(--razmak-2); }
+
+        &__iz-galerije {
+            margin-top: var(--razmak-2);
+            padding-top: var(--razmak-2);
+        }
+
+        &__red      { padding: 0; }
+        &__umanjena { width: 44px; height: 30px; }
     }
 }

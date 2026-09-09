@@ -318,3 +318,14 @@
         }
     }
 }
+
+
+/* Telefon: tekst „o nama" je 262 znaka preko cele širine. Mera slova ide na
+   `--slovo-md` (15px sa telefonske lestvice deluje sitno za pasus), a red se
+   ograničava na 60ch da oko ne gubi početak sledećeg. Desktop netaknut. */
+@include mobile {
+    .z-podnozje__o-nama {
+        font-size: var(--slovo-md);
+        max-width: 60ch;
+    }
+}

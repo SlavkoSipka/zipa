@@ -233,6 +233,68 @@
     box-shadow: var(--senka-lebdi);
 
     &--usko { min-width: 200px; }
+
+    /*
+     * Panel sa spiskom — kategorije.
+     *
+     * Visina je ZAKLJUČANA i spisak skroluje u sebi. Bez toga bi 43 stavke
+     * napravile panel od preko 1.500px koji izlazi ispod ekrana.
+     */
+    &--spisak {
+        min-width: 280px;
+        max-width: 320px;
+        padding: var(--razmak-2);
+        gap: 0;
+    }
+}
+
+.z-alatna-traka__panel-naslov {
+    margin: 0 0 var(--razmak-1);
+    padding: var(--razmak-2) var(--razmak-3) var(--razmak-2);
+
+    font-size: var(--slovo-oznaka);
+    line-height: 1.6;
+    font-weight: var(--tezina-jaka);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--boja-tekst-tiho);
+}
+
+.z-alatna-traka__opcije {
+    display: flex;
+    flex-direction: column;
+
+    // Osam stavki u kadru, ostatak na skrol.
+    max-height: 320px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.z-alatna-traka__opcija {
+    display: block;
+    width: 100%;
+    padding: var(--razmak-2) var(--razmak-3);
+
+    border: 0;
+    border-radius: var(--radijus-mali);
+    background: transparent;
+
+    font-family: var(--pismo-tekst);
+    font-size: var(--slovo-sm);
+    line-height: var(--red-sm);
+    font-weight: var(--tezina-knjiga);
+    color: var(--boja-tekst);
+    text-align: left;
+    cursor: pointer;
+
+    @include z-prelaz(background-color, color);
+    &:hover { background: var(--boja-podloga-tiha); }
+    @include z-fokus;
+
+    &--izabrana {
+        background: var(--boja-podloga-tiha);
+        font-weight: var(--tezina-jaka);
+    }
 }
 
 /* ── desni klaster: prekidač i ikonice prikaza ────────────────────────── */
@@ -311,6 +373,108 @@
     .z-alatna-traka__sirina { justify-content: flex-start; }
     .z-alatna-traka__pretraga { flex: 1 1 100%; max-width: none; order: -1; }
     .z-alatna-traka__desno { margin-left: auto; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TELEFON — traka ne sme da pojede prvi ekran
+   ═══════════════════════════════════════════════════════════════════════════
+   Mereno na 390px: cela traka je bila visoka 294px, pa se do prve fotografije
+   dolazilo tek posle trećine ekrana. Mete su dignute na 44px (`_telefon.scss`),
+   što bi je same po sebi još i povisilo — zato se ovde skupljaju RAZMACI, a
+   filteri i prikaz staju u isti red.
+*/
+/* ═══════════════════════════════════════════════════════════════════════════
+   TELEFON — traka se preslaguje, ne skuplja
+   ═══════════════════════════════════════════════════════════════════════════
+   Na desktopu je sve u jednom redu. Na telefonu je to pre bio nizak niz
+   preloma: filteri su se lomili 2+2 nejednakih širina, „Više filtera" je
+   visilo desno u drugom redu, a cela traka je bila 294px pre prve
+   fotografije.
+
+   Sada je raspored izričit, u četiri celine odozgo nadole:
+
+     1. pretraga, puna širina
+     2. četiri filtera u MREŽI 2×2 — jednake širine, poravnate ivice
+     3. „Više filtera", svoj red
+     4. prekidač Galerije/Fotografije + način prikaza
+
+   Padajući spiskovi se otvaraju preko PUNE širine trake, ne ispod svog
+   dugmeta: sa 260–320px širine i dugmetom u desnom stupcu izlazili bi van
+   ekrana na užim telefonima.
+*/
+@include mobile {
+    .z-alatna-traka {
+        /* Razmak izmedju cetiri celine — 8px, ne 12: traka je i ovako
+           visa nego pre, zbog reda za „Vise filtera". */
+        &__sirina { row-gap: var(--razmak-2); }
+
+        /* Polje pretrage — visina je zadata na samom `input`-u, pa
+           `min-height` na omotaču nema efekta. */
+        &__pretraga input { height: 44px; }
+
+        /* ── 2. filteri u mreži 2×2 ─────────────────────────────────── */
+        &__filteri {
+            display: block;
+            width: 100%;
+            /* Nosač padajućih spiskova — vidi `__panel` niže. */
+            position: relative;
+        }
+
+        &__filter-spisak {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: var(--razmak-2);
+        }
+
+        &__filter {
+            width: 100%;
+            justify-content: space-between;
+            padding: 0 var(--razmak-3);
+        }
+
+        /* ── 3. „Više filtera" u svom redu ──────────────────────────── */
+        /* Stoji sam u redu, pa ide po sredini — uz levu ivicu bi izgledao
+           kao da je zaostao od mreze iznad. (`justify-content` iz osnovnog
+           pravila je vec `center`; ovde se samo ne ponistava.) */
+        &__vise {
+            margin: 6px 0 0;
+            padding: 0;
+            width: 100%;
+        }
+
+        /* ── 4. prikaz ──────────────────────────────────────────────── */
+        &__desno {
+            display: flex;
+            align-items: center;
+            gap: var(--razmak-3);
+            width: 100%;
+            margin-left: 0;
+        }
+
+        &__prekidac { flex: 1 1 auto; }
+        &__prekidac-dugme { flex: 1 1 0; }
+        &__prikazi { flex: 0 0 auto; }
+
+        /* ── padajući spiskovi ──────────────────────────────────────── */
+
+        /* Dugme prestaje da bude nosač; nosač postaje ceo blok filtera, pa
+           se spisak otvara preko pune širine i ne može da izađe iz ekrana. */
+        &__filter-grupa { position: static; }
+
+        &__panel,
+        &__panel--usko,
+        &__panel--spisak {
+            left: 0;
+            right: 0;
+            width: auto;
+            min-width: 0;
+            max-width: none;
+        }
+
+        /* Spisak kategorija: visina se veže za EKRAN, ne za zadatih 320px —
+           na niskom telefonu bi inače prešao donju ivicu. */
+        &__panel--spisak { max-height: 60vh; }
+    }
 }
 
 

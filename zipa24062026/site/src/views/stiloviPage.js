@@ -235,7 +235,7 @@ class StiloviPage extends Component {
                                 dvesta dve hiljade fotografija, šezdeset dva fotografa.
                             </p>
                             <p style={{ fontFamily: 'var(--pismo-podaci)' }}>
-                                Podaci — ZP-2024-0317-a4f9 · 5472×3648 · 12.4 MB · 0O1lI
+                                Podaci — ZPA-2024-0317-a4f9 · 5472×3648 · 12.4 MB · 0O1lI
                             </p>
                         </div>
                     </section>
@@ -337,7 +337,7 @@ class StiloviPage extends Component {
                             <Col lg="6">
                                 <label className="z-polje">
                                     <span className="z-polje__natpis">Isključeno</span>
-                                    <input className="z-polje__unos" defaultValue="ZP-2024-0317-a4f9" disabled />
+                                    <input className="z-polje__unos" defaultValue="ZPA-2024-0317-a4f9" disabled />
                                 </label>
                             </Col>
                             <Col lg="6">
@@ -388,7 +388,7 @@ class StiloviPage extends Component {
                             <span className="z-oznaka z-oznaka--oznaka">Izdvojeno</span>
                             <span className="z-oznaka z-oznaka--uspeh">Plaćeno</span>
                             <span className="z-oznaka z-oznaka--upozorenje">Bez datuma</span>
-                            <span className="z-oznaka z-oznaka--podatak">ZP-2024-0317-a4f9</span>
+                            <span className="z-oznaka z-oznaka--podatak">ZPA-2024-0317-a4f9</span>
                         </div>
                         <div className="stilovi__red">
                             <button type="button" className="z-pilula">Sport <span className="z-pilula__broj">1.204</span></button>

@@ -10,6 +10,14 @@
 .naslovna-c {
 
     $razmak: 14px;
+
+    /* Nazivi galerija na sajtu stoje VELIKIM SLOVIMA (odluka 2026-09-08).
+       Kartice u ovom predlogu su još iz prvog pravca, pa naslov nema svoju
+       klasu — pravilo hvata gole `h4` u kartici. */
+    .kartica h4,
+    .izdvojena h4,
+    .preko-teksta h4,
+    .telo h4 { text-transform: uppercase; }
     $sirinaKartice: 232px;
 
     padding-top: var(--zaglavlje-visina);
@@ -137,107 +145,28 @@
         }
     }
 
-    /* ── okvir trake i dugme za pauzu ─────────────────────────────────────
-     * WCAG 2.2.2: sadržaj koji se sam pomera duže od pet sekundi mora da ima
-     * VIDLJIVU kontrolu za zaustavljanje. Pauza na hover i na fokus, koju
-     * `components/traka.js` već ima, ne ispunjava uslov — korisnik tastature
-     * i čitača ekrana ne vidi u njoj kontrolu.
+    /* ── mreža galerija ───────────────────────────────────────────────────
      *
-     * Dugme stoji ispod trake, uz desnu ivicu: iznad je već naslov odeljka sa
-     * vezom „Sve galerije →", pa bi druga kontrola u istom redu bila gužva.
+     * Ovde je do 2026-09-08 stajala traka koja se sama pomerala
+     * (`components/traka.js`): pomeranje za jednu karticu na 4,5s,
+     * `scroll-snap`, pauza na hover i dugme za zaustavljanje zbog WCAG
+     * 2.2.2. Klijent je tražio da karusela nema, pa je sve to izbačeno —
+     * galerije stoje u običnoj mreži, kao u druga dva predloga.
+     *
+     * Broj stubaca je isti kao broj kartica koje su ranije stajale u kadru
+     * trake, pa se veličina kartice nije promenila: 5 na širokom ekranu,
+     * pa 4, 3 i 2. `minmax(0, 1fr)`, nikad golo `1fr` — pravilo projekta:
+     * najmanja mera `1fr`-a je `min-content`, pa jedan neprelomiv naziv
+     * razvuče stubac preko širine ekrana.
      */
-    .traka-okvir {
-        position: relative;
-    }
-
-    .traka-pauza {
-        display: flex;
-        align-items: center;
-        gap: var(--razmak-2);
-        margin-left: auto;
-        margin-top: var(--razmak-1);
-
-        padding: var(--razmak-1) var(--razmak-3);
-        border: 1px solid var(--boja-linija);
-        border-radius: var(--radijus-pun);
-        background: var(--boja-povrsina);
-        color: var(--boja-tekst);
-
-        font-family: var(--pismo-tekst);
-        font-size: var(--slovo-xs);
-        line-height: var(--red-xs);
-        font-weight: var(--tezina-srednja);
-        cursor: pointer;
-
-        @include z-prelaz(border-color, background-color);
-        @include z-fokus;
-
-        &:hover { border-color: var(--boja-tekst-tiho); }
-
-        &__znak {
-            font-size: var(--slovo-sm);
-            line-height: 1;
-        }
-
-        /* Traka se pod „manje kretanja" ne pomera uopšte, pa nema šta da se
-         * zaustavi. Dugme se sklanja iz PRIKAZA, a ne iz markupa: da ga
-         * `traka.js` izostavlja, prikaz sa servera i prvi prikaz u pregledaču
-         * ne bi bili isti i hidracija bi prijavila neslaganje. */
-        @media (prefers-reduced-motion: reduce) {
-            display: none;
-        }
-    }
-
-    /* ── traka koja se pomera vodoravno ───────────────────────────────────
-     * Ovo je glavna razlika u odnosu na druga dva predloga: kategorija ne
-     * zauzima ceo red niz stranu nego se lista u stranu.
-     */
-    .traka {
-        display: flex;
+    .mreza-galerija {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
         gap: $razmak;
-        overflow-x: auto;
-        overflow-y: hidden;
-        padding-bottom: 10px;
-        /* `mandatory`, ne `proximity`: uz `proximity` traka ume da stane
-           IZMEĐU dve kartice, pa je šesta ostajala presečena na pola. */
-        scroll-snap-type: x mandatory;
-        -webkit-overflow-scrolling: touch;
 
-        // uzdržana traka za pomeranje
-        scrollbar-width: thin;
-        scrollbar-color: #C7CCD8 transparent;
-
-        &::-webkit-scrollbar { height: 7px; }
-        &::-webkit-scrollbar-track { background: transparent; }
-        &::-webkit-scrollbar-thumb {
-            background-color: #C7CCD8;
-            border-radius: 99px;
-        }
-
-        /*
-         * Kartica se meri u DELOVIMA ŠIRINE, ne u pikselima.
-         *
-         * Sa zakucanih 232px broj kartica retko izlazi ceo, pa je poslednja
-         * vidljiva uvek bila presečena. Ovako u kadar staje tačan broj
-         * kartica, a razmak između njih se oduzme iz mere.
-         *
-         * `calc` prolazi kroz gradnju; `min()`, `max()` i `clamp()` NE —
-         * stari CSS parser u Razzle-u pukne nad njima (vidi CLAUDE.md).
-         */
-        > .kartica {
-            flex: 0 0 calc((100% - 4 * #{$razmak}) / 5);
-            scroll-snap-align: start;
-
-            @include small-desktop { flex-basis: calc((100% - 3 * #{$razmak}) / 4); }
-            @include tablet        { flex-basis: calc((100% - 2 * #{$razmak}) / 3); }
-            @include mobile        { flex-basis: calc((100% - #{$razmak}) / 2); }
-            // Ispod 480px staje jedna kartica i VIRAK sledeće — 14px njene
-            // ivice. Bez tog virka traka na telefonu izgleda kao obična
-            // slika: ivica sledeće kartice je jedini znak da sadržaj ide
-            // dalje udesno, jer pokazivača za pomeranje na dodir nema.
-            // (Ranije je ovde stajalo `100%`, pa se ništa nije nazíralo.)
-            @include telefon-mali  { flex-basis: calc(100% - #{$razmak}); }
-        }
+        @include small-desktop { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        @include tablet        { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        @include mobile        { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
 
     // ── kartica galerije ─────────────────────────────────────────────────

@@ -242,6 +242,12 @@ class CategoriesPage extends Component {
                                     <svg viewBox="0 0 24 24"><path d="M3 5h18v14H3V5zm2.4 2L12 12l6.6-5H5.4zM5 8.5V17h14V8.5l-7 5.2-7-5.2z" fill="currentColor"/></svg>
                                 </button>
 
+                                {/* Pregled prije slanja — poruka onakva kakvu
+                                    dobija primalac. */}
+                                <Link to={`/account/newsletter-pregled/${r._id}`} className="z-tabela__radnja" title={'Pregledaj'.translate(l)}>
+                                    <svg viewBox="0 0 24 24"><path d="M12 5c-5 0-9 4.5-9 7s4 7 9 7 9-4.5 9-7-4-7-9-7zm0 11a4 4 0 110-8 4 4 0 010 8zm0-6.2a2.2 2.2 0 100 4.4 2.2 2.2 0 000-4.4z" fill="currentColor"/></svg>
+                                </Link>
+
                                 <Link to={`/account/newsletter/${r._id}`} className="z-tabela__radnja" title={'Izmijeni'.translate(l)}>
                                     <svg viewBox="0 0 24 24"><path d="M3 17.2V21h3.8L17.8 10 14 6.2 3 17.2zM20.7 7.1a1 1 0 000-1.4l-2.4-2.4a1 1 0 00-1.4 0l-1.8 1.8L18.9 9l1.8-1.9z" fill="currentColor"/></svg>
                                 </Link>

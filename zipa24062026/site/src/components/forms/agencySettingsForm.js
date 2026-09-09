@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
-import { Field, reduxForm } from 'redux-form'
+import { Field, reduxForm, formValueSelector } from 'redux-form'
+import { connect } from 'react-redux'
 import { Link } from 'react-router-dom'
 
 import Text from './fields/text1';
@@ -235,6 +236,9 @@ class form extends React.Component {
 
         const { handleSubmit, pristine, reset, submitting } = this.props;
 
+        // Zatecени zapisi nemaju ovo polje — za njih vazi pretplata, kao i pre.
+        const naPretplati = this.props.naPretplati !== false;
+
         return (
             <form onSubmit={handleSubmit} className="edit-account-form">
                 <Row>
@@ -257,32 +261,100 @@ class form extends React.Component {
                     
                     <Col lg="12"></Col>
 
-                    <Col lg="4">
-
+                    {/* ── NACIN NAPLATE ───────────────────────────────────
+                        Uvek vazi samo jedan. Zato se druga celina ZAMRZAVA
+                        preko `<fieldset disabled>` — to gasi svako polje u
+                        sebi, bez diranja pojedinacnih komponenti. */}
+                    <Col lg="12">
                         <Field
-                            name="resolution3000px"
-                            validate={[required]}
-                            component={renderTextField}
-                            label="3000px *"
+                            name="naPretplati"
+                            component={renderCheckField}
+                            label={'Korisnik je pod pretplatom'.translate(this.props.lang)}
                         ></Field>
+                        <p className="z-naplata__uputa">
+                            {'Pod pretplatom važe odobrena preuzimanja ispod. Kad se kvota potroši, plaća se osnovna cijena galerije. Ako pretplate nema, važe dogovorene cijene po fotografiji.'.translate(this.props.lang)}
+                        </p>
                     </Col>
-                    <Col lg="4">
 
-                        <Field
-                            name="resolution1500px"
-                            validate={[required]}
-                            component={renderTextField}
-                            label="1500px *"
-                        ></Field>
+                    {/* ── pretplata: BROJ odobrenih preuzimanja ─────────── */}
+                    <Col lg="12">
+                        <fieldset
+                            disabled={!naPretplati}
+                            className={'z-naplata' + (!naPretplati ? ' z-naplata--zamrznuta' : '')}
+                        >
+                            <legend className="z-naplata__naslov">
+                                {'Pretplata — broj odobrenih preuzimanja'.translate(this.props.lang)}
+                            </legend>
+                            <Row>
+                                <Col lg="4">
+                                    <Field
+                                        name="resolution3000px"
+                                        component={renderTextField}
+                                        label="3000px"
+                                    ></Field>
+                                </Col>
+                                <Col lg="4">
+                                    <Field
+                                        name="resolution1500px"
+                                        component={renderTextField}
+                                        label="1500px"
+                                    ></Field>
+                                </Col>
+                                <Col lg="4">
+                                    <Field
+                                        name="resolution800px"
+                                        component={renderTextField}
+                                        label="800px"
+                                    ></Field>
+                                </Col>
+                            </Row>
+                        </fieldset>
                     </Col>
-                    <Col lg="4">
 
-                        <Field
-                            name="resolution800px"
-                            validate={[required]}
-                            component={renderTextField}
-                            label="800px *"
-                        ></Field>
+                    {/* ── po fotografiji: DOGOVORENA cena ──────────────── */}
+                    <Col lg="12">
+                        <fieldset
+                            disabled={naPretplati}
+                            className={'z-naplata' + (naPretplati ? ' z-naplata--zamrznuta' : '')}
+                        >
+                            <legend className="z-naplata__naslov">
+                                {'Dogovorena cijena po fotografiji (KM)'.translate(this.props.lang)}
+                            </legend>
+                            <Row>
+                                <Col lg="4">
+                                    <Field
+                                        name="cena3000px"
+                                        component={renderTextField}
+                                        label="3000px"
+                                    ></Field>
+                                </Col>
+                                <Col lg="4">
+                                    <Field
+                                        name="cena1500px"
+                                        component={renderTextField}
+                                        label="1500px"
+                                    ></Field>
+                                </Col>
+                                <Col lg="4">
+                                    <Field
+                                        name="cena800px"
+                                        component={renderTextField}
+                                        label="800px"
+                                    ></Field>
+                                </Col>
+                                <Col lg="12">
+                                    <p className="z-naplata__uputa">
+                                        {'Prazno polje znači da za tu rezoluciju nema dogovora — tada važi osnovna cijena galerije.'.translate(this.props.lang)}
+                                    </p>
+                                </Col>
+                            </Row>
+                        </fieldset>
+                    </Col>
+
+                    {/* Odavde počinje OPSEG ugovora — koje kategorije i čiji
+                        snimci ulaze. Linija odvaja to od načina naplate iznad. */}
+                    <Col lg="12">
+                        <hr className="z-naplata__crta" />
                     </Col>
 
                     <Col lg="4">
@@ -349,12 +421,15 @@ class form extends React.Component {
                         </Field>
 
                     </Col>
-                    <Col lg="4">
+                    {/* Fotografa ima 62 — u jednom stupcu je to traka duga
+                        preko dva ekrana. Sada zauzimaju punu širinu i idu u
+                        tri stupca (`width` je mera stupca PO STAVCI). */}
+                    <Col lg="12">
                         <Field
                             name="photographers"
                             component={renderMultiCheckboxField}
                             label={'Fotografi'.translate(this.props.lang)}
-                            width="12"
+                            width="4"
                         >
                             {
                                 this.props.photographers && this.props.photographers.map((item, idx) => {
@@ -384,6 +459,18 @@ class form extends React.Component {
     }
 }
 
-export default reduxForm({
-    form: 'editAccountForm'  // a unique identifier for this form
-})(form)
+/*
+ * Obrazac ima SVOJE ime.
+ *
+ * Svi administratorski obrasci su prepisivanjem dobili isto ime
+ * (`editAccountForm`), sto radi samo dok su odvojeni na razlicitim stranama.
+ * Ovde nam treba ziva vrednost prekidaca, pa se cita imenovano stanje — a
+ * tada zajednicko ime postaje zamka.
+ */
+const izabrano = formValueSelector('agencySettingsForm');
+
+export default connect((state) => ({
+    naPretplati: izabrano(state, 'naPretplati'),
+}))(reduxForm({
+    form: 'agencySettingsForm'
+})(form))

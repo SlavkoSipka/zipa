@@ -144,6 +144,46 @@ class GalleriesPage extends Component {
 
                             </Col>
 
+                            {/*
+                              * PRETRAGA
+                              *
+                              * Administrator sada vidi celu arhivu — 9.965
+                              * galerija, oko 500 strana. Bez pretrage se do
+                              * jedne galerije dolazi samo listanjem.
+                              *
+                              * Pojam ide u adresu (`?search=`), pa strana
+                              * ostaje deljiva i osvežavanje je pamti; strana
+                              * na promenu adrese vec sama dovlaci ispocetka.
+                              */}
+                            <Col lg="12">
+                                <form
+                                    className="z-spisak-pretraga"
+                                    onSubmit={(e) => {
+                                        e.preventDefault();
+                                        this.props[0].history.push(
+                                            this.props[0].location.pathname
+                                            + this.generateSearchLink('search', this.state.pojam || null)
+                                        );
+                                    }}
+                                >
+                                    <input
+                                        type="text"
+                                        className="z-polje__unos"
+                                        value={this.state.pojam !== undefined
+                                            ? this.state.pojam
+                                            : (this.getSearchParams().search
+                                                ? decodeURIComponent(this.getSearchParams().search)
+                                                : '')}
+                                        placeholder={'Naziv galerije, mjesto ili fotograf…'.translate(this.props.lang)}
+                                        aria-label={'Pretraga galerija'.translate(this.props.lang)}
+                                        onChange={(e) => this.setState({ pojam: e.target.value })}
+                                    />
+                                    <button type="submit" className="z-dugme z-dugme--glavno">
+                                        {'Traži'.translate(this.props.lang)}
+                                    </button>
+                                </form>
+                            </Col>
+
                             <Col lg="12">
                                 <div className="table">
                                     <div>
@@ -166,7 +206,14 @@ class GalleriesPage extends Component {
                                                             <td>{item.price.formatPrice(2)} KM</td>
 
                                                             <td>
-                                                                <Link to={`/account/gallery/${item._id}`}><button><Isvg src={penIcon} /></button></Link>
+                                                                {/* Administrator ide na put koji zna za vlasnika
+                                                                    galerije; `/account/gallery/:id` radi samo za
+                                                                    fotografa nad SVOJOM galerijom. */}
+                                                                <Link to={
+                                                                    (this.props.uData && this.props.uData.userRole == 'admin' && item.uid && String(item.uid) !== String(this.props.uData._id))
+                                                                        ? `/account/gallery-photographer/${item.uid}/${item._id}`
+                                                                        : `/account/gallery/${item._id}`
+                                                                }><button><Isvg src={penIcon} /></button></Link>
                                                                 <button onClick={() => {
                                                                     this.props.handleDelete(() => {
                                                                         fetch(`${API_ENDPOINT}/gallery/delete/` + item._id, {

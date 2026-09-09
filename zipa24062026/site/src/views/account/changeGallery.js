@@ -103,6 +103,24 @@ class ChangeGallery extends Component {
             this.setState({
                 _loading: null
             })
+
+            /*
+             * Odgovor se PROVERAVA pre nego što se javi uspeh.
+             *
+             * API sada vraća 404 i poruku kad izmjena ne pogodi nijednu
+             * galeriju. Ranije se svaki odgovor smatrao uspjehom, pa je
+             * strana odvodila korisnika dalje i izmjena bi se tiho izgubila —
+             * upravo to se dešavalo kad administrator uređuje tuđu galeriju.
+             */
+            if (!result || result.error || !result.link) {
+                this.setState({
+                    error: (result && result.error)
+                        ? result.error
+                        : 'Izmjena nije sačuvana. Pokušajte ponovo.'.translate(this.props.lang)
+                });
+                return;
+            }
+
             if (this.props.uData && this.props.uData.userRole == 'admin') {
                 this.props[0].history.push('/');
             } else {

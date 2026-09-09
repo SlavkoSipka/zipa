@@ -83,12 +83,65 @@ header .logo .desktop-logo.logo-b > .natpis-b {
 
     $razmak: 18px;
 
+    /* Nazivi galerija na sajtu stoje VELIKIM SLOVIMA (odluka 2026-09-08).
+       Kartice u ovom predlogu su još iz prvog pravca, pa naslov nema svoju
+       klasu — pravilo hvata gole `h4` u kartici. */
+    .kartica h4,
+    .izdvojena h4,
+    .preko-teksta h4,
+    .telo h4 { text-transform: uppercase; }
+
     // Zaglavlje sajta lebdi preko sadržaja, pa se prvi odeljak spušta tačno
     // ispod njega. U predlogu B zaglavlju je dodata i plava traka od 34
     // tačke, pa je razmak za toliko veći.
     padding-top: calc(var(--zaglavlje-visina) + var(--razmak-5));
 
     @include mobile-tablet { padding-top: var(--zaglavlje-visina); }
+
+    /* ── kostur dok galerije ne stignu ───────────────────────────────── */
+
+    &__k-naslov {
+        display: block;
+        width: 180px;
+        height: 22px;
+    }
+
+    // Pločica popuni mesto koje joj mreža da — naslovni blok i tri ispod
+    // već imaju svoju visinu, pa se kostur poklapa sa onim što dolazi.
+    &__k-puna {
+        display: block;
+        width: 100%;
+        height: 100%;
+        border-radius: 10px;
+    }
+
+    &__k-red {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: $razmak;
+
+        @include mobile-tablet { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    &__k-plocica {
+        display: block;
+        width: 100%;
+        padding-top: 66%;      // isti odnos stranica kao kartica u redu
+        border-radius: 10px;
+    }
+
+    // Natpis postoji zbog čitača ekrana; oku ga kostur već govori.
+    &__k-najava {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        padding: 0;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+        border: 0;
+    }
 
     // ── kartica galerije ─────────────────────────────────────────────────
     .kartica {
@@ -111,6 +164,35 @@ header .logo .desktop-logo.logo-b > .natpis-b {
                 width: 100%; height: 100%;
                 object-fit: cover;
                 transition: transform 0.4s ease;
+            }
+
+            /* Dok fotografija ne stigne, okvir lagano diše — znak da nešto
+               dolazi. Traka svetla ide preko `transform`, ne preko pozadine:
+               pomeranje sloja se ne preračunava pri svakom kadru.
+               Kadrovi (`z-plocica-dise`, `z-slika-dolazi`) stoje u
+               `_galerija.scss` i važe na celom sajtu. */
+            &::after {
+                content: '';
+                position: absolute;
+                inset: 0;
+                background: linear-gradient(
+                    90deg,
+                    transparent 0%,
+                    var(--boja-podloga) 50%,
+                    transparent 100%
+                );
+                opacity: .55;
+                transform: translateX(-100%);
+                animation: z-plocica-dise 1.6s ease-in-out infinite;
+                pointer-events: none;
+                z-index: 1;
+            }
+
+            /* Slika se ne krije unapred — ako skripta zakaže, fotografije se
+               i dalje vide. Preliv ide tek kad stigne. */
+            &.stigla {
+                &::after { content: none; }
+                img { animation: z-slika-dolazi var(--prelaz-obicno) ease-out both; }
             }
 
             // crvena oznaka kategorije, kao na predlogu

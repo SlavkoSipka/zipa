@@ -444,21 +444,51 @@
     }
 }
 
-/* ── TELEFON: sitna slova se dižu ─────────────────────────────────────────
- * Na 375px su oznake preko fotografije bile 10px, a gust red podataka 11,5px.
- * Na ekranu koji se drži u ruci to je ispod granice udobnog čitanja, a arhiva
- * se upravo tako i pregleda. Menjaju se SAMO dva najsitnija koraka i SAMO na
- * telefonu — lestvica iznad njih ostaje ista, pa se raspored ne pomera.
+/* ── TELEFON: sopstvena lestvica slova ────────────────────────────────────
+ *
+ * Do 2026-09-09 su se ovde dizala samo dva najsitnija koraka, a sve ostalo je
+ * na telefonu bilo ISTO kao na desktopu. Mereno na 390px, na naslovnoj:
+ * 43 elementa na 14px, još 15 na 11–12px, a naslovni blok na 38px koji sam
+ * pojede 84px visine. Zato telefon dobija svoju lestvicu.
+ *
+ * Pravilo je jednostavno: SITNO se diže, KRUPNO se spušta. Na ekranu koji se
+ * drži u ruci nema razlike između 14 i 15px u rasporedu, ali ima u čitanju; a
+ * naslov od 38px na 390px troši prvi ekran koji pripada fotografijama.
+ *
+ * `--slovo-md` (16px) se NE dira: Safari na iPhone-u sam uveća celu stranu
+ * kad se klikne u polje sa slovima ispod 16px, i ostavi je uvećanu.
  *
  * Prelomna tačka je ispisana, ne kroz mixin: `_settings.scss` (gde mixini
  * stoje) uvozi se POSLE ovog fajla, pa mixin ovde još ne postoji.
  *
  * Tema „trenutni" ovo ne dobija — njen blok je specifičniji (`[data-tema]`),
- * pa zatečeni izgled ostaje slovo do slova isti.
+ * pa zatečeni izgled ostaje slovo do slova isti. To je i mreža za pad.
  */
 @media (max-width: 767px) {
     :root {
+        /* sitno gore */
         --slovo-oznaka:  0.6875rem;   /* 10 → 11px */
         --slovo-sitno:   0.75rem;     /* 11,5 → 12px */
+        --slovo-xs:      0.8125rem;   /* 12 → 13px */
+        --slovo-sm:      0.9375rem;   /* 14 → 15px — najcesca velicina */
+
+        /* krupno dole, uz tesnji prored */
+        --slovo-lg:      1.0625rem;   /* 18 → 17px */
+        --slovo-lg-plus: 1.25rem;     /* 22 → 20px */
+        --slovo-xl:      1.25rem;     /* 24 → 20px */   --red-xl:  1.25;
+        --slovo-2xl:     1.625rem;    /* 32 → 26px */   --red-2xl: 1.18;
+        --slovo-3xl:     1.75rem;     /* 44 → 28px */   --red-3xl: 1.15;
+
+        /*
+         * MERE SA UZORA — samo na telefonu.
+         *
+         * `--slovo-naslovni` (38px) i `--slovo-podnaslov` (18px) su izmerene
+         * na uzoru pri sirini 1280 i na desktopu ostaju netaknute. Na 390px
+         * naslov od 38px sam pojede 84px visine, pa je prva fotografija
+         * pocinjala tek na 528px od 844 — dve trecine prvog ekrana pre nego
+         * sto se vidi ijedan snimak.
+         */
+        --slovo-naslovni:  1.75rem;   /* 38 → 28px */   --red-naslovni: 1.15;
+        --slovo-podnaslov: 1rem;      /* 18 → 16px */   --red-podnaslov: 1.5;
     }
 }

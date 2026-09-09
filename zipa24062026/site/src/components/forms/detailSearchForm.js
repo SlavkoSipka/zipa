@@ -399,7 +399,7 @@ class form extends React.Component {
 
                     {/* ── kada ─────────────────────────────────────────── */}
                     <div className="z-pretraga-prozor__grupa">
-                        <h3 className="z-pretraga-prozor__naslov-grupe">{'Kada je snimljeno'.translate(l)}</h3>
+                        <h3 className="z-pretraga-prozor__naslov-grupe">{'Kada je fotografisano'.translate(l)}</h3>
 
                         <div className="z-pretraga-prozor__precice">
                             {precice.map(([kljuc, naziv]) => (

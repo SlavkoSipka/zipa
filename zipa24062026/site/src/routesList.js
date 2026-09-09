@@ -23,6 +23,7 @@ import AccountNewsItemPage from './views/account/blogItemPage';
 import AccountUsersPage from './views/account/usersPage';
 import AccountPagesPage from './views/account/pagesPage';
 import AccountPageItemPage from './views/account/pageItemPage';
+import AccountPrijavaStranaPage from './views/account/prijavaStranaPage';
 import AccountProfilePage from './views/account/profilePage';
 import AccountChangePasswordPage from './views/account/changePassword';
 import AccountPhotoVisitsPage from './views/account/photoVisits';
@@ -66,6 +67,7 @@ import ErrorPage from './views/404';
 import NewslettersPage from './views/account/newslettersPage';
 import NewsletterPage from './views/account/newsletterPage';
 import PreviewPage from './views/account/previewPage';
+import NewsletterPreviewPage from './views/account/newsletterPreviewPage';
 
 import SubscribersPage from './views/account/subscribers';
 import ImportPage from './views/account/import';
@@ -207,6 +209,21 @@ export const routes = [
 
 
         ]
+    },
+    {
+        /*
+         * Pregled newslettera prije slanja. Stoji PRIJE `/account/preview/:id`
+         * — ta ruta je zauzeta prikazom statistike i uzela bi i ovaj put.
+         */
+        path: "/account/newsletter-pregled/:id",
+        component: NewsletterPreviewPage,
+        loginNeeded: true,
+        preAuthComponent: LoginPage,
+        exact: true,
+        generateSeoTags: () => {
+            return { title: 'Pregled newslettera' }
+        },
+        loadData: []
     },
     {
         path: "/account/preview/:id",
@@ -678,7 +695,17 @@ export const routes = [
                     },
                 }).then(res => res.json()).then((result) => {
                     return {
-                        initialValues: result
+                        /*
+                         * `naPretplati` mora da ima vrednost i kad je zapis
+                         * star (pre 2026-09-09) ili ga uopste nema: obrazac
+                         * se ponasa kao da je pretplata ukljucena, pa i
+                         * kvacica mora tako da stoji. Bez ovoga bi kvacica
+                         * bila prazna a polja pretplate ipak otvorena.
+                         */
+                        initialValues: {
+                            ...result,
+                            naPretplati: result && result.naPretplati !== false,
+                        }
                     }
                 })
 
@@ -1074,6 +1101,25 @@ export const routes = [
         generateSeoTags: (data) => {
             return {
                 title: 'Stranice',
+            }
+        },
+
+        loadData: []
+    },
+    {
+        /*
+         * Sistemska strana: prijava i registracija. Mora da stoji PRE
+         * `/account/pages/:id` — `Switch` uzima prvo poklapanje, pa bi
+         * inace „prijava" bilo shvaceno kao id stranice.
+         */
+        path: "/account/pages/prijava",
+        exact: true,
+        loginNeeded: true,
+        preAuthComponent: LoginPage,
+        component: AccountPrijavaStranaPage,
+        generateSeoTags: () => {
+            return {
+                title: 'Prijava i registracija',
             }
         },
 

@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { Container, Row, Col } from 'reactstrap';
 import Isvg from 'react-inlinesvg';
 
-import infoIcon from '../../assets/svg/info.svg';
 import { PHOTOS_ENDPOINT } from '../../constants';
 
 /**
@@ -67,6 +66,19 @@ const odredisteIzdvojenog = (veza) => {
     return v;
 };
 
+/*
+ * Fotografija se ne pojavljuje naglo: dok ne stigne, okvir je tiha podloga
+ * koja lagano diše, a slika ulazi prelivom. Isti postupak kao na strani
+ * galerije (`detailPage.js`) — klasa se dodaje pravo na čvor, bez stanja.
+ *
+ * `complete` u `ref`-u hvata slike koje su već u kešu: za njih `onLoad` ume
+ * da ne stigne, pa bi okvir ostao da diše zauvek.
+ */
+const oznaciStiglu = (slika) => {
+    const okvir = slika.parentNode;
+    if (okvir && okvir.classList) okvir.classList.add('stigla');
+};
+
 class PredlogB extends Component {
 
     /*
@@ -112,6 +124,10 @@ class PredlogB extends Component {
                             src={slikaUrl(slika, velicina === 'mala' ? '350x' : '700x')}
                             alt={naziv}
                             loading="lazy"
+                            decoding="async"
+                            ref={(n) => { if (n && n.complete) oznaciStiglu(n); }}
+                            onLoad={(e) => oznaciStiglu(e.currentTarget)}
+                            onError={(e) => oznaciStiglu(e.currentTarget)}
                         />
                     ) : null}
 
@@ -135,6 +151,70 @@ class PredlogB extends Component {
         );
     }
 
+    /*
+     * Kostur naslovne dok galerije ne stignu.
+     *
+     * Crta se ISTI raspored koji dolazi posle — naslovni blok (jedna krupna
+     * i dve uz nju), tri ispod, pa dva reda po kategorijama — pa strana ne
+     * poskoči kad podaci stignu. Do sada su okviri stajali prazni i sadržaj
+     * je banuo u njih.
+     *
+     * `z-kostur` iz `_komponente.scss` nosi prelivanje i sam se gasi pod
+     * `prefers-reduced-motion`.
+     */
+    kosturNaslovne() {
+        const red = (kljuc, koliko) => (
+            <section className="odeljak" key={kljuc}>
+                <Container>
+                    <div className="naslov-odeljka">
+                        <span className="z-kostur naslovna-b__k-naslov" />
+                    </div>
+                    <div className="naslovna-b__k-red">
+                        {Array.from({ length: koliko }).map((_, i) => (
+                            <span className="z-kostur naslovna-b__k-plocica" key={i} />
+                        ))}
+                    </div>
+                </Container>
+            </section>
+        );
+
+        return (
+            <div className="naslovna-b naslovna-b--kostur" aria-busy="true">
+                <section className="odeljak naslovni">
+                    <Container>
+                        <div className="naslov-odeljka">
+                            <span className="z-kostur naslovna-b__k-naslov" />
+                        </div>
+
+                        <div className="blok-naslovni">
+                            <div className="glavna">
+                                <span className="z-kostur naslovna-b__k-puna" />
+                            </div>
+                            <div className="uz-glavnu">
+                                <span className="z-kostur naslovna-b__k-puna" />
+                                <span className="z-kostur naslovna-b__k-puna" />
+                            </div>
+                        </div>
+
+                        <div className="blok-tri">
+                            <span className="z-kostur naslovna-b__k-puna" />
+                            <span className="z-kostur naslovna-b__k-puna" />
+                            <span className="z-kostur naslovna-b__k-puna" />
+                        </div>
+                    </Container>
+                </section>
+
+                {red('k1', 5)}
+                {red('k2', 5)}
+
+                {/* Za čitače ekrana — kostur im ništa ne govori. */}
+                <p className="naslovna-b__k-najava" role="status">
+                    {'Učitavanje galerije'.translate(this.props.lang)}
+                </p>
+            </div>
+        );
+    }
+
     render() {
         const lang = this.props.lang;
         const podesavanja = this.props.settings || {};
@@ -148,19 +228,15 @@ class PredlogB extends Component {
         // Naslovni blok: šest najnovijih — jedna krupna, dve uz nju, tri ispod.
         const najnovije = (this.props.latest || []).slice(0, 6);
 
+        // Bez galerija nema šta da se crta — ide kostur, ne prazni okviri.
+        if (!najnovije.length) return this.kosturNaslovne();
+
         return (
             <div className="naslovna-b">
 
-                {/* Najave stoje iznad svega, kao i do sada. */}
-                {(this.props.announcements || []).map((item, idx) => (
-                    <Container key={idx}>
-                        <Link to={`/najave/${item._id}`}>
-                            <div className="alert">
-                                <Isvg src={infoIcon} /> {Object.translate(item, 'content', lang)}
-                            </div>
-                        </Link>
-                    </Container>
-                ))}
+                {/* Najave se vise NE iscrtavaju ovde. Od 2026-09-08 stoje u
+                    traci na vrhu zaglavlja (`header.js`), koja se vidi na
+                    svakoj strani — ovde su bile drugi prikaz iste stvari. */}
 
                 {/* ── Naslovni blok ─────────────────────────────────────────
                     Dve krupnije galerije gore, tri ispod — sve u visini
