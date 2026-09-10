@@ -641,6 +641,33 @@ class DetailPage extends Component {
                                         alt={selectedImage.description || selectedImage.name}
                                         onLoad={() => this.setState({ ostraStigla: true })}
                                     />
+
+                                    {/*
+                                      * BROJAČ NA SAMOJ FOTOGRAFIJI — telefon.
+                                      *
+                                      * Stoji UNUTAR okvira slike, ne u sceni:
+                                      * scena je viša od kadra (fotografija je
+                                      * uklopljena po širini), pa bi vezan za
+                                      * scenu pao ISPOD slike, na praznu
+                                      * podlogu. Mjereno: kadar se završava na
+                                      * 379px, a brojač je stajao na 398.
+                                      *
+                                      * Strelice se na telefonu sklanjaju —
+                                      * prst prevlači, ne cilja dugme preko
+                                      * kadra. Prevlačenje već radi
+                                      * (`naDodirPocetak` / `naDodirKraj`,
+                                      * prag 50px); ovo je znak da radi.
+                                      */}
+                                    {ukupno > 1 ? (
+                                        <span className="z-prozor__brojac-slika" aria-hidden="true">
+                                            <span className="z-prozor__brojac-slika-broj">
+                                                {selectedImageIndex + 1} / {ukupno}
+                                            </span>
+                                            <span className="z-prozor__brojac-slika-uputa">
+                                                {"prevucite".translate(this.props.lang)}
+                                            </span>
+                                        </span>
+                                    ) : null}
                                 </div>
 
                                 {ukupno > 1 ? (
@@ -653,6 +680,7 @@ class DetailPage extends Component {
                                         &#8250;
                                     </button>
                                 ) : null}
+
                             </div>
 
                             {/* ── panel: cene pa podaci ───────────────── */}

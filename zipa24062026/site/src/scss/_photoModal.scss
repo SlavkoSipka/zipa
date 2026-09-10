@@ -228,6 +228,15 @@
         &.z-prozor__slika--stigla { opacity: 1; }
     }
 
+    /*
+     * Brojač na fotografiji postoji SAMO na telefonu.
+     *
+     * Tamo zamjenjuje strelice (prst prevlači, ne cilja dugme preko kadra).
+     * Na desktopu strelice ostaju, a broj stoji u gornjoj traci — pa bi ovaj
+     * bio treći na istom mjestu. Pali ga blok `@include mobile` na dnu.
+     */
+    &__brojac-slika { display: none; }
+
     /* ── strelice ─────────────────────────────────────────────────────── */
 
     /* Uvek na istom mestu, bez obzira na odnos stranica fotografije.
@@ -752,5 +761,147 @@
 
         &__red      { padding: 0; }
         &__umanjena { width: 44px; height: 30px; }
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TELEFON — prozor sa fotografijom i cijenama
+   ═══════════════════════════════════════════════════════════════════════════
+   Mereno na 390×844 prije izmjene: gornja traka je bila ŠIRA OD EKRANA
+   (426px), preko fotografije su stajale dvije strelice od 48px, ispod je išla
+   traka umanjenih (61px), opis je bio 12px, a „Dodaj u korpu" 40px — ispod
+   granice za prst. Podaci su padali na 878px, dakle van prvog ekrana.
+
+   Novi raspored, odozgo nadole:
+
+     1. gornja traka — samo naziv i zatvaranje
+     2. fotografija, veća, sa brojačem u uglu („3 / 156 · prevucite")
+     3. cijene — puni redovi koji se lako pogode prstom
+     4. „Dodaj u korpu" — zalijepljeno za dno, uvijek u kadru
+     5. opis i podaci — skroluju ispod
+
+   Sve unutar `mobile`; desktop se ne dira.
+*/
+@include mobile {
+    .z-prozor {
+
+        /* ── 1. gornja traka ─────────────────────────────────────────── */
+        &__vrh {
+            /* Bila je 426px u ekranu od 390 — brojač je gurao red preko
+               ivice. Brojač se seli na fotografiju, pa red ostaje kratak. */
+            padding: var(--razmak-3) var(--razmak-4);
+            gap: var(--razmak-3);
+        }
+
+        &__naslov { font-size: var(--slovo-md); }
+        &__brojac { display: none; }
+
+        /* ── 2. fotografija ──────────────────────────────────────────── */
+
+        /* Strelice se sklanjaju: prst prevlači, ne cilja dugme preko kadra.
+           Prevlačenje već radi, a brojač ispod govori da radi. */
+        &__strelica { display: none; }
+
+        &__scena {
+            height: auto;
+            flex: 0 0 auto;
+            padding: var(--razmak-2);
+        }
+
+        /* Okvir HUGA kadar: `object-fit: contain` inače ostavlja praznu
+           traku iznad i ispod fotografije, pa bi brojač u uglu stajao na
+           praznoj podlozi umjesto na slici. */
+        &__slika-okvir {
+            height: auto;
+            aspect-ratio: auto;
+        }
+
+        &__slika {
+            height: auto;
+            max-height: 52vh;
+        }
+
+        &__slika--pregled {
+            height: 100%;
+            object-fit: cover;
+        }
+
+        &__brojac-slika {
+            position: absolute;
+            left: var(--razmak-3);
+            bottom: var(--razmak-3);
+            z-index: 2;
+
+            display: inline-flex;
+            align-items: baseline;
+            gap: var(--razmak-2);
+
+            padding: 4px var(--razmak-3);
+            border-radius: var(--radijus-pun);
+            background: var(--boja-zavesa);
+            color: var(--boja-traka-tekst);
+        }
+
+        &__brojac-slika-broj {
+            font-family: var(--pismo-podaci);
+            font-size: var(--slovo-sm);
+            font-weight: var(--tezina-jaka);
+            font-variant-numeric: tabular-nums;
+        }
+
+        &__brojac-slika-uputa {
+            font-size: var(--slovo-oznaka);
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            opacity: .8;
+        }
+
+        /* ── traka umanjenih se sklanja ──────────────────────────────
+           Šezdeset jedan piksel visine za sličice od 64×44 koje se na
+           telefonu ionako ne pogađaju — prevlačenje radi isti posao. */
+        &__traka { display: none; }
+
+        /* ── 3. cijene ───────────────────────────────────────────────── */
+        &__panel-telo { padding: var(--razmak-4); }
+
+        &__oznaka-grupe { font-size: var(--slovo-xs); }
+
+        &__rezolucija {
+            min-height: 56px;
+            padding: var(--razmak-3) var(--razmak-4);
+            gap: var(--razmak-3);
+        }
+
+        &__rez-naziv { font-size: var(--slovo-md); }
+        &__rez-opis  { font-size: var(--slovo-xs); }
+
+        &__rez-cena {
+            font-size: var(--slovo-lg);
+            font-weight: var(--tezina-jaka);
+        }
+
+        /* ── 4. glavna radnja ────────────────────────────────────────── */
+        &__radnje {
+            padding: var(--razmak-3) var(--razmak-4);
+            gap: var(--razmak-3);
+        }
+
+        &__glavna-radnja {
+            min-height: 48px;
+            font-size: var(--slovo-md);
+        }
+
+        &__sporedna-radnja { min-width: 48px; min-height: 48px; }
+
+        /* ── 5. opis i podaci ────────────────────────────────────────── */
+        &__opis {
+            font-size: var(--slovo-sm);      /* bilo 12px */
+            line-height: var(--red-md);
+        }
+
+        &__opis-vise { font-size: var(--slovo-sm); }
+        &__red       { padding: 3px 0; }
+        &__iz-galerije { font-size: var(--slovo-sm); }
     }
 }
