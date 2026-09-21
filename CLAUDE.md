@@ -1,5 +1,9 @@
 # ZIPA PHOTO — kontekst za redizajn
 
+> **Novi računar / nova sesija: prvo pročitaj `PREDAJA.md`** — podizanje
+> projekta, gde se šta menja, stanje posle poslednjih izmena (sloj za
+> telefon) i šta je otvoreno.
+
 ## BRZINA
 
 - Ne pokreći pregledač i ne meri elemente osim kad prompt to izričito traži
@@ -454,7 +458,7 @@ Klase postavljaju `components/header.js` i `components/footer.js`. `:where()`
 je namerno: unutar njega selektor ne nosi specifičnost, pa se kaskada ne
 pomera. Ako pišeš novo pravilo za pravo zaglavlje ili podnožje, ciljaj klasu.
 
-### Visina zaglavlja — `--zaglavlje-visina`
+### Visina zaglavlja — `--zaglavlje-visina` (ZASTARELO — zaglavlje više nije fiksirano, token je 0; vidi „Zaglavlje nije fiksirano”)
 
 Zaglavlje je `position: fixed`, pa svaka strana sama odvaja mesto za njega.
 Te mere su ranije bile zakucane i različite (200, 180, 140, 130, 120, 20px) i
