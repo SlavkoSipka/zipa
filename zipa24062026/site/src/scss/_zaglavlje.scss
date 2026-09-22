@@ -100,6 +100,16 @@
         padding: 0 var(--razmak-5);
     }
 
+    // Ista širina na SVAKOJ strani (2026-09-22) — skoro pun ekran, kao
+    // široki odeljci naslovne i podnožje.
+    &__sirina {
+        @include desktop-i-vise {
+            max-width: none;
+            padding-left: var(--razmak-6);
+            padding-right: var(--razmak-6);
+        }
+    }
+
     /* ── SLOJ 1 — tanka traka ─────────────────────────────────────────── */
 
     &__traka {
@@ -158,7 +168,18 @@
     &__jezici {
         display: inline-flex;
         align-items: center;
-        gap: var(--razmak-2);
+        gap: var(--razmak-3);
+    }
+
+    // POMOĆ u glavnom redu — dugme, ne sitna veza.
+    &__desno > &__traka-veza {
+        display: inline-flex;
+        align-items: center;
+        min-height: var(--visina-radnja);
+        padding: 0 var(--razmak-4);
+        border-radius: var(--radijus-mali);
+        font-size: var(--slovo-md);
+        &:hover { background: var(--boja-podloga-tiha); text-decoration: none; }
     }
 
     // Zastavica u dugmetu — aktivni jezik nosi prsten, ne punu pozadinu;
@@ -177,8 +198,8 @@
            20×12 i uz tekst od 16px se nisu videle. */
         img {
             display: block;
-            width: 30px;
-            height: 18px;
+            width: calc(var(--razmak-5) * 5 / 3);
+            height: var(--razmak-5);
             border-radius: var(--radijus-oznaka);
         }
 
@@ -200,7 +221,8 @@
         // zaglavlje (`_category.scss`), inače sadržaj klizne ispod njega.
         padding-top: var(--razmak-3);
         padding-bottom: var(--razmak-3);
-        transition: padding var(--prelaz-obicno) var(--prelaz-kriva);
+        // Bez prelaza na `padding`: stanjivanja više nema, a prelaz je pri
+        // učitavanju strane pomerao logo sa ivice na svoje mesto.
     }
 
     &__logo {
@@ -344,7 +366,22 @@
     &__panel--kategorije {
         // 43 kategorije: u stubovima, ne u jednoj koloni preko celog ekrana.
         width: calc(100vw - var(--razmak-8));
-        max-width: 920px;
+        max-width: 760px;
+
+        /* Jedan panel, bez pomeranja levo-desno: ako spisak ne stane u
+           visinu, panel se pomera samo gore-dole (2026-09-22).
+
+           `display: block`, ne `flex`: kao flex dete stubovi su dobijali
+           visinu panela (`max-height`), pa su CSS kolone koje ne stanu u tu
+           visinu pravile NOVE kolone udesno — to je bila traka levo-desno.
+           Kao blok, stubovi rastu nadole, a panel skroluje uspravno. */
+        display: block;
+        overflow-x: hidden;
+
+        .z-zaglavlje__stavka-panela {
+            font-size: var(--slovo-lg);
+            line-height: var(--red-lg);
+        }
 
         /* Isti kvar kao kod „Agencije", samo blaži. „Kategorije" su STAVKA
            U SREDINI menija, pa ne pomaže vezivanje ni za levu ni za desnu
@@ -588,6 +625,35 @@
 
         .oznaceni { background: var(--boja-podloga-tiha); }
 
+        // Pretraga fotografija: red sličica ispod ključnih reči.
+        li.prijedlozi__fotografije {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: var(--razmak-2);
+            cursor: default;
+        }
+
+        .prijedlozi__foto {
+            display: block;
+            padding: 0;
+            border: 0;
+            border-radius: var(--radijus-mali);
+            overflow: hidden;
+            background: var(--boja-podloga-tiha);
+            cursor: pointer;
+            aspect-ratio: 3 / 2;
+            @include z-fokus;
+
+            img {
+                display: block;
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                @include z-prelaz(opacity);
+            }
+            &:hover img { opacity: .85; }
+        }
+
         .vrsta {
             flex: 0 0 auto;
             font-family: var(--pismo-podaci);
@@ -640,6 +706,23 @@
         gap: var(--razmak-2);
         flex: 0 0 auto;
         margin-left: auto;
+    }
+
+    // Broj fotografija u korpi — mali amber krug uz ikonicu (2026-09-22).
+    &__korpa-broj {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: var(--razmak-5);
+        height: var(--razmak-5);
+        padding: 0 var(--razmak-1);
+        border-radius: var(--radijus-pun);
+        background: var(--boja-akcenat);
+        color: var(--boja-akcenat-tekst);
+        font-style: normal;
+        font-size: var(--slovo-xs);
+        line-height: 1;
+        font-weight: var(--tezina-jaka);
     }
 
     &__korpa {
@@ -811,11 +894,10 @@
 
     /* ── RED 2 — pilula levo, logo u sredini, radnje desno ────────────── */
 
-    // Tri jednake kolone, da logo stoji tačno po sredini bez obzira na to
-    // koliko je široko ono levo i desno.
+    // Logo stoji levo (uz dugme menija), radnje desno.
     &__sirina--tri {
         display: grid;
-        grid-template-columns: 1fr auto 1fr;
+        grid-template-columns: minmax(0, 1fr) auto;
         align-items: center;
         gap: var(--razmak-4);
     }
@@ -878,12 +960,19 @@
         @include z-prelaz(opacity);
         &:hover { opacity: .88; }
         @include z-fokus;
+        // Na beloj traci (tema C) bela pilula se ne bi videla — ide grafitna.
+        [data-tema="c"] & {
+            background: var(--boja-akcenat);
+            color: var(--boja-akcenat-tekst);
+        }
     }
 
     /* ── RED 3 — navigacija po sredini ────────────────────────────────── */
 
     &__navred {
         border-top: 1px solid var(--boja-traka-linija);
+        // Drugi red može imati svoju nijansu (tema A: crvenija od prvog).
+        background: var(--boja-traka-meni);
 
         .z-zaglavlje__sirina {
             display: flex;
@@ -910,6 +999,18 @@
     /* ── NASLOVNI BLOK — samo naslovna ────────────────────────────────── */
 
     &__naslovni {
+        /* Bela podloga — tamna je samo traka sa navigacijom (2026-09-21).
+           Tokeni se ovde vraćaju na svetle, pa polje, predlozi i fokus
+           izgledaju kao na ostatku strane. */
+        --boja-povrsina:     var(--svetlo-povrsina);
+        --boja-podloga-tiha: var(--svetlo-podloga-tiha);
+        --boja-tekst:        var(--svetlo-tekst);
+        --boja-tekst-tiho:   var(--svetlo-tekst-tiho);
+        --boja-linija:       var(--svetlo-linija);
+        --boja-veza:         var(--svetlo-veza);
+        --boja-fokus:        var(--svetlo-fokus);
+
+        background: var(--boja-podloga);
         border-top: 1px solid var(--boja-traka-linija);
 
         /* BEZ `overflow: hidden`. Sekao je padajuću listu predloga pretrage
@@ -930,9 +1031,31 @@
                     transform var(--prelaz-obicno) var(--prelaz-kriva);
     }
 
+    /* Predlog C (2026-09-22): iza pretrage stoji slika koju bira
+       administracija (`--pozadina-pretrage`, postavlja je `header.js`), pod
+       tamnim zastorom da polje pretrage ostane glavno. */
+    [data-tema="c"] &__naslovni {
+        background:
+            linear-gradient(var(--boja-preko-zastor), var(--boja-preko-zastor)),
+            var(--pozadina-pretrage, none) center / cover no-repeat,
+            var(--boja-traka);
+
+        // Visok blok, da se slika vidi (povećano 2026-09-22).
+        .z-zaglavlje__naslovni-red {
+            padding-top: calc(var(--razmak-8) * 3.5);
+            padding-bottom: calc(var(--razmak-8) * 3.5);
+
+            @include mobile-tablet {
+                padding-top: calc(var(--razmak-8) * 2);
+                padding-bottom: calc(var(--razmak-8) * 2);
+            }
+        }
+    }
+
     &__naslovni-red {
         display: flex;
         align-items: center;
+        justify-content: center;
         gap: var(--razmak-7);
         padding-top: calc(var(--razmak-4) + 50px);
         padding-bottom: calc(var(--razmak-4) + 50px);
@@ -940,117 +1063,6 @@
         // Tačka oslonca za ilustraciju — ona izlazi iz toka (position:
         // absolute) i naslanja se na visinu koju ovaj red dobije od teksta.
         position: relative;
-    }
-
-    &__naslovni-tekst {
-        flex: 1 1 auto;
-        min-width: 0;
-        // Ilustracija stoji van toka, pa bez ove granice bi tekst rastegao
-        // ceo red i ušao pod nju. 46% njoj, razmak isti kao ranije, ostatak
-        // tekstu.
-        max-width: calc(54% - var(--razmak-7));
-    }
-
-    // Mere sa uzora: 38px / 42px, težina 670, razmak slova -0,19px.
-    &__naslov {
-        margin: 0 0 var(--razmak-2);
-        font-family: var(--pismo-naslov);
-        font-size: var(--slovo-naslovni);
-        line-height: var(--red-naslovni);
-        letter-spacing: var(--razmak-naslovni);
-        font-weight: var(--tezina-poludebela);
-        color: var(--boja-traka-tekst);
-    }
-
-    // Uzor: 18px / 26px, težina 430, i to belo — ne tiho.
-    &__podnaslov {
-        margin: 0 0 var(--razmak-5);
-        font-size: var(--slovo-podnaslov);
-        line-height: var(--red-podnaslov);
-        font-weight: var(--tezina-knjiga);
-        color: var(--boja-traka-tekst);
-    }
-
-    /*
-     * Ilustracija — gotova slika, isporučena sa svojom crnom podlogom i
-     * isečenim oblikom. Bez dodatne maske ili okvira preko nje — crna se
-     * sama stapa sa trakom.
-     *
-     * Van toka (position: absolute), iz dva razloga:
-     *   — visina prati TAČNO onoliko koliko red dobije od teksta. Sopstveni
-     *     zakucan broj bi ili sekao kadar ili (kod `align-self: stretch`
-     *     bez njega) dizao ceo blok na svoj odnos stranica — to se već
-     *     jednom desilo.
-     *   — desna ivica dostiže PRAVU ivicu ekrana, ne samo ivicu kontejnera
-     *     od 1440px. Do te širine se poklapaju; iznad nje razliku nadoknađuje
-     *     `veliki-ekran` ispod (čist `calc`, bez `min()`/`max()` — ovde ne
-     *     prolaze kroz gradnju).
-     */
-    &__naslovna-slika {
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        /* `right` na apsolutno pozicioniranom elementu meri se od IVICE
-           OTPUNJENJA (padding edge) okvira, ne od ivice sadržaja — razmak
-           reda (`--razmak-5`) je već isključen sam po sebi. `right: 0` zato
-           već dodiruje pravu ivicu reda; oduzimanje razmaka ovde bi je
-           gurnulo dalje nego treba (probano — 24px viška van ekrana). */
-        right: 0;
-        /* Širina se NE zadaje procentom (46%) — to je terala `object-fit`
-           da nešto seče, jer se odnos stranica kutije retko tačno poklapa
-           sa odnosom stranica slike. Umesto toga, širina se izvodi iz
-           STVARNOG odnosa slike (763×327) i visine koju kutija već ima
-           (top:0/bottom:0 = tačno visina reda). Kutija tako UVEK ima isti
-           odnos stranica kao slika — gornja i donja ivica se poklapaju sa
-           ivicama diva, a bočno se ništa ne seče. */
-        aspect-ratio: 1526 / 654;
-        width: auto;
-
-        @include veliki-ekran {
-            right: calc(-1 * (100vw - 1440px) / 2);
-        }
-
-        img {
-            display: block;
-            width: 100%;
-            height: 100%;
-            // Kutija već ima isti odnos stranica kao slika, pa ovo više ne
-            // seče ništa — samo je mreža za sitno zaokruživanje piksela.
-            object-fit: contain;
-            object-position: right center;
-        }
-
-        @include mobile-tablet { display: none; }
-    }
-
-    /* ── red „Traži se:" ──────────────────────────────────────────────── */
-
-    // Uzor: „Trending:" i pojmovi isti kao podnaslov — 18px / 26px, 430.
-    &__trazi-se {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: baseline;
-        gap: var(--razmak-2) var(--razmak-3);
-        margin: var(--razmak-4) 0 0;
-        font-size: var(--slovo-podnaslov);
-        line-height: var(--red-podnaslov);
-        font-weight: var(--tezina-knjiga);
-    }
-
-    &__trazi-se-natpis {
-        color: var(--boja-traka-tekst);
-        font-weight: var(--tezina-knjiga);
-    }
-
-    // Ovo su prave veze u toku teksta, pa nose podvlačenje u mirovanju.
-    &__trazi-se-pojam {
-        color: var(--boja-veza-traka);
-        text-decoration: underline;
-        text-underline-offset: .15em;
-        text-decoration-thickness: 1px;
-
-        &:hover { text-decoration-thickness: 2px; }
-        @include z-fokus;
     }
 
     /* ── izbor vrste pretrage ─────────────────────────────────────────── */
@@ -1095,6 +1107,8 @@
 
     &__pretraga--siroka {
         max-width: 720px;
+        border-color: var(--boja-tekst-tiho);
+        box-shadow: var(--senka-lebdi);
         border-radius: var(--radijus-panel);
         background: var(--boja-podloga);
 
@@ -1245,11 +1259,6 @@
 
         &__korpa span { display: none; }
 
-        /* Granica od 54% postoji zbog ilustracije koja stoji desno, van toka.
-           Ispod 1024px ilustracije nema (`display: none`), pa je granica
-           stezala naslov u stubac od 145px na 375px i 108px na 320px. */
-        &__naslovni-tekst { max-width: 100%; }
-
         &__traka .z-zaglavlje__sirina { justify-content: flex-end; }
         &__agencija { display: none; }
     }
@@ -1374,7 +1383,8 @@
         font-size: var(--slovo-sm);
     }
 
-    .z-zaglavlje__natpis { font-size: var(--slovo-md); }
+    // Znak ZIPA PHOTO već nosi ime; natpis bi gurnuo korpu u drugi red.
+    .z-zaglavlje__natpis { display: none; }
 }
 
 
@@ -1568,21 +1578,11 @@ header:where(.zaglavlje-sajta) .navigation > ul {
             font-size: var(--slovo-sm);
         }
 
-        /* ── NASLOVNI BLOK ───────────────────────────────────────────
-         * Naslov 28 → 26px i tesnji prored; podnaslov ostaje 16px (ispod
-         * toga Safari uvecava stranu pri fokusu polja), ali dobija manje
-         * razmaka ispod. */
+        /* ── NASLOVNI BLOK — samo pretraga, manje vazduha ─────────── */
         &__naslovni-red {
             padding-top: var(--razmak-4);
             padding-bottom: var(--razmak-4);
         }
-
-        &__naslov {
-            font-size: 1.625rem;   /* 28 → 26px */
-            line-height: 1.12;
-        }
-
-        &__podnaslov { line-height: 1.4; }
 
         &__vrsta-dugme { padding: 0 var(--razmak-3); }
         &__unos        { padding: var(--razmak-2) var(--razmak-3); }
@@ -1602,102 +1602,5 @@ header:where(.zaglavlje-sajta) .navigation > ul {
          * razlog postojanja te strane i ne dira se.
          */
         &__pretraga--uska { display: none; }
-
-        /* ── ILUSTRACIJA KAO PODLOGA ──────────────────────────────────────
-         *
-         * Na desktopu stoji desno, pored teksta. Na telefonu za nju nema
-         * mesta pored, pa je do sada bila `display: none` — naslovni blok je
-         * ostajao gola tamna ploča.
-         *
-         * Sada ide IZA teksta, kao podloga: razmazana, uvećana i utišana, sa
-         * zastorom preko nje. Zastor nije ukras nego uslov — bez njega bela
-         * slova padaju preko svetlih delova slike i kontrast se gubi.
-         *
-         * Slika je već u markupu (isti `<img>` koji desktop koristi), pa nema
-         * novog dovlačenja ni druge putanje do datoteke.
-         */
-        &__naslovni {
-            position: relative;
-            overflow: hidden;
-            isolation: isolate;   // sloj slike ostaje ispod, bez z-index rata
-        }
-
-        &__naslovna-slika {
-            display: block;
-            position: absolute;
-            inset: 0;
-            right: 0;
-            width: auto;
-            aspect-ratio: auto;
-            z-index: 0;
-            pointer-events: none;
-
-            img {
-                width: 100%;
-                height: 100%;
-                object-fit: cover;
-                object-position: center;
-
-                /* Uvećanje 1.2 postoji zbog zamućenja: `blur` razmazuje i
-                   PREKO ivica, pa bi se bez njega video svetao rub. */
-                /*
-                 * ODAKLE SE UZIMA KADAR — mereno, ne pogodjeno.
-                 *
-                 * Ilustracija je 1526×654 i LEVA POLOVINA JOJ JE PRAZNA:
-                 * srednja svetlina po mrezi 6×3 daje 0 u prve tri kolone, a
-                 * crtez zivi u kolonama 4–6. Uz to je PNG uglavnom providan
-                 * (srednja neprozirnost 70 od 255) i samo 13% piksela je
-                 * svetlije od 60.
-                 *
-                 * Zato `object-position: 75%` — inace se iza teksta nadje
-                 * prazan deo i ne vidi se ama bas nista, sto se i desilo.
-                 */
-                object-position: 75% 45%;
-
-                /* `brightness` je ovde uslov, ne ukras: crtez je taman
-                   (prosek 18/255), pa bi razmazan bez pojacanja ostao crn. */
-                filter: blur(24px) saturate(1.6) brightness(2.2);
-                transform: scale(1.35);
-                opacity: .95;
-            }
-
-            /* Zastor: pun ton trake gore i dole, malo prozirniji po sredini.
-               Tako se ilustracija naslućuje, a slova ostaju na podlozi koja
-               je praktično ista kao i pre. */
-            &::after {
-                content: '';
-                position: absolute;
-                inset: 0;
-                /* Zastor je NAJJACI gore, gde stoji krupan beo naslov, a
-                   popusta nadole, gde je polje pretrage na svojoj beloj
-                   podlozi. Tako se boja naslucuje, a citljivost ne zavisi
-                   od toga koji deo ilustracije padne iza slova. */
-                background:
-                    linear-gradient(
-                        180deg,
-                        rgba(14, 22, 38, .93)  0%,
-                        rgba(14, 22, 38, .84) 38%,
-                        rgba(14, 22, 38, .60) 72%,
-                        rgba(14, 22, 38, .74) 100%
-                    );
-            }
-        }
-
-        /* Tekst i pretraga idu IZNAD podloge. */
-        &__naslovni-tekst { position: relative; z-index: 1; }
-
-        /* Ko je tražio manje pokreta i manje šuma — bez zamućenja i bez
-           uvećanja; ostaje samo tiha slika pod zastorom. */
-        @media (prefers-reduced-motion: reduce) {
-            &__naslovna-slika img { filter: none; transform: none; opacity: .35; }
-        }
-
-        &__naslov    { margin-bottom: var(--razmak-1); }
-        &__podnaslov { margin-bottom: var(--razmak-4); }
-
-        /* „Traži se:" nosi jedan jedini pojam (danas je zakačena samo jedna
-           kategorija od pet), a troši 26px plus razmak iznad pregiba. Na
-           telefonu se sklanja; na desktopu ostaje netaknut. */
-        &__trazi-se { display: none; }
     }
 }

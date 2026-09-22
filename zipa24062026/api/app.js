@@ -725,6 +725,11 @@ app.get('/search/suggest', async (req, res) => {
     res.send(await productsModule.searchSuggestions(req.query.q));
 });
 
+// Predlozi za pretragu fotografija — ključne reči sa fotografija i sličice.
+app.get('/search/suggest/photos', async (req, res) => {
+    res.send(await productsModule.searchPhotoSuggestions(req.query.q));
+});
+
 app.post('/users/all', permissionMiddleware('*'), async (req, res) => {
     let result = await usersModule.fetchUsers(req.body.page, req.body.search);
     res.send(result);

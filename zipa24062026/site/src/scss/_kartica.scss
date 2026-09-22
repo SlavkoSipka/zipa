@@ -179,34 +179,49 @@
      * odnosu 3:2, a pored nje idu kategorija, naziv, red podataka, dva reda
      * opisa i poziv da se galerija otvori.
      *
-     * KUTIJE NEMA ni ovde: nema sive podloge ni okvira, redove razdvaja tanka
-     * linija — isto pravilo kao za karticu u mreži.
+     * Od 2026-09-21 tekst stoji u tihoj kutiji iste visine kao fotografija.
      */
+    /* Izmena 2026-09-21: fotografija krupna i CELA (bez sečenja, u svom
+       odnosu stranica), a tekst u tihoj kutiji iste visine pored nje. */
     &--spisak {
         flex-direction: row;
-        align-items: flex-start;
+        align-items: stretch;
         gap: var(--razmak-5);
 
-        padding-bottom: var(--razmak-5);
+        padding-bottom: var(--razmak-6);
 
-        // Fotografija: uža nego pre, i u istom odnosu kao u mreži.
         .z-kartica-galerije__slika {
-            flex: 0 0 280px;
-            aspect-ratio: 3 / 2;
+            flex: 0 0 45%;
+            aspect-ratio: auto;
+            align-self: flex-start;
         }
 
         .z-kartica-galerije__telo {
-            padding-top: 0;
-            gap: var(--razmak-2);
-            align-self: center;
+            flex: 1 1 auto;
+            min-width: 0;
+            justify-content: center;
+            gap: var(--razmak-3);
+            padding: var(--razmak-6);
+            background: var(--boja-podloga-tiha);
+            border-radius: var(--radijus-panel);
         }
 
         /* Krupnije od mreže — u redu ima mesta, a spisak se ČITA, ne
            preleće pogledom kao mreža. Traženo 2026-09-09. */
         .z-kartica-galerije__naslov {
-            font-size: var(--slovo-lg-plus);
-            line-height: var(--red-lg-plus);
+            font-size: var(--slovo-xl);
+            line-height: var(--red-xl);
             -webkit-line-clamp: 2;
+        }
+
+        .z-kartica-galerije__oznaka-reda {
+            font-size: var(--slovo-sm);
+            line-height: var(--red-sm);
+        }
+
+        .z-kartica-galerije__opis {
+            font-size: var(--slovo-lg);
+            line-height: var(--red-lg);
         }
 
         .z-kartica-galerije__mesto {
@@ -214,12 +229,8 @@
             line-height: var(--red-md);
         }
 
-        @include small-desktop {
-            .z-kartica-galerije__slika { flex: 0 0 240px; }
-        }
-
         @include tablet {
-            .z-kartica-galerije__slika { flex: 0 0 200px; }
+            .z-kartica-galerije__slika { flex: 0 0 38%; }
             .z-kartica-galerije__opis  { -webkit-line-clamp: 2; }
         }
 
@@ -230,7 +241,7 @@
             padding-bottom: var(--razmak-4);
 
             .z-kartica-galerije__slika { flex: 0 0 auto; width: 100%; }
-            .z-kartica-galerije__telo  { align-self: stretch; }
+            .z-kartica-galerije__telo  { padding: var(--razmak-4); }
             .z-kartica-galerije__naslov {
                 font-size: var(--slovo-lg);
                 line-height: var(--red-lg);
@@ -357,9 +368,24 @@
  * (`.articles.novi-spisak .z-kartica-galerije`). Zato su ovde navedena oba
  * puta; sa samo dva razreda je `border-bottom` ostajao `0px`.
  */
+/* `_global.scss` drži `.articles .list-view-article img` na 300×200px (visinu
+   sa `!important`). U spisku fotografija ide cela: puna širina okvira, visina
+   po svom odnosu stranica, bez sečenja. */
+.articles .z-kartica-galerije--spisak .z-kartica-galerije__slika img {
+    width: 100%;
+    height: auto !important;
+    object-fit: contain;
+}
+
 .articles .z-kartica-galerije--spisak,
 .articles.novi-spisak .z-kartica-galerije--spisak {
-    border-bottom: 1px solid var(--boja-linija);
+    // Redove razdvaja razmak — tekst je sada u svojoj kutiji.
+    border-bottom: 0;
+
+    /* `_global.scss` ima `.articles article { max-height: 300px }` — red bi
+       odsekao fotografiju koja je sada viša od toga. */
+    max-height: none;
+    height: auto;
 
     /*
      * Mere teksta MORAJU ovde, iz istog razloga.
@@ -373,8 +399,8 @@
     .z-kartica-galerije__mesto,
     .z-kartica-galerije__opis,
     .z-kartica-galerije__dalje {
-        font-size: var(--slovo-md);
-        line-height: var(--red-md);
+        font-size: var(--slovo-lg);
+        line-height: var(--red-lg);
     }
 
     .z-kartica-galerije__opis { -webkit-line-clamp: 3; }

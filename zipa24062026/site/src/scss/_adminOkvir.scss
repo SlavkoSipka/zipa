@@ -686,6 +686,44 @@ body.u-administraciji {
         color: var(--boja-tekst-tiho);
     }
 
+    // Ekran „Izdvajamo" — spisak izabranih galerija, redom.
+    .z-izdvajamo__spisak {
+        display: grid;
+        gap: var(--razmak-3);
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .z-izdvajamo__stavka {
+        display: flex;
+        align-items: center;
+        gap: var(--razmak-3);
+        flex-wrap: wrap;
+    }
+
+    .z-izdvajamo__broj {
+        min-width: var(--razmak-5);
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-tekst-tiho);
+    }
+
+    .z-izdvajamo__radnje {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--razmak-2);
+        margin-left: auto;
+    }
+
+    &__sopstvena {
+        display: grid;
+        gap: var(--razmak-3);
+        max-width: 65ch;
+        margin-bottom: var(--razmak-6);
+        padding-bottom: var(--razmak-5);
+        border-bottom: 1px solid var(--boja-linija);
+    }
+
     &__trenutno {
         margin-bottom: var(--razmak-6);
         padding-bottom: var(--razmak-5);

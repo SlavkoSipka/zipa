@@ -1535,6 +1535,14 @@ class ProductsModule {
             uslovi.push(`(g.keywords->'ba') ?| $${par.length}::text[]`);
         }
 
+        // Pretraga sa naslovne: samo fotografije kojima su ključne reči upisane
+        // na samoj fotografiji. `photo_index` ih ne drži, pa se čitaju iz
+        // `gallery.photos` na mestu `idx`. `@> '[]'` je istina samo za niz.
+        if (query.kljucne) {
+            uslovi.push(`(g.photos->p.idx->'keywords') @> '[]'::jsonb`
+                + ` and (g.photos->p.idx->'keywords') <> '[]'::jsonb`);
+        }
+
         if (query.city) {
             par.push(query.city);
             uslovi.push(`unaccent(lower(coalesce(p.location,''))) like '%' || unaccent(lower($${par.length})) || '%'`);
@@ -1649,6 +1657,63 @@ class ProductsModule {
         return rez.rows
             .filter((r) => r.tekst)
             .map((r) => ({ tekst: r.tekst, vrsta: r.vrsta }));
+    }
+
+    /*
+     * Predlozi dok se kuca u pretrazi FOTOGRAFIJA: ključne reči upisane na
+     * samim fotografijama i nekoliko fotografija koje ih nose.
+     *
+     * Kandidati se nalaze kroz indeks `photo_index.tsv` (brzo), pa se tek
+     * nad njima čitaju ključne reči iz `gallery.photos` — bez prolaska kroz
+     * svih dvesta hiljada fotografija na svako slovo.
+     */
+    async searchPhotoSuggestions(pojam) {
+        const q = (pojam || '').trim();
+        if (q.length < 2) return { kljucne: [], fotografije: [] };
+
+        const rijeci = q.toLowerCase().replace(/[&|!():*'"\\]/g, ' ').split(/\s+/).filter(Boolean);
+        if (!rijeci.length) return { kljucne: [], fotografije: [] };
+        const upit = rijeci.map((r, n) => (n === rijeci.length - 1 ? `${r}:*` : r)).join(' & ');
+
+        const rez = await db.query(
+            `select p."galleryId", p.idx, p.image, p.name, g.alias->>'ba' as "galleryAlias",
+                    g.photos->p.idx->'keywords' as keywords
+               from photo_index p join gallery g on g."_id" = p."galleryId"
+              where p."isActive"
+                and p.tsv @@ to_tsquery('simple', unaccent($1))
+                and (g.photos->p.idx->'keywords') @> '[]'::jsonb
+                and (g.photos->p.idx->'keywords') <> '[]'::jsonb
+              order by p.date desc nulls last
+              limit 200`,
+            [upit]
+        );
+
+        // Ključne reči koje počinju upisanim pojmom, bez obzira na slova i kvačice.
+        const bezKvacica = (t) => String(t).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'dj');
+        const trazeno = bezKvacica(q);
+        const brojac = new Map();
+        for (const r of rez.rows) {
+            for (const kw of (Array.isArray(r.keywords) ? r.keywords : [])) {
+                const kljuc = bezKvacica(kw);
+                if (!kljuc.startsWith(trazeno)) continue;
+                const bilo = brojac.get(kljuc);
+                brojac.set(kljuc, { tekst: bilo ? bilo.tekst : kw, koliko: (bilo ? bilo.koliko : 0) + 1 });
+            }
+        }
+        const kljucne = [...brojac.values()]
+            .sort((a, b) => b.koliko - a.koliko)
+            .slice(0, 6)
+            .map((k) => ({ tekst: k.tekst, vrsta: 'kljucna-rec' }));
+
+        const fotografije = rez.rows.slice(0, 6).map((r) => ({
+            galleryId: r.galleryId,
+            galleryAlias: r.galleryAlias,
+            idx: r.idx,
+            image: r.image,
+            name: r.name,
+        }));
+
+        return { kljucne, fotografije };
     }
 
     createRegexPattern(input) {

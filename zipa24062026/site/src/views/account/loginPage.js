@@ -1,10 +1,10 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 import Page from '../../containers/page';
+import FotografijaPrijave from '../../components/fotografijaPrijave';
 import { posleprijave } from '../../posleprijave';
 
-import { API_ENDPOINT, PHOTOS_ENDPOINT } from '../../constants';
-import moment from 'moment';
+import { API_ENDPOINT } from '../../constants';
 
 /*
  * PRIJAVA
@@ -90,6 +90,17 @@ class LoginPage extends Component {
                 this.setState({ error: result.error, salje: false })
             } else {
                 localStorage.setItem('authToken', result.token);
+
+                /*
+                 * Korpa gosta prelazi u korpu naloga (2026-09-22) — ruta
+                 * `/user/login` je ne preuzima sama. Ko je imao nešto u korpi,
+                 * posle prijave ide pravo nazad u korpu da završi kupovinu.
+                 */
+                const prenos = (cart || []).map((s) => fetch(
+                    `${API_ENDPOINT}/cart/add/${s.galleryId}/${s.photoId}/${s.resolution}`,
+                    { headers: { 'Authorization': `Bearer ${result.token}` } }
+                ).catch(() => null));
+                const imaoKorpu = prenos.length > 0;
                 localStorage.removeItem('cart');
 
                 /*
@@ -99,9 +110,11 @@ class LoginPage extends Component {
                  * još ne zna. Ako provera padne, ide se na nalog, kao i do
                  * sada.
                  */
-                Promise.resolve(this.props.verifyUser()).then((u) => {
-                    this.props[0].history.push(posleprijave(u));
-                });
+                Promise.all(prenos)
+                    .then(() => this.props.verifyUser())
+                    .then((u) => {
+                        this.props[0].history.push(imaoKorpu ? '/cart' : posleprijave(u));
+                    });
             }
         }).catch(() => {
             this.setState({
@@ -115,14 +128,6 @@ class LoginPage extends Component {
         const l = this.props.lang;
         const g = this.state.greskePolja;
 
-        /* Fotografija dolazi iz najnovije galerije — iste koju `App.js` već
-           dovlači za traku najave i naslovni blok. Bez novog poziva. */
-        /* Galerija izabrana u administraciji (*Stranice → Prijava i
-           registracija*); bez izbora ide najnovija, kao i do sada. */
-        const galerija = this.props.prijavaGalerija || this.props.najava;
-        const slika = galerija && galerija.photos && galerija.photos[0]
-            ? `${PHOTOS_ENDPOINT}/photos/700x/${galerija.photos[0].image}`
-            : null;
 
         return (
             <div className="login-wrap z-prijava">
@@ -229,31 +234,15 @@ class LoginPage extends Component {
                             </button>
                         </form>
 
-                        <p className="z-prijava__dno">
-                            {'Niste registrovani?'.translate(l)}{' '}
-                            <Link to="/register">{'Kreirajte nalog'.translate(l)}</Link>
-                        </p>
+                        <div className="z-prijava__dno z-prijava__dno--istaknuto">
+                            <p>{'Niste registrovani?'.translate(l)}</p>
+                            <Link className="z-prijava__dugme-nalog" to="/register">{'Kreirajte nalog'.translate(l)}</Link>
+                        </div>
                     </div>
                 </div>
 
-                {/* Fotografija iz arhive sa potpisom — reklama za agenciju. */}
-                {slika ? (
-                    <div className="z-prijava__slika">
-                        <img src={slika} alt="" loading="lazy" decoding="async" />
-                        <div className="z-prijava__potpis">
-                            <p className="z-prijava__potpis-naslov">
-                                {Object.translate(galerija, 'name', l)}
-                            </p>
-                            <p className="z-prijava__potpis-podaci">
-                                {galerija.user ? galerija.user : null}
-                                {galerija.user && galerija.location ? ' · ' : null}
-                                {galerija.location ? galerija.location : null}
-                                {(galerija.user || galerija.location) && galerija.date ? ' · ' : null}
-                                {galerija.date ? moment.unix(galerija.date).format('YYYY.') : null}
-                            </p>
-                        </div>
-                    </div>
-                ) : null}
+                {/* Fotografija sa potpisom — bira se u administraciji. */}
+                <FotografijaPrijave props={this.props} lang={l} />
             </div>
         );
     }

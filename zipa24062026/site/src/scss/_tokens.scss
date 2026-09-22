@@ -28,6 +28,16 @@
     --boja-tekst-tiho:    #6B7079;   /* 4.98:1 na beloj, 4.60:1 na tihoj */
     --boja-linija:        #E6E8EB;   /* svako razdvajanje u toku strane */
 
+    /* Svetle vrednosti za bele delove zaglavlja (naslovni blok). Računaju se
+       ovde, na :root, pa ih preusmerenje tokena u tamnom zaglavlju ne dira. */
+    --svetlo-povrsina:     var(--boja-povrsina);
+    --svetlo-podloga-tiha: var(--boja-podloga-tiha);
+    --svetlo-tekst:        var(--boja-tekst);
+    --svetlo-tekst-tiho:   var(--boja-tekst-tiho);
+    --svetlo-linija:       var(--boja-linija);
+    --svetlo-veza:         var(--boja-veza);
+    --svetlo-fokus:        var(--boja-fokus);
+
     /* Ivica KONTROLE — polja, pilula, obrubljena dugmad. Dodato 2026-08-27.
      *
      * `--boja-linija` daje 1,23:1 na beloj. Za razdvajanje u toku teksta to je
@@ -62,6 +72,14 @@
      * prozora. Bela ploča je tu izgledala kao zalepljen drugi sajt. */
     --boja-traka-povrsina:    #141D2E;
 
+    /* Drugi red navbara (meni) i panel za kupovinu u prozoru fotografije.
+     * Podrazumevano isti kao traka i njena površina; tema ih može razdvojiti
+     * (tema A to radi — dodato 2026-09-22). */
+    --boja-traka-meni:        var(--boja-traka);
+    --boja-podnozje:          var(--boja-traka);
+    --boja-kupovina-panel:    var(--boja-traka-povrsina);
+    --boja-kupovina-linija:   var(--boja-traka-linija);
+
     /* ── RADNJA I OZNAKA ──────────────────────────────────────────────────
      * Amber nosi pretragu i glavnu radnju. On je POVRŠINA, ne tekst:
      * #F2A93B kao tekst na beloj daje 2.00:1 i nikad ne sme tako da stoji.
@@ -69,6 +87,12 @@
     --boja-akcenat:       #F2A93B;   /* dugme pretrage, glavna radnja */
     --boja-akcenat-tekst: #3A2B0C;   /* tekst NA amberu — 6.87:1 */
     --boja-akcenat-jako:  #DF9526;   /* pritisnuto stanje — 5.53:1 sa gornjim */
+
+    /* Dugme za kupovinu i oznaka izabrane rezolucije u prozoru fotografije.
+     * Podrazumevano glavna radnja; tema ga može izdvojiti (A: žuto). */
+    --boja-kupi:          var(--boja-akcenat);
+    --boja-kupi-tekst:    var(--boja-akcenat-tekst);
+    --boja-kupi-jako:     var(--boja-akcenat-jako);
 
     --boja-oznaka:        #D60006;   /* crvena identiteta — oznake, aktivno */
     --boja-najava:        #2877A3;   /* traka najave — svetlija plava sa uzora */
@@ -205,6 +229,16 @@
     --tezina-srednja: 500;   /* kataloški broj, podaci */
     --tezina-jaka:    600;
 
+    /* ── PLOČICA KAO NA PIXSELLU (2026-09-22) ─────────────────────────────
+     * Naslovna A: tekst preko fotografije se pojavljuje na prelaz mišem, na
+     * crnom zastoru od 60% (kao Pixsell). Slova su namerno MNOGO krupnija i
+     * deblja od Pixsellovih 14px / 600 — traženo 2026-09-22.
+     */
+    --slovo-preko-datum:  0.875rem;   --red-preko-datum:  1.25rem;    /* 14 / 20px */
+    --slovo-preko-naslov: 2rem;       --red-preko-naslov: 1.15;       /* 32px */
+    --tezina-preko:       700;        /* najdeblje što Figtree ovde ima */
+    --boja-preko-zastor:  rgba(0, 0, 0, .6);
+
     /* ── MERE PREUZETE SA UZORA (Shutterstock, mereno 2026-08-23) ─────────
      * Zaglavlje i pretraga prate uzor u veličinama, težinama i razmaku
      * slova. Njihovo pismo je Haffer (zaštićeno) — nosi ga Figtree, iste
@@ -316,10 +350,152 @@
 
    Tema „trenutni" je druga stvar i menja sve — ona je mreža za pad, ne predlog.
 */
-[data-tema="a"],
-[data-tema="b"],
+/* ── TEMA B — PLAVA (2026-09-22) ───────────────────────────────────────────
+ *
+ * Duboka plava traka, svetlija plava u drugom redu menija, plava glavna
+ * radnja. Strana ostaje bela. Kupovina ima svoju svetliju plavu površinu i
+ * ŽUTO dugme, kao kod tema A i C.
+ *
+ *   belo na traci #0A2A52 ............ 14,3:1
+ *   tiho #BFD3EA na traci ............  9,4:1
+ *   belo na drugom redu #0F3B70 ...... 11,2:1
+ *   belo na plavom dugmetu #1D6FDB ...  4,8:1
+ *   belo na pritisnutom #1558B0 ......  6,9:1
+ *   belo na panelu kupovine #174A85 ..  8,9:1  (tiho 5,8:1)
+ *   belo na izabranom redu #2C62A3 ...  6,2:1
+ *   crvena #FF6B6F na traci ..........  5,2:1
+ *   okvir fokusa #9CC3FF na traci ....  8,0:1
+ *   ivica kontrole #6F94C2 na traci ..  4,6:1
+ */
+[data-tema="b"] {
+    --boja-traka:                 #0A2A52;
+    --boja-traka-tekst:           #FFFFFF;
+    --boja-traka-tekst-tiho:      #BFD3EA;
+    --boja-traka-linija:          #1F4A7E;
+    --boja-traka-linija-kontrola: #6F94C2;
+    --boja-traka-povrsina:        #0F3563;
+    --boja-traka-meni:            #0F3B70;
+
+    --boja-akcenat:       #1D6FDB;
+    --boja-akcenat-tekst: #FFFFFF;
+    --boja-akcenat-jako:  #1558B0;
+
+    --boja-oznaka:        #D60006;
+    --boja-oznaka-traka:  #FF6B6F;
+    --boja-fokus-traka:   #9CC3FF;
+
+    --boja-podloga-tiha:  #F4F7FB;
+    --boja-linija:        #E3E9F1;
+
+    --boja-preko-zastor:  rgba(10, 42, 82, .74);
+
+    --boja-kupovina-panel:  #174A85;
+    --boja-kupovina-linija: #2C62A3;
+    --boja-kupi:            #F2A93B;
+    --boja-kupi-tekst:      #3A2B0C;
+    --boja-kupi-jako:       #DF9526;
+}
+
+/* ── TEMA C — BELA (2026-09-22) ────────────────────────────────────────────
+ *
+ * Sve svetlo: beo navbar, svetlo sivi drugi red i podnožje, beo prozor
+ * fotografije. Glavna radnja (pretraga, dugmad) je grafitna — na beloj
+ * jedina tamna tačka, pa se odmah vidi. Kupovina ima svoju toplu svetlu
+ * površinu i ŽUTO dugme, kao kod teme A.
+ *
+ *   tekst #1B1E24 na beloj ........... 16,7:1
+ *   tiho #5E636B na beloj / #F5F6F8 .. 6,0:1 / 5,6:1
+ *   belo na grafitnom #1F2937 ........ 14,7:1
+ *   tamno #3A2B0C na žutom #F2A93B ...  6,9:1
+ *   tekst na panelu kupovine #FFF8EC . 16,0:1
+ *   crvena oznaka #D60006 na beloj ...  5,4:1
+ *   ivica kontrole #868C93 na beloj ..  3,4:1
+ */
 [data-tema="c"] {
-    /* namerno prazno — sve tri nasleđuju :root */
+    --boja-traka:                 #FFFFFF;
+    --boja-traka-tekst:           #1B1E24;
+    --boja-traka-tekst-tiho:      #5E636B;
+    --boja-traka-linija:          #E6E8EB;
+    --boja-traka-linija-kontrola: #868C93;
+    --boja-traka-povrsina:        #F5F6F8;
+
+    --boja-traka-meni:    #F5F6F8;
+    --boja-podnozje:      #F5F6F8;
+
+    --boja-akcenat:       #1F2937;
+    --boja-akcenat-tekst: #FFFFFF;
+    --boja-akcenat-jako:  #111827;
+
+    --boja-oznaka:        #D60006;
+    --boja-oznaka-traka:  #D60006;
+    --boja-fokus-traka:   #1B1E24;
+
+    // Kupovina: topla svetla površina, žuto dugme.
+    --boja-kupovina-panel:  #FFF8EC;
+    --boja-kupovina-linija: #F1E2C4;
+    --boja-kupi:            #F2A93B;
+    --boja-kupi-tekst:      #3A2B0C;
+    --boja-kupi-jako:       #DF9526;
+}
+
+/* ── TEMA A — BORDO I CRVENA (2026-09-22) ──────────────────────────────────
+ *
+ * Od 2026-09-22 tema važi za CEO sajt, ne samo za naslovnu: klijent bira A,
+ * B ili C u administraciji i ta boja se vidi svuda — zaglavlje, podnožje,
+ * galerija, prozor za kupovinu, korpa. (Ranije pravilo „predlog menja samo
+ * naslovnu" je time namerno ukinuto.)
+ *
+ * Strana ostaje BELA — fotografija je i dalje jedina boja u toku strane.
+ * Bordo nosi traku (zaglavlje, podnožje, prozor fotografije), crvena glavnu
+ * radnju i oznake. Svi parovi su provereni na kontrast (WCAG AA):
+ *
+ *   belo na traci #3D0A12 ............ 16,8:1
+ *   tiho #E8C4C9 na traci ............ 10,5:1
+ *   belo na panelu #4F0F1A ........... 14,9:1
+ *   belo na crvenom dugmetu #C8102E ..  5,9:1
+ *   belo na pritisnutom #9E0B23 ......  8,3:1
+ *   crvena #C8102E kao tekst na beloj   5,9:1
+ *   svetla crvena #FF8A95 na traci ...  7,5:1
+ *   okvir fokusa #FFC7CE na traci .... 11,4:1
+ *   ivica kontrole #A8606B na traci ..  3,6:1  (traži se 3:1)
+ */
+[data-tema="a"] {
+    --boja-traka:                 #3D0A12;
+    --boja-traka-tekst:           #FFFFFF;
+    --boja-traka-tekst-tiho:      #E8C4C9;
+    --boja-traka-linija:          #6B2530;
+    --boja-traka-linija-kontrola: #A8606B;
+    --boja-traka-povrsina:        #4F0F1A;
+
+    --boja-akcenat:       #C8102E;
+    --boja-akcenat-tekst: #FFFFFF;
+    --boja-akcenat-jako:  #9E0B23;
+
+    --boja-oznaka:        #C8102E;
+    --boja-oznaka-traka:  #FF8A95;
+    --boja-fokus-traka:   #FFC7CE;
+
+    // Tople tihe površine, da bela strana ne bude hladno siva uz bordo.
+    --boja-podloga-tiha:  #FAF4F5;
+    --boja-linija:        #EFE3E5;
+
+    // Zastor preko fotografije na prelaz mišem — bordo umesto crne.
+    --boja-preko-zastor:  rgba(61, 10, 18, .74);
+
+    /* Drugi red navbara — crvenija nijansa od prvog (belo 13,8:1). */
+    --boja-traka-meni:    #5A0F1C;
+
+    /* Panel za kupovinu — svetliji i crveniji od prozora, da se odmah vidi
+     * gde se kupuje (belo 11,7:1, tiho 7,4:1). Linije i izabrani red su još
+     * svetliji (#8E3040, belo na njemu 7,9:1). */
+    --boja-kupovina-panel:  #6E1424;
+    --boja-kupovina-linija: #8E3040;
+
+    /* Dugme „Dodaj u korpu" je ŽUTO, jedino žuto u prozoru — tamni tekst na
+     * njemu 6,87:1. */
+    --boja-kupi:          #F2A93B;
+    --boja-kupi-tekst:    #3A2B0C;
+    --boja-kupi-jako:     #DF9526;
 }
 
 

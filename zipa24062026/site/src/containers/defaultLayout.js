@@ -35,6 +35,15 @@ function generateSearchLink(params) {
 }
 
 export const DefaultLayout = (Wrapped) => (props) => {
+    // Dok je napredna pretraga otvorena, strana ispod nje se ne pomera.
+    React.useEffect(() => {
+        if (typeof document === 'undefined') return undefined;
+        const koren = document.documentElement;
+        if (props.detailSearch) koren.classList.add('z-bez-skrola');
+        else koren.classList.remove('z-bez-skrola');
+        return () => koren.classList.remove('z-bez-skrola');
+    }, [props.detailSearch]);
+
     return (
         <div className={"wrapper"}>
             <Header {...props} />

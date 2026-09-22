@@ -45,6 +45,8 @@ class CartPage extends Component {
                     ...data
                 }, () => {
                     this.props.updateMeta(this.props.generateSeoTags(this.state));
+                    // Posle svakog učitavanja korpe osveži i brojač u zaglavlju.
+                    if (this.props.osveziKorpu) this.props.osveziKorpu();
                 })
             })
         }
@@ -144,7 +146,8 @@ class CartPage extends Component {
 
 
     componentDidUpdate(prevProps, prevState) {
-        if (!prevState.cart.length && this.state.cart.length) {
+        // Plaćanje se učitava samo prijavljenom kupcu; gost prvo vidi prijavu.
+        if (!prevState.cart.length && this.state.cart.length && this.props.uData) {
             let total = 0.0;
             let items_total = 0.0;
             let handling = 0.3;
@@ -424,10 +427,27 @@ class CartPage extends Component {
                                     {'. Preprodaja i ustupanje trećim licima nisu dozvoljeni.'.translate(l)}
                                 </p>
 
-                                <div
-                                    className="z-korpa__placanje paypal-container"
-                                    ref={(node) => this.paypalContainer = node}
-                                ></div>
+                                {this.props.uData ? (
+                                    <div
+                                        className="z-korpa__placanje paypal-container"
+                                        ref={(node) => this.paypalContainer = node}
+                                    ></div>
+                                ) : (
+                                    /* Gost: korpa je sačuvana u pregledaču, a
+                                       za plaćanje se prijavljuje ili registruje.
+                                       Posle prijave se vraća ovde. */
+                                    <div className="z-korpa__prijava">
+                                        <p className="z-korpa__prijava-tekst">
+                                            {'Da biste završili kupovinu, prijavite se ili napravite nalog. Fotografije ostaju u korpi.'.translate(l)}
+                                        </p>
+                                        <Link className="z-korpa__dugme" to="/login">
+                                            {'Prijavite se i platite'.translate(l)}
+                                        </Link>
+                                        <Link className="z-korpa__tiho-dugme" to="/register">
+                                            {'Napravite nalog'.translate(l)}
+                                        </Link>
+                                    </div>
+                                )}
 
                                 <p className="z-korpa__sigurno">
                                     <Isvg src={lock} />

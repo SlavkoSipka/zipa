@@ -8,16 +8,22 @@
    a ovo je radna površina, ne nastavak trake.
 */
 
+// Klasu postavlja `containers/defaultLayout.js` dok je prozor otvoren.
+html.z-bez-skrola,
+html.z-bez-skrola body { overflow: hidden; }
+
 .z-pretraga-prozor {
     position: fixed;
     inset: 0;
     z-index: var(--sloj-prozor);
 
     display: flex;
-    align-items: flex-start;
+    align-items: stretch;
     justify-content: center;
-    padding: var(--razmak-7) var(--razmak-5);
+    // Prozor skoro preko celog ekrana.
+    padding: var(--razmak-5);
     overflow-y: auto;
+    overscroll-behavior: contain;
 
     background: var(--boja-zavesa);
 
@@ -29,7 +35,6 @@
 
     &__okvir {
         width: 100%;
-        max-width: 880px;
         background: var(--boja-povrsina);
         border-radius: var(--radijus-panel);
         box-shadow: var(--senka-lebdi);
@@ -116,8 +121,18 @@
     &__telo {
         padding: var(--razmak-5);
         overflow-y: auto;
+        overscroll-behavior: contain;
         flex: 1 1 auto;
         min-height: 0;
+
+        // Na širem ekranu sve grupe filtera odjednom: dve kolone, dva reda.
+        @include desktop-i-vise {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            align-content: start;
+            gap: var(--razmak-6) var(--razmak-7);
+            padding: var(--razmak-6);
+        }
     }
 
     /* ── grupe polja ──────────────────────────────────────────────────── */
@@ -126,6 +141,8 @@
         margin-top: var(--razmak-6);
         padding-top: var(--razmak-6);
         border-top: 1px solid var(--boja-linija);
+
+        @include desktop-i-vise { margin-top: 0; padding-top: 0; border-top: 0; }
     }
 
     &__naslov-grupe {
@@ -141,10 +158,10 @@
     // Dva polja u redu; na telefonu jedno ispod drugog.
     &__par {
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: var(--razmak-4);
 
-        @include mobile-tablet { grid-template-columns: 1fr; }
+        @include mobile-tablet { grid-template-columns: minmax(0, 1fr); }
     }
 
     /* ── prečice za datum ─────────────────────────────────────────────── */

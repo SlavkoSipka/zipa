@@ -3,38 +3,25 @@ import { Link } from 'react-router-dom';
 import { Container } from 'reactstrap';
 
 import { PHOTOS_ENDPOINT } from '../../constants';
+import { Plocica, PlocicaGalerije } from '../../components/plocica';
 
 /**
  * Naslovna strana — predlog A.
  *
- * RASPORED (prekrojen 2026-09-08, po traženju klijenta):
+ * RASPORED (prekrojen 2026-09-22, po uzoru na Pixsell):
  *
- *   1. IZBOR UREDNIKA — ručno izabrano ide PRVO, ne najnovije. Jedna stavka
- *      krupno, ostale kao uzan stubac pored nje.
- *   2. DNEVNIK ARHIVE — galerije grupisane PO DANIMA. Levo krupan datum,
- *      desno šta je tog dana snimljeno. Arhiva je hronološka i to je ovde
- *      nosilac rasporeda, umesto još jedne mreže.
- *   3. ARHIVA PO KATEGORIJAMA — bez ijedne fotografije: samo nazivi i
- *      brojevi, u stupcima. Miran predah između dva foto-odeljka.
- *   4. VIDEO — dve široke pločice.
- *   5. REKLAMA — poslednja, da ne preseca sadržaj.
+ *   1. MOZAIK — devet najnovijih galerija, 3 × 3, preko celog ekrana, sa
+ *      malim razmacima. Naslov i datum se pojave kad se mišem pređe preko.
+ *   2. RED OD PET — sledeće galerije iz kategorija naslovne, isti izgled.
+ *   3. IZDVAJAMO — ručni izbor, krupno, po četiri u redu.
+ *   4. VIDEO i 5. REKLAMA.
  *
- * NIJEDNA GALERIJA SE NE PONAVLJA. „Izbor urednika" često pokazuje na
- * galerije koje su i među najnovijima (mereno: 3 od 4 stavke), pa se iz
- * dnevnika izbacuju one koje su gore već prikazane — vidi `idIzVeze`.
+ * „Arhiva po kategorijama" i „Dnevnik arhive" su izbačeni (2026-09-22).
+ *
+ * NIJEDNA GALERIJA SE NE PONAVLJA — vidi `idIzVeze` i skup `prikazane`.
  *
  * Nema nijedne trake koja se sama pomera. Sve stoji.
  */
-
-/*
- * Putanja se KODIRA. Imena datoteka u arhivi sadrže razmake
- * („…100god FK Borac Banja Luka…jpg"), a `srcset` razdvaja kandidate
- * razmakom — nekodiran razmak obara ceo `srcset` i pregledač ga odbaci
- * („Failed parsing 'srcset' attribute value"). `encodeURI` ostavlja `/`
- * netaknut, a razmak pretvara u `%20`.
- */
-const slikaUrl = (putanja, sirina = '350x') =>
-    putanja ? `${PHOTOS_ENDPOINT}/photos/${sirina}/${encodeURI(putanja)}` : null;
 
 /*
  * Fotografija „Izdvajamo" — adresa se uvek preslaguje na TEKUCI izvor slika.
@@ -68,38 +55,6 @@ const idIzVeze = (veza) => {
 };
 
 /*
- * Galerije u grupe po DANU snimanja, redom kojim su i stigle.
- *
- * Galerije bez datuma se preskaču: sve takve u arhivi su prazni nacrti
- * (`docs/galerije-bez-datuma.md`), pa u dnevniku nemaju šta da rade.
- */
-const poDanima = (galerije) => {
-    const grupe = [];
-    const poKljucu = {};
-
-    (galerije || []).forEach((g) => {
-        if (!g || !g.date) return;
-        const d = new Date(g.date * 1000);
-        const kljuc = d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate();
-
-        if (!poKljucu[kljuc]) {
-            poKljucu[kljuc] = { kljuc, dan: d, stavke: [] };
-            grupe.push(poKljucu[kljuc]);
-        }
-        poKljucu[kljuc].stavke.push(g);
-    });
-
-    return grupe;
-};
-
-const datum = (vreme) => {
-    if (!vreme) return '';
-    const d = new Date(vreme * 1000);
-    return `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${d.getFullYear()}.`;
-};
-
-
-/*
  * Kuda vodi izdvojena stavka.
  *
  * Ako pokazuje na kategoriju, otvara se prikaz pojedinačnih fotografija —
@@ -115,215 +70,76 @@ const odredisteIzdvojenog = (veza) => {
 };
 class PredlogA extends Component {
 
-    /*
-     * Kartica galerije u dnevniku — fotografija, pa naziv i podaci ISPOD nje.
-     * Tekst nikad ne ide preko kadra; u uglovima stoje samo dve oznake, kao
-     * na kartici galerije.
-     */
-    kartica(g, kljuc) {
-        if (!g) return null;
-
-        const lang = this.props.lang;
-        const naziv = Object.translate(g, 'name', lang);
-        const alias = Object.translate(g, 'alias', lang);
-        const slika = g.photos && g.photos[0] && g.photos[0].image;
-        const broj = g.photosCount !== undefined ? g.photosCount : (g.photos && g.photos.length);
-        const putanja = `/galerija/${alias}/${g._id}`;
-
-        return (
-            <article className="z-dan__stavka" key={kljuc}>
-                <Link to={putanja} className="z-dan__kadar" tabIndex="-1" aria-hidden="true">
-                    {slika ? (
-                        <img
-                            src={slikaUrl(slika, '350x')}
-                            srcSet={`${slikaUrl(slika, '350x')} 350w, ${slikaUrl(slika, '700x')} 700w`}
-                            sizes="(max-width: 767px) 100vw, 320px"
-                            alt=""
-                            loading="lazy"
-                            decoding="async"
-                        />
-                    ) : null}
-                    {broj ? <span className="z-dan__brojac">{broj}</span> : null}
-                </Link>
-
-                <h4 className="z-dan__naslov">
-                    <Link to={putanja}>{naziv}</Link>
-                </h4>
-
-                <p className="z-dan__meta">
-                    {g.location ? <span>{g.location}</span> : null}
-                    {g.user ? <span>{g.user}</span> : null}
-                </p>
-            </article>
-        );
-    }
-
     render() {
         const lang = this.props.lang;
         const podesavanja = this.props.settings || {};
 
         /*
          * ── NIŠTA SE NE PONAVLJA ─────────────────────────────────────────
-         * Ručni izbor ide prvi i ima prednost; galerije koje su tu prikazane
-         * izlaze iz dnevnika ispod. Bez ovoga se ista galerija vidi dvaput
-         * (mereno na živim podacima: 3 od 4 izdvojene stavke su i među
-         * najnovijim galerijama).
+         * Redom: mozaik (najnovije), ručni izbor, red od pet, dnevnik. Svaka
+         * galerija koja je već prikazana izlazi iz svih ispod.
          */
-        const izbor = (this.props.izdvojeno || []).slice(0, 4);
+        const prikazane = {};
+        const oznaci = (id) => { if (id) prikazane[String(id)] = true; };
+        const slobodna = (g) => g && g._id && !prikazane[String(g._id)];
 
-        const zauzete = {};
-        izbor.forEach((s) => {
-            const id = idIzVeze(s.link);
-            if (id) zauzete[String(id)] = true;
+        const mozaik = (this.props.latest || []).filter(slobodna).slice(0, 9);
+        mozaik.forEach((g) => oznaci(g._id));
+
+        const izbor = (this.props.izdvojeno || []).slice();
+        izbor.forEach((s) => oznaci(idIzVeze(s.link)));
+
+        // Galerije iz kategorija naslovne, bez ponavljanja, najnovije prve.
+        const zaliha = [];
+        (this.props.homeCategories || []).forEach((k) => {
+            (k.photos || []).forEach((g) => {
+                if (slobodna(g)) { zaliha.push(g); oznaci(g._id); }
+            });
         });
+        zaliha.sort((a, b) => (b.date || 0) - (a.date || 0));
 
-        const zaDnevnik = (this.props.latest || []).filter(
-            (g) => g && g._id && !zauzete[String(g._id)]
-        );
-
-        const dani = poDanima(zaDnevnik).slice(0, 4);
-
-        const kategorije = (this.props.homeCategories || [])
-            .filter((k) => (k.photosCount !== undefined ? k.photosCount : (k.photos && k.photos.length)))
-            .slice()
-            .sort((a, b) => (a.position || 0) - (b.position || 0));
-
-        const vodeciIzbor = izbor[0];
-        const ostatakIzbora = izbor.slice(1);
+        const redPet = zaliha.slice(0, 5);
 
         return (
             <div className="naslovna-a">
 
-                {/* ── 1. IZBOR UREDNIKA ────────────────────────────────────
-                    Ručno biran sadržaj ide PRVI, ne najnovije. Jedna stavka
-                    krupno levo, ostale kao uzan stubac desno. */}
-                {vodeciIzbor ? (
-                    <section className="odeljak odeljak--prvi">
+                {/* ── 1. MOZAIK — 3 × 3 preko celog ekrana ──────────────── */}
+                {mozaik.length ? (
+                    <section className="z-mozaik">
+                        <div className="z-mozaik__mreza">
+                            {mozaik.map((g, i) => <PlocicaGalerije key={g._id || i} g={g} lang={lang} />)}
+                        </div>
+                    </section>
+                ) : null}
+
+                {/* ── 2. RED OD PET ─────────────────────────────────────── */}
+                {redPet.length ? (
+                    <section className="z-mozaik z-mozaik--pet">
+                        <div className="z-mozaik__mreza z-mozaik__mreza--pet">
+                            {redPet.map((g, i) => <PlocicaGalerije key={g._id || i} g={g} lang={lang} />)}
+                        </div>
+                    </section>
+                ) : null}
+
+                {/* ── 3. IZDVAJAMO — krupno, četiri u redu ──────────────── */}
+                {izbor.length ? (
+                    <section className="odeljak z-izdvajamo-a">
                         <Container>
                             <div className="naslov-odeljka">
                                 <h3>{podesavanja.izdvojenoNaslov || 'Izdvajamo'}</h3>
                                 <Link to="/galerije">{'Sve galerije'.translate(lang)} &rarr;</Link>
                             </div>
-
-                            <div className="z-izbor">
-                                {(() => {
-                                    const naslov = Object.translate(vodeciIzbor, 'title', lang) || '';
-                                    const naKategoriju = String(vodeciIzbor.link || '').indexOf('category=') !== -1;
-                                    const kuda = odredisteIzdvojenog(vodeciIzbor.link);
-
-                                    return (
-                                        <article className="z-izbor__glavni">
-                                            <Link to={kuda} className="z-izbor__kadar" tabIndex="-1" aria-hidden="true">
-                                                {vodeciIzbor.image ? (
-                                                    <img src={slikaIzdvojenog(vodeciIzbor.image)} alt="" decoding="async" />
-                                                ) : null}
-                                            </Link>
-
-                                            <div className="z-izbor__telo">
-                                                <p className="z-izbor__oznaka">
-                                                    {(naKategoriju ? 'Kategorija' : 'Galerija').translate(lang)}
-                                                </p>
-                                                <h4 className="z-izbor__naslov">
-                                                    <Link to={kuda}>{naslov}</Link>
-                                                </h4>
-                                                <p className="z-izbor__dalje">
-                                                    {(naKategoriju
-                                                        ? 'Pogledajte fotografije'
-                                                        : 'Otvorite galeriju').translate(lang)} &rarr;
-                                                </p>
-                                            </div>
-                                        </article>
-                                    );
-                                })()}
-
-                                {ostatakIzbora.length ? (
-                                    <ul className="z-izbor__uz">
-                                        {ostatakIzbora.map((s, i) => {
-                                            const naslov = Object.translate(s, 'title', lang) || '';
-                                            const kuda = odredisteIzdvojenog(s.link);
-                                            return (
-                                                <li className="z-izbor__red" key={s._id || i}>
-                                                    <Link to={kuda} className="z-izbor__red-veza">
-                                                        <span className="z-izbor__slicica">
-                                                            {s.image ? (
-                                                                <img src={slikaIzdvojenog(s.image)} alt="" loading="lazy" decoding="async" />
-                                                            ) : null}
-                                                        </span>
-                                                        <span className="z-izbor__red-naslov">{naslov}</span>
-                                                    </Link>
-                                                </li>
-                                            );
-                                        })}
-                                    </ul>
-                                ) : null}
-                            </div>
-                        </Container>
-                    </section>
-                ) : null}
-
-                {/* ── 2. DNEVNIK ARHIVE ────────────────────────────────────
-                    Galerije po danima: levo krupan datum, desno šta je tog
-                    dana snimljeno. Nosilac rasporeda je vreme, ne mreža. */}
-                {dani.length ? (
-                    <section className={'odeljak z-dnevnik' + (vodeciIzbor ? '' : ' odeljak--prvi')}>
-                        <Container>
-                            <div className="naslov-odeljka">
-                                <h3>{'Dnevnik arhive'.translate(lang)}</h3>
-                                <Link to="/galerije">{'Sve galerije'.translate(lang)} &rarr;</Link>
-                            </div>
-
-                            {dani.map((d) => (
-                                <div className="z-dan" key={d.kljuc}>
-                                    <div className="z-dan__datum">
-                                        <span className="z-dan__broj">
-                                            {String(d.dan.getDate()).padStart(2, '0')}
-                                        </span>
-                                        <span className="z-dan__mesec">
-                                            {String(d.dan.getMonth() + 1).padStart(2, '0')}.
-                                        </span>
-                                        <span className="z-dan__godina">{d.dan.getFullYear()}.</span>
-                                        <span className="z-dan__koliko">
-                                            {d.stavke.length} {'galerija'.translate(lang)}
-                                        </span>
-                                    </div>
-
-                                    <div className="z-dan__stavke">
-                                        {d.stavke.map((g, i) => this.kartica(g, g._id || i))}
-                                    </div>
-                                </div>
-                            ))}
-                        </Container>
-                    </section>
-                ) : null}
-
-                {/* ── 3. ARHIVA PO KATEGORIJAMA ────────────────────────────
-                    Bez ijedne fotografije — samo nazivi i brojevi. Predah
-                    između dva foto-odeljka i brz put u dubinu arhive. */}
-                {kategorije.length ? (
-                    <section className="odeljak z-indeks-odeljak">
-                        <Container>
-                            <div className="naslov-odeljka">
-                                <h3>{'Arhiva po kategorijama'.translate(lang)}</h3>
-                                <Link to="/galerije">{'Sve kategorije'.translate(lang)} &rarr;</Link>
-                            </div>
-
-                            <ul className="z-indeks">
-                                {kategorije.map((k, i) => (
-                                    <li className="z-indeks__red" key={k._id || i}>
-                                        <Link
-                                            to={`/galerije?category=${k.alias && k.alias.ba}`}
-                                            className="z-indeks__veza"
-                                        >
-                                            <span className="z-indeks__naziv">
-                                                {Object.translate(k, 'name', lang)}
-                                            </span>
-                                            <span className="z-indeks__broj">
-                                                {(k.photosCount || 0).toLocaleString('sr-RS')}
-                                            </span>
-                                        </Link>
-                                    </li>
+                            <div className="z-mozaik__mreza z-mozaik__mreza--cetiri">
+                                {izbor.map((s, i) => (
+                                    <Plocica
+                                        key={s._id || i}
+                                        putanja={odredisteIzdvojenog(s.link)}
+                                        slika={slikaIzdvojenog(s.image)}
+                                        naslov={Object.translate(s, 'title', lang) || ''}
+                                        velika
+                                    />
                                 ))}
-                            </ul>
+                            </div>
                         </Container>
                     </section>
                 ) : null}

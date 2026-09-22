@@ -250,7 +250,7 @@
         // Galerije tog dana — nikad golo `1fr` (pravilo projekta).
         &__stavke {
             display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
+            grid-template-columns: repeat(4, minmax(0, 1fr));
             gap: var(--razmak-4);
 
             @include small-desktop { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -629,5 +629,127 @@
                 .napomena-mala { font-size: var(--slovo-xs); color: var(--boja-tekst-tiho); }
             }
         }
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   NASLOVNA A — MOZAIK I PLOČICE (po uzoru na Pixsell, 2026-09-22)
+   ═══════════════════════════════════════════════════════════════════════════
+   Devet najnovijih 3 × 3 preko celog ekrana, ispod red od pet, pa
+   „Izdvajamo" po četiri. Razmaci su mali, tekst se pojavi na prelaz mišem.
+   Isti red od pet pločica koristi i predlog C (2026-09-22).
+*/
+.naslovna-a,
+.naslovna-c {
+
+    .z-mozaik {
+        padding: var(--razmak-1);
+
+        & + .z-mozaik { padding-top: 0; }
+        & + .odeljak { margin-top: var(--razmak-6); }
+    }
+
+    .z-mozaik__mreza {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: var(--razmak-1);
+
+        @include mobile { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+        &--pet {
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            @include tablet { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+            @include mobile { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+
+        &--cetiri {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: var(--razmak-2);
+            @include tablet { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            @include mobile { grid-template-columns: minmax(0, 1fr); }
+        }
+    }
+
+    .z-plocica {
+        position: relative;
+        display: block;
+        aspect-ratio: 3 / 2;
+        overflow: hidden;
+        background: var(--boja-podloga-tiha);
+        color: var(--boja-traka-tekst);
+        text-decoration: none;
+        @include z-fokus;
+
+        img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        &--velika { border-radius: var(--radijus-mali); }
+    }
+
+    .z-plocica__preko {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: var(--razmak-4);
+        background: var(--boja-preko-zastor);
+        opacity: 0;
+        @include z-prelaz(opacity);
+    }
+
+    // Red od pet ima uže pločice — naslov stepen manji.
+    .z-mozaik__mreza--pet .z-plocica__naslov {
+        font-size: var(--slovo-xl);
+        line-height: var(--red-xl);
+    }
+
+    @include small-desktop {
+        .z-plocica__naslov { font-size: var(--slovo-xl); line-height: var(--red-xl); }
+        .z-mozaik__mreza--pet .z-plocica__naslov { font-size: var(--slovo-lg); line-height: var(--red-lg); }
+    }
+
+    .z-plocica:hover .z-plocica__preko,
+    .z-plocica:focus-visible .z-plocica__preko { opacity: 1; }
+
+    .z-plocica__datum {
+        font-size: var(--slovo-preko-datum);
+        line-height: var(--red-preko-datum);
+        font-weight: var(--tezina-jaka);
+        letter-spacing: -0.025em;
+        color: var(--boja-traka-tekst);
+    }
+
+    .z-plocica__naslov {
+        font-size: var(--slovo-preko-naslov);
+        line-height: var(--red-preko-naslov);
+        font-weight: var(--tezina-preko);
+        letter-spacing: -0.01em;
+        color: var(--boja-traka-tekst);
+        text-transform: uppercase;
+
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    /* Ekran bez miša (telefon, tablet): prelaza nema, pa naslov stoji stalno,
+       dole, na blagom prelivu umesto punog zastora. */
+    @media (hover: none) {
+        .z-plocica__preko {
+            opacity: 1;
+            justify-content: flex-end;
+            padding: var(--razmak-3);
+            background: linear-gradient(transparent 45%, var(--boja-preko-zastor));
+        }
+        .z-plocica__datum { display: none; }
+        .z-plocica__naslov,
+        .z-mozaik__mreza--pet .z-plocica__naslov { font-size: var(--slovo-lg); line-height: var(--red-lg); }
     }
 }

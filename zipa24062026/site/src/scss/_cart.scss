@@ -401,6 +401,24 @@
         &--puno { width: 100%; }
     }
 
+    // Gost u korpi: umesto plaćanja poziv na prijavu (2026-09-22).
+    &__prijava {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--razmak-3);
+        margin-bottom: var(--razmak-4);
+
+        .z-korpa__tiho-dugme { align-self: center; }
+    }
+
+    &__prijava-tekst {
+        margin: 0;
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        color: var(--boja-tekst-tiho);
+    }
+
     &__tiho-dugme {
         padding: 0;
         border: 0;
@@ -463,4 +481,55 @@
 
         svg { width: 56px; height: 56px; margin-bottom: var(--razmak-4); }
     }
+}
+
+
+/* ── Plutajuća korpa ─────────────────────────────────────────────────────
+   Gornji DESNI ugao, na svakoj strani, čim u korpi ima nešto a zaglavlje
+   (sa svojom korpom) ode van kadra — `components/plutajucaKorpa.js`. */
+.z-plutajuca-korpa {
+    position: fixed;
+    top: var(--razmak-4);
+    right: var(--razmak-4);
+    z-index: var(--sloj-padajuce);
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: calc(var(--razmak-7) + var(--razmak-2));
+    height: calc(var(--razmak-7) + var(--razmak-2));
+
+    border-radius: var(--radijus-pun);
+    background: var(--boja-traka);
+    box-shadow: var(--senka-lebdi);
+    text-decoration: none;
+
+    @include z-prelaz(transform);
+    &:hover { transform: scale(1.06); text-decoration: none; }
+    @include z-fokus;
+
+    svg { width: var(--razmak-5); height: var(--razmak-5); display: block; }
+    svg path, svg circle, svg rect { fill: var(--boja-traka-tekst); }
+
+    @include mobile { top: var(--razmak-3); right: var(--razmak-3); }
+}
+
+.z-plutajuca-korpa__broj {
+    position: absolute;
+    top: calc(-1 * var(--razmak-1));
+    right: calc(-1 * var(--razmak-1));
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: var(--razmak-5);
+    height: var(--razmak-5);
+    padding: 0 var(--razmak-1);
+
+    border-radius: var(--radijus-pun);
+    background: var(--boja-akcenat);
+    color: var(--boja-akcenat-tekst);
+    font-size: var(--slovo-xs);
+    line-height: 1;
+    font-weight: var(--tezina-jaka);
 }

@@ -6,13 +6,16 @@ import Isvg from 'react-inlinesvg';
 import cart from '../assets/svg/cart.svg';
 import search from '../assets/svg/search.svg';
 import filterIcon from '../assets/svg/filters.svg';
+// Znak ZIPA PHOTO: beli za tamnu traku, tamni za belu (tema C).
+import znakZipa from '../assets/svg/footer-logo.svg';
+import znakZipaTamni from '../assets/svg/logo.svg';
 
 // Zastavica za `ba` je crtez, ne slika: leva polovina je srpska trobojka
 // (bez grba), desna ostaje zastava BiH. Kao SVG je ostra na svakoj meri.
 import ba from '../assets/svg/jezik-ba.svg';
 import en from '../assets/images/en.png';
 import PretragaSaPrijedlozima from './pretragaSaPrijedlozima';
-import naslovnaIlustracija from '../assets/images/naslovna-ilustracija.png';
+import {PHOTOS_ENDPOINT} from '../constants';
 
 /*
  * ZAGLAVLJE SAJTA
@@ -174,7 +177,10 @@ class Header extends Component {
 
         const delovi = [];
         if (q) delovi.push(`search=${encodeURIComponent(q)}`);
-        if (this.state.vrstaPretrage === 'fotografije') delovi.push('view=photos');
+        // Pretraga fotografija: pojedinačne fotografije, i to samo one kojima
+        // su ključne reči upisane na samoj fotografiji (`kljucne=1`, filtrira
+        // `searchPhotos` u API-ju). Pretraga galerija ostaje kakva je bila.
+        if (this.state.vrstaPretrage === 'fotografije') delovi.push('view=photos', 'kljucne=1');
 
         this.props[0].history.push(`/galerije${delovi.length ? `?${delovi.join('&')}` : ''}`);
     };
@@ -242,6 +248,22 @@ class Header extends Component {
         );
     }
 
+    /*
+     * Pozadinska slika iza velike pretrage — važi samo za predlog C (pravilo
+     * je u `_zaglavlje.scss` pod `[data-tema="c"]`). Bira se u *Podešavanja
+     * sajta → Pozadina pretrage*; dok nije izabrana, ide prva fotografija
+     * najnovije galerije.
+     */
+    pozadinaPretrage() {
+        const izbor = this.props.settings && this.props.settings.pozadinaPretrage;
+        const g = this.props.najava;
+        const rezerva = g && g.photos && g.photos[0] && g.photos[0].image
+            ? `${PHOTOS_ENDPOINT}/photos/700x/${encodeURI(g.photos[0].image)}`
+            : null;
+        const slika = izbor || rezerva;
+        return slika ? { '--pozadina-pretrage': `url("${slika}")` } : undefined;
+    }
+
     poljePretrage(siroko, l) {
         return (
             <div className={'z-zaglavlje__pretraga' + (siroko ? ' z-zaglavlje__pretraga--siroka' : ' z-zaglavlje__pretraga--uska')}>
@@ -270,6 +292,9 @@ class Header extends Component {
                         placeholder={'Pretražite arhivu…'.translate(l)}
                         onChange={(v) => this.setState({pretraga: v})}
                         onSearch={this.pokreniPretragu}
+                        fotografije={this.state.vrstaPretrage === 'fotografije'}
+                        onFotografija={(f) => this.props[0].history.push(
+                            `/galerija/${f.galleryAlias}/${f.galleryId}?photo=${f.idx}`)}
                         renderInput={(svojstva) => (
                             <input {...svojstva} className="z-zaglavlje__unos"
                                    aria-label={'Pretraga arhive'.translate(l)}/>
@@ -317,7 +342,6 @@ class Header extends Component {
                             className="z-zaglavlje__stavka-panela"
                             to={`/galerije?category=${Object.translate(k, 'alias', this.props.lang)}&detailSearch=true`}>
                             <span>{Object.translate(k, 'name', this.props.lang)}</span>
-                            {k.photosCount ? <em>{k.photosCount}</em> : null}
                         </Link>
                     ))}
                 </div>
@@ -379,15 +403,15 @@ class Header extends Component {
         // umesto da beži uvis.
         const zbijeno = this.state.yScroll > 20;
 
-        // Nalozna navigacija ima svoj red ispod glavnog; javna se tad sklanja.
-        const naNalogu = putanja.indexOf('/account') === 0;
-
         /*
          * Fotografu se javni meni ranije sklanjao jer ga je zamenjivala traka
          * `account-nav`. Trake više nema — bez ovoga bi fotograf na javnim
          * stranama ostao bez ijedne veze u zaglavlju.
          */
-        const javniMeni = !naNalogu;
+        /* JEDAN NAVBAR NA SVIM STRANAMA (2026-09-22): isti redovi, isti meni
+           i ista širina svuda — i na stranama naloga. Nalog ima svoj bočni
+           meni u `nalogOkvir.js`, pa mu javni meni gore ne smeta. */
+        const javniMeni = true;
 
         const imaKorpu = !u || u.userRole !== 'photographer';
 
@@ -399,9 +423,6 @@ class Header extends Component {
         // Naslovna dobija visoku traku, sve ostale nisku. Ista komponenta.
         const naslovna = putanja === '/';
 
-
-        // Kategorije zakačene u administraciji hrane red „Traži se:".
-        const trazi = (this.props.categories || []).filter((k) => k.isVisibleOnNav);
 
         // „Dron" nije nova ruta nego postojeća kategorija iz arhive.
         const dron = (this.props.categories || []).find(
@@ -415,13 +436,11 @@ class Header extends Component {
          *      prednost. Vazi dok je danasnji dan izmedju polja OD i DO —
          *      ruta `/announcements` sama filtrira po tome, pa je taj prozor
          *      i prekidac: nema posebnog polja „prikazi u zaglavlju".
-         *   2. Kad nijedna najava nije vazeca — najnovija galerija iz
-         *      arhive, kao i do sada, da traka nikad ne ostane prazna.
-         *
-         * Oba izvora dovlaci `App.js`; zaglavlje ovde samo bira.
+         *   2. Kad nijedna najava nije vazeca, traka se ne prikazuje
+         *      (ranije je tu isla najnovija galerija; odluka 2026-09-21).
          */
         const najavaAdmin = this.props.najavaAdmin;
-        const najava = najavaAdmin || this.props.najava;
+        const najava = najavaAdmin;
 
         // Najava nosi natpis u `content`, galerija naziv u `name`.
         const najavaNaslov = najava
@@ -510,8 +529,7 @@ class Header extends Component {
 
 
                 {/* ── RED 1 — traka najave ─────────────────────────────
-                    Najava iz administracije ima prednost; kad je nema, ide
-                    najnovija galerija. Izgled je isti za oba. */}
+                    Samo najava iz administracije; bez nje nema trake. */}
                 {najava ?
                     <div className={'z-zaglavlje__najava' + (najavaAdmin ? ' z-zaglavlje__najava--obavestenje' : '')}>
                         <div className="z-zaglavlje__sirina">
@@ -552,13 +570,13 @@ class Header extends Component {
                                     {pilula}
                                 </Link>
                                 : null}
-                        </div>
 
-                        <Link to="/" className="z-zaglavlje__logo">
-                            <Isvg src={this.props.settings.logo}/>
-                            <span className="z-zaglavlje__natpis"
-                                  dangerouslySetInnerHTML={{__html: this.props.settings.logoText}}/>
-                        </Link>
+                            <Link to="/" className="z-zaglavlje__logo">
+                                <img className="z-znak z-znak--svetli" src={znakZipa} alt=""/>
+                                <img className="z-znak z-znak--tamni" src={znakZipaTamni} alt=""/>
+                                <span className="z-zaglavlje__natpis">ZIPAPHOTO</span>
+                            </Link>
+                        </div>
 
                         <div className="z-zaglavlje__desno">
                             {imaCenovnik ?
@@ -588,6 +606,9 @@ class Header extends Component {
                                 <Link to="/cart" className="z-zaglavlje__korpa" aria-label={'Korpa'.translate(l)}>
                                     <Isvg src={cart}/>
                                     <span>{'Korpa'.translate(l)}</span>
+                                    {this.props.brojUKorpi > 0 ?
+                                        <em className="z-zaglavlje__korpa-broj">{this.props.brojUKorpi}</em>
+                                        : null}
                                 </Link>
                                 : null}
 
@@ -707,50 +728,21 @@ class Header extends Component {
                                 </div>
                             </nav>
 
-                            {/* Na ostalim stranama pretraga stoji u traci, uža. */}
-                            {!naslovna ? this.poljePretrage(false, l) : null}
+                            {/* Uska pretraga u ovom redu je izbačena (2026-09-22):
+                                navbar mora da bude isti na svakoj strani, a na
+                                naslovnoj pretraga stoji ispod, u naslovnom bloku. */}
                         </div>
                     </div>
                     : null}
 
 
-                {/* ── NASLOVNI BLOK — samo naslovna ────────────────────── */}
+                {/* ── NASLOVNI BLOK — samo naslovna ──────────────────────
+                    Bela podloga i samo pretraga u sredini (odluka 2026-09-21);
+                    naslov, podnaslov, „Traži se" i ilustracija su izbačeni. */}
                 {naslovna ?
-                    <div className="z-zaglavlje__naslovni">
+                    <div className="z-zaglavlje__naslovni" style={this.pozadinaPretrage()}>
                         <div className="z-zaglavlje__sirina z-zaglavlje__naslovni-red">
-                            <div className="z-zaglavlje__naslovni-tekst">
-                                <h1 className="z-zaglavlje__naslov">
-                                    {'Fotografije iz zemlje i sveta, od 1990.'.translate(l)}
-                                </h1>
-                                <p className="z-zaglavlje__podnaslov">
-                                    {'Pretražite fotografije iz arhive agencije ZIPA PHOTO.'.translate(l)}
-                                </p>
-
-                                {this.poljePretrage(true, l)}
-
-                                {trazi.length ?
-                                    <p className="z-zaglavlje__trazi-se">
-                                        <span className="z-zaglavlje__trazi-se-natpis">{'Traži se:'.translate(l)}</span>
-                                        {trazi.map((k, idx) => (
-                                            <Link key={idx}
-                                                  className="z-zaglavlje__trazi-se-pojam"
-                                                  to={`/galerije?category=${Object.translate(k, 'alias', l)}`}>
-                                                {Object.translate(k, 'name', l)}
-                                            </Link>
-                                        ))}
-                                    </p>
-                                    : null}
-                            </div>
-
-                            {/* Ilustracija — ukras, ne sadržaj. Prazan alt; `lazy` +
-                                `low` prioritet da nikad ne konkuriše naslovu i pretrazi
-                                za propusni opseg pri prvom prikazu. Tekst NIKAD ne ide
-                                preko nje (stalno pravilo) — stoji levo u svom stupcu,
-                                slika je pozicionirana nezavisno, van toka. */}
-                            <div className="z-zaglavlje__naslovna-slika">
-                                <img src={naslovnaIlustracija} alt=""
-                                     loading="lazy" decoding="async" fetchpriority="low"/>
-                            </div>
+                            {this.poljePretrage(true, l)}
                         </div>
                     </div>
                     : null}

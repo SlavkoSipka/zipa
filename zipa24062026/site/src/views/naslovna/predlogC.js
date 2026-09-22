@@ -5,6 +5,7 @@ import { Container } from 'reactstrap';
 import Isvg from 'react-inlinesvg';
 
 import { PHOTOS_ENDPOINT } from '../../constants';
+import { PlocicaGalerije } from '../../components/plocica';
 
 /**
  * Naslovna strana — predlog C.
@@ -99,17 +100,14 @@ class PredlogC extends Component {
         const lang = this.props.lang;
         const podesavanja = this.props.settings || {};
 
-        const najnovije = (this.props.latest || []).slice(0, 9);
-        const glavna = najnovije[0];
+        // Red od pet pločica kao na A (2026-09-22) — pet najnovijih galerija.
+        const najnovije = (this.props.latest || []).slice(0, 5);
 
         const kategorije = (this.props.homeCategories || [])
             .filter((k) => (k.photosCount !== undefined ? k.photosCount : (k.photos && k.photos.length)))
             .slice()
             .sort((a, b) => (a.position || 0) - (b.position || 0));
 
-        const naslovGlavne = glavna ? Object.translate(glavna, 'name', lang) : '';
-        const aliasGlavne = glavna ? Object.translate(glavna, 'alias', lang) : '';
-        const slikaGlavne = glavna && glavna.photos && glavna.photos[0] && glavna.photos[0].image;
 
         return (
             <div className="naslovna-c">
@@ -118,42 +116,18 @@ class PredlogC extends Component {
                     traci na vrhu zaglavlja (`header.js`), koja se vidi na
                     svakoj strani — ovde su bile drugi prikaz iste stvari. */}
 
-                {/* ── Naslovna traka: jedan snimak preko cele širine ────── */}
-                {glavna ? (
-                    <section className="glavna-traka">
-                        <Link to={`/galerija/${aliasGlavne}/${glavna._id}`}>
-                            {slikaGlavne ? <img src={slikaUrl(slikaGlavne, '700x')} alt={naslovGlavne} /> : null}
-                            <Container>
-                                <div className="tekst">
-                                    {glavna.categoryName ? (
-                                        <span className="oznaka">{Object.translate(glavna, 'categoryName', lang)}</span>
-                                    ) : null}
-                                    <h2>{naslovGlavne}</h2>
-                                    <p>
-                                        {glavna.location ? <span>{glavna.location}</span> : null}
-                                        <span>{datum(glavna.date)}</span>
-                                        <span>{glavna.photosCount} {'fotografija'.translate(lang)}</span>
-                                    </p>
-                                </div>
-                            </Container>
-                        </Link>
+                {/* ── Pretraga sa pozadinskom slikom je u zaglavlju
+                    (`header.js`, naslovni blok); sliku bira administracija.
+                    Ispod nje: pet najnovijih galerija kao pločice sa A. ── */}
+                {najnovije.length ? (
+                    <section className="z-mozaik z-mozaik--pet">
+                        <div className="z-mozaik__mreza z-mozaik__mreza--pet">
+                            {najnovije.map((g, i) => (
+                                <PlocicaGalerije key={g._id || i} g={g} lang={lang} />
+                            ))}
+                        </div>
                     </section>
                 ) : null}
-
-                {/* ── Najnovije ────────────────────────────────────────── */}
-                <section className="odeljak">
-                    <Container>
-                        <div className="naslov-odeljka">
-                            <h3>{'Najnovije'.translate(lang)}</h3>
-                            <Link to="/galerije">{'Sve galerije'.translate(lang)} &rarr;</Link>
-                        </div>
-                    </Container>
-                    <Container>
-                        <div className="mreza-galerija">
-                            {najnovije.slice(1).map((g, i) => this.kartica(g, `n${i}`))}
-                        </div>
-                    </Container>
-                </section>
 
                 {/* ── Izdvojeno ────────────────────────────────────────── */}
                 {this.props.izdvojeno && this.props.izdvojeno.length ? (
@@ -188,9 +162,6 @@ class PredlogC extends Component {
                                 <Container>
                                     <div className="naslov-odeljka">
                                         <h3>{Object.translate(k, 'name', lang)}</h3>
-                                        <span className="broj-kat">
-                                            {(k.photosCount || 0).toLocaleString('sr-RS')}
-                                        </span>
                                         <Link to={`/galerije?category=${k.alias && k.alias.ba}`}>
                                             {'Sve'.translate(lang)} &rarr;
                                         </Link>

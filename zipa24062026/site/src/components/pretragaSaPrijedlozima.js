@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {API_ENDPOINT} from '../constants';
+import {API_ENDPOINT, PHOTOS_ENDPOINT} from '../constants';
 
 // Nazivi vrsta predloga, onako kako ih vidi posetilac.
 const VRSTE = {
@@ -18,12 +18,17 @@ const VRSTE = {
  *
  * Koristi se i na naslovnoj i u zaglavlju, pa izgled dolazi spolja preko
  * `renderInput`; ovde je samo ponašanje.
+ *
+ * Uz `fotografije` (pretraga fotografija) predlozi su ključne reči upisane na
+ * samim fotografijama, a ispod njih i nekoliko fotografija kao sličice.
+ * Klik na sličicu zove `onFotografija(foto)`.
  */
 class PretragaSaPrijedlozima extends Component {
     constructor(props) {
         super(props);
         this.state = {
             prijedlozi: [],
+            fotografije: [],
             vidljivi: false,
             oznaceni: -1,
         };
@@ -42,19 +47,26 @@ class PretragaSaPrijedlozima extends Component {
         clearTimeout(this._kucanje);
 
         if (!pojam || pojam.trim().length < 2) {
-            this.setState({prijedlozi: [], vidljivi: false, oznaceni: -1});
+            this.setState({prijedlozi: [], fotografije: [], vidljivi: false, oznaceni: -1});
             return;
         }
 
         this._kucanje = setTimeout(() => {
             const ovaj = (this._redniBroj = (this._redniBroj || 0) + 1);
 
-            fetch(`${API_ENDPOINT}/search/suggest?q=${encodeURIComponent(pojam.trim())}`)
+            const zaFotografije = !!this.props.fotografije;
+            const putanja = zaFotografije ? '/search/suggest/photos' : '/search/suggest';
+
+            fetch(`${API_ENDPOINT}${putanja}?q=${encodeURIComponent(pojam.trim())}`)
                 .then((res) => res.json())
                 .then((rezultat) => {
                     if (ovaj !== this._redniBroj) return;
+                    const prijedlozi = zaFotografije
+                        ? ((rezultat && rezultat.kljucne) || [])
+                        : (Array.isArray(rezultat) ? rezultat : []);
                     this.setState({
-                        prijedlozi: Array.isArray(rezultat) ? rezultat : [],
+                        prijedlozi,
+                        fotografije: zaFotografije ? ((rezultat && rezultat.fotografije) || []) : [],
                         vidljivi: true,
                         oznaceni: -1,
                     });
@@ -99,8 +111,16 @@ class PretragaSaPrijedlozima extends Component {
         }
     };
 
+    componentDidUpdate(prethodni) {
+        // Promena vrste pretrage (galerije ↔ fotografije) — stari predlozi ne važe.
+        if (!!prethodni.fotografije !== !!this.props.fotografije) {
+            this.setState({prijedlozi: [], fotografije: [], vidljivi: false, oznaceni: -1});
+            if (this.props.value) this.traziPrijedloge(this.props.value);
+        }
+    }
+
     render() {
-        const {prijedlozi, vidljivi, oznaceni} = this.state;
+        const {prijedlozi, fotografije, vidljivi, oznaceni} = this.state;
 
         const svojstva = {
             type: 'text',
@@ -112,7 +132,7 @@ class PretragaSaPrijedlozima extends Component {
                 this.traziPrijedloge(e.target.value);
             },
             onFocus: () => {
-                if (prijedlozi.length) this.setState({vidljivi: true});
+                if (prijedlozi.length || fotografije.length) this.setState({vidljivi: true});
             },
             // Kratko odlaganje, da klik na predlog stigne pre zatvaranja liste.
             onBlur: () => setTimeout(this.zatvori, 150),
@@ -125,7 +145,7 @@ class PretragaSaPrijedlozima extends Component {
                     ? this.props.renderInput(svojstva)
                     : <input {...svojstva} />}
 
-                {vidljivi && prijedlozi.length ?
+                {vidljivi && (prijedlozi.length || fotografije.length) ?
                     <ul className="prijedlozi">
                         {prijedlozi.map((p, idx) => (
                             <li key={idx}
@@ -136,6 +156,24 @@ class PretragaSaPrijedlozima extends Component {
                                 <span className="vrsta">{VRSTE[p.vrsta] || p.vrsta}</span>
                             </li>
                         ))}
+                        {fotografije.length ?
+                            <li className="prijedlozi__fotografije">
+                                {fotografije.map((f) => (
+                                    <button type="button"
+                                            key={`${f.galleryId}-${f.idx}`}
+                                            className="prijedlozi__foto"
+                                            title={f.name || ''}
+                                            onMouseDown={(e) => {
+                                                e.preventDefault();
+                                                this.zatvori();
+                                                if (this.props.onFotografija) this.props.onFotografija(f);
+                                            }}>
+                                        <img src={`${PHOTOS_ENDPOINT}/photos/350x/${encodeURI(f.image)}`}
+                                             alt={f.name || ''} loading="lazy"/>
+                                    </button>
+                                ))}
+                            </li>
+                            : null}
                     </ul>
                     : null}
             </>

@@ -24,6 +24,7 @@ import AccountUsersPage from './views/account/usersPage';
 import AccountPagesPage from './views/account/pagesPage';
 import AccountPageItemPage from './views/account/pageItemPage';
 import AccountPrijavaStranaPage from './views/account/prijavaStranaPage';
+import AccountIzdvajamoPage from './views/account/izdvajamoPage';
 import AccountProfilePage from './views/account/profilePage';
 import AccountChangePasswordPage from './views/account/changePassword';
 import AccountPhotoVisitsPage from './views/account/photoVisits';
@@ -1101,6 +1102,20 @@ export const routes = [
         generateSeoTags: (data) => {
             return {
                 title: 'Stranice',
+            }
+        },
+
+        loadData: []
+    },
+    {
+        path: "/account/featured",
+        exact: true,
+        loginNeeded: true,
+        preAuthComponent: LoginPage,
+        component: AccountIzdvajamoPage,
+        generateSeoTags: () => {
+            return {
+                title: 'Izdvajamo',
             }
         },
 

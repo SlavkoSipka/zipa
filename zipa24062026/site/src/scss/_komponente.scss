@@ -1325,3 +1325,18 @@
     color: var(--boja-tekst-tiho);
     font-style: italic;
 }
+
+
+/* ── Znak ZIPA PHOTO po temi (2026-09-22) ────────────────────────────────
+   Zaglavlje i podnožje nose oba znaka: beli za tamnu traku i tamni za belu.
+   Tema C je bela, pa tamo stoji tamni. */
+.z-zaglavlje__logo .z-znak--tamni,
+.z-podnozje__logo .z-znak--tamni { display: none; }
+
+[data-tema="c"] {
+    .z-zaglavlje__logo .z-znak--svetli,
+    .z-podnozje__logo .z-znak--svetli { display: none; }
+
+    .z-zaglavlje__logo .z-znak--tamni,
+    .z-podnozje__logo .z-znak--tamni { display: block; }
+}

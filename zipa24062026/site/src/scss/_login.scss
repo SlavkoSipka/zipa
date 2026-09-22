@@ -314,6 +314,39 @@
         color: var(--boja-tekst-tiho);
 
         a { @include z-veza; @include z-fokus; }
+
+        // Prijava: „Kreirajte nalog" kao veliko dugme, da se lako uoči.
+        &--istaknuto {
+            font-size: var(--slovo-md);
+            line-height: var(--red-md);
+
+            p { margin: 0 0 var(--razmak-3); }
+        }
+    }
+
+    &__dno &__dugme-nalog {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        min-height: var(--visina-radnja);
+        padding: 0 var(--razmak-4);
+
+        border: 2px solid var(--boja-tekst);
+        border-radius: var(--radijus-panel);
+        background: var(--boja-povrsina);
+        color: var(--boja-tekst);
+
+        font-size: var(--slovo-lg);
+        font-weight: var(--tezina-poludebela);
+        text-decoration: none;
+
+        @include z-prelaz(background-color);
+        &:hover {
+            background: var(--boja-podloga-tiha);
+            color: var(--boja-tekst);
+            text-decoration: none;
+        }
     }
 
     /* ── desna strana: fotografija iz arhive ──────────────────────────── */

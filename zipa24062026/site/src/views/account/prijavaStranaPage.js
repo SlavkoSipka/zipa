@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import Page from '../../containers/page';
 import AdminOkvir from '../../components/adminOkvir';
 import { Obavestenja, napraviPoruke } from '../../components/admin/Stanja';
+import PoljeSlike from '../../components/forms/fields/image';
 
 import { API_ENDPOINT, PHOTOS_ENDPOINT } from '../../constants';
 
@@ -13,7 +14,8 @@ import { API_ENDPOINT, PHOTOS_ENDPOINT } from '../../constants';
  * stranice: obrazac je isti uvek, a jedino što se menja je FOTOGRAFIJA uz
  * njega i potpis ispod nje (naziv galerije, autor, mjesto, godina).
  *
- * Do sada je to uvijek bila najnovija galerija. Ovdje se bira konkretna.
+ * Do sada je to uvijek bila najnovija galerija. Ovdje se bira konkretna
+ * galerija ILI se postavlja sopstvena fotografija (`fotografija` + `potpis`).
  * Izbor se pamti u podešavanjima sajta (`loginGallery`), pa nema nove
  * tabele u bazi: `/settings/update` spaja poslano sa postojećim.
  *
@@ -31,7 +33,7 @@ class PrijavaStranaPage extends Component {
             rezultati: [],
             ucitavanje: true,
             trazim: false,
-            izabrana: null,     // { id, alias, naziv, slika }
+            izabrana: null,     // { id, alias, naziv, slika } ili { fotografija, potpis }
             poruke: [],
         };
 
@@ -57,7 +59,7 @@ class PrijavaStranaPage extends Component {
         }).then((res) => res.json()).then((result) => {
             const izbor = result && result.loginGallery;
             this.setState({
-                izabrana: izbor && izbor.id ? izbor : null,
+                izabrana: izbor && (izbor.id || izbor.fotografija) ? izbor : null,
                 ucitavanje: false,
             });
         }).catch(() => this.setState({ ucitavanje: false }));
@@ -100,7 +102,7 @@ class PrijavaStranaPage extends Component {
         this.sacuvaj({ id: izbor.id, alias: izbor.alias });
     };
 
-    sacuvaj = (vrednost) => {
+    sacuvaj = (vrednost, porukaUspeha) => {
         const l = this.props.lang;
         fetch(`${API_ENDPOINT}/settings/update`, {
             method: 'POST',
@@ -129,8 +131,9 @@ class PrijavaStranaPage extends Component {
                     headers: { 'Content-Type': 'application/json' },
                 }).then((r) => r.json()).then((sada) => {
                     const upisano = sada && sada.loginGallery;
-                    const ocekivano = vrednost ? String(vrednost.id) : null;
-                    const stvarno = upisano && upisano.id ? String(upisano.id) : null;
+                    const kljuc = (v) => (v && (v.id || v.fotografija)) ? String(v.id || v.fotografija) : null;
+                    const ocekivano = kljuc(vrednost);
+                    const stvarno = kljuc(upisano);
 
                     if (ocekivano !== stvarno) {
                         this.poruke.dodaj('greska',
@@ -141,17 +144,32 @@ class PrijavaStranaPage extends Component {
                     // Zaglavlje i strane čitaju podešavanja iz `App.js` — osvježi
                     // ih, da se izmjena vidi bez ponovnog učitavanja sajta.
                     if (this.props.initFetch) this.props.initFetch();
-                    this.poruke.dodaj('uspeh', (vrednost
-                        ? 'Fotografija na prijavi je promijenjena.'
-                        : 'Vraćeno na najnoviju galeriju.').translate(l));
+                    const uspeh = porukaUspeha
+                        || (vrednost ? 'Fotografija na prijavi je promijenjena.' : 'Vraćeno na najnoviju galeriju.');
+                    this.poruke.dodaj('uspeh', uspeh.translate(l));
                 });
             })
             .catch(() => this.poruke.dodaj('greska', 'Izmjena nije sačuvana. Pokušajte ponovo.'.translate(l)));
     };
 
+    // Sopstvena fotografija — postavlja se kroz isti `/upload` kao baneri.
+    postaviFotografiju = (url) => {
+        const iz = this.state.izabrana;
+        const izbor = { fotografija: url, potpis: (iz && iz.fotografija && iz.potpis) || '' };
+        this.setState({ izabrana: izbor });
+        this.sacuvaj(izbor);
+    };
+
+    sacuvajPotpis = () => {
+        const iz = this.state.izabrana;
+        if (!iz || !iz.fotografija) return;
+        this.sacuvaj({ fotografija: iz.fotografija, potpis: iz.potpis || '' }, 'Potpis je sačuvan.');
+    };
+
     render() {
         const l = this.props.lang;
         const iz = this.state.izabrana;
+        const sopstvena = !!(iz && iz.fotografija);
 
         return (
             <AdminOkvir
@@ -186,14 +204,18 @@ class PrijavaStranaPage extends Component {
                             <span className="z-kostur z-kostur--red" />
                         ) : iz ? (
                             <div className="z-prijava-strana__izbor">
-                                {iz.slika ? (
+                                {sopstvena ? (
+                                    <img className="z-prijava-strana__slicica" src={iz.fotografija} alt="" />
+                                ) : iz.slika ? (
                                     <img
                                         className="z-prijava-strana__slicica"
                                         src={`${PHOTOS_ENDPOINT}/photos/350x/${encodeURI(iz.slika)}`}
                                         alt=""
                                     />
                                 ) : null}
-                                <span className="z-prijava-strana__naziv">{iz.naziv || iz.alias}</span>
+                                <span className="z-prijava-strana__naziv">
+                                    {sopstvena ? 'Sopstvena fotografija'.translate(l) : (iz.naziv || iz.alias)}
+                                </span>
                                 <button
                                     type="button"
                                     className="z-prijava-strana__ukloni"
@@ -212,8 +234,32 @@ class PrijavaStranaPage extends Component {
                         )}
                     </div>
 
+                    {/* ── sopstvena fotografija ───────────────────────── */}
+                    <span className="z-prijava-strana__oznaka">{'Postavite svoju fotografiju'.translate(l)}</span>
+
+                    <div className="z-prijava-strana__sopstvena">
+                        <PoljeSlike
+                            lang={l}
+                            value={sopstvena ? iz.fotografija : null}
+                            onChange={this.postaviFotografiju}
+                        />
+
+                        {sopstvena ? (
+                            <label className="z-polje">
+                                <span className="z-polje__oznaka">{'Potpis ispod fotografije (neobavezno)'.translate(l)}</span>
+                                <input
+                                    type="text"
+                                    className="z-polje__unos"
+                                    value={iz.potpis || ''}
+                                    onChange={(e) => this.setState({ izabrana: { ...iz, potpis: e.target.value } })}
+                                    onBlur={this.sacuvajPotpis}
+                                />
+                            </label>
+                        ) : null}
+                    </div>
+
                     {/* ── izbor galerije ──────────────────────────────── */}
-                    <span className="z-prijava-strana__oznaka">{'Izaberite galeriju'.translate(l)}</span>
+                    <span className="z-prijava-strana__oznaka">{'Ili izaberite galeriju'.translate(l)}</span>
 
                     <form
                         className="z-prijava-strana__trazenje"

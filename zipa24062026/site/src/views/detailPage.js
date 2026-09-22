@@ -207,7 +207,28 @@ class DetailPage extends Component {
         this.setState({ isMobile: window.innerWidth < 1024 });
     };
 
+    /*
+     * Najveća rezolucija koju fotografija ima — ista granica kao spisak
+     * rezolucija u prozoru (3000 od 1500px širine, 1500 od 801px).
+     */
+    najvecaRezolucija = (indeks) => {
+        const g = this.state.galleryContent;
+        const foto = g && g.photos && g.photos[indeks];
+        const sirina = (foto && foto.width) || 0;
+        if (sirina >= 1500) return 3000;
+        if (sirina >= 801) return 1500;
+        return 800;
+    };
+
     componentDidUpdate(prevProps, prevState) {
+        /* Kad se fotografija otvori ili promeni, za kupovinu je prvo izabrana
+           NAJVEĆA rezolucija (traženo 2026-09-22); kupac može da izabere manju. */
+        if (this.state.modalOpen
+            && (!prevState.modalOpen || prevState.selectedImageIndex !== this.state.selectedImageIndex)) {
+            const najveca = this.najvecaRezolucija(this.state.selectedImageIndex);
+            if (this.state.resolution !== najveca) this.setState({ resolution: najveca });
+        }
+
         if (prevState.modalOpen !== this.state.modalOpen) {
             if (this.state.modalOpen) {
                 document.body.style.overflow = "hidden"; // Disable scrolling
@@ -834,16 +855,13 @@ class DetailPage extends Component {
                                                     <button
                                                         className="z-prozor__glavna-radnja"
                                                         onClick={() => {
-                                                            if (this.props.uData)
-                                                                this.props.addToCart(
-                                                                    galleryContent,
-                                                                    selectedImageIndex,
-                                                                    this.state.resolution
-                                                                );
-                                                            else
-                                                                this.props[0].history.push(
-                                                                    "/login"
-                                                                );
+                                                            // I gost dodaje u korpu i nastavlja da
+                                                            // gleda; prijava se traži tek pri plaćanju.
+                                                            this.props.addToCart(
+                                                                galleryContent,
+                                                                selectedImageIndex,
+                                                                this.state.resolution
+                                                            );
                                                         }}
                                                     >
                                                         <Isvg src={cartIcon} />

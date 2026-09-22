@@ -20,7 +20,8 @@
     --boja-fokus:        var(--boja-fokus-traka);
     --boja-oznaka-tekst: var(--boja-oznaka-traka);
 
-    background: var(--boja-traka);
+    // Svoja nijansa ako je tema zada (tema C: svetlo siva), inače traka.
+    background: var(--boja-podnozje);
     color: var(--boja-traka-tekst);
 
     // Zatečeno `footer:where(.podnozje-sajta)` iz `_global.scss` nosi svoj
@@ -36,6 +37,12 @@
         max-width: 1440px;
         margin: 0 auto;
         padding: 0 var(--razmak-5);
+
+        // Skoro pun ekran, kao široki odeljci naslovne (2026-09-22).
+        @include desktop-i-vise {
+            max-width: none;
+            padding: 0 var(--razmak-6);
+        }
     }
 
     /* ── newsletter ───────────────────────────────────────────────────── */
@@ -257,20 +264,31 @@
      * to što im se odnosi stranica jako razlikuju, a `width: auto` čuva svaki
      * od izobličenja. Na uskom ekranu se prelamaju u više redova.
      */
+    /* Od 2026-09-22: do šest banera u redu (tablet tri, telefon dva). Svaki
+       dobija šestinu reda; kad ih je manje, red ostaje centriran. */
     &__baner {
+        --baneri-u-redu: 6;
+
         display: flex;
         flex-wrap: wrap;
         align-items: center;
         justify-content: center;
-        gap: var(--razmak-4) var(--razmak-6);
+        gap: var(--razmak-4) var(--razmak-5);
+
+        @include tablet { --baneri-u-redu: 3; }
+        @include mobile { --baneri-u-redu: 2; }
+
+        > a {
+            flex: 0 0 calc((100% - (var(--baneri-u-redu) - 1) * var(--razmak-5)) / var(--baneri-u-redu));
+            display: flex;
+            justify-content: center;
+        }
 
         margin-top: var(--razmak-7);
         padding-top: var(--razmak-6);
         border-top: 1px solid var(--boja-traka-linija);
 
         a {
-            display: block;
-            flex: 0 1 auto;
             line-height: 0;
             @include z-fokus;
         }
@@ -280,7 +298,7 @@
             // Zajednička visina drži traku mirnom; širina je ograničena da
             // najširi baner ne pojede ceo red.
             max-height: 64px;
-            max-width: 260px;
+            max-width: 100%;
             width: auto;
             height: auto;
             object-fit: contain;
@@ -288,7 +306,7 @@
 
         @include mobile {
             gap: var(--razmak-3) var(--razmak-4);
-            img { max-height: 48px; max-width: 180px; }
+            img { max-height: 48px; }
         }
     }
 

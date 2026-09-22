@@ -308,6 +308,16 @@ class form extends React.Component {
                     </Col>
 
                     <Col lg="6">
+                        {/* Slika iza velike pretrage na naslovnoj — predlog C.
+                            Bez nje ide prva fotografija najnovije galerije. */}
+                        <Field
+                            name="pozadinaPretrage"
+                            component={renderImageField}
+                            label="Pozadina pretrage (predlog C)"
+                        ></Field>
+                    </Col>
+
+                    <Col lg="6">
                         <Field
                             name="homepageLayoutPreview"
                             component={renderCheckField}

@@ -72,6 +72,14 @@ class HomePage extends Component {
 
         window.scrollTo(0, 0);
 
+        /* Pregled izgleda iz `sessionStorage` (vidi `App.postaviTemu`). Čita se
+           tek posle montiranja: server ga ne vidi, pa bi prvi prikaz inače
+           bio drugačiji od serverskog. */
+        try {
+            const pregled = sessionStorage.getItem('izgledPregled');
+            if (pregled) this.setState({ izgledPregled: pregled });
+        } catch (e) { /* privatni režim */ }
+
 
         for (let i = 0; i < this.props.loadData.length; i++) {
             this.props.loadData[i](window.fetch, this.props[0].match).then((data) => {
@@ -103,8 +111,18 @@ class HomePage extends Component {
          */
     }
 
-    componentDidUpdate(prevProps, prevState) {
-        window.scrollTo(0, 0)
+    /*
+     * Na vrh samo kad se promeni adresa (npr. `?izgled=b`). Ranije je ovde
+     * stajalo bezuslovno `scrollTo(0, 0)` na SVAKO osvežavanje — pa je svaka
+     * promena stanja u `App.js` (korpa, poruka, podešavanja) bacala naslovnu
+     * na vrh i skrolovanje nadole nije radilo.
+     */
+    componentDidUpdate(prevProps) {
+        const pre = prevProps[0] && prevProps[0].location;
+        const sad = this.props[0] && this.props[0].location;
+        if (pre && sad && (pre.pathname !== sad.pathname || pre.search !== sad.search)) {
+            window.scrollTo(0, 0);
+        }
     }
 
     onExiting() {
@@ -141,6 +159,16 @@ class HomePage extends Component {
      * fotografijama, pre nego što se pusti u javnost.
      */
     izabraniIzgled() {
+        // `?izgled=a|b|c|trenutni` u adresi — za pregled izgleda bez diranja
+        // podešavanja. Ništa se ne pamti; bez parametra važi izbor iz administracije.
+        const lokacija = this.props[0] && this.props[0].location;
+        const izAdrese = lokacija && (lokacija.search || '').match(/[?&]izgled=(a|b|c|trenutni)\b/);
+        if (izAdrese) return izAdrese[1];
+        if (this.state.izgledPregled && ['a', 'b', 'c', 'trenutni'].indexOf(this.state.izgledPregled) !== -1
+            && !(lokacija && /[?&]izgled=podesavanja\b/.test(lokacija.search || ''))) {
+            return this.state.izgledPregled;
+        }
+
         const podesavanja = this.props.settings || {};
         const izgled = podesavanja.homepageLayout || 'trenutni';
 

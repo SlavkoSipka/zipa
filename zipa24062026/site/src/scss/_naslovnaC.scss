@@ -488,6 +488,20 @@
     }
 }
 
+// Predlozi A i C: odeljci idu skoro do ivice ekrana, pa kartice rastu sa širinom.
+.naslovna-a,
+.naslovna-c {
+    > .container,
+    .odeljak > .container,
+    section > .container {
+        @include desktop-i-vise {
+            max-width: none;
+            padding-left: var(--razmak-6);
+            padding-right: var(--razmak-6);
+        }
+    }
+}
+
 // Naslovna traka predloga C ide preko cele širine, pa ostaje kako jeste.
 .naslovna-c .glavna-traka > a > img { max-width: none; }
 

@@ -12,6 +12,7 @@ import './App.css';
 
 import Isvg from 'react-inlinesvg';
 import trashIcon from './assets/svg/orders-trash.svg';
+import PlutajucaKorpa from './components/plutajucaKorpa';
 
 import DocumentMeta from 'react-document-meta';
 import {withRouter} from 'react-router'
@@ -181,7 +182,11 @@ class App extends Component {
             uData: null,
             productAddedToCart: null,
             infoMessages: {},
-            settings: pocetnaPodesavanja
+            settings: pocetnaPodesavanja,
+
+            // Koliko je fotografija u korpi — za brojač u zaglavlju i
+            // plutajuću korpu (2026-09-22). Vidi `osveziKorpu`.
+            brojUKorpi: 0
 
         };
     }
@@ -290,9 +295,28 @@ class App extends Component {
             if (!jesamAdmin) izgled = 'trenutni';
         }
 
-        const tema = ['a', 'b', 'c', 'trenutni'].indexOf(izgled) !== -1 ? izgled : 'trenutni';
+        /*
+         * Pregled kroz adresu (`?izgled=a`). Od 2026-09-22 pamti se u
+         * `sessionStorage` te kartice, pa tema važi na SVIM stranama dok se
+         * gleda (galerija, kupovina, korpa) — a podešavanje sajta i ostali
+         * posetioci ostaju netaknuti. `?izgled=podesavanja` vraća na izbor
+         * iz administracije.
+         */
+        const izAdrese = (window.location.search || '').match(/[?&]izgled=(a|b|c|trenutni|podesavanja)\b/);
+        try {
+            if (izAdrese && izAdrese[1] === 'podesavanja') sessionStorage.removeItem('izgledPregled');
+            else if (izAdrese) sessionStorage.setItem('izgledPregled', izAdrese[1]);
+        } catch (e) { /* privatni režim */ }
 
-        try { localStorage.setItem('tema', tema); } catch (e) { /* privatni režim */ }
+        let pregled = null;
+        try { pregled = sessionStorage.getItem('izgledPregled'); } catch (e) { pregled = null; }
+
+        const tema = pregled && ['a', 'b', 'c', 'trenutni'].indexOf(pregled) !== -1 ? pregled
+            : (['a', 'b', 'c', 'trenutni'].indexOf(izgled) !== -1 ? izgled : 'trenutni');
+
+        if (!pregled) {
+            try { localStorage.setItem('tema', tema); } catch (e) { /* privatni režim */ }
+        }
 
         // Na strani sa sistemom stilova preklopnik tema je smisao te strane, pa
         // tamo ona odlučuje šta se vidi. Pamćenje je iznad ovoga već upisano,
@@ -334,6 +358,9 @@ class App extends Component {
     };
 
     componentDidMount() {
+        // Brojač korpe prati i promene iz drugih kartica pregledača.
+        window.addEventListener('storage', this.osveziKorpu);
+
         // Vraćamo jezik koji je posetilac ranije izabrao.
         try {
             const zapamcen = localStorage.getItem('jezik');
@@ -551,6 +578,39 @@ class App extends Component {
      * zna gde da odvede — administratora na nadzornu ploču, ostale na njihov
      * nalog. Ko ne treba povratnu vrednost, zove je kao i do sada.
      */
+    /*
+     * Broj fotografija u korpi. Gost je drži u pregledaču (`localStorage.cart`),
+     * prijavljeni kupac na serveru (`/cart`). Osvežava se posle prijave,
+     * dodavanja u korpu i svake promene strane.
+     */
+    osveziKorpu = () => {
+        if (typeof window === 'undefined') return;
+
+        if (this.state.uData) {
+            fetch(`${API_ENDPOINT}/cart`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                },
+                body: JSON.stringify({cart: []})
+            }).then(res => res.json()).then((rez) => {
+                this.setState({brojUKorpi: Array.isArray(rez) ? rez.length : 0});
+            }).catch(() => {});
+        } else {
+            let korpa = [];
+            try { korpa = JSON.parse(localStorage.getItem('cart') || '[]'); } catch (e) { korpa = []; }
+            this.setState({brojUKorpi: Array.isArray(korpa) ? korpa.length : 0});
+        }
+    };
+
+    componentDidUpdate(prevProps) {
+        if (prevProps.location && this.props.location
+            && prevProps.location.pathname !== this.props.location.pathname) {
+            this.osveziKorpu();
+        }
+    }
+
     verifyUser() {
         return fetch(`${API_ENDPOINT}/user/verify`, {
             method: 'GET',
@@ -566,11 +626,12 @@ class App extends Component {
                 // izgleda, od dozvola zavisi koju paletu korisnik vidi.
                 this.setState({
                     uData: result
-                }, this.postaviTemu)
+                }, () => { this.postaviTemu(); this.osveziKorpu(); })
                 return result;
             }
+            this.osveziKorpu();
             return null;
-        }).catch(() => null)
+        }).catch(() => { this.osveziKorpu(); return null; })
 
     }
 
@@ -586,9 +647,28 @@ class App extends Component {
                 if (!result.error) {
                     this.showInfoMessage('Fotografija je uspješno dodata u korpu');
                 }
+                this.osveziKorpu();
             })
 
-        }/* else {
+        } else {
+            /*
+             * Gost (2026-09-22): fotografija ide u korpu u pregledaču, bez
+             * prijave — prijava se traži tek kad krene da plaća (`cartPage.js`).
+             * Isti oblik koji `/cart` već prima od gosta; posle prijave
+             * `loginPage.js` prenosi ove stavke u korpu naloga.
+             */
+            let korpa = [];
+            try { korpa = JSON.parse(localStorage.getItem('cart') || '[]'); } catch (e) { korpa = []; }
+            const vec = korpa.some((s) => String(s.galleryId) === String(gallery._id)
+                && Number(s.photoId) === Number(photoId) && Number(s.resolution) === Number(resolution));
+            if (!vec) {
+                korpa.push({ galleryId: gallery._id, photoId: photoId, resolution: resolution });
+                localStorage.setItem('cart', JSON.stringify(korpa));
+            }
+            this.showInfoMessage('Fotografija je uspješno dodata u korpu');
+            this.osveziKorpu();
+        }
+        /* else {
       let cart = localStorage.getItem('cart');
       if (!cart) {
         cart = [];
@@ -737,10 +817,21 @@ class App extends Component {
                     handleDetailSearch={this.handleDetailSearch}
                     initFetch={this.initFetch}
                     showInfoMessage={this.showInfoMessage}
+                    osveziKorpu={this.osveziKorpu}
                     setLang={this.setLang}
                     bannerClick={this.bannerClick}
                 />
 
+
+                {/* Plutajuća korpa — skrol prati sama komponenta, ne `App`. Nema
+                    je u korpi, u administraciji i kod fotografa. */}
+                {(() => {
+                    const putanja = (this.props.location && this.props.location.pathname) || '';
+                    const u = this.state.uData;
+                    if (putanja === '/cart' || putanja.indexOf('/account') === 0
+                        || (u && u.userRole === 'photographer')) return null;
+                    return <PlutajucaKorpa broj={this.state.brojUKorpi} lang={this.state.lang}/>;
+                })()}
 
                 <div className="pop-up-messages">
                     {

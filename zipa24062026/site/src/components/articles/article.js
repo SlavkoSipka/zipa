@@ -93,7 +93,9 @@ class Article extends Component {
                         <img
                             src={mala}
                             srcSet={`${mala} 350w, ${velika} 700w`}
-                            sizes="(max-width: 767px) 100vw, (max-width: 1023px) 50vw, 350px"
+                            sizes={p.listView
+                                ? '(max-width: 767px) 100vw, 40vw'
+                                : '(max-width: 767px) 100vw, (max-width: 1023px) 50vw, 350px'}
                             alt=""
                             loading="lazy"
                             decoding="async"
@@ -133,8 +135,6 @@ class Article extends Component {
                         {p.location ? p.location : null}
                         {p.location && p.published ? ' · ' : null}
                         {p.published ? moment.unix(p.published).format('DD.MM.YYYY.') : null}
-                        {p.listView && p.author ? ' · ' : null}
-                        {p.listView && p.author ? p.author : null}
                     </p>
 
                     {/* Opis se vidi SAMO u spisku — u mreži za njega nema reda,

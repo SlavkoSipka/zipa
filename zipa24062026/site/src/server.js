@@ -198,7 +198,7 @@ server
              podesavanja kojim se bira naslovna. Rezerva je pamcenje
              pregledaca, pa zatim „trenutni“ — zateceni izgled, bezbedan
              pocetak ako podesavanja nisu stigla. -->
-        <script>(function(){try{var p=window.__PODESAVANJA__||{};var t=p.homepageLayout||localStorage.getItem('tema');if(['a','b','c','trenutni'].indexOf(t)===-1)t='trenutni';document.documentElement.setAttribute('data-tema',t);}catch(e){document.documentElement.setAttribute('data-tema','trenutni');}})();</script>
+        <script>(function(){try{var p=window.__PODESAVANJA__||{};var s=null;try{var m=/[?&]izgled=(a|b|c|trenutni|podesavanja)(?:&|$)/.exec(location.search);if(m&&m[1]==='podesavanja'){sessionStorage.removeItem('izgledPregled');}else if(m){sessionStorage.setItem('izgledPregled',m[1]);}s=sessionStorage.getItem('izgledPregled');}catch(e){}var t=s||p.homepageLayout||localStorage.getItem('tema');if(['a','b','c','trenutni'].indexOf(t)===-1)t='trenutni';document.documentElement.setAttribute('data-tema',t);}catch(e){document.documentElement.setAttribute('data-tema','trenutni');}})();</script>
 
         <title>${metaTags.title && metaTags.title}</title>
         <meta name="description" content='${metaTags.description && metaTags.description}' />

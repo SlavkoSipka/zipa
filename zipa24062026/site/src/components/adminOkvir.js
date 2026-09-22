@@ -101,6 +101,7 @@ export const MENI = [
             { putanja: '/account/banners',       naziv: 'Baneri',            ikona: 'baner' },
             { putanja: '/account/faq',           naziv: 'FAQ',               ikona: 'faq' },
             { putanja: '/account/faqCategories', naziv: 'Kategorije pitanja', ikona: 'kategorija' },
+            { putanja: '/account/featured',      naziv: 'Izdvajamo',         ikona: 'galerija' },
             { putanja: '/account/slides',        naziv: 'Slajder',           ikona: 'slajder' },
         ],
     },

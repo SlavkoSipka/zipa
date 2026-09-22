@@ -2,11 +2,11 @@ import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 import Isvg from 'react-inlinesvg';
 import Page from '../../containers/page';
+import FotografijaPrijave from '../../components/fotografijaPrijave';
 
 import ZEMLJE from '../../components/forms/zemlje';
 import emailSent from '../../assets/svg/email-sent.svg';
-import { API_ENDPOINT, PHOTOS_ENDPOINT } from '../../constants';
-import moment from 'moment';
+import { API_ENDPOINT } from '../../constants';
 
 /*
  * REGISTRACIJA
@@ -155,12 +155,6 @@ class RegisterPage extends Component {
 
         const ispunjeni = USLOVI_LOZINKE.filter((u) => u.vazi(this.state.password)).length;
 
-        /* Galerija izabrana u administraciji (*Stranice → Prijava i
-           registracija*); bez izbora ide najnovija, kao i do sada. */
-        const galerija = this.props.prijavaGalerija || this.props.najava;
-        const slika = galerija && galerija.photos && galerija.photos[0]
-            ? `${PHOTOS_ENDPOINT}/photos/700x/${galerija.photos[0].image}`
-            : null;
 
         return (
             <div className="login-wrap z-prijava">
@@ -398,23 +392,7 @@ class RegisterPage extends Component {
                     </div>
                 </div>
 
-                {slika ? (
-                    <div className="z-prijava__slika">
-                        <img src={slika} alt="" loading="lazy" decoding="async" />
-                        <div className="z-prijava__potpis">
-                            <p className="z-prijava__potpis-naslov">
-                                {Object.translate(galerija, 'name', l)}
-                            </p>
-                            <p className="z-prijava__potpis-podaci">
-                                {galerija.user ? galerija.user : null}
-                                {galerija.user && galerija.location ? ' · ' : null}
-                                {galerija.location ? galerija.location : null}
-                                {(galerija.user || galerija.location) && galerija.date ? ' · ' : null}
-                                {galerija.date ? moment.unix(galerija.date).format('YYYY.') : null}
-                            </p>
-                        </div>
-                    </div>
-                ) : null}
+                <FotografijaPrijave props={this.props} lang={l} />
             </div>
         );
     }

@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom'
 import Isvg from 'react-inlinesvg';
+import znakZipaTamni from '../assets/svg/logo.svg';
 
 import social1 from '../assets/svg/social1.svg';
 import social2 from '../assets/svg/social2.svg';
@@ -198,7 +199,11 @@ class Footer extends Component {
 
                             <div>
                                 {p.footerLogo ?
-                                    <div className="z-podnozje__logo"><Isvg src={p.footerLogo} /></div>
+                                    <div className="z-podnozje__logo">
+                                        <span className="z-znak z-znak--svetli"><Isvg src={p.footerLogo} /></span>
+                                        {/* Na svetlom podnožju (tema C) — tamni znak iz sajta. */}
+                                        <img className="z-znak z-znak--tamni" src={znakZipaTamni} alt="" />
+                                    </div>
                                     : null}
                                 <p className="z-podnozje__o-nama">
                                     {'Prva foto agencija u Bosni i Hercegovini. Zipa Agency nudi profesionalno fotografisanje, video i dron snimanje svih događaja u zemlji i okruženju, prema potrebama medijskih kuća, pravnih i fizičkih lica. Pogledajte arhivu fotografija od 1990. godine pa do danas.'.translate(l)}

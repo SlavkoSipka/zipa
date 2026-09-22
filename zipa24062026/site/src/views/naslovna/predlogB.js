@@ -108,7 +108,6 @@ class PredlogB extends Component {
                 {g.location ? <span>{g.location}</span> : null}
                 <span>{datum(g.date)}</span>
                 {broj ? <span>{broj} {'fotografija'.translate(lang)}</span> : null}
-                {g.user ? <span>{g.user}</span> : null}
             </p>
         );
 
@@ -323,9 +322,6 @@ class PredlogB extends Component {
                                 <Container>
                                     <div className="naslov-odeljka">
                                         <h3>{Object.translate(k, 'name', lang)}</h3>
-                                        <span className="broj">
-                                            {(k.photosCount || 0).toLocaleString('sr-RS')} {'fotografija'.translate(lang)}
-                                        </span>
                                         <Link to={`/galerije?category=${k.alias && k.alias.ba}`}>
                                             {'Sve'.translate(lang)} &rarr;
                                         </Link>

@@ -69,6 +69,10 @@
 
     .modal-header { flex: 0 0 auto; }
 
+    /* reactstrap stavlja sadržaj zaglavlja u `.modal-title`, koji je bio
+       uzak — pa je X stajao odmah uz brojač umesto u gornjem desnom uglu. */
+    .modal-title { flex: 1 1 auto; min-width: 0; }
+
     .modal-body {
         flex: 1 1 auto;
         min-height: 0;
@@ -122,19 +126,24 @@
         color: var(--boja-traka-tekst-tiho);
     }
 
+    // X je u gornjem desnom uglu (2026-09-22) — brojač ga više ne pomera.
+    &__brojac { margin-right: auto; }
+
     &__zatvori {
         flex: 0 0 auto;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 36px;
-        height: 36px;
+        width: var(--visina-radnja);
+        height: var(--visina-radnja);
+        margin-left: auto;
 
         border: 0;
         border-radius: var(--radijus-panel);
         background: transparent;
         color: var(--boja-traka-tekst);
-        font-size: var(--slovo-md);
+        font-size: var(--slovo-2xl);
+        line-height: 1;
         cursor: pointer;
 
         @include z-prelaz(background-color);
@@ -194,6 +203,14 @@
         width: 100%;
         height: 100%;
         min-height: 0;
+
+        /* Kadar za kupovinu je 4:3 (2026-09-22), kao fotografije agencije.
+           Slika u njemu ostaje `contain` — ništa se ne seče. */
+        @include desktop-i-vise {
+            width: auto;
+            max-width: 100%;
+            aspect-ratio: 4 / 3;
+        }
     }
 
     /*
@@ -292,9 +309,23 @@
      * tanka linija — bez senke i bez radijusa na spoljnim ivicama.
      */
     &__panel {
-        flex: 0 0 310px;
-        max-width: 310px;
+        /* Širi od prvobitnih 310px: fotografije agencije su 4:3, pa pored
+           njih ima mesta, a izbor za kupovinu treba da se čita kao na AP-u
+           (naziv i cena krupno, namena ispod) — 2026-09-22. */
+        flex: 0 0 420px;
+        max-width: 420px;
         min-height: 0;
+
+        @include small-desktop { flex-basis: 360px; max-width: 360px; }
+
+        /* Panel za kupovinu nosi svoje boje (tema ih može izdvojiti — A ga
+           ima svetlijim i sa žutim dugmetom). Preusmeravanje ovde važi za
+           sve u panelu: redove rezolucija, linije, dugme i oznaku izbora. */
+        --boja-traka-povrsina: var(--boja-kupovina-panel);
+        --boja-traka-linija:   var(--boja-kupovina-linija);
+        --boja-akcenat:        var(--boja-kupi);
+        --boja-akcenat-tekst:  var(--boja-kupi-tekst);
+        --boja-akcenat-jako:   var(--boja-kupi-jako);
 
         border-left: 1px solid var(--boja-traka-linija);
         background: var(--boja-traka-povrsina);
@@ -324,7 +355,7 @@
         display: block;
         margin: 0 0 var(--razmak-2);
 
-        font-size: var(--slovo-oznaka);
+        font-size: var(--slovo-xs);
         line-height: 1.6;
         font-weight: var(--tezina-jaka);
         letter-spacing: .1em;
@@ -347,12 +378,12 @@
     &__rezolucija {
         position: relative;
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         justify-content: space-between;
-        gap: var(--razmak-3);
+        gap: var(--razmak-4);
         width: 100%;
         min-height: 44px;
-        padding: var(--razmak-2) var(--razmak-3);
+        padding: var(--razmak-4);
         text-align: left;
 
         border: 0;
@@ -391,18 +422,17 @@
        do A3"), pa je duži red prelamao i njegovo dugme je bilo više od
        ostala dva. Sada se višak skraćuje tačkicama i sva tri reda imaju
        istu visinu. */
+    /* Kao na AP-u: naziv krupno u prvom redu, namena ispod u celini (bez
+       tačkica) — na širem panelu više nema potrebe za skraćivanjem. */
     &__rez-naziv,
     &__rez-opis {
         display: block;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
     }
 
     &__rez-naziv {
-        font-size: var(--slovo-sm);
-        line-height: 1.3;
-        font-weight: var(--tezina-srednja);
+        font-size: var(--slovo-lg);
+        line-height: var(--red-lg);
+        font-weight: var(--tezina-jaka);
         color: var(--boja-traka-tekst-tiho);
 
         .z-prozor__rezolucija--izabrana & {
@@ -418,8 +448,9 @@
     }
 
     &__rez-opis {
-        font-size: var(--slovo-sitno);
-        line-height: 1.4;
+        margin-top: var(--razmak-1);
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
         color: var(--boja-traka-tekst-tiho);
     }
 
@@ -440,9 +471,9 @@
     &__rez-cena {
         flex: 0 0 auto;
         text-align: right;
-        font-size: var(--slovo-sm);
-        line-height: 1.3;
-        font-weight: var(--tezina-srednja);
+        font-size: var(--slovo-lg);
+        line-height: var(--red-lg);
+        font-weight: var(--tezina-jaka);
         color: var(--boja-traka-tekst-tiho);
         white-space: nowrap;
 
@@ -541,8 +572,8 @@
     // gde je ceo pasus razvlačio panel.
     &__opis {
         margin: 0 0 var(--razmak-2);
-        font-size: var(--slovo-sitno);
-        line-height: 1.55;
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
         color: var(--boja-traka-tekst-tiho);
 
         &--skupljen {
@@ -561,7 +592,7 @@
         background: transparent;
 
         font-family: var(--pismo-tekst);
-        font-size: var(--slovo-sitno);
+        font-size: var(--slovo-sm);
         font-weight: var(--tezina-srednja);
         color: var(--boja-veza-traka);
         text-decoration: underline;
@@ -587,7 +618,7 @@
         dt {
             flex: 0 0 auto;
             margin: 0;
-            font-size: var(--slovo-sitno);
+            font-size: var(--slovo-sm);
             line-height: 1.5;
             color: var(--boja-traka-tekst-tiho);
         }
@@ -598,7 +629,7 @@
             margin: 0;
             text-align: right;
 
-            font-size: var(--slovo-sitno);
+            font-size: var(--slovo-md);
             line-height: 1.5;
             color: var(--boja-traka-tekst);
             overflow-wrap: anywhere;

@@ -151,7 +151,12 @@ alter table "userResolutions" add column if not exists "cena3000px" numeric;
 alter table "userResolutions" add column if not exists "cena1500px" numeric;
 alter table "userResolutions" add column if not exists "cena800px" numeric;
 alter table subscribers add column if not exists "unsubscribedAt" bigint;
+alter table settings add column if not exists "pozadinaPretrage" text;
 ```
+
+`pozadinaPretrage` (2026-09-22) je slika iza velike pretrage na naslovnoj C,
+bira se u *Podešavanja sajta*. Dok kolone nema, izbor se ne pamti i ide prva
+fotografija najnovije galerije.
 
 Dok se ne pusti, način naplate u *Podešavanjima agencije* i pamćenje odjava
 sa newslettera ne rade; ostatak sajta radi normalno. Ne upisivati u bazu

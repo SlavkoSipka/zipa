@@ -492,17 +492,27 @@ header .logo .desktop-logo.logo-b > .natpis-b {
 
             &:hover .slika img { transform: scale(1.04); }
 
+            /* Mesto za naslov je uvek visoko DVA reda (2 × 1.16em), a naslov
+               stoji na vrhu tog mesta — natpis od jednog reda zato stoji red
+               više, u visini prvog reda dvorednog (izmena 2026-09-21).
+               Veličina slova je na omotaču, da `em` važi i za tu visinu. */
             .preko-teksta {
                 position: absolute;
                 left: 0; right: 0; bottom: 0;
                 padding: 70px 26px 26px;
                 background-image: linear-gradient(transparent, rgba(8, 11, 22, 0.9));
 
+                font-size: 30px;
+                box-sizing: border-box;
+                min-height: calc(70px + 2.32em + 26px);
+
+                @include mobile-tablet { font-size: 23px; }
+
                 h4 {
                     position: relative;
-                    padding-left: 16px;
+                    padding-left: 18px;
                     margin: 0;
-                    font-size: 27px;
+                    font-size: 1em;
                     font-weight: $bold;
                     line-height: 1.16;
                     color: $white;
@@ -513,18 +523,21 @@ header .logo .desktop-logo.logo-b > .natpis-b {
                         content: '';
                         position: absolute;
                         left: 0; top: 3px; bottom: 3px;
-                        width: 4px;
-                        border-radius: 2px;
+                        width: 6px;
+                        border-radius: 3px;
                         background-color: #E3B341;
                     }
 
-                    @include mobile-tablet { font-size: 21px; }
-                    @include mobile { font-size: 18px; padding-left: 12px; }
+                    @include mobile { padding-left: 14px; &::before { width: 5px; } }
                 }
             }
 
             @include mobile {
-                .preko-teksta { padding: 46px 16px 16px; }
+                .preko-teksta {
+                    padding: 46px 16px 16px;
+                    font-size: 20px;
+                    min-height: calc(46px + 2.32em + 16px);
+                }
             }
         }
     }
