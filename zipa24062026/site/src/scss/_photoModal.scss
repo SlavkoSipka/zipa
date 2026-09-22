@@ -888,10 +888,25 @@
             opacity: .8;
         }
 
-        /* ── traka umanjenih se sklanja ──────────────────────────────
-           Šezdeset jedan piksel visine za sličice od 64×44 koje se na
-           telefonu ionako ne pogađaju — prevlačenje radi isti posao. */
-        &__traka { display: none; }
+        /* ── traka umanjenih OSTAJE i na telefonu (2026-09-23) ────────
+           Traženo: da se vidi gde si u galeriji i da se ostale fotografije
+           listaju levo-desno, kao na računaru. Sličice su manje, traka se
+           prevlači prstom, a trenutna se sama dovlači u kadar (`scrollIntoView`
+           u `detailPage.js`). Prevlačenje preko same fotografije i dalje menja
+           fotografiju. */
+        &__traka {
+            gap: var(--razmak-1);
+            padding: var(--razmak-2) var(--razmak-3);
+            scroll-padding: 0 var(--razmak-3);
+            -webkit-overflow-scrolling: touch;
+        }
+
+        &__umanjena {
+            width: 56px;
+            height: 40px;
+            // Na dodir nema hovera, pa netrenutne ne smeju da budu previše tihe.
+            opacity: .75;
+        }
 
         /* ── 3. cijene ───────────────────────────────────────────────── */
         &__panel-telo { padding: var(--razmak-4); }

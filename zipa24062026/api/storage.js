@@ -25,6 +25,19 @@ if (!R2.accountId || !R2.accessKeyId || !R2.secretAccessKey) {
     console.error('[storage] Nedostaju R2_* varijable — napravi .env po uzoru na .env.example');
 }
 
+/*
+ * Koliko veza ka R2 sme da bude otvoreno odjednom.
+ *
+ * Podrazumevanih 50 je premalo: jedna galerija ume da ima 150+ fotografija,
+ * a sve sličice idu kroz ovaj API (lokalno uvek, na produkciji kad Worker
+ * nije podešen). Preko te granice se zahtevi REDAJU — mereno 2026-09-23:
+ * „socket usage at capacity=50 and 693 additional requests are enqueued",
+ * posle čega API prestane da odgovara i na obične pozive, pa se galerija
+ * uopšte ne otvori.
+ */
+const { NodeHttpHandler } = require('@smithy/node-http-handler');
+const https = require('https');
+
 const client = new S3Client({
     region: 'auto',
     endpoint: `https://${R2.accountId}.r2.cloudflarestorage.com`,
@@ -32,6 +45,11 @@ const client = new S3Client({
         accessKeyId: R2.accessKeyId,
         secretAccessKey: R2.secretAccessKey,
     },
+    requestHandler: new NodeHttpHandler({
+        httpsAgent: new https.Agent({ keepAlive: true, maxSockets: 256 }),
+        connectionTimeout: 5000,
+        requestTimeout: 30000,
+    }),
 });
 
 /** Da li objekat postoji u bucketu */

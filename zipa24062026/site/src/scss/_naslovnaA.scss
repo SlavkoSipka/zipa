@@ -749,7 +749,14 @@
             background: linear-gradient(transparent 45%, var(--boja-preko-zastor));
         }
         .z-plocica__datum { display: none; }
+
+        /* Na telefonu su pločice upola uže, pa naslov ide na dva reda i
+           sitnijim slogom — inače prekrije pola fotografije. */
         .z-plocica__naslov,
-        .z-mozaik__mreza--pet .z-plocica__naslov { font-size: var(--slovo-lg); line-height: var(--red-lg); }
+        .z-mozaik__mreza--pet .z-plocica__naslov {
+            font-size: var(--slovo-sm);
+            line-height: var(--red-sm);
+            -webkit-line-clamp: 2;
+        }
     }
 }

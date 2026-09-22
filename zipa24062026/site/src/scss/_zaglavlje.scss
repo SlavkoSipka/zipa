@@ -1289,7 +1289,8 @@
 @include mobile {
     .z-zaglavlje {
         &__sirina { padding: 0 var(--razmak-4); }
-        &__logo svg, &__logo img { height: var(--razmak-6); }
+        // Znak je jedini logo na telefonu (natpis se sklanja), pa ide krupnije.
+        &__logo svg, &__logo img { height: calc(var(--razmak-6) + var(--razmak-1)); }
         &__traka-veza { font-size: var(--slovo-xs); }
 
         // Tanka traka na telefonu nosi samo natpise, bez razmaka za disanje.
