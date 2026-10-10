@@ -454,13 +454,17 @@ class Header extends Component {
             ? 'Obavještenje'.translate(l)
             : 'Pogledajte novu galeriju'.translate(l);
 
-        const najavaDugme = najavaAdmin
+        const najavaDugme = najavaAdmin && !najavaAdmin.link
             ? 'Pročitaj'.translate(l)
             : 'Pogledaj'.translate(l);
 
+        /* Najava sa upisanom vezom (`link`, npr. galerija) vodi tamo, sa
+           dugmetom „Pogledaj"; bez veze vodi na svoju stranu `/najave/:id`. */
+        const najavaVeza = najavaAdmin && najavaAdmin.link ? najavaAdmin.link : null;
+
         const najavaPutanja = najava && najava._id
             ? (najavaAdmin
-                ? `/najave/${najava._id}`
+                ? (najavaVeza || `/najave/${najava._id}`)
                 : `/galerija/${Object.translate(najava, 'alias', l) || najava.alias || 'galerija'}/${najava._id}`)
             : null;
 

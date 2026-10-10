@@ -103,6 +103,11 @@
      * plavoj daje 3,34:1. Dodato 2026-08-27. Belo na `#2877A3` je 5,40:1. */
     --boja-najava-tekst:  #FFFFFF;
 
+    /* Traka OBAVEŠTENJA iz administracije (iznad navigacije). Prati boju
+       izgleda: svaka tema (A, B, C) zadaje svoju vrednost ispod. Tekst na
+       njoj je beo, a dugme „Pogledaj" nosi istu boju kao tekst na sebi. */
+    --boja-najava-obavestenje: #D60006;   /* belo 5,25:1 */
+
     /* Tekst na PILULI KOJA STOJI NA TRACI (dugme „Prijava", dugme u traci
      * najave). Pilula je svetla, tekst uzima boju same trake — to je obrtanje
      * koje radi dok je traka tamna. Pod „trenutni" je traka BELA, pa bi tekst
@@ -238,6 +243,9 @@
     --slovo-preko-naslov: 2rem;       --red-preko-naslov: 1.15;       /* 32px */
     --tezina-preko:       700;        /* najdeblje što Figtree ovde ima */
     --boja-preko-zastor:  rgba(0, 0, 0, .6);
+    /* Tekst preko zastora je UVEK beo, pod svakom temom — ne sme da ide
+       preko `--boja-traka-tekst`, koja je pod temom C tamna (2026-10-10). */
+    --boja-preko-tekst:   #FFFFFF;
 
     /* ── MERE PREUZETE SA UZORA (Shutterstock, mereno 2026-08-23) ─────────
      * Zaglavlje i pretraga prate uzor u veličinama, težinama i razmaku
@@ -368,6 +376,8 @@
  *   ivica kontrole #6F94C2 na traci ..  4,6:1
  */
 [data-tema="b"] {
+    --boja-najava-obavestenje:    #1D6FDB;   /* plava radnje, belo 4,8:1 */
+
     --boja-traka:                 #0A2A52;
     --boja-traka-tekst:           #FFFFFF;
     --boja-traka-tekst-tiho:      #BFD3EA;
@@ -412,6 +422,8 @@
  *   ivica kontrole #868C93 na beloj ..  3,4:1
  */
 [data-tema="c"] {
+    --boja-najava-obavestenje:    #1F2937;   /* grafit radnje, belo 14,7:1 */
+
     --boja-traka:                 #FFFFFF;
     --boja-traka-tekst:           #1B1E24;
     --boja-traka-tekst-tiho:      #5E636B;
@@ -460,6 +472,8 @@
  *   ivica kontrole #A8606B na traci ..  3,6:1  (traži se 3:1)
  */
 [data-tema="a"] {
+    --boja-najava-obavestenje:    #C8102E;   /* crvena radnje, belo 5,9:1 */
+
     --boja-traka:                 #3D0A12;
     --boja-traka-tekst:           #FFFFFF;
     --boja-traka-tekst-tiho:      #E8C4C9;

@@ -677,7 +677,7 @@
         aspect-ratio: 3 / 2;
         overflow: hidden;
         background: var(--boja-podloga-tiha);
-        color: var(--boja-traka-tekst);
+        color: var(--boja-preko-tekst);
         text-decoration: none;
         @include z-fokus;
 
@@ -722,7 +722,7 @@
         line-height: var(--red-preko-datum);
         font-weight: var(--tezina-jaka);
         letter-spacing: -0.025em;
-        color: var(--boja-traka-tekst);
+        color: var(--boja-preko-tekst);
     }
 
     .z-plocica__naslov {
@@ -730,7 +730,7 @@
         line-height: var(--red-preko-naslov);
         font-weight: var(--tezina-preko);
         letter-spacing: -0.01em;
-        color: var(--boja-traka-tekst);
+        color: var(--boja-preko-tekst);
         text-transform: uppercase;
 
         display: -webkit-box;

@@ -40,9 +40,22 @@ export default {
 
         const key = `${size}/${image}`;
 
-        // Edge keš: iste sličice se traže hiljadama puta
+        /*
+         * Edge keš: iste sličice se traže hiljadama puta.
+         *
+         * VERZIJA KEŠA je deo ključa. Kad se pregledi u R2 naprave iznova
+         * (npr. `api/popravi-zig.js` doda žig koji je falio), stara kopija bi
+         * inače ostala u kešu do godinu dana — keš preko Cache API-ja na
+         * workers.dev ne može da se očisti iz Cloudflare-a. Povećanje broja
+         * i novi deploy čine sve stare kopije nevidljivim.
+         *
+         *   2 — 2026-10-10, „31. Sajam knjige" je bio keširan bez žiga.
+         */
+        const VERZIJA_KESA = '2';
         const cache = caches.default;
-        const cacheKey = new Request(url.toString(), request);
+        const kljucKesa = new URL(url.toString());
+        kljucKesa.searchParams.set('__k', VERZIJA_KESA);
+        const cacheKey = new Request(kljucKesa.toString(), request);
         const cached = await cache.match(cacheKey);
         if (cached) return cached;
 

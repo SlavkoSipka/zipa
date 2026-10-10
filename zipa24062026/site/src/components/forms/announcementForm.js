@@ -275,6 +275,14 @@ class form extends React.Component {
 
 
                     </Col>
+                    <Col lg="6">
+                        <Field
+                            name="link"
+                            component={renderTextField}
+                            label={'Veza (npr. adresa galerije) — dugme u traci vodi tamo'.translate(this.props.lang)}
+                            placeholder="https://zipaphoto.net/galerija/..."
+                        ></Field>
+                    </Col>
                     <Col lg="12"></Col>
                     <Col lg="3">
                         <Field

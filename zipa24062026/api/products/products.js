@@ -15,6 +15,7 @@ let db;
 const dbConnect = require('../db');
 const storage = require('../storage');
 const sharp = require('sharp');
+const zig = require('../zig');
 const { API_ENDPOINT, SITE_URL } = require('../constants');
 const sendMail = require('../sendMail');
 const crypto = require('crypto');
@@ -270,22 +271,11 @@ class ProductsModule {
 
             const imageInfo = await sharp(buffer).metadata();
 
-            // Watermark (isti fajl kao i ranije, iz uploads/ foldera)
-            let watermarkBuffer = null;
-            if (siteSettings.length && siteSettings[0].watermark) {
-                const wmPath = `./uploads/${siteSettings[0].watermark.split('/').pop()}`;
-                if (fs.existsSync(wmPath)) watermarkBuffer = fs.readFileSync(wmPath);
-            }
-
-            // Pregled: smanji na zadatu sirinu pa nalepi watermark preko sredine,
-            // sirine 50% slike - identicno starom rasporedu (logoX 88/350, 175/700).
-            const makePreview = async (width) => {
-                const resized = await sharp(buffer).rotate().resize({ width }).jpeg({ quality: 100 }).toBuffer();
-                if (!watermarkBuffer) return resized;
-                const meta = await sharp(resized).metadata();
-                const wm = await sharp(watermarkBuffer).resize({ width: Math.round(meta.width / 2) }).toBuffer();
-                return sharp(resized).composite([{ input: wm, gravity: 'center' }]).jpeg({ quality: 100 }).toBuffer();
-            };
+            /* Žig je OBAVEZAN — `zig.js` ga nalazi lokalno, u R2 ili u repou,
+               a ako ga nema nigde, baca grešku i fotografija se NE objavljuje
+               (ranije je bez fajla tiho išlo bez žiga). */
+            const watermarkBuffer = await zig.ucitajZig(siteSettings.length ? siteSettings[0].watermark : null);
+            const makePreview = (width) => zig.napraviPregled(buffer, width, watermarkBuffer);
 
             const [x350, x700] = await Promise.all([makePreview(350), makePreview(700)]);
 

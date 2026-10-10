@@ -2,6 +2,7 @@ const fs = require('fs');
 const constants = require('./constants');
 const ObjectID = require('../objectid');
 const slike = require('./slike');
+const zig = require('../zig');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const uuidv4 = require('uuid/v4');
@@ -1248,6 +1249,11 @@ class Admin {
         await db.collection('settings').deleteMany({});
         await db.collection('settings').insertOne(novo);
 
+        // Kopija u R2 — lokalni disk na Renderu ne preživi deploy (vidi `zig.js`).
+        try { await zig.sacuvajZigUR2(red[0].image); } catch (e) {
+            console.error('[zig] kopija u R2 nije uspela:', e.message);
+        }
+
         return { response: {}, status: 200 };
     }
 
@@ -1772,6 +1778,18 @@ class Admin {
     }
 
 
+    /*
+     * Veza najave (npr. galerija) cuva se kao PUTANJA na sajtu. Unos sme da
+     * bude i puna adresa (`https://zipaphoto.net/galerija/...`) — domacin se
+     * sece, da veza radi i lokalno i na produkciji. Prazno = bez veze.
+     */
+    static vezaNajave(v) {
+        const s = String(v || '').trim();
+        if (!s) return null;
+        const bezDomacina = s.replace(/^https?:\/\/[^/]+/i, '');
+        return bezDomacina.charAt(0) === '/' ? bezDomacina : '/' + bezDomacina;
+    }
+
     async updateAnnouncement(id, data) {
         let obj = data;
 
@@ -1779,6 +1797,7 @@ class Admin {
             await db.collection('announcements').insertOne({
                 content: obj.content,
                 text: obj.text,
+                link: Admin.vezaNajave(obj.link),
                 from: parseInt(obj.from),
                 to: parseInt(obj.to),
                 published: Math.floor(new Date().getTime() / 1000)
@@ -1790,6 +1809,7 @@ class Admin {
                 $set: {
                     content: obj.content,
                     text: obj.text,
+                    link: Admin.vezaNajave(obj.link),
                     from: parseInt(obj.from),
                     to: parseInt(obj.to),
                 }
