@@ -42,6 +42,7 @@ import {
     WhatsappIcon,
 } from "react-share";
 import PriceInquiry from '../components/priceInquiry';
+import UpitLicence from '../components/upitLicence';
 import { API_ENDPOINT, PHOTOS_ENDPOINT} from "../constants";
 import download from "../assets/svg/download.svg";
 import cartIcon from "../assets/svg/cart.svg";
@@ -124,6 +125,9 @@ class DetailPage extends Component {
             obrnutRedosled: false,
 
             deljenjeOtvoreno: false,
+            // Izbor formata papira za štampu (A4 / A3) i priprema slika.
+            stampaOtvorena: false,
+            stampaSePriprema: false,
             srodne: [],
 
             // Da li je oštra verzija trenutne fotografije stigla — dok ne
@@ -133,6 +137,7 @@ class DetailPage extends Component {
             opisFotoOtvoren: false,
         };
         this.deljenjeRef = React.createRef();
+        this.stampaRef = React.createRef();
     }
 
     init() {
@@ -196,6 +201,12 @@ class DetailPage extends Component {
     componentDidMount() {
         window.scrollTo(0, 0);
         this.init();
+
+        // Licence (namene korišćenja) za prozor fotografije — opšte cene.
+        fetch(`${API_ENDPOINT}/licence`)
+            .then((res) => res.json())
+            .then((licence) => this.setState({ licence: Array.isArray(licence) ? licence : [] }))
+            .catch(() => {});
         this.setState({ isMobile: window.innerWidth < 1024 });
         window.addEventListener("resize", this.updateScreenWidth);
         document.addEventListener("mousedown", this.naKlikVanDeljenja);
@@ -369,11 +380,69 @@ class DetailPage extends Component {
         if (this.state.deljenjeOtvoreno && this.deljenjeRef.current && !this.deljenjeRef.current.contains(e.target)) {
             this.setState({ deljenjeOtvoreno: false });
         }
+        if (this.state.stampaOtvorena && this.stampaRef.current && !this.stampaRef.current.contains(e.target)) {
+            this.setState({ stampaOtvorena: false });
+        }
+    };
+
+    /*
+     * ŠTAMPA GALERIJE NA A4 ILI A3 (2026-10-10).
+     *
+     * Format se zadaje pravilom `@page { size }` koje se ubaci samo za ovu
+     * štampu, pa pregledač otvori prozor za štampu već na izabranom papiru.
+     * Na `<html>` ide `data-stampa="a4|a3"` — po njemu `_print.scss` slaže
+     * dve (A4) ili tri (A3) fotografije u red.
+     *
+     * Pre štampe se SVE fotografije učitaju u većoj veličini (700x): mreža
+     * ih inače učitava tek kad dođu u kadar, pa bi na papiru ostala prazna
+     * mesta. Čeka se najviše 20 sekundi.
+     */
+    stampaj = (format) => {
+        if (typeof document === "undefined") return;
+        this.setState({ stampaOtvorena: false, stampaSePriprema: true });
+
+        const stil = document.createElement("style");
+        stil.id = "z-stampa-papir";
+        stil.textContent = `@page { size: ${format} portrait; margin: 10mm; }`;
+        const stari = document.getElementById("z-stampa-papir");
+        if (stari) stari.remove();
+        document.head.appendChild(stil);
+        document.documentElement.setAttribute("data-stampa", format.toLowerCase());
+
+        const slike = [...document.querySelectorAll(".z-galerija__mreza img")];
+        slike.forEach((slika) => {
+            slika.loading = "eager";
+            slika.sizes = "700px";
+        });
+
+        const stigla = (slika) => new Promise((gotovo) => {
+            if (slika.complete && slika.naturalWidth && slika.currentSrc.indexOf("/700x/") !== -1) return gotovo();
+            slika.addEventListener("load", gotovo, { once: true });
+            slika.addEventListener("error", gotovo, { once: true });
+        });
+        const najduze = new Promise((gotovo) => setTimeout(gotovo, 20000));
+
+        Promise.race([Promise.all(slike.map(stigla)), najduze]).then(() => {
+            this.setState({ stampaSePriprema: false });
+
+            const pocisti = () => {
+                stil.remove();
+                document.documentElement.removeAttribute("data-stampa");
+                window.removeEventListener("afterprint", pocisti);
+            };
+            window.addEventListener("afterprint", pocisti);
+
+            // Kadar da React iscrta skinutu oznaku „priprema", pa štampa.
+            setTimeout(() => window.print(), 50);
+        });
     };
 
     naTasterDeljenja = (e) => {
         if ((e.key === "Escape" || e.keyCode === 27) && this.state.deljenjeOtvoreno) {
             this.setState({ deljenjeOtvoreno: false });
+        }
+        if ((e.key === "Escape" || e.keyCode === 27) && this.state.stampaOtvorena) {
+            this.setState({ stampaOtvorena: false });
         }
     };
 
@@ -544,6 +613,15 @@ class DetailPage extends Component {
                 const svoja = dogovorene ? dogovorene[r.px] : null;
                 if (svoja !== null && svoja !== undefined && svoja !== '') {
                     return { iznos: parseFloat(svoja), dogovorena: true };
+                }
+                // Cena upisana na samoj fotografiji, pa za celu galeriju (2026-10-10).
+                const naFoto = selectedImage && selectedImage.cene ? selectedImage.cene[String(r.px)] : null;
+                if (naFoto !== null && naFoto !== undefined && naFoto !== '') {
+                    return { iznos: parseFloat(naFoto), dogovorena: false };
+                }
+                const zaGaleriju = galleryContent.cene ? galleryContent.cene[String(r.px)] : null;
+                if (zaGaleriju !== null && zaGaleriju !== undefined && zaGaleriju !== '') {
+                    return { iznos: parseFloat(zaGaleriju), dogovorena: false };
                 }
                 return {
                     iznos: galleryContent.price ? galleryContent.price * r.mnozilac : 0,
@@ -779,6 +857,16 @@ class DetailPage extends Component {
                                                 );
                                             })}
                                         </div>
+
+                                        {/* Licence (TV, štampa…) — šalju upit, ne idu u korpu. */}
+                                        <UpitLicence
+                                            lang={this.props.lang}
+                                            licence={this.state.licence}
+                                            foto={selectedImage}
+                                            ceneGalerije={galleryContent.cene}
+                                            galleryId={galleryContent._id}
+                                            photoId={selectedImageIndex}
+                                        />
 
                                         {/* Radnje — grane i pozivi NEPROMENJENI,
                                             samo natpisi kažu šta se dešava. */}
@@ -1175,14 +1263,47 @@ class DetailPage extends Component {
                                     ) : null}
                                 </div>
 
-                                <button
-                                    type="button"
-                                    className="z-galerija__radnja"
-                                    onClick={() => window.print()}
-                                >
-                                    <Isvg src={imagesCount} />
-                                    {"Štampaj".translate(this.props.lang)}
-                                </button>
+                                {/* Štampa: prvo se bira format papira (A4 / A3). */}
+                                <div className="z-galerija__radnja-grupa" ref={this.stampaRef}>
+                                    <button
+                                        type="button"
+                                        className="z-galerija__radnja"
+                                        aria-expanded={this.state.stampaOtvorena}
+                                        disabled={this.state.stampaSePriprema}
+                                        onClick={() =>
+                                            this.setState({ stampaOtvorena: !this.state.stampaOtvorena })
+                                        }
+                                    >
+                                        <Isvg src={imagesCount} />
+                                        {(this.state.stampaSePriprema ? "Pripremam štampu…" : "Štampaj").translate(this.props.lang)}
+                                    </button>
+
+                                    {this.state.stampaOtvorena ? (
+                                        <div className="z-galerija__panel-stampa" role="menu">
+                                            <p className="z-galerija__panel-stampa-naslov">
+                                                {"Format papira".translate(this.props.lang)}
+                                            </p>
+                                            {[
+                                                { format: "A4", opis: "2 fotografije u redu" },
+                                                { format: "A3", opis: "3 fotografije u redu" },
+                                            ].map((p) => (
+                                                <button
+                                                    type="button"
+                                                    role="menuitem"
+                                                    key={p.format}
+                                                    className="z-galerija__format"
+                                                    onClick={() => this.stampaj(p.format)}
+                                                >
+                                                    <span className={"z-galerija__format-list z-galerija__format-list--" + p.format.toLowerCase()} aria-hidden="true" />
+                                                    <span className="z-galerija__format-tekst">
+                                                        <strong>{p.format}</strong>
+                                                        <span>{p.opis.translate(this.props.lang)}</span>
+                                                    </span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    ) : null}
+                                </div>
 
                                 {/* Izmena i brisanje — nepromenjena prava i pozivi,
                                     samo u istom tihom izgledu kao ostale radnje. */}

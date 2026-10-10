@@ -25,6 +25,9 @@ import AccountPagesPage from './views/account/pagesPage';
 import AccountPageItemPage from './views/account/pageItemPage';
 import AccountPrijavaStranaPage from './views/account/prijavaStranaPage';
 import AccountIzdvajamoPage from './views/account/izdvajamoPage';
+import AccountLicencePage from './views/account/licencePage';
+import AccountVideoAdminPage from './views/account/videoAdminPage';
+import AccountUpitiPage from './views/account/upitiPage';
 import AccountProfilePage from './views/account/profilePage';
 import AccountChangePasswordPage from './views/account/changePassword';
 import AccountPhotoVisitsPage from './views/account/photoVisits';
@@ -1105,6 +1108,33 @@ export const routes = [
             }
         },
 
+        loadData: []
+    },
+    {
+        path: "/account/videos",
+        exact: true,
+        loginNeeded: true,
+        preAuthComponent: LoginPage,
+        component: AccountVideoAdminPage,
+        generateSeoTags: () => ({ title: 'Video' }),
+        loadData: []
+    },
+    {
+        path: "/account/licence",
+        exact: true,
+        loginNeeded: true,
+        preAuthComponent: LoginPage,
+        component: AccountLicencePage,
+        generateSeoTags: () => ({ title: 'Licence' }),
+        loadData: []
+    },
+    {
+        path: "/account/upiti",
+        exact: true,
+        loginNeeded: true,
+        preAuthComponent: LoginPage,
+        component: AccountUpitiPage,
+        generateSeoTags: () => ({ title: 'Upiti za licence' }),
         loadData: []
     },
     {

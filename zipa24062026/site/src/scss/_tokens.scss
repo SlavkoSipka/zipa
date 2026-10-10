@@ -424,6 +424,18 @@
 [data-tema="c"] {
     --boja-najava-obavestenje:    #1F2937;   /* grafit radnje, belo 14,7:1 */
 
+    /* Naslovna C: fotografija preko celog prvog ekrana, zaglavlje belim
+       slovima preko nje (2026-10-10). Zastor je dovoljno taman da belo
+       ostane čitko i na svetloj fotografiji. */
+    --c-hero-zastor-gore:   rgba(10, 12, 16, .62);
+    --c-hero-zastor-sredina: rgba(10, 12, 16, .28);
+    --c-hero-zastor-dole:   rgba(10, 12, 16, .66);
+    --c-hero-tekst:         #FFFFFF;
+    --c-hero-tekst-tiho:    rgba(255, 255, 255, .82);
+    --c-hero-linija:        rgba(255, 255, 255, .22);
+    --c-hero-panel:         #1B1E24;
+    --c-hero-podloga:       #0F1115;
+
     --boja-traka:                 #FFFFFF;
     --boja-traka-tekst:           #1B1E24;
     --boja-traka-tekst-tiho:      #5E636B;

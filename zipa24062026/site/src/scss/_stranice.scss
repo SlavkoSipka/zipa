@@ -772,3 +772,211 @@
         }
     }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SADRŽAJNE STRANE AGENCIJE — novi izgled (2026-10-10)
+   ═══════════════════════════════════════════════════════════════════════════
+   Tekstovi preneti sa starog sajta (O nama, Saradnja, Uslovi, Ugovori…)
+   izgledali su kao goli papir. Sada: zaglavlje strane u boji teme, tekst u
+   kartici koja zalazi u zaglavlje, krupnija slova i bočni panel sa ostalim
+   stranama agencije i kontaktom. */
+.z-strana--nova {
+    background: var(--boja-podloga-tiha);
+
+    .z-strana__vrh {
+        margin-bottom: 0;
+        padding: var(--razmak-7) 0 calc(var(--razmak-8) + var(--razmak-6));
+        background: var(--boja-traka);
+        border-bottom: 0;
+        color: var(--boja-traka-tekst);
+
+        @include mobile { padding: var(--razmak-6) 0 calc(var(--razmak-8) + var(--razmak-2)); }
+    }
+
+    .z-strana__putanja {
+        margin-bottom: var(--razmak-3);
+        font-size: var(--slovo-sm);
+        color: var(--boja-traka-tekst-tiho);
+
+        a { color: var(--boja-traka-tekst-tiho); @include z-veza-traka; }
+    }
+
+    .z-strana__naslov {
+        font-size: var(--slovo-3xl);
+        line-height: var(--red-3xl);
+        color: var(--boja-traka-tekst);
+
+        // Kratka crta u boji radnje ispod naslova.
+        &::after {
+            content: '';
+            display: block;
+            width: var(--razmak-8);
+            height: 4px;
+            margin-top: var(--razmak-4);
+            border-radius: 2px;
+            background: var(--boja-akcenat);
+        }
+
+        @include mobile { font-size: var(--slovo-2xl); line-height: var(--red-2xl); }
+    }
+
+    .z-strana__podnaslov {
+        margin: var(--razmak-4) 0 0;
+        max-width: 60ch;
+        font-size: var(--slovo-lg);
+        line-height: var(--red-lg);
+        color: var(--boja-traka-tekst-tiho);
+    }
+
+    // Kartica i panel zalaze u obojeno zaglavlje.
+    .z-strana__raspored--sa-panelom {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 320px);
+        gap: var(--razmak-6);
+        align-items: start;
+        margin-top: calc(-1 * var(--razmak-8));
+
+        @include mobile-tablet {
+            grid-template-columns: minmax(0, 1fr);
+            gap: var(--razmak-5);
+        }
+    }
+
+    .z-strana__kartica {
+        min-width: 0;
+        padding: var(--razmak-7);
+        border-radius: var(--radijus-panel);
+        background: var(--boja-povrsina);
+        box-shadow: var(--senka-lebdi);
+
+        @include mobile { padding: var(--razmak-5) var(--razmak-4); }
+    }
+
+    // Krupniji, prozračniji tekst.
+    .z-strana__telo {
+        max-width: 72ch;
+        font-size: var(--slovo-lg);
+        line-height: 1.75;
+
+        p { margin-bottom: var(--razmak-5); }
+
+        // Prvi pasus (obraćanje, uvod) malo jači.
+        > p:first-child {
+            font-size: var(--slovo-xl);
+            line-height: var(--red-xl);
+            font-weight: var(--tezina-srednja);
+        }
+
+        h2 { font-size: var(--slovo-2xl); line-height: var(--red-2xl); }
+        h3 { font-size: var(--slovo-xl); line-height: var(--red-xl); }
+    }
+
+    /* ── bočni panel ─────────────────────────────────────────────────── */
+    .z-strana__bocno {
+        display: grid;
+        gap: var(--razmak-4);
+        position: sticky;
+        top: var(--razmak-5);
+
+        @include mobile-tablet { position: static; }
+    }
+
+    .z-strana__panel {
+        padding: var(--razmak-5);
+        border-radius: var(--radijus-panel);
+        background: var(--boja-povrsina);
+        box-shadow: var(--senka-lebdi);
+    }
+
+    .z-strana__panel-naslov {
+        margin: 0 0 var(--razmak-3);
+        font-size: var(--slovo-xs);
+        line-height: var(--red-xs);
+        font-weight: var(--tezina-jaka);
+        letter-spacing: .1em;
+        text-transform: uppercase;
+        color: var(--boja-tekst-tiho);
+    }
+
+    .z-strana__agencija {
+        display: grid;
+        gap: var(--razmak-1);
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .z-strana__agencija-veza {
+        display: flex;
+        align-items: center;
+        gap: var(--razmak-3);
+        padding: var(--razmak-2);
+        border-radius: var(--radijus-mali);
+        color: var(--boja-tekst);
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
+        font-weight: var(--tezina-srednja);
+        text-decoration: none;
+
+        @include z-prelaz(background-color);
+        &:hover { background: var(--boja-podloga-tiha); color: var(--boja-tekst); text-decoration: none; }
+        @include z-fokus;
+
+        &--ovde {
+            background: var(--boja-podloga-tiha);
+            font-weight: var(--tezina-jaka);
+        }
+    }
+
+    .z-strana__agencija-ikona {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: var(--razmak-6);
+        height: var(--razmak-6);
+        border-radius: var(--radijus-mali);
+        background: var(--boja-akcenat);
+
+        svg { width: var(--razmak-4); height: var(--razmak-4); display: block; }
+        path { fill: var(--boja-akcenat-tekst); }
+    }
+
+    .z-strana__kontakt {
+        padding: var(--razmak-5);
+        border-radius: var(--radijus-panel);
+        background: var(--boja-traka);
+        color: var(--boja-traka-tekst);
+    }
+
+    .z-strana__kontakt-naslov {
+        margin: 0 0 var(--razmak-2);
+        font-size: var(--slovo-lg);
+        line-height: var(--red-lg);
+        font-weight: var(--tezina-jaka);
+    }
+
+    .z-strana__kontakt-tekst {
+        margin: 0 0 var(--razmak-4);
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
+
+        a { color: var(--boja-traka-tekst); @include z-veza-traka; }
+    }
+
+    .z-strana__kontakt-dugme {
+        display: inline-flex;
+        align-items: center;
+        min-height: var(--visina-radnja);
+        padding: 0 var(--razmak-5);
+        border-radius: var(--radijus-panel);
+        background: var(--boja-akcenat);
+        color: var(--boja-akcenat-tekst);
+        font-weight: var(--tezina-jaka);
+        text-decoration: none;
+
+        @include z-prelaz(background-color);
+        &:hover { background: var(--boja-akcenat-jako); color: var(--boja-akcenat-tekst); text-decoration: none; }
+        @include z-fokus;
+    }
+}

@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
+import { API_ENDPOINT } from '../constants';
 
 /*
  * ZAJEDNIČKI OKVIR ZA CELU ADMINISTRACIJU
@@ -102,6 +103,8 @@ export const MENI = [
             { putanja: '/account/faq',           naziv: 'FAQ',               ikona: 'faq' },
             { putanja: '/account/faqCategories', naziv: 'Kategorije pitanja', ikona: 'kategorija' },
             { putanja: '/account/featured',      naziv: 'Izdvajamo',         ikona: 'galerija' },
+            { putanja: '/account/licence',       naziv: 'Licence',           ikona: 'strana' },
+            { putanja: '/account/videos',        naziv: 'Video',             ikona: 'slajder' },
             { putanja: '/account/slides',        naziv: 'Slajder',           ikona: 'slajder' },
         ],
     },
@@ -115,6 +118,7 @@ export const MENI = [
     {
         grupa: 'PORUKE',
         stavke: [
+            { putanja: '/account/upiti',      naziv: 'Upiti za licence', ikona: 'posta', znacka: 'upiti' },
             { putanja: '/account/newsletter', naziv: 'Newsletter', ikona: 'posta' },
         ],
     },
@@ -188,8 +192,20 @@ class AdminOkvir extends Component {
         this.state = {
             sklopljene: {},
             fiokaOtvorena: false,
+            brojUpita: 0,
         };
     }
+
+    // Broj nepročitanih upita za licence — značka u meniju (2026-10-10).
+    osveziUpite = () => {
+        let token = null;
+        try { token = localStorage.getItem('authToken'); } catch (e) {}
+        if (!token) return;
+        fetch(`${API_ENDPOINT}/upiti/admin/broj`, { headers: { Authorization: `Bearer ${token}` } })
+            .then((res) => (res.ok ? res.json() : null))
+            .then((rez) => { if (rez && typeof rez.broj === 'number') this.setState({ brojUpita: rez.broj }); })
+            .catch(() => {});
+    };
 
     componentDidMount() {
         /*
@@ -206,12 +222,16 @@ class AdminOkvir extends Component {
             const zapamceno = localStorage.getItem('admin-sklopljene');
             if (zapamceno) this.setState({ sklopljene: JSON.parse(zapamceno) });
         } catch (e) { /* privatni režim */ }
+
+        this.osveziUpite();
+        window.addEventListener('z-upiti-promena', this.osveziUpite);
     }
 
     componentWillUnmount() {
         if (typeof document !== 'undefined') {
             document.body.classList.remove('u-administraciji');
         }
+        if (typeof window !== 'undefined') window.removeEventListener('z-upiti-promena', this.osveziUpite);
     }
 
     prebaciGrupu = (ime) => {
@@ -313,6 +333,11 @@ class AdminOkvir extends Component {
                                                     >
                                                         <Ikona naziv={s.ikona} />
                                                         <span className="z-adminokvir__natpis">{s.naziv.translate(l)}</span>
+                                                        {s.znacka === 'upiti' && this.state.brojUpita ? (
+                                                            <span className="z-adminokvir__znacka" aria-label={`${this.state.brojUpita} ${'novih'.translate(l)}`}>
+                                                                {this.state.brojUpita}
+                                                            </span>
+                                                        ) : null}
                                                     </Link>
 
                                                     {/* Podstavke se pokazuju samo dok se stoji u toj grani. */}

@@ -229,3 +229,148 @@
         }
     }
 }
+
+/* ── Video strana široko, tri snimka u redu (2026-10-10) ───────────────────
+   Kao galerija: od 1024px naviše do 32px od ivice ekrana. Svaki snimak je
+   kolona: naslov, grad · datum, opis, pa plejer — tekst redova se poravna
+   jer se plejeri spuštaju na dno kolone. */
+.z-video {
+    > .z-video__vrh > .container,
+    > .container {
+        @include desktop-i-vise {
+            max-width: none;
+            padding-left: var(--razmak-6);
+            padding-right: var(--razmak-6);
+        }
+    }
+
+    .z-video__mreza { gap: var(--razmak-6) var(--razmak-5); }
+
+    .z-video__snimak {
+        display: flex;
+        flex-direction: column;
+        gap: var(--razmak-3);
+    }
+
+    .z-video__tekst {
+        display: flex;
+        flex-direction: column;
+        gap: var(--razmak-1);
+        flex: 1 1 auto;
+    }
+
+    .z-video__ime {
+        margin: 0;
+        font-family: var(--pismo-naslov);
+        font-size: var(--slovo-lg);
+        line-height: var(--red-lg);
+    }
+
+    .z-video__podaci {
+        margin: 0;
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        color: var(--boja-tekst-tiho);
+    }
+
+    .z-video__opis {
+        margin: var(--razmak-1) 0 0;
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
+        color: var(--boja-tekst);
+        white-space: pre-line;
+    }
+}
+
+/* Plejer: 16:9, do klika samo sličica sa znakom za puštanje. */
+.z-yt {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border-radius: var(--radijus-panel);
+    background: var(--boja-traka);
+
+    iframe {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+    }
+
+    &__pokreni {
+        position: absolute;
+        inset: 0;
+        display: block;
+        width: 100%;
+        padding: 0;
+        border: 0;
+        background: none;
+        cursor: pointer;
+        @include z-fokus;
+
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            @include z-prelaz(opacity);
+        }
+
+        &:hover img { opacity: .85; }
+        &:hover .z-yt__znak { background: var(--boja-oznaka); }
+    }
+
+    // Znak za puštanje: krug u boji teksta sa belim trouglom.
+    &__znak {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: var(--razmak-8);
+        height: var(--razmak-8);
+        transform: translate(-50%, -50%);
+        border-radius: var(--radijus-pun);
+        background: var(--boja-preko-zastor);
+        @include z-prelaz(background-color);
+
+        &::after {
+            content: '';
+            position: absolute;
+            left: 54%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            border-top: 12px solid transparent;
+            border-bottom: 12px solid transparent;
+            border-left: 19px solid var(--boja-preko-tekst);
+        }
+    }
+}
+
+/* Administracija — pregled sličice uz polja snimka. */
+.z-video-admin__vrh {
+    display: grid;
+    grid-template-columns: calc(var(--razmak-8) * 4) minmax(0, 1fr);
+    gap: var(--razmak-4);
+
+    @include mobile { grid-template-columns: minmax(0, 1fr); }
+}
+
+.z-video-admin__pregled {
+    aspect-ratio: 16 / 9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--razmak-2);
+    border-radius: var(--radijus-mali);
+    background: var(--boja-podloga-tiha);
+    font-size: var(--slovo-sm);
+    color: var(--boja-tekst-tiho);
+    text-align: center;
+    overflow: hidden;
+
+    img { width: 100%; height: 100%; object-fit: cover; display: block; }
+}
+
+.z-video-admin__polja { display: grid; gap: var(--razmak-3); }
+.z-licence-admin__red--opis { grid-template-columns: repeat(2, minmax(0, 1fr)); }

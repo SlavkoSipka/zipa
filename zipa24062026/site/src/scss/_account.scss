@@ -2356,3 +2356,6 @@ button.posalji--poslato {
     font-size: var(--slovo-sm);
     white-space: nowrap;
 }
+
+/* Kvačica „Preuzmi datum sa fotografije" poravnata sa poljem Datum. */
+.z-datum-sa-slike { padding-top: var(--razmak-6); }

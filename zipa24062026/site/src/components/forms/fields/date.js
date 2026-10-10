@@ -38,12 +38,11 @@ class DatePicker extends Component {
     }
 
     componentDidUpdate(prevProps){
-        if (prevProps.value != this.state.value && !this.state.value){
-            if (this.props.value){
-                this.setState({
-                    value: moment.unix(this.props.value).format('DD.MM.YYYY')
-                })
-            }    
+        // Vrednost promenjena spolja (npr. „Preuzmi datum sa fotografije") —
+        // natpis u polju mora da je prati, ne samo prvi put.
+        if (prevProps.value !== this.props.value && this.props.value) {
+            const tekst = moment.unix(this.props.value).format('DD.MM.YYYY');
+            if (tekst !== this.state.value) this.setState({ value: tekst });
         }
     }
 

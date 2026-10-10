@@ -347,3 +347,10 @@
         max-width: 60ch;
     }
 }
+
+/* Deblja slova u celom podnožju (2026-10-10): obični tekst i veze idu na
+   srednju težinu. Selektor je namerno slab (`:where`), pa elementi koji već
+   imaju svoju težinu (naslovi kolona, dugme) ostaju deblji. */
+.z-podnozje { font-weight: var(--tezina-srednja); }
+
+:where(.z-podnozje) :is(p, a, li, span) { font-weight: var(--tezina-srednja); }

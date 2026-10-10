@@ -563,3 +563,198 @@
         &__podaci { font-size: var(--slovo-sm); }
     }
 }
+
+/* ── Galerija skoro od ivice do ivice (2026-10-10) ──────────────────────────
+   Klijent želi veće fotografije: od 1024px naviše zaglavlje galerije i mreža
+   idu do 32px od ivice ekrana, kao naslovna. Visina reda je izračunata tako
+   da u red stanu ČETIRI položene fotografije (3:2); uspravne su uže, pa u
+   takvom redu stane i pet. Opis ostaje u čitljivoj širini reda. */
+.z-galerija {
+    > .z-galerija__zaglavlje > .container,
+    > .section-detail > .container {
+        @include desktop-i-vise {
+            max-width: none;
+            padding-left: var(--razmak-6);
+            padding-right: var(--razmak-6);
+        }
+    }
+
+    .z-galerija__opis { max-width: 90ch; }
+
+    .z-galerija__mreza {
+        @include desktop-i-vise {
+            /* (širina ekrana − bočni razmaci − 3 razmaka između − rezerva
+               za traku za pomeranje) / 4 fotografije / 1,5 odnos stranica */
+            --visina-reda: calc((100vw - 2 * var(--razmak-6) - 3 * var(--razmak-2) - var(--razmak-5)) / 6);
+        }
+    }
+}
+
+/* ── Izbor formata za štampu (2026-10-10) ───────────────────────────────── */
+.z-galerija__panel-stampa {
+    position: absolute;
+    top: calc(100% + var(--razmak-2));
+    right: 0;
+    z-index: var(--sloj-padajuce);
+
+    display: grid;
+    gap: var(--razmak-2);
+    width: calc(var(--razmak-8) * 4);
+    padding: var(--razmak-3);
+
+    background: var(--boja-povrsina);
+    border: 1px solid var(--boja-linija);
+    border-radius: var(--radijus-panel);
+    box-shadow: var(--senka-lebdi);
+}
+
+.z-galerija__panel-stampa-naslov {
+    margin: 0 0 var(--razmak-1);
+    font-size: var(--slovo-xs);
+    line-height: var(--red-xs);
+    font-weight: var(--tezina-jaka);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--boja-tekst-tiho);
+}
+
+.z-galerija__format {
+    display: flex;
+    align-items: center;
+    gap: var(--razmak-3);
+    width: 100%;
+    padding: var(--razmak-3);
+
+    border: 1px solid var(--boja-linija);
+    border-radius: var(--radijus-mali);
+    background: var(--boja-povrsina);
+    color: var(--boja-tekst);
+    text-align: left;
+    cursor: pointer;
+
+    @include z-prelaz(border-color, background-color);
+    &:hover { border-color: var(--boja-tekst); background: var(--boja-podloga-tiha); }
+    @include z-fokus;
+}
+
+// Sličica lista papira — A3 je vidno veći od A4 (odnos √2 kao na papiru).
+.z-galerija__format-list {
+    flex: 0 0 auto;
+    border: 2px solid var(--boja-tekst-tiho);
+    border-radius: 2px;
+
+    &--a4 { width: 20px; height: 28px; }
+    &--a3 { width: 28px; height: 40px; }
+}
+
+.z-galerija__format-tekst {
+    display: flex;
+    flex-direction: column;
+
+    strong {
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
+        font-weight: var(--tezina-jaka);
+    }
+
+    span {
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        color: var(--boja-tekst-tiho);
+    }
+}
+
+/* ── ŠTAMPA GALERIJE (2026-10-10) ───────────────────────────────────────────
+   Na papir idu samo naslov, podaci, opis i fotografije, na beloj podlozi.
+   A4: dve fotografije u redu; A3: tri. Format bira dugme „Štampaj" (vidi
+   `stampaj` u `detailPage.js`), koje ubaci i `@page { size }`.
+
+   Ranije na papiru NIJE BILO NIJEDNE FOTOGRAFIJE: `_print.scss` sakriva sva
+   dugmad (`button:not(.keep-on-print)`), a svaka fotografija u mreži je
+   dugme. Zato ovde `display: block !important` sa jačim selektorom. */
+@media print {
+    .zaglavlje-sajta,
+    .podnozje-sajta,
+    .section-info-blocks,
+    .iskacuca-reklama,
+    .z-galerija__radnje,
+    .z-galerija__traka-mreze,
+    .z-galerija__preko,
+    .z-galerija__srodne,
+    .section-banners,
+    .z-prozor {
+        display: none !important;
+    }
+
+    html, body { background: #FFFFFF !important; }
+
+    .z-galerija > .z-galerija__zaglavlje > .container,
+    .z-galerija > .section-detail > .container {
+        max-width: none !important;
+        padding: 0 !important;
+    }
+
+    .z-galerija .z-galerija__zaglavlje {
+        padding: 0 0 4mm;
+        margin: 0 0 4mm;
+        border-bottom: 0.3mm solid #000000;
+    }
+
+    // Potpis agencije na vrhu prve strane.
+    .z-galerija .z-galerija__zaglavlje::before {
+        content: 'ZIPA PHOTO AGENCY · zipaphoto.net';
+        display: block;
+        margin-bottom: 3mm;
+        font-size: 9pt;
+        letter-spacing: .08em;
+        color: #000000;
+    }
+
+    .z-galerija .z-galerija__naslov { font-size: 16pt; color: #000000; }
+    .z-galerija .z-galerija__podaci,
+    .z-galerija .z-galerija__opis { font-size: 9.5pt; max-width: none; color: #000000; }
+
+    .z-galerija .z-galerija__mreza {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 4mm;
+
+        &::after { display: none; }
+    }
+
+    html[data-stampa="a3"] .z-galerija .z-galerija__mreza {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .z-galerija .z-galerija__foto {
+        display: block !important;
+        width: auto !important;
+        height: auto !important;
+        flex: none !important;
+        aspect-ratio: auto !important;
+        padding: 0;
+        border: 0;
+        background: none !important;
+        break-inside: avoid;
+        page-break-inside: avoid;
+
+        img {
+            display: block;
+            width: 100% !important;
+            height: auto !important;
+            object-fit: contain !important;
+            opacity: 1 !important;
+            animation: none !important;
+        }
+    }
+}
+
+/* „Iz iste kategorije" ostaje u staroj, centriranoj širini (Bootstrap
+   kontejner 1140px) — široko ide samo mreža fotografija galerije. */
+.z-galerija .z-galerija__srodne {
+    @include desktop-i-vise {
+        max-width: 1110px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+}

@@ -552,6 +552,20 @@ class CategoryPage extends Component {
                                                 </div>
 
                                                 <div className="z-alatna-traka__desno">
+                                                    {/* Broj stavki po strani i gore, ne samo ispod liste (2026-10-10). */}
+                                                    <div className="z-alatna-traka__po-strani">
+                                                        <span className="z-alatna-traka__po-strani-natpis">{'Po strani'.translate(this.props.lang)}</span>
+                                                        <div className="z-alatna-traka__prekidac">
+                                                            {[[null, '36'], ['96', '96'], ['200', '200']].map(([vrednost, natpis]) => (
+                                                                <Link key={natpis}
+                                                                      to={this.props[0].location.pathname + this.generateSearchLink('ipp', vrednost)}
+                                                                      className={'z-alatna-traka__prekidac-dugme' + ((params.ipp || null) === vrednost ? ' z-alatna-traka__prekidac-dugme--aktivan' : '')}>
+                                                                    {natpis}
+                                                                </Link>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+
                                                     <div className="z-alatna-traka__prekidac">
                                                         <Link to={this.props[0].location.pathname + this.generateSearchLink('view', null)}
                                                               className={'z-alatna-traka__prekidac-dugme' + (params.view !== 'photos' ? ' z-alatna-traka__prekidac-dugme--aktivan' : '')}>

@@ -3,6 +3,12 @@ import { Link } from 'react-router-dom';
 import { Container } from 'reactstrap';
 
 import Page from '../containers/page';
+import { YouTubePlejer } from '../components/youtube';
+
+const datum = (t) => {
+    const d = new Date(t * 1000);
+    return `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${d.getFullYear()}.`;
+};
 
 /*
  * VIDEO — /video
@@ -56,37 +62,28 @@ class VideoPage extends Component {
 
                 <Container>
                     {snimci.length ? (
+                        /* Tri snimka u redu, široko. Naslov, grad i datum i opis
+                           stoje IZNAD snimka; plejer se učitava tek na klik
+                           (`components/youtube.js`). — 2026-10-10 */
                         <div className="z-video__mreza">
                             {snimci.map((v, i) => {
                                 const naslov = Object.translate(v, 'title', l) || '';
+                                const opis = v.opis ? Object.translate(v, 'opis', l) : '';
                                 return (
-                                    <a
-                                        key={v._id || i}
-                                        href={v.link}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="z-video__snimak"
-                                    >
-                                        <span className="z-video__slika">
-                                            {v.thumbnail ? (
-                                                <img src={v.thumbnail} alt="" loading="lazy" decoding="async" />
+                                    <article key={v._id || i} className="z-video__snimak">
+                                        <div className="z-video__tekst">
+                                            {naslov ? <h2 className="z-video__ime">{naslov}</h2> : null}
+                                            {v.grad || v.datum ? (
+                                                <p className="z-video__podaci">
+                                                    {v.grad ? <span>{v.grad}</span> : null}
+                                                    {v.grad && v.datum ? ' · ' : null}
+                                                    {v.datum ? <span>{datum(v.datum)}</span> : null}
+                                                </p>
                                             ) : null}
-
-                                            <span className="z-video__igraj" aria-hidden="true" />
-
-                                            {/* Trajanje — samo ako je uneto. */}
-                                            {v.duration ? (
-                                                <span className="z-video__trajanje">{v.duration}</span>
-                                            ) : null}
-                                        </span>
-
-                                        <span className="z-video__telo">
-                                            <span className="z-video__ime">{naslov}</span>
-                                            <span className="z-video__izvor">
-                                                {'Otvara se na YouTube-u'.translate(l)}
-                                            </span>
-                                        </span>
-                                    </a>
+                                            {opis ? <p className="z-video__opis">{opis}</p> : null}
+                                        </div>
+                                        <YouTubePlejer link={v.link} slicica={v.thumbnail} naslov={naslov} lang={l} />
+                                    </article>
                                 );
                             })}
                         </div>

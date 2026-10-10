@@ -1104,6 +1104,101 @@ class Admin {
         return await db.collection('featured').find(uslov).sort({ position: 1 }).toArray();
     }
 
+    /* ── Licence (2026-10-10) ──────────────────────────────────────────────
+     *
+     * Namene korišćenja fotografije, po uzoru na AP: Televizija, Štampa i
+     * portali, Samo digitalno, Korporativno… Ovde se vode OPŠTE cene i
+     * opisi; svaka fotografija može da ima svoju cenu (`photo.cene[<id>]`),
+     * koja ima prednost. Licenca se NE kupuje kroz korpu — kupac šalje upit
+     * agenciji (`upiti`), a prenos i dozvole agencija rešava sa kupcem.
+     */
+    async allLicence(samoAktivne = false) {
+        const uslov = samoAktivne ? { isActive: true } : {};
+        return await db.collection('licence').find(uslov).sort({ position: 1 }).toArray();
+    }
+
+    async updateLicenca(id, data) {
+        const polja = {
+            naziv: data.naziv || { ba: '', en: '' },
+            opis: data.opis || { ba: '', en: '' },
+            cena: data.cena === '' || data.cena === undefined || data.cena === null ? null : parseFloat(data.cena),
+            position: data.position ? parseInt(data.position) : 0,
+            isActive: data.isActive === undefined ? true : !!data.isActive,
+        };
+        if (id == 'new') {
+            await db.collection('licence').insertOne(polja);
+        } else {
+            await db.collection('licence').updateOne({ _id: ObjectID(id) }, { $set: polja });
+        }
+        return { response: {}, status: 200 };
+    }
+
+    async deleteLicenca(id) {
+        await db.collection('licence').deleteOne({ _id: ObjectID(id) });
+        return { response: {}, status: 200 };
+    }
+
+    /* ── Upiti za licence ────────────────────────────────────────────────
+     * Stižu sa prozora fotografije; administrator ih vidi u
+     * *Poruke → Upiti za licence*, a neprocitani se broje u meniju. */
+    async sacuvajUpit(obj) {
+        const tekst = (v, n) => String(v || '').trim().slice(0, n);
+        const ime = tekst(obj.ime, 120), firma = tekst(obj.firma, 160);
+        const telefon = tekst(obj.telefon, 60), email = tekst(obj.email, 160);
+
+        if (!ime || !firma || !telefon || email.indexOf('@') === -1) {
+            return { response: { error: 'Popunite ime i prezime, firmu, telefon i ispravnu e-mail adresu.' }, status: 400 };
+        }
+
+        const gallery = obj.galleryId ? await db.collection('gallery').find({ _id: ObjectID(obj.galleryId) }).toArray() : [];
+        const g = gallery[0];
+        const photoId = parseInt(obj.photoId, 10);
+        const foto = g && g.photos ? g.photos[photoId] : null;
+
+        const licence = obj.licencaId ? await db.collection('licence').find({ _id: ObjectID(obj.licencaId) }).toArray() : [];
+        const lic = licence[0];
+        const cenaFoto = foto && foto.cene ? foto.cene[String(obj.licencaId)] : null;
+        const cenaGalerije = g && g.cene ? g.cene[String(obj.licencaId)] : null;
+
+        await db.collection('upiti').insertOne({
+            ime, firma, telefon, email,
+            poruka: tekst(obj.poruka, 2000),
+            galleryId: g ? String(g._id) : null,
+            galerija: g && g.name ? (g.name.ba || g.name.en || '') : '',
+            galerijaAlias: g && g.alias ? (g.alias.ba || '') : '',
+            photoId: isNaN(photoId) ? null : photoId,
+            slika: foto ? foto.image : null,
+            licencaId: lic ? String(lic._id) : null,
+            licenca: lic && lic.naziv ? (lic.naziv.ba || lic.naziv.en || '') : '',
+            cena: [cenaFoto, cenaGalerije].concat(lic ? [lic.cena] : [])
+                .filter((v) => v !== null && v !== undefined && v !== '')
+                .map(parseFloat)[0] ?? null,
+            procitan: false,
+            published: Math.floor(Date.now() / 1000),
+        });
+
+        return { response: { ok: true }, status: 200 };
+    }
+
+    async allUpiti() {
+        return await db.collection('upiti').find({}).sort({ published: -1 }).toArray();
+    }
+
+    async brojNeprocitanihUpita() {
+        const n = await db.collection('upiti').find({ procitan: false }).count();
+        return { broj: n };
+    }
+
+    async oznaciUpit(id, procitan) {
+        await db.collection('upiti').updateOne({ _id: ObjectID(id) }, { $set: { procitan: !!procitan } });
+        return { response: {}, status: 200 };
+    }
+
+    async deleteUpit(id) {
+        await db.collection('upiti').deleteOne({ _id: ObjectID(id) });
+        return { response: {}, status: 200 };
+    }
+
     async deleteFeatured(id) {
         await db.collection('featured').deleteOne({ _id: ObjectID(id) });
         return { response: {}, status: 200 };
@@ -1130,10 +1225,15 @@ class Admin {
 
     async updateVideo(id, data) {
         const obj = data;
+        /* Od 2026-10-10 snimak nosi i opis (po jezicima), grad i datum —
+           prikazuju se na /video iznad samog snimka. */
         const polja = {
             title: obj.title,
             link: obj.link,
             thumbnail: obj.thumbnail || this.slicicaSaYouTube(obj.link),
+            opis: obj.opis || null,
+            grad: obj.grad ? String(obj.grad).trim() : null,
+            datum: obj.datum ? parseInt(obj.datum) : null,
             position: obj.position ? parseInt(obj.position) : 0,
             isActive: obj.isActive === undefined ? true : !!obj.isActive
         };

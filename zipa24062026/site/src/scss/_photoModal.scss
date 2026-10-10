@@ -951,3 +951,95 @@
         &__iz-galerije { font-size: var(--slovo-sm); }
     }
 }
+
+/* ── Licence ispod veličina (2026-10-10, po uzoru na AP) ───────────────────
+   „Prikaži više opcija" između dve crtice, pa spisak namena korišćenja u
+   istom izgledu kao veličine, a ispod izabrane kratak obrazac za upit. */
+.z-licence {
+    margin-bottom: var(--razmak-5);
+
+    &__prekidac {
+        display: flex;
+        align-items: center;
+        gap: var(--razmak-3);
+        width: 100%;
+        margin: 0 0 var(--razmak-4);
+        padding: var(--razmak-2) 0;
+        border: 0;
+        background: transparent;
+        cursor: pointer;
+
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-traka-tekst);
+        white-space: nowrap;
+
+        &:hover span:not(.z-licence__crta) { text-decoration: underline; }
+        @include z-fokus;
+    }
+
+    &__crta {
+        flex: 1 1 auto;
+        height: 1px;
+        background: var(--boja-traka-linija);
+    }
+
+    &__obrazac {
+        display: grid;
+        gap: var(--razmak-3);
+        margin-top: var(--razmak-2);
+    }
+
+    &__uvod {
+        margin: 0;
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        color: var(--boja-traka-tekst-tiho);
+    }
+
+    &__polje {
+        display: grid;
+        gap: var(--razmak-1);
+        margin: 0;
+
+        span {
+            font-size: var(--slovo-sm);
+            line-height: var(--red-sm);
+            font-weight: var(--tezina-srednja);
+            color: var(--boja-traka-tekst);
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            padding: var(--razmak-2) var(--razmak-3);
+            border: 1px solid var(--boja-traka-linija-kontrola);
+            border-radius: var(--radijus-mali);
+            background: var(--boja-podloga);
+            color: var(--boja-tekst);
+            font-family: var(--pismo-tekst);
+            font-size: var(--slovo-md);
+            line-height: var(--red-md);
+            @include z-fokus;
+        }
+
+        textarea { resize: vertical; }
+    }
+
+    &__greska {
+        margin: 0;
+        font-size: var(--slovo-sm);
+        color: var(--boja-oznaka-traka);
+    }
+
+    &__poslato {
+        margin: var(--razmak-2) 0 0;
+        padding: var(--razmak-3);
+        border-radius: var(--radijus-mali);
+        background: var(--boja-traka-linija);
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        color: var(--boja-traka-tekst);
+    }
+}

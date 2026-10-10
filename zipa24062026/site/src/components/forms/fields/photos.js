@@ -23,6 +23,7 @@ import Text from './text1';
 import Textarea from './textarea';
 import Check from './check';
 import { API_ENDPOINT, PHOTOS_ENDPOINT} from '../../../constants';
+import { opstaCena } from './ceneGalerije';
 
 class Gallery extends Component {
     constructor(props) {
@@ -36,11 +37,53 @@ class Gallery extends Component {
             files: [],
             imagesLayout: [],
             _uploading: [],
+            licence: [],
         };
+    }
+
+    /*
+     * Cena jedne stavke za OVU fotografiju (`photo.cene[kljuc]`). Prazno polje
+     * briše posebnu cenu, pa važi opšta (galerija × množilac za veličine,
+     * opšta cena licence za licence). Dodato 2026-10-10.
+     */
+    postaviCenu(kljuc, vrednost) {
+        const selectedImage = this.state.selectedImage;
+        const cene = Object.assign({}, selectedImage.cene || {});
+        if (vrednost === '' || vrednost === null || vrednost === undefined) delete cene[kljuc];
+        else cene[kljuc] = vrednost;
+        selectedImage.cene = cene;
+        this.setState({ selectedImage });
+    }
+
+    // Cijena koju fotografija vuče kad nema svoju: iz galerije, pa opšta.
+    nasledjenaCena(kljuc) {
+        const galerija = this.props.formCene || {};
+        const v = galerija[kljuc];
+        if (v !== null && v !== undefined && v !== '') return parseFloat(v);
+        return opstaCena(kljuc, this.props.formPrice, this.state.licence);
+    }
+
+    poljeCene(kljuc, natpis) {
+        const cene = (this.state.selectedImage && this.state.selectedImage.cene) || {};
+        const nasledjena = this.nasledjenaCena(kljuc);
+        return (
+            <Col lg="3" md="6" key={kljuc}>
+                <Text label={natpis} type="number" onChange={(e) => this.postaviCenu(kljuc, e)}
+                      placeholder={nasledjena !== null ? `iz galerije: ${nasledjena} KM` : 'iz galerije: na upit'}
+                      value={cene[kljuc] === undefined || cene[kljuc] === null ? '' : String(cene[kljuc])} />
+            </Col>
+        );
     }
 
 
     componentDidMount() {
+        // Licence za polja cena po fotografiji.
+        fetch(`${API_ENDPOINT}/licence/admin/all`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` },
+        }).then((res) => (res.ok ? res.json() : [])).then((licence) => {
+            this.setState({ licence: Array.isArray(licence) ? licence : [] });
+        }).catch(() => {});
+
         let files = [];
         let imagesLayout = [];
         for (let i = 0; i < this.props.value.length; i++) {
@@ -58,7 +101,23 @@ class Gallery extends Component {
 
 
 
+    // Datum snimanja prve fotografije koja ga ima (FotoStation / EXIF).
+    datumIzFotografija() {
+        const lista = (this.state.files && this.state.files.length) ? this.state.files : (this.props.value || []);
+        const f = lista.find((x) => x && x.date);
+        return f ? f.date : null;
+    }
+
     componentDidUpdate(prevProps, prevState) {
+        /* „Preuzmi datum sa fotografije": čim je kvačica uključena, i posle
+           svakog novog postavljanja, datum galerije se postavlja na datum
+           snimanja iz podataka fotografije. */
+        if (this.props.datumSaSlike
+            && (!prevProps.datumSaSlike || prevProps.value !== this.props.value || prevState.files !== this.state.files)) {
+            const d = this.datumIzFotografija();
+            if (d && d !== this.props.formDate) this.props.changeDate(d);
+        }
+
         if ((!this.state.files.length && this.props.value.length) && !(prevState.files.length && !this.state.files.length)) {
             console.log(this.props.value);
             let files = [];
@@ -569,6 +628,21 @@ class Gallery extends Component {
                                         }} value={this.state.selectedImage.localCaption || ''} />
                                     </Col>
 
+                                    {/*
+                                      * Cijene za OVU fotografiju (KM). Prazno = važi opšta cijena:
+                                      * za veličine cijena galerije, za licence cijena iz
+                                      * Sadržaj → Licence. Upisana cijena ima prednost.
+                                      */}
+                                    <Col lg="12">
+                                        <h4 className="z-cene-foto__naslov">Cijene za ovu fotografiju (KM) — prazno polje vuče cijenu iz galerije (siva oznaka)</h4>
+                                    </Col>
+                                    {this.poljeCene('3000', 'Najveća (3000 px)')}
+                                    {this.poljeCene('1500', 'Srednja (1500 px)')}
+                                    {this.poljeCene('800', 'Mala (800 px)')}
+                                    {(this.state.licence || []).map((lic) =>
+                                        this.poljeCene(String(lic._id), (lic.naziv && lic.naziv.ba) || 'Licenca')
+                                    )}
+
                                     <Col lg="12" className="buttons">
                                         <button type="button" onClick={() => {
                                             let files = this.state.files;
@@ -612,6 +686,9 @@ export default connect(state => {
         formDescription: selector(state, 'description'),
         formDate: selector(state, 'date'),
         formLocation: selector(state, 'location'),
+        formPrice: selector(state, 'price'),
+        datumSaSlike: selector(state, 'datumSaSlike'),
+        formCene: selector(state, 'cene'),
 
     }
 

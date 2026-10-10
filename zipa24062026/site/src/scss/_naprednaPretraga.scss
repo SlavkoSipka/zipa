@@ -313,3 +313,215 @@ html.z-bez-skrola body { overflow: hidden; }
         }
     }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   NAPREDNA PRETRAGA — redizajn (2026-10-10)
+   ═══════════════════════════════════════════════════════════════════════════
+   Prozor više nije razvučen preko celog ekrana: centriran je, najviše
+   1080px širok i visok koliko mu treba. Četiri grupe su kartice na tihoj
+   podlozi, polja su ujednačena (48px, bela, sa obodom), slova krupnija.
+   Kalendar datuma se otvara NADOLE (ranije gore, pa se datumi nisu videli). */
+.z-pretraga-prozor {
+    align-items: flex-start;
+    padding: var(--razmak-8) var(--razmak-5);
+
+    @include mobile-tablet { padding: 0; }
+
+    &__okvir {
+        max-width: 1080px;
+        max-height: none;
+        overflow: visible;           // kalendar sme da izađe iz kartice
+        border-radius: calc(var(--radijus-panel) * 2);
+        box-shadow: var(--senka-prozor);
+
+        @include mobile-tablet { border-radius: 0; }
+    }
+
+    &__vrh {
+        align-items: flex-start;
+        padding: var(--razmak-6) var(--razmak-6) var(--razmak-5);
+        @include mobile { padding: var(--razmak-5) var(--razmak-4); }
+    }
+
+    &__naslov {
+        font-size: var(--slovo-2xl);
+        line-height: var(--red-2xl);
+        font-weight: var(--tezina-jaka);
+    }
+
+    &__podnaslov {
+        margin: var(--razmak-1) 0 0;
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
+        color: var(--boja-tekst-tiho);
+    }
+
+    &__zatvori {
+        width: 44px;
+        height: 44px;
+        border-radius: var(--radijus-pun);
+        background: var(--boja-podloga-tiha);
+    }
+
+    .detail-search-form .z-pretraga-prozor__telo {
+        overflow: visible;
+        gap: var(--razmak-4);
+        padding: var(--razmak-5) var(--razmak-6) var(--razmak-6);
+
+        @include mobile-tablet {
+            overflow-y: auto;
+            padding: var(--razmak-4);
+        }
+    }
+
+    // Grupa = kartica.
+    .z-pretraga-prozor__grupa,
+    .z-pretraga-prozor__grupa + .z-pretraga-prozor__grupa {
+        position: relative;
+        padding: var(--razmak-5);
+        border: 1px solid var(--boja-linija);
+        border-radius: calc(var(--radijus-panel) * 1.5);
+        background: var(--boja-podloga-tiha);
+    }
+
+    @include mobile-tablet {
+        .z-pretraga-prozor__grupa + .z-pretraga-prozor__grupa { margin-top: var(--razmak-4); }
+    }
+
+    .z-pretraga-prozor__naslov-grupe {
+        margin-bottom: var(--razmak-4);
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        letter-spacing: .06em;
+        color: var(--boja-tekst);
+    }
+
+    /* ── polja ────────────────────────────────────────────────────────── */
+    .detail-search-form label {
+        display: block;
+        margin: 0 0 var(--razmak-2);
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-tekst);
+    }
+
+    .detail-search-form .input-wrap,
+    .detail-search-form .date-picker-field,
+    .detail-search-form .form-field-tags {
+        margin-bottom: var(--razmak-4);
+    }
+
+    .detail-search-form input[type="text"],
+    .detail-search-form .date-picker-field > input,
+    .detail-search-form .react-autosuggest__input,
+    .detail-search-form select,
+    .detail-search-form .react-tagsinput {
+        width: 100%;
+        min-height: 48px;
+        height: auto;
+        padding: 0 var(--razmak-3);
+        border: 1px solid var(--boja-linija-kontrola);
+        border-radius: var(--radijus-mali);
+        background-color: var(--boja-povrsina);
+        color: var(--boja-tekst);
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
+        box-shadow: none;
+
+        &:focus {
+            outline: none;
+            border-color: var(--boja-tekst);
+            box-shadow: 0 0 0 3px var(--boja-linija);
+        }
+    }
+
+    // Polje sa oznakama (ključne reči): oznake i unos u istom redu.
+    .detail-search-form .react-tagsinput {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--razmak-1);
+        padding: var(--razmak-1) var(--razmak-2);
+
+        input {
+            min-height: 38px;
+            padding: 0 var(--razmak-1);
+            border: 0 !important;
+            background: transparent;
+            box-shadow: none !important;
+        }
+    }
+
+    .detail-search-form .react-tagsinput-tag {
+        margin: 0;
+        padding: 2px var(--razmak-2);
+        border: 0;
+        border-radius: var(--radijus-pun);
+        background: var(--boja-akcenat);
+        color: var(--boja-akcenat-tekst);
+        font-size: var(--slovo-sm);
+    }
+
+    // Kalendar: NADOLE ispod polja, iznad ostalih kartica.
+    .detail-search-form .date-picker-field { position: relative; }
+
+    .detail-search-form .date-picker-field .rdrCalendarWrapper {
+        position: absolute;
+        top: calc(100% + var(--razmak-1));
+        bottom: auto;
+        left: 0;
+        z-index: var(--sloj-padajuce);
+        border: 1px solid var(--boja-linija);
+        border-radius: var(--radijus-panel);
+        box-shadow: var(--senka-prozor);
+        overflow: hidden;
+    }
+
+    // Kalendar desnog polja se poravnava uz desnu ivicu, da ne izađe iz prozora.
+    .z-pretraga-prozor__par > :last-child .rdrCalendarWrapper {
+        left: auto;
+        right: 0;
+    }
+
+    /* ── prečice i orijentacija, krupnije ─────────────────────────────── */
+    .z-pretraga-prozor__precica {
+        padding: var(--razmak-2) var(--razmak-4);
+        background: var(--boja-povrsina);
+        font-size: var(--slovo-md);
+    }
+
+    .z-pretraga-prozor__orijentacija {
+        min-width: 140px;
+        padding: var(--razmak-5) var(--razmak-4);
+        background: var(--boja-povrsina);
+        font-size: var(--slovo-md);
+        font-weight: var(--tezina-srednja);
+    }
+
+    /* ── dno ──────────────────────────────────────────────────────────── */
+    .z-pretraga-prozor__dno {
+        padding: var(--razmak-4) var(--razmak-6);
+        background: var(--boja-podloga-tiha);
+        border-radius: 0 0 calc(var(--radijus-panel) * 2) calc(var(--radijus-panel) * 2);
+
+        @include mobile-tablet {
+            border-radius: 0;
+            padding: var(--razmak-3) var(--razmak-4);
+        }
+    }
+
+    .z-pretraga-prozor__dugme {
+        min-height: 48px;
+        padding: 0 var(--razmak-6);
+        font-size: var(--slovo-md);
+    }
+}
+
+// Stari `_global.scss` boji polje sa oznakama u sivo jačim selektorom.
+.z-pretraga-prozor .detail-search-form .form-field-tags .react-tagsinput {
+    background-color: var(--boja-povrsina);
+
+    input { width: auto; flex: 1 1 160px; }
+}

@@ -576,3 +576,19 @@
         font-weight: var(--tezina-jaka);
     }
 }
+
+/* „Po strani" u alatnoj traci, iznad rezultata (2026-10-10). */
+.z-alatna-traka__po-strani {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--razmak-2);
+}
+
+.z-alatna-traka__po-strani-natpis {
+    font-size: var(--slovo-sm);
+    line-height: var(--red-sm);
+    color: var(--boja-tekst-tiho);
+    white-space: nowrap;
+
+    @include mobile { display: none; }
+}

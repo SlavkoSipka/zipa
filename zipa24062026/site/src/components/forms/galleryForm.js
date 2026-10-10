@@ -16,6 +16,10 @@ import Image from './fields/profilePhoto';
 import DatePicker from './fields/date';
 import Toggle from './fields/toggleCheckbox';
 import Gallery from './fields/photos';
+import CeneGalerije from './fields/ceneGalerije';
+
+// Cijene za cijelu galeriju — jedno polje sa objektom `cene` (2026-10-10).
+const renderCeneField = ({ input }) => <CeneGalerije value={input.value} onChange={input.onChange} />;
 import MultiCheckbox from './fields/multiCheckbox';
 
 import mail from '../../assets/svg/mail.svg';
@@ -334,6 +338,18 @@ class form extends React.Component {
                                 ></Field>
 
                             </Col>
+                            <Col lg="6">
+                                {/* Datum galerije iz podataka same fotografije
+                                    (FotoStation / EXIF „Datum snimanja"), za svakog
+                                    ko postavlja galeriju. 2026-10-10 */}
+                                <div className="z-datum-sa-slike">
+                                    <Field
+                                        name="datumSaSlike"
+                                        component={renderCheckField}
+                                        label={'Preuzmi datum sa fotografije (podaci iz FotoStation-a)'.translate(this.props.lang)}
+                                    ></Field>
+                                </div>
+                            </Col>
                             {/*<Col lg="6">
                                 <Field
                                     name="forcedDate"
@@ -362,6 +378,9 @@ class form extends React.Component {
                                     label={'Cijena'.translate(this.props.lang)}
                                 ></Field>
 
+                            </Col>
+                            <Col lg="12">
+                                <Field name="cene" component={renderCeneField}></Field>
                             </Col>
                             <Col lg="4">
                                 <Field

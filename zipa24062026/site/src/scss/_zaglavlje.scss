@@ -1616,3 +1616,212 @@ header:where(.zaglavlje-sajta) .navigation > ul {
         &__pretraga--uska { display: none; }
     }
 }
+
+/* ── Panel „Agencija": pločice umesto golih spiskova (2026-10-10) ──────────
+   Agencija (5 stavki, tri u redu) i Usluge (2 stavke, jedna ispod druge)
+   stoje jedna pored druge, iste visine. Svaka stavka je pločica: ikonica u
+   boji glavne radnje teme (A crvena, B plava, C grafit), naziv i kratak
+   opis. Spisak fotografa ispod je nepromenjen. */
+.z-zaglavlje {
+    &__grupa--plocice { flex: 3 1 0; min-width: 0; }
+    &__grupa--usluge  { flex: 1 1 0; }
+
+    &__plocice {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: var(--razmak-2);
+
+        .z-zaglavlje__grupa--usluge & { grid-template-columns: minmax(0, 1fr); }
+    }
+
+    &__plocica-agencije {
+        display: flex;
+        align-items: flex-start;
+        gap: var(--razmak-3);
+        padding: var(--razmak-3);
+        border-radius: var(--radijus-panel);
+        background: var(--boja-traka-povrsina);
+        color: var(--boja-traka-tekst);
+        text-decoration: none;
+
+        @include z-prelaz(background-color, transform);
+        &:hover {
+            background: var(--boja-traka-linija);
+            color: var(--boja-traka-tekst);
+            text-decoration: none;
+            transform: translateY(-1px);
+        }
+        @include z-fokus;
+    }
+
+    &__plocica-ikona {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: var(--razmak-6);
+        height: var(--razmak-6);
+        border-radius: var(--radijus-mali);
+        background: var(--boja-akcenat);
+
+        svg { width: var(--razmak-4); height: var(--razmak-4); display: block; }
+        path { fill: var(--boja-akcenat-tekst); }
+    }
+
+    &__plocica-tekst {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+
+        strong {
+            font-size: var(--slovo-sm);
+            line-height: var(--red-sm);
+            font-weight: var(--tezina-jaka);
+        }
+
+        span {
+            font-size: var(--slovo-xs);
+            line-height: var(--red-xs);
+            color: var(--boja-traka-tekst-tiho);
+        }
+    }
+
+    // Telefon i uži ekran: jedna kolona pločica, grupe jedna ispod druge.
+    @include mobile-tablet {
+        &__grupa--plocice,
+        &__grupa--usluge { flex: 1 0 100%; }
+        &__plocice { grid-template-columns: minmax(0, 1fr); }
+    }
+
+    @include small-desktop {
+        &__plocice { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   NASLOVNA C — FOTOGRAFIJA PREKO CELOG PRVOG EKRANA (2026-10-10)
+   ═══════════════════════════════════════════════════════════════════════════
+   Zaglavlje naslovne (traka najave, red sa logom, navigacija i pretraga)
+   zauzima tačno visinu ekrana, a fotografija (`--pozadina-pretrage`, iz
+   administracije ili najnovija galerija) je pozadina celog tog dela. Logo,
+   navigacija i dugmad su beli i krupniji preko slike; pretraga stoji u
+   sredini. Ostatak naslovne se vidi tek pri skrolovanju. Samo izgled C. */
+[data-tema="c"] .z-zaglavlje--visoka {
+    --boja-traka-tekst:      var(--c-hero-tekst);
+    --boja-traka-tekst-tiho: var(--c-hero-tekst-tiho);
+    --boja-traka-linija:     var(--c-hero-linija);
+    --boja-tekst:            var(--c-hero-tekst);
+    --boja-tekst-tiho:       var(--c-hero-tekst-tiho);
+    --boja-linija:           var(--c-hero-linija);
+    --boja-veza:             var(--c-hero-tekst);
+    --boja-fokus:            var(--c-hero-tekst);
+    --boja-podloga-tiha:     var(--c-hero-linija);
+    // Padajući meniji: tamna ploča sa belim slovima.
+    --boja-povrsina:         var(--c-hero-panel);
+    --boja-pilula-tekst:     var(--c-hero-panel);
+
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    border-bottom: 0;
+    background:
+        linear-gradient(180deg, var(--c-hero-zastor-gore) 0%, var(--c-hero-zastor-sredina) 45%, var(--c-hero-zastor-dole) 100%),
+        var(--pozadina-pretrage, none) center / cover no-repeat,
+        var(--c-hero-podloga);
+
+    .z-zaglavlje__glavni,
+    .z-zaglavlje__navred {
+        background: transparent;
+        border-color: var(--c-hero-linija);
+    }
+
+    // Beli znak preko fotografije (tema C inače nosi tamni).
+    .z-zaglavlje__logo .z-znak--tamni { display: none; }
+    .z-zaglavlje__logo .z-znak--svetli { display: block; }
+
+    // Krupniji logo i natpis.
+    .z-zaglavlje__logo svg,
+    .z-zaglavlje__logo img { height: calc(var(--razmak-7) + var(--razmak-2)); }
+    .z-zaglavlje__natpis { font-size: var(--slovo-2xl); line-height: var(--red-2xl); }
+
+    // Navigacija: udarno — krupno, debelo, razmaknuto.
+    .z-zaglavlje__navred .z-zaglavlje__sirina {
+        gap: var(--razmak-6);
+        padding-top: var(--razmak-3);
+        padding-bottom: var(--razmak-3);
+    }
+
+    .z-zaglavlje__navred .z-zaglavlje__stavka {
+        font-size: var(--slovo-xl);
+        line-height: var(--red-xl);
+        font-weight: var(--tezina-jaka);
+        letter-spacing: .01em;
+        padding: var(--razmak-2) var(--razmak-3);
+        text-shadow: 0 1px 2px rgba(0, 0, 0, .35);
+    }
+
+    .z-zaglavlje__traka-veza,
+    .z-zaglavlje__korpa { font-size: var(--slovo-lg); font-weight: var(--tezina-jaka); }
+
+    // Pretraga u sredini preostalog prostora.
+    .z-zaglavlje__naslovni {
+        flex: 1 1 auto;
+        display: flex;
+        align-items: center;
+        background: none;
+        border-top: 0;
+
+        .z-zaglavlje__naslovni-red {
+            width: 100%;
+            padding-top: var(--razmak-7);
+            padding-bottom: var(--razmak-8);
+        }
+    }
+
+    // Polje pretrage krupnije, kao jedini cilj na ekranu.
+    .z-zaglavlje__pretraga--siroka {
+        max-width: 860px;
+        min-height: calc(var(--visina-pretraga) + var(--razmak-3));
+        box-shadow: 0 12px 40px rgba(0, 0, 0, .35);
+    }
+
+    @include mobile-tablet {
+        .z-zaglavlje__navred .z-zaglavlje__stavka {
+            font-size: var(--slovo-lg);
+            text-shadow: none;
+        }
+        .z-zaglavlje__natpis { font-size: var(--slovo-lg); }
+    }
+
+    @include mobile {
+        .z-zaglavlje__logo svg,
+        .z-zaglavlje__logo img { height: calc(var(--razmak-6) + var(--razmak-2)); }
+    }
+}
+
+/* Napredna pretraga na velikoj pretrazi naslovne: ikonica + natpis „Filteri"
+   (2026-10-10). Na telefonu samo ikonica, da polje za unos ostane široko. */
+.z-zaglavlje__napredna--sa-natpisom {
+    width: auto;
+    gap: var(--razmak-2);
+    padding: 0 var(--razmak-4);
+    border-radius: 0 var(--radijus-panel) var(--radijus-panel) 0;
+
+    span {
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-polje-tekst, var(--boja-tekst));
+        white-space: nowrap;
+    }
+
+    @include mobile {
+        padding: 0 var(--razmak-3);
+        span { display: none; }
+    }
+}
+
+// Dugme lupe više nije poslednje u polju — bez zaobljenja desno.
+.z-zaglavlje__pretraga--siroka .z-zaglavlje__trazi { border-radius: 0; }

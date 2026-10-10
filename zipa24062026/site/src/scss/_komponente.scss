@@ -1340,3 +1340,83 @@
     .z-zaglavlje__logo .z-znak--tamni,
     .z-podnozje__logo .z-znak--tamni { display: block; }
 }
+
+/* ── Jedinstvena mera reklama (2026-10-10) ─────────────────────────────────
+   Svi baneri u sadržaju strane (galerije, galerija, fotograf, fotografija,
+   naslovne A/B/C) imaju istu meru kao ZIPA baner na naslovnoj: najviše 980px
+   širine, centrirani, zaobljeni. Ranije se baner na /galerije razvlačio
+   preko cele strane. */
+.section-banners .banners,
+.mesto-reklame,
+.z-fotograf__reklame,
+.z-fotografija__reklame {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--razmak-4);
+
+    a {
+        display: block;
+        width: 100%;
+        max-width: 980px;
+        line-height: 0;
+        @include z-fokus;
+    }
+
+    img,
+    img.banner {
+        display: block;
+        width: 100%;
+        max-width: 980px;
+        height: auto;
+        border-radius: var(--radijus-panel);
+    }
+}
+
+.section-banners {
+    padding: var(--razmak-6) 0;
+}
+
+/* Glavni baner ispod pretrage na naslovnoj. */
+.z-zaglavlje__naslovni-red {
+    flex-direction: column;
+    gap: var(--razmak-4);
+}
+
+.z-zaglavlje__glavni-baner {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--razmak-3);
+    width: 100%;
+
+    // Mala traka: širina pretrage iznad nje (720px), da ne preuzme naslovnu.
+    a {
+        display: block;
+        width: 100%;
+        max-width: 720px;
+        line-height: 0;
+        @include z-fokus;
+    }
+
+    img {
+        display: block;
+        width: 100%;
+        height: auto;
+        border-radius: var(--radijus-panel);
+    }
+}
+
+// U uspravnom redu pretraga ne sme da raste u visinu — samo puna širina do 720px.
+.z-zaglavlje__naslovni-red > .z-zaglavlje__pretraga {
+    flex: 0 0 auto;
+    width: 100%;
+}
+
+/* Glavni baner u svojoj beloj traci ispod naslovnog bloka (ne preko slike). */
+.z-zaglavlje__baner-traka {
+    padding: var(--razmak-5) var(--razmak-4);
+    background: var(--boja-podloga);
+    border-top: 1px solid var(--svetlo-linija);
+    border-bottom: 1px solid var(--svetlo-linija);
+}

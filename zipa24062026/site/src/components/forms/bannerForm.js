@@ -368,7 +368,7 @@ class form extends React.Component {
                         <Field
                             name="ad"
                             component={renderCheckField}
-                            label={'Naslovni banner'.translate(this.props.lang)}
+                            label={'Glavni baner (ispod pretrage na naslovnoj)'.translate(this.props.lang)}
                         ></Field>
 
 

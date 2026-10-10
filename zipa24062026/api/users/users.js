@@ -1448,9 +1448,18 @@ class UsersModule {
         for (let i = 0; i < cart.length; i++) {
             let gallery = await db.collection('gallery').find({ _id: cart[i].galleryId }).toArray();
             if (gallery.length) {
+                /* Redosled cene: dogovorena cena korisnika, pa cena upisana
+                   na samoj fotografiji (`photo.cene`), pa za celu galeriju
+                   (`gallery.cene`), pa cena galerije × množilac (2026-10-10). Isto pravilo pokazuje i prozor
+                   fotografije (`detailPage.js`). */
                 const dogovorena = cene ? cene[cart[i].resolution] : null;
-                const cena = (dogovorena !== null && dogovorena !== undefined && dogovorena !== '')
-                    ? parseFloat(dogovorena)
+                const foto = gallery[0].photos ? gallery[0].photos[cart[i].photoId] : null;
+                const naFoto = foto && foto.cene ? foto.cene[String(cart[i].resolution)] : null;
+                const zaGaleriju = gallery[0].cene ? gallery[0].cene[String(cart[i].resolution)] : null;
+                const ima = (v) => v !== null && v !== undefined && v !== '';
+                const cena = ima(dogovorena) ? parseFloat(dogovorena)
+                    : ima(naFoto) ? parseFloat(naFoto)
+                    : ima(zaGaleriju) ? parseFloat(zaGaleriju)
                     : gallery[0].price * priceMap[cart[i].resolution];
 
                 newCart.push({

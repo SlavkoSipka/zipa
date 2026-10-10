@@ -379,6 +379,42 @@ app.delete('/slides/delete/:id', permissionMiddleware('*'), async (req, res) => 
 });
 
 
+// Licence (namene korišćenja) — javno samo uključene, redom.
+app.get('/licence', async (req, res) => {
+    res.send(await adminModule.allLicence(true));
+});
+app.get('/licence/admin/all', permissionMiddleware('*'), async (req, res) => {
+    res.send(await adminModule.allLicence(false));
+});
+app.post('/licence/update/:id', permissionMiddleware('*'), async (req, res) => {
+    const r = await adminModule.updateLicenca(req.params.id, req.body);
+    res.status(r.status).send(r.response);
+});
+app.delete('/licence/delete/:id', permissionMiddleware('*'), async (req, res) => {
+    const r = await adminModule.deleteLicenca(req.params.id);
+    res.status(r.status).send(r.response);
+});
+
+// Upit za licencu — šalje ga posetilac sa prozora fotografije.
+app.post('/upiti/licenca', async (req, res) => {
+    const r = await adminModule.sacuvajUpit(req.body || {});
+    res.status(r.status).send(r.response);
+});
+app.get('/upiti/admin/all', permissionMiddleware('*'), async (req, res) => {
+    res.send(await adminModule.allUpiti());
+});
+app.get('/upiti/admin/broj', permissionMiddleware('*'), async (req, res) => {
+    res.send(await adminModule.brojNeprocitanihUpita());
+});
+app.post('/upiti/procitan/:id', permissionMiddleware('*'), async (req, res) => {
+    const r = await adminModule.oznaciUpit(req.params.id, req.body && req.body.procitan);
+    res.status(r.status).send(r.response);
+});
+app.delete('/upiti/delete/:id', permissionMiddleware('*'), async (req, res) => {
+    const r = await adminModule.deleteUpit(req.params.id);
+    res.status(r.status).send(r.response);
+});
+
 // Izdvojeno na naslovnoj — javno se vraćaju samo uključene stavke.
 app.get('/featured/all', async (req, res) => {
     res.send(await adminModule.allFeatured(true));

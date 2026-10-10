@@ -15,6 +15,7 @@ import znakZipaTamni from '../assets/svg/logo.svg';
 import ba from '../assets/svg/jezik-ba.svg';
 import en from '../assets/images/en.png';
 import PretragaSaPrijedlozima from './pretragaSaPrijedlozima';
+import { AGENCIJA, USLUGE } from './agencijaStrane';
 import {PHOTOS_ENDPOINT} from '../constants';
 
 /*
@@ -309,14 +310,16 @@ class Header extends Component {
                     <Isvg src={search}/>
                 </button>
 
-                {!siroko ?
-                    <button type="button"
-                            className="z-zaglavlje__napredna"
-                            aria-label={'Napredna pretraga'.translate(l)}
-                            onClick={() => this.props.handleDetailSearch(true)}>
-                        <Isvg src={filterIcon}/>
-                    </button>
-                    : null}
+                {/* Napredna pretraga — i na velikoj pretrazi naslovne, na sva
+                    tri izgleda (2026-10-10); tamo uz ikonicu stoji i natpis. */}
+                <button type="button"
+                        className={'z-zaglavlje__napredna' + (siroko ? ' z-zaglavlje__napredna--sa-natpisom' : '')}
+                        aria-label={'Napredna pretraga'.translate(l)}
+                        title={'Napredna pretraga'.translate(l)}
+                        onClick={() => this.props.handleDetailSearch(true)}>
+                    <Isvg src={filterIcon}/>
+                    {siroko ? <span>{'Filteri'.translate(l)}</span> : null}
+                </button>
             </div>
         );
     }
@@ -356,25 +359,40 @@ class Header extends Component {
      * Fotografisanje. Sada su „Usluge" i „Fotografi" naslovi grupa unutar
      * istog panela — jedan klik manje i ništa se ne krije iza drugog klika.
      */
+    plocicaAgencije(p, l) {
+        return (
+            <Link key={p.putanja} className="z-zaglavlje__plocica-agencije" to={p.putanja}>
+                <span className="z-zaglavlje__plocica-ikona" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d={p.ikona} /></svg>
+                </span>
+                <span className="z-zaglavlje__plocica-tekst">
+                    <strong>{p.naziv.translate(l)}</strong>
+                    <span>{p.opis.translate(l)}</span>
+                </span>
+            </Link>
+        );
+    }
+
     panelAgencije() {
         const l = this.props.lang;
         const fotografi = this.props.photographers || [];
 
         return (
             <div className="z-zaglavlje__panel z-zaglavlje__panel--agencija">
-                <div className="z-zaglavlje__grupa">
+                {/* Agencija i Usluge kao pločice sa ikonicom i kratkim opisom
+                    (2026-10-10) — umesto dva gola spiska veza. */}
+                <div className="z-zaglavlje__grupa z-zaglavlje__grupa--plocice">
                     <p className="z-zaglavlje__naslov-grupe">{'Agencija'.translate(l)}</p>
-                    <Link className="z-zaglavlje__stavka-panela" to="/page/o-nama">{'O nama'.translate(l)}</Link>
-                    <Link className="z-zaglavlje__stavka-panela" to="/page/uslovi-koriscenja">{'Uslovi korišćenja'.translate(l)}</Link>
-                    <Link className="z-zaglavlje__stavka-panela" to="/page/ugovori">{'Ugovori'.translate(l)}</Link>
-                    <Link className="z-zaglavlje__stavka-panela" to="/page/prijatelji-sajta">{'Prijatelji sajta'.translate(l)}</Link>
-                    <Link className="z-zaglavlje__stavka-panela" to="/contact">{'Kontakt'.translate(l)}</Link>
+                    <div className="z-zaglavlje__plocice">
+                        {AGENCIJA.map((p) => this.plocicaAgencije(p, l))}
+                    </div>
                 </div>
 
-                <div className="z-zaglavlje__grupa">
+                <div className="z-zaglavlje__grupa z-zaglavlje__grupa--plocice z-zaglavlje__grupa--usluge">
                     <p className="z-zaglavlje__naslov-grupe">{'Usluge'.translate(l)}</p>
-                    <Link className="z-zaglavlje__stavka-panela" to="/page/fotografisanje">{'Fotografisanje'.translate(l)}</Link>
-                    <Link className="z-zaglavlje__stavka-panela" to="/page/saradnja">{'Saradnja'.translate(l)}</Link>
+                    <div className="z-zaglavlje__plocice">
+                        {USLUGE.map((p) => this.plocicaAgencije(p, l))}
+                    </div>
                 </div>
 
                 {fotografi.length ?
@@ -475,6 +493,9 @@ class Header extends Component {
         return (
             <header
                 ref={(n) => this.koren = n}
+                /* Na naslovnoj zaglavlje nosi i adresu pozadinske slike — tema C
+                   je širi preko celog prvog ekrana (2026-10-10). */
+                style={naslovna ? this.pozadinaPretrage() : undefined}
                 className={
                     'zaglavlje-sajta z-zaglavlje'
                     + (naslovna ? ' z-zaglavlje--visoka' : ' z-zaglavlje--niska')
@@ -750,6 +771,7 @@ class Header extends Component {
                         </div>
                     </div>
                     : null}
+
 
 
                 {/* Zavesa iza fioke — klik na nju zatvara meni. Postoji samo

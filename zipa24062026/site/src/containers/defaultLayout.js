@@ -47,6 +47,24 @@ export const DefaultLayout = (Wrapped) => (props) => {
     return (
         <div className={"wrapper"}>
             <Header {...props} />
+
+            {/* ── GLAVNI BANER — u svojoj beloj traci, ispod celog zaglavlja
+                (i ispod slike preko celog ekrana na izgledu C). Samo naslovna.
+                U administraciji: Baneri → „Glavni baner (ispod pretrage)". */}
+            {props[0] && props[0].location && props[0].location.pathname === '/'
+                && props.adBanner && props.adBanner.images && props.adBanner.images.length ?
+                <div className="z-zaglavlje__baner-traka">
+                    <div className="z-zaglavlje__glavni-baner">
+                        {props.adBanner.images.map((b, bi) => (
+                            <a key={bi} href={b.link} target="_blank" rel="noopener noreferrer"
+                               onClick={() => props.bannerClick && props.bannerClick(b.link)}>
+                                <img src={b.image} alt="" />
+                            </a>
+                        ))}
+                    </div>
+                </div>
+                : null}
+
             <Wrapped {...props} />
             <Footer {...props} />
 
@@ -68,7 +86,12 @@ export const DefaultLayout = (Wrapped) => (props) => {
                      onClick={(e) => { if (e.target === e.currentTarget) props.handleDetailSearch(null); }}>
                     <div className="z-pretraga-prozor__okvir">
                         <div className="z-pretraga-prozor__vrh">
-                            <h2 className="z-pretraga-prozor__naslov">{'Napredna pretraga'.translate(props.lang)}</h2>
+                            <div>
+                                <h2 className="z-pretraga-prozor__naslov">{'Napredna pretraga'.translate(props.lang)}</h2>
+                                <p className="z-pretraga-prozor__podnaslov">
+                                    {'Suzite pretragu po ključnim riječima, datumu, mjestu i fotografu.'.translate(props.lang)}
+                                </p>
+                            </div>
                             <button type="button"
                                     className="z-pretraga-prozor__zatvori"
                                     aria-label={'Zatvori'.translate(props.lang)}

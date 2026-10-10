@@ -388,12 +388,14 @@ class form extends React.Component {
                             name="keywords"
                             component={renderTagsField}
                             label={'Ključne riječi'.translate(l)}
+                            placeholder={'Upišite riječ i pritisnite Enter'.translate(l)}
                         ></Field>
 
                         <Field
                             name="name"
                             component={renderTextField}
                             label={'Događaj'.translate(l)}
+                            placeholder={'npr. Dan Republike, utakmica…'.translate(l)}
                         ></Field>
                     </div>
 
@@ -418,12 +420,14 @@ class form extends React.Component {
                             <Field
                                 name="date-from"
                                 component={renderDateField}
-                                label={'Datum fotografisanja - OD'.translate(l)}
+                                label={'Od datuma'.translate(l)}
+                                placeholder="dd.mm.gggg"
                             ></Field>
                             <Field
                                 name="date-to"
                                 component={renderDateField}
-                                label={'Datum fotografisanja - DO'.translate(l)}
+                                label={'Do datuma'.translate(l)}
+                                placeholder="dd.mm.gggg"
                             ></Field>
                         </div>
                     </div>
@@ -438,6 +442,7 @@ class form extends React.Component {
                                 component={renderAutoTextField}
                                 suggestions={this.state.cities}
                                 label={'Grad'.translate(l)}
+                                placeholder={'npr. Banja Luka'.translate(l)}
                             ></Field>
 
                             <Field
@@ -458,7 +463,7 @@ class form extends React.Component {
 
                     {/* ── oblik fotografije ────────────────────────────── */}
                     <div className="z-pretraga-prozor__grupa">
-                        <h3 className="z-pretraga-prozor__naslov-grupe">{'Orjentacija fotografije'.translate(l)}</h3>
+                        <h3 className="z-pretraga-prozor__naslov-grupe">{'Orijentacija fotografije'.translate(l)}</h3>
 
                         <div className="z-pretraga-prozor__orijentacije">
                             <Field

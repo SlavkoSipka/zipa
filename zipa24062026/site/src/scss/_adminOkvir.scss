@@ -1097,3 +1097,124 @@ body.u-administraciji {
     background: var(--boja-podloga-tiha);
     color: var(--boja-oznaka-tekst);
 }
+
+/* ── Značka broja u meniju (nepročitani upiti) ─────────────────────────── */
+.z-adminokvir__znacka {
+    margin-left: auto;
+    min-width: var(--razmak-5);
+    padding: 0 var(--razmak-2);
+    border-radius: var(--radijus-pun);
+    background: var(--boja-oznaka);
+    color: var(--boja-preko-tekst);
+    font-size: var(--slovo-xs);
+    line-height: var(--razmak-5);
+    font-weight: var(--tezina-jaka);
+    text-align: center;
+}
+
+/* ── Licence (administracija) ──────────────────────────────────────────── */
+.z-licence-admin {
+    display: grid;
+    gap: var(--razmak-4);
+
+    &__stavka {
+        display: grid;
+        gap: var(--razmak-3);
+        padding: var(--razmak-4);
+        border: 1px solid var(--boja-linija);
+        border-radius: var(--radijus-panel);
+        background: var(--boja-povrsina);
+    }
+
+    &__red {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: var(--razmak-3);
+
+        &--opis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+        @include mobile { grid-template-columns: minmax(0, 1fr); &--opis { grid-template-columns: minmax(0, 1fr); } }
+    }
+
+    &__radnje {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: var(--razmak-2);
+        flex-wrap: wrap;
+    }
+
+    &__aktivna {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--razmak-2);
+        margin: 0 auto 0 0;
+        font-size: var(--slovo-sm);
+    }
+}
+
+/* ── Upiti za licence ──────────────────────────────────────────────────── */
+.z-upiti {
+    display: grid;
+    gap: var(--razmak-3);
+
+    &__stavka {
+        display: flex;
+        gap: var(--razmak-4);
+        padding: var(--razmak-4);
+        border: 1px solid var(--boja-linija);
+        border-radius: var(--radijus-panel);
+        background: var(--boja-povrsina);
+
+        &--novo {
+            border-color: var(--boja-oznaka);
+            box-shadow: inset 3px 0 0 var(--boja-oznaka);
+        }
+
+        @include mobile { flex-direction: column; }
+    }
+
+    &__slika {
+        flex: 0 0 auto;
+        width: calc(var(--razmak-8) * 2);
+        height: auto;
+        align-self: flex-start;
+        border-radius: var(--radijus-mali);
+    }
+
+    &__telo { flex: 1 1 auto; min-width: 0; display: grid; gap: var(--razmak-2); }
+
+    &__vrh,
+    &__kupac,
+    &__galerija,
+    &__poruka { margin: 0; font-size: var(--slovo-md); line-height: var(--red-md); }
+
+    &__vreme { margin-left: var(--razmak-3); font-size: var(--slovo-sm); color: var(--boja-tekst-tiho); }
+
+    &__oznaka {
+        display: inline-block;
+        margin-right: var(--razmak-2);
+        padding: 0 var(--razmak-2);
+        border-radius: var(--radijus-pun);
+        background: var(--boja-oznaka);
+        color: var(--boja-preko-tekst);
+        font-size: var(--slovo-xs);
+        font-weight: var(--tezina-jaka);
+        text-transform: uppercase;
+    }
+
+    &__poruka {
+        padding: var(--razmak-3);
+        border-radius: var(--radijus-mali);
+        background: var(--boja-podloga-tiha);
+        white-space: pre-wrap;
+    }
+
+    &__radnje { display: flex; gap: var(--razmak-2); flex-wrap: wrap; }
+}
+
+.z-cene-foto__naslov {
+    margin: var(--razmak-4) 0 var(--razmak-2);
+    font-size: var(--slovo-md);
+    font-weight: var(--tezina-jaka);
+}
