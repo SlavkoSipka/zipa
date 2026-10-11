@@ -18,6 +18,7 @@ const sharp = require('sharp');
 const { Pool } = require('pg');
 const storage = require('./storage');
 const zig = require('./zig');
+const { razlikaUZigu } = require('./zig-detektor');
 
 const args = process.argv.slice(2);
 const popravi = args.includes('--popravi');
@@ -25,8 +26,9 @@ const odIdx = args.indexOf('--od');
 const od = odIdx !== -1 ? Math.floor(new Date(args[odIdx + 1]).getTime() / 1000) : null;
 const idevi = args.filter((a, i) => !a.startsWith('--') && !(odIdx !== -1 && i === odIdx + 1));
 
-// Srednja apsolutna razlika (0–255) u sredini kadra; ispod praga = nema žiga.
-const PRAG = 4;
+// Srednja razlika na pikselima žiga (`razlikaUZigu`); ispod praga = nema žiga.
+// Sa žigom je 40+, bez žiga 1–3 (kalibrisano 2026-10-11).
+const PRAG = 15;
 
 async function razlikaUSredini(a, b) {
     const meta = await sharp(a).metadata();
@@ -64,7 +66,7 @@ async function razlikaUSredini(a, b) {
                     storage.getBuffer(storage.previewKey('700x', f.image)),
                 ]);
                 const cist = await sharp(orig).rotate().resize({ width: 700 }).jpeg({ quality: 100 }).toBuffer();
-                const razlika = await razlikaUSredini(cist, pregled);
+                const razlika = await razlikaUZigu(cist, pregled, zigBuf);
 
                 if (razlika < PRAG) {
                     bez++; bezUGaleriji++;

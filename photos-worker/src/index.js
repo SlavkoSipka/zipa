@@ -50,8 +50,9 @@ export default {
          * i novi deploy čine sve stare kopije nevidljivim.
          *
          *   2 — 2026-10-10, „31. Sajam knjige" je bio keširan bez žiga.
+         *   3 — 2026-10-11, provera cele arhive (`api/skeniraj-zig.js`).
          */
-        const VERZIJA_KESA = '2';
+        const VERZIJA_KESA = '3';
         const cache = caches.default;
         const kljucKesa = new URL(url.toString());
         kljucKesa.searchParams.set('__k', VERZIJA_KESA);
