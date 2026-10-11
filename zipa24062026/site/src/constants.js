@@ -21,5 +21,12 @@ export const API_ENDPOINT =
 // Adresa sa koje se povlace watermarkovani pregledi fotografija.
 // U produkciji je to Cloudflare Worker (slike idu sa CDN-a, ne kroz API);
 // lokalno, ako nije postavljena, pregledi idu kroz sam API kao i do sada.
+//
+// VERZIJA_SLIKA ide u svaku adresu slike (`…/v4/photos/350x/…`). Kad se
+// pregledi u skladištu naprave iznova (npr. dodat žig koji je falio —
+// `api/popravi-zig.js`), povećaj broj: to je nova adresa, pa svaki pregledač
+// odmah povuče novu sliku umesto stare iz svog keša. Worker i API prihvataju
+// adresu i sa prefiksom i bez njega. 4 — 2026-10-11, žig na uvezenim galerijama.
+export const VERZIJA_SLIKA = 'v4';
 export const PHOTOS_ENDPOINT =
-    izStrane.photos || process.env.RAZZLE_PHOTOS_ENDPOINT || API_ENDPOINT
+    (izStrane.photos || process.env.RAZZLE_PHOTOS_ENDPOINT || API_ENDPOINT).replace(/\/+$/, '') + '/' + VERZIJA_SLIKA

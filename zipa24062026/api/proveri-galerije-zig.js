@@ -5,7 +5,7 @@
  * kojoj ijedna nema žig upisuje se u izlaz; njih onda popravlja
  * `node popravi-zig.js --popravi <id> ...`.
  *
- *   node proveri-galerije-zig.js 2025-01-01 <izlazni.json>
+ *   node proveri-galerije-zig.js 2025-01-01 <izlazni.json> [do-datuma]
  *
  * Radi sa malo istovremenih zahteva, da ne zagusi vezu.
  */
@@ -20,7 +20,8 @@ const { razlikaUZigu } = require('./zig-detektor');
 
 const od = Math.floor(new Date(process.argv[2]).getTime() / 1000);
 const izlaz = process.argv[3];
-const ISTOVREMENO = 3;
+const doDatuma = process.argv[4] ? Math.floor(new Date(process.argv[4]).getTime() / 1000) : 2e10;
+const ISTOVREMENO = 6;
 const PRAG = 15;   // razlika na pikselima žiga: sa žigom 40+, bez 1–3
 
 async function razlikaUSredini(a, b) {
@@ -49,7 +50,7 @@ async function bezZiga(image) {
     const pod = await pool.query('select watermark from settings limit 1');
     zigBuf = await zig.ucitajZig(pod.rows[0] && pod.rows[0].watermark);
     const r = await pool.query(`select _id, name->>'ba' as naziv, published, photos from gallery
-                                 where published >= $1 order by published desc`, [od]);
+                                 where published >= $1 and published < $2 order by published desc`, [od, doDatuma]);
     const galerije = r.rows;
     console.log(`galerija od ${process.argv[2]}: ${galerije.length}`);
 

@@ -109,7 +109,8 @@ function servePreview(size) {
             const obj = await storage.getStream(storage.previewKey(size, image));
             res.set({
                 'Content-Type': obj.contentType,
-                'Cache-Control': 'public, max-age=31536000, immutable',
+                // Dan, ne godinu: pregled ume da se napravi iznova (`popravi-zig.js`).
+                'Cache-Control': 'public, max-age=86400',
                 ...(obj.contentLength ? { 'Content-Length': obj.contentLength } : {}),
                 ...(obj.etag ? { ETag: obj.etag } : {}),
             });
@@ -120,6 +121,11 @@ function servePreview(size) {
     };
 }
 
+// Prefiks verzije (`/v4/photos/...`) se skida — vidi `VERZIJA_SLIKA` u `site/src/constants.js`.
+app.use((req, res, next) => {
+    if (/^\/v\d+\/photos\//.test(req.url)) req.url = req.url.replace(/^\/v\d+/, '');
+    next();
+});
 app.use('/photos/350x', servePreview('350x'));
 app.use('/photos/700x', servePreview('700x'));
 

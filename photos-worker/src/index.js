@@ -21,8 +21,14 @@ export default {
 
         const url = new URL(request.url);
 
-        // Dozvoljeno je samo /photos/350x/... i /photos/700x/...
-        const match = url.pathname.match(/^\/photos\/(350x|700x)\/(.+)$/);
+        /*
+         * Dozvoljeno je samo /photos/350x/... i /photos/700x/..., uz neobavezan
+         * prefiks verzije (`/v4/photos/...`). Prefiks postavlja sajt
+         * (`VERZIJA_SLIKA` u `site/src/constants.js`): nova verzija je nova
+         * adresa, pa i pregledač koji ima staru kopiju bez žiga mora da povuče
+         * novu. Uveden 2026-10-11.
+         */
+        const match = url.pathname.match(/^(?:\/v\d+)?\/photos\/(350x|700x)\/(.+)$/);
         if (!match) {
             return new Response('Not found', { status: 404 });
         }
@@ -43,16 +49,19 @@ export default {
         /*
          * Edge keš: iste sličice se traže hiljadama puta.
          *
-         * VERZIJA KEŠA je deo ključa. Kad se pregledi u R2 naprave iznova
-         * (npr. `api/popravi-zig.js` doda žig koji je falio), stara kopija bi
-         * inače ostala u kešu do godinu dana — keš preko Cache API-ja na
-         * workers.dev ne može da se očisti iz Cloudflare-a. Povećanje broja
-         * i novi deploy čine sve stare kopije nevidljivim.
+         * I edge i pregledač čuvaju kopiju JEDAN DAN, ne godinu. Pregled pod
+         * istim imenom ume da se napravi iznova (žig koji je falio —
+         * `api/popravi-zig.js`); sa godinu dana bi stara kopija bez žiga
+         * ostala vidljiva, a keš preko Cache API-ja na workers.dev ne može da
+         * se očisti iz Cloudflare-a. Ovako popravka stigne do svakoga
+         * najkasnije za dan — a odmah, povećanjem `VERZIJA_SLIKA` na sajtu.
          *
+         * VERZIJA_KESA (deo ključa) ostaje za hitno brisanje edge keša:
          *   2 — 2026-10-10, „31. Sajam knjige" je bio keširan bez žiga.
          *   3 — 2026-10-11, provera cele arhive (`api/skeniraj-zig.js`).
+         *   4 — 2026-10-11, keš skraćen na dan.
          */
-        const VERZIJA_KESA = '3';
+        const VERZIJA_KESA = '4';
         const cache = caches.default;
         const kljucKesa = new URL(url.toString());
         kljucKesa.searchParams.set('__k', VERZIJA_KESA);
@@ -69,8 +78,7 @@ export default {
         object.writeHttpMetadata(headers);
         headers.set('etag', object.httpEtag);
         headers.set('Content-Type', object.httpMetadata?.contentType || 'image/jpeg');
-        // Fajlovi se nikad ne menjaju pod istim imenom -> može dug keš
-        headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+        headers.set('Cache-Control', 'public, max-age=86400');
         headers.set('Access-Control-Allow-Origin', '*');
 
         const response = new Response(object.body, { headers });
