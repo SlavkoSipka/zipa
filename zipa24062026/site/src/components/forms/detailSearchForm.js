@@ -384,18 +384,20 @@ class form extends React.Component {
                     <div className="z-pretraga-prozor__grupa">
                         <h3 className="z-pretraga-prozor__naslov-grupe">{'Šta tražite'.translate(l)}</h3>
 
+                        {/* Ključne riječi, Događaj i Grad su PRAZNA polja, bez
+                            primera u sebi („npr. Banja Luka"…) — traženo 2026-10-13. */}
+
                         <Field
                             name="keywords"
                             component={renderTagsField}
                             label={'Ključne riječi'.translate(l)}
-                            placeholder={'Upišite riječ i pritisnite Enter'.translate(l)}
+                            placeholder=""
                         ></Field>
 
                         <Field
                             name="name"
                             component={renderTextField}
                             label={'Događaj'.translate(l)}
-                            placeholder={'npr. Dan Republike, utakmica…'.translate(l)}
                         ></Field>
                     </div>
 
@@ -442,7 +444,6 @@ class form extends React.Component {
                                 component={renderAutoTextField}
                                 suggestions={this.state.cities}
                                 label={'Grad'.translate(l)}
-                                placeholder={'npr. Banja Luka'.translate(l)}
                             ></Field>
 
                             <Field

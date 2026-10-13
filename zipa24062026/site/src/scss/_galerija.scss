@@ -94,12 +94,17 @@
         margin-bottom: var(--razmak-6);
     }
 
-    // Naslovni deo levo, radnje desno.
+    /* Naslovni deo levo, radnje desno — ali kao BLOK u sredini ekrana
+       (2026-10-13): tekst ostaje levo poravnat, samo se cela celina (naslov,
+       podaci, radnje i opis ispod) ne razvlači do ivica nego stoji u sredini,
+       u širini `--sirina-opisa-galerije`. Fotografije ispod ostaju pune širine. */
     &__vrh {
         display: flex;
         align-items: flex-start;
         justify-content: space-between;
         gap: var(--razmak-6);
+        max-width: var(--sirina-opisa-galerije);
+        margin: 0 auto;
 
         @include mobile-tablet {
             flex-direction: column;
@@ -187,7 +192,9 @@
      * Nema više skupljanja na tri reda: opis se vidi ceo, bez dugmeta.
      */
     &__opis {
-        margin-top: var(--razmak-5);
+        // Ista širina i isto mesto kao naslovni deo iznad (2026-10-13).
+        max-width: var(--sirina-opisa-galerije);
+        margin: var(--razmak-5) auto 0;
 
         font-size: var(--slovo-lg);
         line-height: var(--red-md);
@@ -517,6 +524,31 @@
     &__srodne .z-kartica-galerije__mesto {
         display: none;
     }
+
+    /* Kartice bliže jedna drugoj (2026-10-13): Bootstrapov razmak između
+       stubaca je 30px; ovde 12px (`--razmak-3`). */
+    &__srodne .articles {
+        margin-left: calc(var(--razmak-3) / -2);
+        margin-right: calc(var(--razmak-3) / -2);
+
+        > [class*="col-"] {
+            padding-left: calc(var(--razmak-3) / 2);
+            padding-right: calc(var(--razmak-3) / 2);
+            margin-bottom: var(--razmak-5);
+        }
+
+        // Kartica je nosila 70px donje margine iz zatečenog `.home-article`,
+        // pa je između dva reda zjapilo ~120px.
+        .z-kartica-galerije { margin-bottom: 0; }
+    }
+
+    // Slova u ovom odeljku su crvena (2026-10-13) — naslov odeljka i nazivi.
+    &__srodne-naslov { color: var(--boja-oznaka-tekst); }
+
+    &__srodne .z-kartica-galerije__naslov a {
+        color: var(--boja-oznaka-tekst);
+        &:hover { text-decoration: underline; }
+    }
 }
 
 /* Dolazak fotografije u mreži galerije — vidi `&__foto` iznad. */
@@ -579,7 +611,8 @@
         }
     }
 
-    .z-galerija__opis { max-width: 90ch; }
+    // Širina bloka sa naslovom i opisom — vidi `&__vrh` gore.
+    --sirina-opisa-galerije: 1040px;
 
     .z-galerija__mreza {
         @include desktop-i-vise {

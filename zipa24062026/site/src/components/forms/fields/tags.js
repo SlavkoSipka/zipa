@@ -39,7 +39,7 @@ class Tags extends Component {
                     }
                     this.forceUpdate();
 
-                }} inputProps={{ placeholder: this.props.placeholder || 'Upišite i pritisnite Enter' }} />
+                }} inputProps={{ placeholder: this.props.placeholder !== undefined ? this.props.placeholder : 'Upišite i pritisnite Enter' }} />
 
             </div>
         );

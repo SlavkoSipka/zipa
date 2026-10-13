@@ -156,7 +156,7 @@ class Footer extends Component {
                                         {'Prijavite se na naš newsletter'.translate(l)}
                                     </h2>
                                     <p className="z-podnozje__newsletter-opis">
-                                        {'Nove galerije iz arhive, jednom mjesečno. Odjava je moguća u svakom trenutku.'.translate(l)}
+                                        {'Budite prvi obaviješteni o novim fotografijama, pogodnostima i najavama. Odjava je moguća u svakom trenutku.'.translate(l)}
                                     </p>
                                 </div>
 

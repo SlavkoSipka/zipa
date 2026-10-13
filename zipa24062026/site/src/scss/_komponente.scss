@@ -1420,3 +1420,192 @@
     border-top: 1px solid var(--svetlo-linija);
     border-bottom: 1px solid var(--svetlo-linija);
 }
+
+
+/* ── Prozor najave (2026-10-13) ─────────────────────────────────────────────
+   Otvara ga dugme „Pročitaj" uz najavu u traci iznad navbara
+   (`components/prozorNajave.js`). Crta se u <body>, pa nosi svetle tokene
+   strane, ne tamne iz zaglavlja. Traka u boji izgleda gore (A crvena,
+   B plava, C grafit) vezuje prozor za najavu iz koje je otvoren. */
+.z-prozor-najave {
+    position: fixed;
+    inset: 0;
+    z-index: var(--sloj-prozor);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--razmak-4);
+    background: var(--boja-zavesa);
+    animation: z-prozor-najave-zavesa var(--prelaz-obicno) var(--prelaz-kriva);
+
+    &__kartica {
+        position: relative;
+        width: 100%;
+        max-width: 640px;
+        max-height: calc(100vh - var(--razmak-7));
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        padding: var(--razmak-6) var(--razmak-6) var(--razmak-5);
+
+        background: var(--boja-povrsina);
+        border-top: 4px solid var(--boja-akcenat);
+        border-radius: var(--radijus-panel);
+        box-shadow: var(--senka-prozor);
+        animation: z-prozor-najave-kartica var(--prelaz-obicno) var(--prelaz-kriva);
+
+        @include mobile { padding: var(--razmak-5) var(--razmak-4) var(--razmak-4); }
+    }
+
+    &__x {
+        position: absolute;
+        top: var(--razmak-3);
+        right: var(--razmak-3);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        padding: 0;
+        border: 0;
+        border-radius: var(--radijus-pun);
+        background: transparent;
+        color: var(--boja-tekst-tiho);
+        cursor: pointer;
+
+        @include z-prelaz(background-color, color);
+        &:hover { background: var(--boja-podloga-tiha); color: var(--boja-tekst); }
+        @include z-fokus;
+
+        svg { width: 20px; height: 20px; }
+    }
+
+    &__oznaka {
+        margin: 0 0 var(--razmak-2);
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        font-weight: var(--tezina-jaka);
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: var(--boja-oznaka-tekst);
+    }
+
+    &__naslov {
+        // Desno mesta za dugme zatvaranja, da se naslov ne podvuče pod njega.
+        margin: 0 var(--razmak-7) var(--razmak-4) 0;
+        font-family: var(--pismo-naslov);
+        font-size: var(--slovo-2xl);
+        line-height: var(--red-2xl);
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-tekst);
+
+        @include mobile { font-size: var(--slovo-xl); line-height: var(--red-xl); }
+    }
+
+    // Opis stiže kao slobodan HTML iz administracije.
+    &__telo {
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-lg);
+        line-height: var(--red-md);
+        color: var(--boja-tekst);
+
+        p { margin: 0 0 var(--razmak-3); }
+        p:last-child { margin-bottom: 0; }
+        a { @include z-veza; }
+        img { max-width: 100%; height: auto; border-radius: var(--radijus-panel); }
+        ul, ol { margin: 0 0 var(--razmak-3); padding-left: var(--razmak-5); }
+    }
+
+    &__radnje {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: var(--razmak-3);
+        margin-top: var(--razmak-5);
+        padding-top: var(--razmak-4);
+        border-top: 1px solid var(--boja-linija);
+    }
+}
+
+@keyframes z-prozor-najave-zavesa {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+@keyframes z-prozor-najave-kartica {
+    from { opacity: 0; transform: translateY(var(--razmak-3)) scale(.98); }
+    to   { opacity: 1; transform: none; }
+}
+
+
+/* ── Kategorije na naslovnoj (2026-10-13) ───────────────────────────────────
+   `components/kategorijeNaslovne.js` — isto na A, B i C. Pet galerija u
+   redu (4 na manjem laptopu, 3 na tabletu, 2 na telefonu). */
+.z-kategorija-naslovne {
+    margin-top: var(--razmak-7);
+
+    &__vrh {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: var(--razmak-4);
+        margin-bottom: var(--razmak-4);
+        padding-bottom: var(--razmak-2);
+        border-bottom: 1px solid var(--boja-linija);
+    }
+
+    &__naslov {
+        margin: 0;
+        font-family: var(--pismo-naslov);
+        font-size: var(--slovo-xl);
+        line-height: var(--red-xl);
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-tekst);
+    }
+
+    &__sve {
+        @include z-veza-meni;
+        flex: 0 0 auto;
+        font-size: var(--slovo-md);
+        white-space: nowrap;
+    }
+
+    &__mreza {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: var(--razmak-5) var(--razmak-3);
+
+        @include small-desktop { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        @include tablet        { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        @include mobile        { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+        .z-kartica-galerije { margin-bottom: 0; }
+    }
+}
+
+
+/* ── Prikaži još (2026-10-14) ───────────────────────────────────────────────
+   `components/ucitajJos.js` — /galerije i /video. Omotač stoji i bez dugmeta,
+   jer ga prati posmatrač koji sam dodaje sledeću stranu. */
+
+/* Pregledač pri dodavanju sadržaja drži u kadru ono što se gleda. Kad je to
+   dno strane, pomeri se zajedno sa njim i posmatrač odmah traži još jednu
+   stranu — pa se pri brzom skoku na dno dodavalo četiri odjednom. Cela
+   strana (sa reklamama ispod spiska) i podnožje zato ne smeju da budu
+   oslonac. */
+.category-wrap,
+.z-video,
+.z-podnozje { overflow-anchor: none; }
+
+.z-ucitaj-jos {
+    display: flex;
+    justify-content: center;
+    min-height: 1px;
+    margin-top: var(--razmak-6);
+
+    &__dugme {
+        min-width: 240px;
+
+        @include mobile { width: 100%; min-width: 0; }
+    }
+}

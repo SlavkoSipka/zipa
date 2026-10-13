@@ -353,7 +353,7 @@ class CartPage extends Component {
 
                                                 <div className="z-korpa__desno">
                                                     <span className="z-korpa__cena">
-                                                        ${(s.price).formatPrice(2)}
+                                                        {(s.price).formatPrice(2)} KM
                                                     </span>
                                                     <button
                                                         type="button"
@@ -403,19 +403,19 @@ class CartPage extends Component {
 
                                 <div className="z-korpa__zbir-red">
                                     <span>{'Fotografije'.translate(l)}</span>
-                                    <span>${total.formatPrice(2)}</span>
+                                    <span>{total.formatPrice(2)} KM</span>
                                 </div>
 
                                 {obrada !== undefined && obrada !== null ? (
                                     <div className="z-korpa__zbir-red">
                                         <span>{'Troškovi obrade'.translate(l)}</span>
-                                        <span>${obrada.formatPrice(2)}</span>
+                                        <span>{obrada.formatPrice(2)} KM</span>
                                     </div>
                                 ) : null}
 
                                 <div className="z-korpa__zbir-ukupno">
                                     <span>{'Ukupno'.translate(l)}</span>
-                                    <span>${(total).formatPrice(2)}</span>
+                                    <span>{(total).formatPrice(2)} KM</span>
                                 </div>
 
                                 {/* Licenca stoji PRE plaćanja, ne posle. */}
@@ -503,7 +503,7 @@ class CartPage extends Component {
                     <div className="z-korpa__traka-dno">
                         <span className="z-korpa__traka-zbir">
                             {'Ukupno'.translate(l)}
-                            <strong>${(total).formatPrice(2)}</strong>
+                            <strong>{(total).formatPrice(2)} KM</strong>
                         </span>
                         <a className="z-korpa__dugme" href="#placanje">
                             {'Na plaćanje'.translate(l)}

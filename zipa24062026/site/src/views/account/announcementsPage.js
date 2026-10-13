@@ -132,7 +132,8 @@ class CategoriesPage extends Component {
                     lang={l}
                     ucitavanje={this.state.ucitavanje}
                     kolone={[
-                        { kljuc: 'naslov', naziv: 'Naslov' },
+                        { kljuc: 'naslov', naziv: 'Natpis u traci' },
+                        { kljuc: 'mesto', naziv: 'Mesto' },
                         { kljuc: 'period', naziv: 'Prikazuje se' },
                     ]}
                     redovi={this.state.items || []}
@@ -146,6 +147,9 @@ class CategoriesPage extends Component {
                     }}
                     celija={(r, k) => {
                         if (k.kljuc === 'naslov') return Object.translate(r, 'content', l) || '—';
+                        if (k.kljuc === 'mesto') return r.pozicija === 'desno'
+                            ? 'Obaveštenje 2 — desno'.translate(l)
+                            : 'Obaveštenje 1 — levo'.translate(l);
 
                         /* Datumi se do sada nisu videli u spisku, iako SAMO oni
                            odlučuju da li je najava vidljiva. */

@@ -41,6 +41,11 @@ import PredlogA from './naslovna/predlogA';
 import PredlogC from './naslovna/predlogC';
 import PredlogB from './naslovna/predlogB';
 
+/* Na početnoj samo šest najnovijih snimaka (2026-10-14). `/videos/all` ih
+   već šalje poređane po datumu koji upiše administrator, najnoviji prvi. */
+const NAJVISE_VIDEA_NA_POCETNOJ = 6;
+const najnovijiVidei = (videi) => (videi || []).slice(0, NAJVISE_VIDEA_NA_POCETNOJ);
+
 class HomePage extends Component {
     constructor(props) {
         super(props);
@@ -199,7 +204,7 @@ class HomePage extends Component {
                     latest={this.state.latest}
                     izdvojeno={this.state.izdvojeno}
                     banners={this.props.banners}
-                    videos={this.state.videos}
+                    videos={najnovijiVidei(this.state.videos)}
                     bannerClick={this.props.bannerClick}
                 />
             );

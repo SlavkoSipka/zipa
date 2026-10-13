@@ -48,7 +48,7 @@ class AddToCartModal extends Component {
                             <Isvg src={this.props.rating >= 4.5 ? fullStar : star} />
 
                         </div>
-                        <p className="price">${this.props.price}</p>
+                        <p className="price">{this.props.price} KM</p>
                     </div>
                     <div className="buttons-wrap">
                         <button className="close-button" onClick={this.props.hideAddToCartModal}>Keep Browsing</button>

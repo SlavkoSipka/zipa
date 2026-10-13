@@ -1,6 +1,7 @@
 require('dotenv').config();
 
 const express = require("express");
+const fs = require('fs');
 const http = require("http");
 const port = process.env.PORT || 10015;
 //const nodemailer = require('nodemailer');
@@ -81,7 +82,33 @@ const app = express();
 app.use(cors());
 app.use(compression());
 app.use(bodyParser.json({ limit: '20mb' }));
+/*
+ * `uploads/` NIJE u gitu (`.gitignore`), pa na Renderu posle deploya ne postoji
+ * — svako postavljanje slike iz administracije je padalo sa ENOENT („Snimanje
+ * fajla nije uspjelo"). Pravi se pri pokretanju (2026-10-13).
+ */
+fs.mkdirSync('./uploads', { recursive: true });
 app.use('/uploads', express.static('uploads'))
+
+/*
+ * Fajl koga nema na disku čita se iz R2 (2026-10-13) — `/upload` ga tamo
+ * kopira, jer Render lokalni disk briše pri svakom deployu i restartu.
+ * Pročitan se zapiše i na disk, pa sledeći zahtev ide preko `express.static`.
+ */
+const VRSTE_UPLOADA = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp' };
+app.get('/uploads/:ime', async (req, res) => {
+    const ime = String(req.params.ime || '');
+    const ext = (ime.split('.').pop() || '').toLowerCase();
+    if (!/^[\w-]+\.[a-z]+$/i.test(ime) || !VRSTE_UPLOADA[ext]) { res.status(404).send('Not found'); return; }
+    try {
+        const b = await storage.getBuffer('uploads/' + ime);
+        fs.writeFile('./uploads/' + ime, b, () => {});
+        res.set({ 'Content-Type': VRSTE_UPLOADA[ext], 'Cache-Control': 'public, max-age=86400' });
+        res.send(b);
+    } catch (e) {
+        res.status(404).send('Not found');
+    }
+});
 
 /*
  * Slike koje idu U POŠTI (logo u zaglavlju i podnožju poruke).
@@ -96,6 +123,7 @@ app.use('/mail-assets', express.static('mail-assets'))
 // Bucket je privatan — originali se NIKAD ne serviraju ovuda, samo kroz
 // /gallery/download rute nakon provere prava.
 const storage = require('./storage');
+const zig = require('./zig');
 
 function servePreview(size) {
     return async (req, res) => {
@@ -891,6 +919,19 @@ app.post('/watermarks/update/:id', permissionMiddleware('*'), async (req, res) =
 app.post('/watermarks/activate/:id', permissionMiddleware('*'), async (req, res) => {
     let result = await adminModule.activateWatermark(req.params.id);
     res.status(result.status).send(result.response);
+});
+
+// Slika žiga za administraciju — sa diska ili iz R2 (vidi `zig.zigZaPrikaz`).
+app.get('/zig/:ime', async (req, res) => {
+    const ime = String(req.params.ime || '');
+    if (!/^[\w.-]+$/.test(ime)) { res.status(400).send('Bad request'); return; }
+    try {
+        const b = await zig.zigZaPrikaz(ime);
+        res.set({ 'Content-Type': 'image/png', 'Cache-Control': 'public, max-age=300' });
+        res.send(b);
+    } catch (e) {
+        res.status(404).send('Not found');
+    }
 });
 
 app.delete('/watermarks/delete/:id', permissionMiddleware('*'), async (req, res) => {

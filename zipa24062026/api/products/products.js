@@ -1775,7 +1775,9 @@ class ProductsModule {
         }
 
         if (query.city) {
-            galleryQuery.location = new RegExp(query.city, 'i');
+            // Upisan tekst, ne regex: zagrada ili tačka iz polja „Grad" ne
+            // sme da obori pretragu (2026-10-13, polje sada prima i slobodan unos).
+            galleryQuery.location = new RegExp(String(query.city).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
         }
 
         /*

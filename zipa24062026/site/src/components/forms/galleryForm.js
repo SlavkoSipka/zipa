@@ -414,12 +414,14 @@ class form extends React.Component {
 
 
 
-                    <Col lg="4">
+                    {/* Osnovne kategorije u DVE kolone (2026-10-13) — u jednoj
+                        koloni je spisak bio toliko dug da se zbog njega skrolovalo. */}
+                    <Col lg="6">
                         <Field
                             name="category"
                             component={renderMultiCheckboxField}
                             label={'Osnovne kategorije'.translate(this.props.lang)}
-                            width="12"
+                            width="6"
                         >
                             {
                                 this.props.categories && this.props.categories.map((item, idx) => {
@@ -433,7 +435,7 @@ class form extends React.Component {
                         </Field>
 
                     </Col>
-                    <Col lg="4">
+                    <Col lg="3">
                         <Field
                             name="category"
                             component={renderMultiCheckboxField}
@@ -454,7 +456,7 @@ class form extends React.Component {
                         </Field>
 
                     </Col>
-                    <Col lg="4">
+                    <Col lg="3">
                         <Field
                             name="category"
                             component={renderMultiCheckboxField}

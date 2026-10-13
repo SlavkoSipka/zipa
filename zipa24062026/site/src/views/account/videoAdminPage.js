@@ -11,23 +11,13 @@ import { youtubeId } from '../../components/youtube';
  *
  * Admin nalepi YouTube adresu (pun link ili goli ID), upiše naslov, opis,
  * grad i datum. Sličica se vuče sama iz adrese. Naslov i opis stoje na
- * strani /video direktno iznad snimka. Redosled je `position`; na naslovnoj
- * idu prvi uključeni.
+ * strani /video direktno iznad snimka. Redosled je po DATUMU, najnoviji
+ * prvi (2026-10-14); na naslovnoj idu šest najnovijih uključenih. Polje
+ * „Redosljed" je zato skinuto — `position` ostaje u bazi, ali se ne čita.
  */
 const zaglavlja = () => ({
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-});
-
-const prazan = () => ({
-    _id: 'new',
-    link: '',
-    title: { ba: '', en: '' },
-    opis: { ba: '', en: '' },
-    grad: '',
-    datum: null,
-    position: 0,
-    isActive: true,
 });
 
 // unix (sekunde) ↔ vrednost polja <input type="date">
@@ -37,6 +27,18 @@ const uPolje = (t) => {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 const izPolja = (v) => (v ? Math.floor(new Date(v + 'T12:00:00').getTime() / 1000) : null);
+
+const prazan = () => ({
+    _id: 'new',
+    link: '',
+    title: { ba: '', en: '' },
+    opis: { ba: '', en: '' },
+    grad: '',
+    // Nov snimak dobija današnji datum, da ne ode na kraj spiska.
+    datum: izPolja(uPolje(Math.floor(Date.now() / 1000))),
+    position: 0,
+    isActive: true,
+});
 
 class VideoAdminPage extends Component {
     constructor(props) {
@@ -77,6 +79,11 @@ class VideoAdminPage extends Component {
         const id = youtubeId(s.link);
         if (!id) {
             this.poruke.dodaj('greska', 'Adresa nije prepoznata kao YouTube snimak.'.translate(l));
+            return;
+        }
+        // Po datumu se ređa i /video i naslovna — bez njega bi snimak otišao na kraj.
+        if (!s.datum) {
+            this.poruke.dodaj('greska', 'Upišite datum snimka.'.translate(l));
             return;
         }
         // Goli ID se pretvara u punu adresu pre slanja; sličica se pravi iznova.
@@ -125,7 +132,7 @@ class VideoAdminPage extends Component {
 
                 <div className="z-licence-admin">
                     <p className="z-prijava-strana__uvod">
-                        {'Snimci za stranu Video i naslovnu. Nalepite YouTube adresu, upišite naslov, opis, grad i datum — naslov i opis stoje iznad snimka. Manji redosljed ide prvi.'.translate(l)}
+                        {'Snimci za stranu Video i naslovnu. Nalepite YouTube adresu, upišite naslov, opis, grad i datum — naslov i opis stoje iznad snimka. Snimci idu po datumu, najnoviji prvi; na početnoj se vidi šest najnovijih.'.translate(l)}
                     </p>
 
                     {this.state.ucitavanje ? <span className="z-kostur z-kostur--red" /> : null}
@@ -156,14 +163,9 @@ class VideoAdminPage extends Component {
                                                        onChange={(e) => this.izmeni(i, ['grad'], e.target.value)} />
                                             </label>
                                             <label className="z-polje">
-                                                <span className="z-polje__oznaka">{'Datum'.translate(l)}</span>
+                                                <span className="z-polje__oznaka">{'Datum'.translate(l)} *</span>
                                                 <input className="z-polje__unos" type="date" value={uPolje(s.datum)}
                                                        onChange={(e) => this.izmeni(i, ['datum'], izPolja(e.target.value))} />
-                                            </label>
-                                            <label className="z-polje">
-                                                <span className="z-polje__oznaka">{'Redosljed'.translate(l)}</span>
-                                                <input className="z-polje__unos" type="number" value={s.position || 0}
-                                                       onChange={(e) => this.izmeni(i, ['position'], e.target.value)} />
                                             </label>
                                         </div>
                                     </div>

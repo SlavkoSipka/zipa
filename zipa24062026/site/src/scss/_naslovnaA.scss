@@ -556,6 +556,58 @@
         }
     }
 
+    /* Trenutno uključen žig, gore (2026-10-13). Podloga je pola tamna, pola
+       srednje siva — žig je najčešće beo i na šahovnici se ne bi video. */
+    .trenutni {
+        display: flex;
+        align-items: center;
+        gap: var(--razmak-5);
+        margin: var(--razmak-4) 0;
+        padding: var(--razmak-4);
+        border: 1px solid var(--boja-linija);
+        border-radius: var(--radijus-panel);
+
+        .slika {
+            flex: 0 0 280px;
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radijus-panel);
+            background: linear-gradient(90deg, var(--boja-traka) 50%, var(--boja-tekst-tiho) 50%);
+
+            img { max-width: 88%; max-height: 96px; object-fit: contain; }
+        }
+
+        b { display: block; font-size: var(--slovo-lg); color: $black; }
+
+        .oznaka {
+            display: inline-block;
+            margin-bottom: var(--razmak-1);
+            font-size: var(--slovo-oznaka);
+            font-weight: $semiBold;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: var(--boja-uspeh);
+        }
+
+        @include mobile {
+            flex-direction: column;
+            align-items: stretch;
+            .slika { flex-basis: auto; }
+        }
+    }
+
+    .dodavanje .odmah {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--razmak-2);
+        font-size: var(--slovo-sm);
+        color: var(--boja-tekst);
+        cursor: pointer;
+        input { width: 18px; height: 18px; }
+    }
+
     .mreza-zigova {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
@@ -577,13 +629,8 @@
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                // šahovnica, da se vidi providnost PNG-a
-                background-color: var(--boja-podloga-tiha);
-                background-image:
-                    linear-gradient(45deg, var(--boja-linija) 25%, transparent 25%, transparent 75%, var(--boja-linija) 75%),
-                    linear-gradient(45deg, var(--boja-linija) 25%, transparent 25%, transparent 75%, var(--boja-linija) 75%);
-                background-size: 16px 16px;
-                background-position: 0 0, 8px 8px;
+                // Pola tamno, pola sivo — beli žig se na šahovnici nije video.
+                background: linear-gradient(90deg, var(--boja-traka) 50%, var(--boja-tekst-tiho) 50%);
 
                 img { max-width: 88%; max-height: 92px; object-fit: contain; }
             }
@@ -638,9 +685,11 @@
    ═══════════════════════════════════════════════════════════════════════════
    Devet najnovijih 3 × 3 preko celog ekrana, ispod red od pet, pa
    „Izdvajamo" po četiri. Razmaci su mali, tekst se pojavi na prelaz mišem.
-   Isti red od pet pločica koristi i predlog C (2026-09-22).
+   Isti red od pet pločica koristi i predlog C (2026-09-22). „Izdvajamo" po
+   četiri pločice je od 2026-10-13 isti na A, B i C.
 */
 .naslovna-a,
+.naslovna-b,
 .naslovna-c {
 
     .z-mozaik {

@@ -15,7 +15,8 @@ import { API_ENDPOINT } from '../../constants';
 class WatermarksPage extends Component {
     constructor(props) {
         super(props);
-        this.state = { zigovi: [], ucitava: true, greska: null, poruka: null, naziv: '', salje: false };
+        // `odmah`: nov žig se posle postavljanja odmah i uključuje (2026-10-13).
+        this.state = { zigovi: [], ucitava: true, greska: null, poruka: null, naziv: '', salje: false, odmah: true };
     }
 
     componentDidMount() {
@@ -76,7 +77,21 @@ class WatermarksPage extends Component {
                     body: JSON.stringify({ name: naziv, image: adresa })
                 });
             })
-            .then(() => this.setState({ salje: false, naziv: '', poruka: 'Žig je sačuvan.' }, this.ucitaj))
+            .then((r) => {
+                if (!r.ok) throw new Error('upload');
+                return r.json().catch(() => ({}));
+            })
+            .then((sacuvan) => {
+                if (this.state.odmah && sacuvan && sacuvan._id) {
+                    return fetch(`${API_ENDPOINT}/watermarks/activate/${sacuvan._id}`, { method: 'POST', headers: this.zaglavlje() })
+                        .then(() => 'Žig je sačuvan i uključen. Važi za galerije postavljene od sada.');
+                }
+                return 'Žig je sačuvan. Uključite ga kad želite.';
+            })
+            .then((poruka) => {
+                if (this.unosFajla) this.unosFajla.value = '';
+                this.setState({ salje: false, naziv: '', poruka }, this.ucitaj);
+            })
             .catch(() => this.setState({ salje: false, greska: 'Slanje nije uspelo. Provjerite da je fajl PNG.' }));
     };
 
@@ -100,6 +115,7 @@ class WatermarksPage extends Component {
 
     render() {
         const { zigovi, ucitava, greska, poruka, salje } = this.state;
+        const ukljucen = zigovi.find((z) => z.ukljucen);
 
         return (
             <AdminOkvir
@@ -115,11 +131,25 @@ class WatermarksPage extends Component {
                     <Row>
                         <Col lg="12">
                             <p className="uvod">
-                                Ovdje čuvate više žigova i prebacujete koji se koristi.
-                                Uključeni žig se ugrađuje u pregledne fotografije
-                                <b> u trenutku postavljanja galerije</b> — promjena važi za
-                                galerije postavljene od tada, ranije zadržavaju svoj.
+                                Ovdje možete da postavite svoj žig (npr. kad promijenite logo)
+                                i da izaberete koji se koristi. <b>Ako ne postavite ništa,
+                                ostaje žig koji je sada uključen.</b> Uključeni žig se ugrađuje
+                                u pregledne fotografije <b>u trenutku postavljanja galerije</b> —
+                                promjena važi za galerije postavljene od tada, ranije
+                                zadržavaju svoj.
                             </p>
+
+                            {ukljucen ? (
+                                <div className="trenutni">
+                                    <div className="slika">
+                                        {ukljucen.image ? <img src={ukljucen.image} alt={ukljucen.name} /> : null}
+                                    </div>
+                                    <div>
+                                        <span className="oznaka">Trenutno uključen</span>
+                                        <b>{ukljucen.name}</b>
+                                    </div>
+                                </div>
+                            ) : null}
 
                             <div className="napomena">
                                 <b>Kako pripremiti:</b> PNG sa providnom pozadinom, širine
@@ -140,8 +170,14 @@ class WatermarksPage extends Component {
                                         onChange={(e) => this.setState({ naziv: e.target.value })}
                                     />
                                     <label className="dugme-fajl">
-                                        {salje ? 'Šaljem…' : 'Izaberi PNG i sačuvaj'}
-                                        <input type="file" accept="image/png" onChange={this.posalji} disabled={salje} />
+                                        {salje ? 'Šaljem…' : 'Postavi nov žig (PNG)'}
+                                        <input type="file" accept="image/png" onChange={this.posalji} disabled={salje}
+                                               ref={(n) => this.unosFajla = n} />
+                                    </label>
+                                    <label className="odmah">
+                                        <input type="checkbox" checked={this.state.odmah}
+                                               onChange={(e) => this.setState({ odmah: e.target.checked })} />
+                                        Odmah ga uključi
                                     </label>
                                 </div>
                             ) : null}
@@ -179,6 +215,10 @@ class WatermarksPage extends Component {
                                                         ? 'Datoteka žiga NE POSTOJI na serveru — fotografije se postavljaju bez žiga.'
                                                         : 'Zatečen iz podešavanja, nije sačuvan kao zapis. Dodajte ga iznad ako želite da ga čuvate uz ostale.'}
                                                 </span>
+                                            ) : z.podrazumevani && !z.ukljucen ? (
+                                                <button type="button" onClick={() => this.ukljuci(z._id)}>Vrati ovaj</button>
+                                            ) : z.podrazumevani ? (
+                                                <span className="napomena-mala">Ugrađeni ZIPA žig — ne briše se.</span>
                                             ) : !z.ukljucen ? (
                                                 <>
                                                     <button type="button" onClick={() => this.ukljuci(z._id)}>Uključi</button>

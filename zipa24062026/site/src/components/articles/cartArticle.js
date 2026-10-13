@@ -29,7 +29,7 @@ class CartArticle extends Component {
                 <img src={`${PHOTOS_ENDPOINT}/photos/350x/` + this.props.image} />
                 {this.props.categoryName ? <div className="category">{this.props.categoryName}</div> : null}
                 <div className="wrap">
-                    <div className="info"><span>{this.props.location} | {moment.unix(this.props.published).format('DD.MM.YYYY.')}  <Isvg src={imagesCount} /> {this.props.resolution}px</span> <span className="price">${(this.props.price).formatPrice(2)}</span> </div>
+                    <div className="info"><span>{this.props.location} | {moment.unix(this.props.published).format('DD.MM.YYYY.')}  <Isvg src={imagesCount} /> {this.props.resolution}px</span> <span className="price">{(this.props.price).formatPrice(2)} KM</span> </div>
                     <h6>{this.props.name.length > (this.props.maxNameLength ? this.props.maxNameLength : 30) ? this.props.name.substring(0, this.props.maxNameLength ? this.props.maxNameLength : 30) + '...' : this.props.name}</h6>
                     {this.props.listView || this.props.bigView ?
                         <p>{this.props.shortDescription.length > (this.props.maxShortDescriptionLength ? this.props.maxShortDescriptionLength : 60) ? this.props.shortDescription.substring(0, this.props.maxShortDescriptionLength ? this.props.maxShortDescriptionLength : 60) + '...' : this.props.shortDescription}</p>

@@ -3,6 +3,7 @@ const constants = require('./constants');
 const ObjectID = require('../objectid');
 const slike = require('./slike');
 const zig = require('../zig');
+const storage = require('../storage');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const uuidv4 = require('uuid/v4');
@@ -1249,9 +1250,16 @@ class Admin {
         return { response: {}, status: 200 };
     }
 
+    /* Redosled je po DATUMU koji administrator upiše uz snimak, najnoviji
+       prvi (2026-10-14) — ne po trenutku unosa i ne po „Redosledu". Snimak
+       bez datuma ide na kraj. Važi za /video, naslovnu i spisak u
+       administraciji. Ređa se ovde, a ne u upitu, da prazan datum sigurno
+       ode na kraj (u Postgresu NULL kod opadajućeg reda ide na početak). */
     async allVideos(samoAktivne = false) {
         const uslov = samoAktivne ? { isActive: true } : {};
-        return await db.collection('videos').find(uslov).sort({ position: 1 }).toArray();
+        const snimci = await db.collection('videos').find(uslov).toArray();
+        return snimci.sort((a, b) =>
+            ((b.datum || 0) - (a.datum || 0)) || ((b.published || 0) - (a.published || 0)));
     }
 
     async deleteVideo(id) {
@@ -1291,16 +1299,29 @@ class Admin {
         const podesavanja = await db.collection('settings').find({}).toArray();
         const trenutni = podesavanja.length ? podesavanja[0].watermark : null;
 
+        // Prikaz ide preko `/zig/:ime` (lokalni disk ili R2): fajl u
+        // `./uploads/` Render briše pri restartu, pa bi slika u spisku pukla.
         const naNasAPI = (adresa) => {
             if (!adresa) return adresa;
             const ime = String(adresa).split('/').pop();
-            return `${API_ENDPOINT}/uploads/${ime}`;
+            return `${API_ENDPOINT}/zig/${encodeURIComponent(ime)}`;
         };
 
         const rezultat = spisak.map((z) => Object.assign({}, z, {
             ukljucen: !!trenutni && z.image === trenutni,
             image: naNasAPI(z.image),
         }));
+
+        /* Podrazumevani ZIPA žig iz repozitorijuma (2026-10-13) — uvek u
+           spisku, da se uvek može vratiti. Uključen je kad u podešavanjima
+           nije izabran nijedan drugi. */
+        rezultat.push({
+            _id: zig.PODRAZUMEVANO_IME,
+            name: 'ZIPA PHOTO — podrazumevani',
+            image: `${API_ENDPOINT}/zig/${zig.PODRAZUMEVANO_IME}`,
+            ukljucen: !trenutni,
+            podrazumevani: true,
+        });
 
         if (trenutni && !rezultat.some((z) => z.ukljucen)) {
             const ime = String(trenutni).split('/').pop();
@@ -1322,19 +1343,39 @@ class Admin {
     async updateWatermark(id, data) {
         const polja = { name: data.name, image: data.image };
 
+        let novId = null;
         if (id == 'new') {
-            await db.collection('watermarks').insertOne(
+            const r = await db.collection('watermarks').insertOne(
                 Object.assign({}, polja, { published: Math.floor(new Date().getTime() / 1000) })
             );
+            novId = r && r.insertedId ? String(r.insertedId) : null;
         } else {
             await db.collection('watermarks').updateOne({ _id: ObjectID(id) }, { $set: polja });
         }
-        return { response: {}, status: 200 };
+
+        // Kopija u R2 odmah, dok je fajl svež na disku — ranije tek pri
+        // uključivanju, pa bi restart između ta dva koraka izgubio žig.
+        try { await zig.sacuvajZigUR2(data.image); } catch (e) {
+            console.error('[zig] kopija u R2 nije uspela:', e.message);
+        }
+
+        return { response: { _id: novId }, status: 200 };
     }
 
     // Uključi izabrani žig — prepisuje se u podešavanja, odakle ga čita
     // postavljanje fotografija.
     async activateWatermark(id) {
+        // Povratak na podrazumevani ZIPA žig: polje u podešavanjima se
+        // prazni, a `zig.ucitajZig` tada uzima žig iz repozitorijuma.
+        if (id === zig.PODRAZUMEVANO_IME) {
+            const podesavanja = await db.collection('settings').find({}).toArray();
+            if (!podesavanja.length) return { response: { error: 'nema podesavanja' }, status: 400 };
+            const novo = Object.assign({}, podesavanja[0], { watermark: null });
+            await db.collection('settings').deleteMany({});
+            await db.collection('settings').insertOne(novo);
+            return { response: {}, status: 200 };
+        }
+
         const red = await db.collection('watermarks').find({ _id: ObjectID(id) }).toArray();
         if (!red.length || !red[0].image) {
             return { response: { error: 'nije nadjen' }, status: 404 };
@@ -1358,6 +1399,9 @@ class Admin {
     }
 
     async deleteWatermark(id) {
+        if (id === zig.PODRAZUMEVANO_IME) {
+            return { response: { error: 'Podrazumevani žig se ne briše.' }, status: 400 };
+        }
         // Onaj koji je trenutno uključen se ne briše — inače bi nove galerije
         // ostale bez žiga a da niko ne primeti.
         const red = await db.collection('watermarks').find({ _id: ObjectID(id) }).toArray();
@@ -1890,29 +1934,37 @@ class Admin {
         return bezDomacina.charAt(0) === '/' ? bezDomacina : '/' + bezDomacina;
     }
 
+    /*
+     * Dve najave istovremeno (2026-10-13): „Obaveštenje 1" stoji levo u
+     * traci, „Obaveštenje 2" desno. `content` je kratak natpis u traci;
+     * `naslov` i `text` su pun naslov i opis u prozoru koji dugme otvara
+     * (prazan `naslov` = isti kao natpis u traci).
+     */
+    static pozicijaNajave(v) {
+        return v === 'desno' ? 'desno' : 'levo';
+    }
+
     async updateAnnouncement(id, data) {
         let obj = data;
+        const polja = {
+            content: obj.content,
+            naslov: obj.naslov || null,
+            text: obj.text,
+            link: Admin.vezaNajave(obj.link),
+            pozicija: Admin.pozicijaNajave(obj.pozicija),
+            from: parseInt(obj.from),
+            to: parseInt(obj.to),
+        };
 
         if (id == 'new') {
-            await db.collection('announcements').insertOne({
-                content: obj.content,
-                text: obj.text,
-                link: Admin.vezaNajave(obj.link),
-                from: parseInt(obj.from),
-                to: parseInt(obj.to),
+            await db.collection('announcements').insertOne(Object.assign(polja, {
                 published: Math.floor(new Date().getTime() / 1000)
-            });
+            }));
         } else {
             await db.collection('announcements').updateOne({
                 _id: ObjectID(id),
             }, {
-                $set: {
-                    content: obj.content,
-                    text: obj.text,
-                    link: Admin.vezaNajave(obj.link),
-                    from: parseInt(obj.from),
-                    to: parseInt(obj.to),
-                }
+                $set: polja
             })
         }
 
@@ -2162,10 +2214,25 @@ class Admin {
 
         const filename = uuidv4() + nalaz.ext;
 
-        file.mv('./uploads/' + filename, (err) => {
+        file.mv('./uploads/' + filename, async (err) => {
             if (err) {
                 console.error('[upload] snimanje nije uspelo:', err.message);
                 res.status(500).send('Snimanje fajla nije uspjelo.');
+                return;
+            }
+
+            /*
+             * Kopija u R2 (2026-10-13). Lokalni `./uploads/` Render briše pri
+             * svakom deployu i restartu, pa su baneri, logo, slika za prijavu
+             * i pozadina naslovne nestajali posle nekoliko dana. `/uploads/:ime`
+             * u `app.js` čita iz R2 kad fajla nema na disku.
+             */
+            try {
+                const vrsta = { '.jpg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp' }[nalaz.ext] || 'application/octet-stream';
+                await storage.put('uploads/' + filename, fs.readFileSync('./uploads/' + filename), vrsta);
+            } catch (e) {
+                console.error('[upload] kopija u R2 nije uspela:', e.message);
+                res.status(500).send('Snimanje fajla u skladište nije uspjelo. Pokušajte ponovo.');
                 return;
             }
 

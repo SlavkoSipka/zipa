@@ -157,7 +157,9 @@ class RegisterPage extends Component {
 
 
         return (
-            <div className="login-wrap z-prijava">
+            /* `z-prijava--registracija`: polja idu levo i desno, a ne nadole —
+               strana ostaje iste visine kao prijava (2026-10-13). */
+            <div className="login-wrap z-prijava z-prijava--registracija">
 
                 <div className="z-prijava__strana">
                     <div className="z-prijava__okvir">

@@ -5,7 +5,8 @@ import { Container } from 'reactstrap';
 import Isvg from 'react-inlinesvg';
 
 import { PHOTOS_ENDPOINT } from '../../constants';
-import { PlocicaGalerije } from '../../components/plocica';
+import { Plocica, PlocicaGalerije } from '../../components/plocica';
+import KategorijeNaslovne from '../../components/kategorijeNaslovne';
 
 /**
  * Naslovna strana — predlog C.
@@ -103,10 +104,6 @@ class PredlogC extends Component {
         // Red od pet pločica kao na A (2026-09-22) — pet najnovijih galerija.
         const najnovije = (this.props.latest || []).slice(0, 5);
 
-        const kategorije = (this.props.homeCategories || [])
-            .filter((k) => (k.photosCount !== undefined ? k.photosCount : (k.photos && k.photos.length)))
-            .slice()
-            .sort((a, b) => (a.position || 0) - (b.position || 0));
 
 
         return (
@@ -136,61 +133,32 @@ class PredlogC extends Component {
                             <div className="naslov-odeljka">
                                 <h3>{podesavanja.izdvojenoNaslov || 'Izdvajamo'}</h3>
                             </div>
-                            <div className="mreza-izdvojeno">
-                                {this.props.izdvojeno.slice(0, 2).map((s, i) => {
-                                    const naslov = Object.translate(s, 'title', lang) || '';
-                                    return (
-                                        <Link key={i} to={odredisteIzdvojenog(s.link)} className="izdvojena">
-                                            {s.image ? <img src={slikaIzdvojenog(s.image)} alt={naslov} loading="lazy" /> : null}
-                                            <div className="preko"><h4>{naslov}</h4></div>
-                                        </Link>
-                                    );
-                                })}
+                            {/* Isto kao na A i C (2026-10-13): uvek ČETIRI pločice
+                                u jednom redu, pa se u administraciji uvek bira
+                                četiri. Ranije je ovde bilo drugačije. */}
+                            <div className="z-mozaik__mreza z-mozaik__mreza--cetiri">
+                                {this.props.izdvojeno.slice(0, 4).map((s, i) => (
+                                    <Plocica
+                                        key={s._id || i}
+                                        putanja={odredisteIzdvojenog(s.link)}
+                                        slika={slikaIzdvojenog(s.image)}
+                                        naslov={Object.translate(s, 'title', lang) || ''}
+                                        velika
+                                    />
+                                ))}
                             </div>
                         </Container>
                     </section>
                 ) : null}
 
-                {/* ── Kategorije, svaka u svojoj mreži ──────────────────── */}
-                {kategorije.map((k, idx) => {
-                    const galerije = (k.photos || []).slice(0, 10);
-                    if (!galerije.length) return null;
-
-                    return (
-                        <React.Fragment key={k._id || idx}>
-                            <section className="odeljak">
-                                <Container>
-                                    <div className="naslov-odeljka">
-                                        <h3>{Object.translate(k, 'name', lang)}</h3>
-                                        <Link to={`/galerije?category=${k.alias && k.alias.ba}`}>
-                                            {'Sve'.translate(lang)} &rarr;
-                                        </Link>
-                                    </div>
-                                </Container>
-                                <Container>
-                                    <div className="mreza-galerija">
-                                        {galerije.map((g, i) => this.kartica(g, `${idx}-${i}`))}
-                                    </div>
-                                </Container>
-                            </section>
-
-                            {idx % 2 === 1 && this.props.banners && this.props.banners[Math.floor(idx / 2)] ? (
-                                <section className="odeljak reklama">
-                                    <Container>
-                                        <div className="mesto-reklame">
-                                            {this.props.banners[Math.floor(idx / 2)].images.map((b, bi) => (
-                                                <a key={bi} href={b.link} target="_blank" rel="noopener noreferrer"
-                                                   onClick={() => this.props.bannerClick && this.props.bannerClick(b.link)}>
-                                                    <img src={b.image} alt="" />
-                                                </a>
-                                            ))}
-                                        </div>
-                                    </Container>
-                                </section>
-                            ) : null}
-                        </React.Fragment>
-                    );
-                })}
+                {/* ── Kategorije — isto na A, B i C (2026-10-13) ───────────
+                    Kategorije označene za početnu, posle „Izdvajamo". */}
+                <KategorijeNaslovne
+                    homeCategories={this.props.homeCategories}
+                    lang={lang}
+                    banners={this.props.banners}
+                    bannerClick={this.props.bannerClick}
+                />
 
                 {/* ── Video ────────────────────────────────────────────── */}
                 {this.props.videos && this.props.videos.length ? (
@@ -203,7 +171,7 @@ class PredlogC extends Component {
                         </Container>
                         <Container>
                             <div className="mreza-galerija">
-                                {this.props.videos.slice(0, 8).map((v, i) => {
+                                {this.props.videos.slice(0, 6).map((v, i) => {
                                     const naslovVidea = Object.translate(v, 'title', lang) || '';
                                     return (
                                         <a key={i} href={v.link} target="_blank" rel="noopener noreferrer" className="kartica">

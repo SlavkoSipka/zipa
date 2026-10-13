@@ -866,13 +866,31 @@
         opacity: .92;
     }
 
+    /* Dve najave (2026-10-13): „Obaveštenje 1" uz levu ivicu, „Obaveštenje 2"
+       uz desnu. Jedna sama ostaje u sredini, kao i do sada. */
+    &__najava-mesto {
+        display: flex;
+        align-items: center;
+        gap: var(--razmak-3);
+        min-width: 0;
+    }
+
+    // Ne do samih ivica ekrana — obe su privučene ka sredini (2026-10-13).
+    &__najava--dve .z-zaglavlje__sirina {
+        justify-content: space-between;
+        max-width: 1100px;
+    }
+
     &__najava-dugme {
         display: inline-flex;
         align-items: center;
         flex: 0 0 auto;
         min-height: var(--visina-najava);
         padding: var(--razmak-2) var(--razmak-4);
+        border: 0;
         border-radius: var(--radijus-pun);
+        font-family: var(--pismo-tekst);
+        cursor: pointer;
 
         background: var(--boja-podloga);
         // `--boja-pilula-tekst` je `--boja-traka` dok je traka tamna, a pod
@@ -978,26 +996,34 @@
         }
     }
 
-    /* ── RED 3 — navigacija po sredini ────────────────────────────────── */
+    /* ── MENI U REDU SA LOGOM (2026-10-13) ────────────────────────────────
+       Ranije je meni imao svoj, treći red ispod loga. Sada stoji u istom
+       redu: logo levo, meni u sredini, radnje desno — na svim izgledima.
+       Na telefonu i tabletu (do 1023px) isti <nav> je fioka, pa red ostaje
+       sa dve kolone. */
+    @include desktop-i-vise {
+        &__sirina--tri { grid-template-columns: auto minmax(0, 1fr) auto; }
 
-    &__navred {
-        border-top: 1px solid var(--boja-traka-linija);
-        // Drugi red može imati svoju nijansu (tema A: crvenija od prvog).
-        background: var(--boja-traka-meni);
-
-        .z-zaglavlje__sirina {
-            display: flex;
-            align-items: center;
+        &__glavni .z-zaglavlje__meni {
             justify-content: center;
-            gap: var(--razmak-4);
-            padding-top: var(--razmak-1);
-            padding-bottom: var(--razmak-1);
+            min-width: 0;
         }
+    }
 
-        .z-zaglavlje__meni {
-            justify-content: center;
-            flex: 0 1 auto;
+    /* 1024–1439px: logo, pet stavki menija i radnje u jednom redu traže
+       ~1145px — na 1024 je meni zalazio pod radnje 62px (mereno). Ovde se
+       steže samo vazduh i slova, ništa se ne sklanja. */
+    @include small-desktop {
+        &__sirina--tri { gap: var(--razmak-3); }
+        &__logo svg, &__logo img { height: calc(var(--razmak-6) + var(--razmak-1)); }
+        &__natpis { font-size: var(--slovo-lg); line-height: var(--red-lg); }
+        &__desno { gap: var(--razmak-1); }
+        &__glavni .z-zaglavlje__meni .z-zaglavlje__stavka {
+            padding-left: var(--razmak-2);
+            padding-right: var(--razmak-2);
+            font-size: var(--slovo-md);
         }
+        &__desno > &__traka-veza { padding: 0 var(--razmak-2); }
     }
 
     // Uski panel — cenovnik i galerije nemaju 43 stavke kao kategorije.
@@ -1162,6 +1188,49 @@
 */
 .z-zaglavlje--visoka .z-zaglavlje__naslovni { display: block; }
 .z-zaglavlje--niska  .z-zaglavlje__naslovni { display: none; }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   IZGLED A — NAVBAR JAKE CRVENE (2026-10-13)
+   ═══════════════════════════════════════════════════════════════════════════
+   Tokeni trake se preusmere SAMO u opsegu zaglavlja, ne na `:root` — podnožje,
+   prozor fotografije i ostale tamne površine čitaju `--boja-traka` i ostaju
+   bordo. Paneli menija, linije i okvir fokusa u zaglavlju prate crvenu
+   preko preusmerenja u `.z-zaglavlje` gore.
+
+   Crveno na crvenom se ne vidi, pa tri stvari koje su bile crvene ovde
+   postaju bele: oznaka „gde sam", linija ispod nje i broj u korpi.
+*/
+[data-tema="a"] .z-zaglavlje {
+    --boja-traka:                 var(--a-navbar);
+    --boja-traka-meni:            var(--a-navbar);
+    --boja-traka-linija:          var(--a-navbar-linija);
+    --boja-traka-tekst-tiho:      var(--a-navbar-tekst-tiho);
+    --boja-traka-linija-kontrola: var(--a-navbar-kontrola);
+    --boja-oznaka-traka:          var(--boja-traka-tekst);
+
+    .z-zaglavlje__stavka--ovde { box-shadow: inset 0 -2px 0 0 var(--boja-traka-tekst); }
+
+    .z-zaglavlje__korpa-broj {
+        background: var(--boja-traka-tekst);
+        color: var(--a-navbar);
+    }
+
+    // Obaveštenje: svetla crvena traka, tamnocrven natpis, dugme puna crvena.
+    .z-zaglavlje__najava--obavestenje {
+        .z-zaglavlje__najava-tekst { color: var(--a-najava-tekst); }
+
+        .z-zaglavlje__najava-dugme {
+            background: var(--boja-akcenat);
+            color: var(--boja-akcenat-tekst);
+            box-shadow: none;
+            &:hover {
+                background: var(--boja-akcenat-jako);
+                color: var(--boja-akcenat-tekst);
+            }
+        }
+    }
+}
 
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -1516,28 +1585,6 @@ header:where(.zaglavlje-sajta) .navigation > ul {
 */
 @include mobile {
     .z-zaglavlje {
-        /*
-         * DVE LINIJE JEDNA ISPOD DRUGE.
-         *
-         * Red glavnog menija na telefonu je PRAZAN — meni je preseljen u
-         * fioku (`position: fixed`), pa od reda ostane samo 9px razmaka i
-         * njegova gornja linija. Odmah ispod nje dolazi gornja linija
-         * naslovnog bloka: dve crte na 9px razmaka, tacno kako je i
-         * prijavljeno.
-         *
-         * Red se NE sme sakriti (`display: none`) — u njemu stoji sama
-         * fioka, pa bi nestao i meni. Zato mu se skida linija i razmak, a
-         * jedina crta ostaje ona naslovnog bloka.
-         */
-        &__navred {
-            border-top: 0;
-
-            .z-zaglavlje__sirina {
-                padding-top: 0;
-                padding-bottom: 0;
-            }
-        }
-
         /* ── TRAKA NAJAVE ────────────────────────────────────────────
          * Bila 60px visoka sa tekstom od 14px. Natpis se ionako prelama u
          * dva reda, pa mu sitniji slog i tesnji prored bolje stoje. Dugme
@@ -1561,6 +1608,20 @@ header:where(.zaglavlje-sajta) .navigation > ul {
         }
 
         &__najava-naslov { margin-left: var(--razmak-1); }
+
+        // Dve najave na telefonu idu jedna ispod druge, svaka svojim redom.
+        &__najava--dve .z-zaglavlje__sirina {
+            flex-direction: column;
+            align-items: stretch;
+            gap: var(--razmak-2);
+        }
+        &__najava--dve &__najava-mesto { justify-content: space-between; }
+        &__najava-mesto--desno {
+            .z-zaglavlje__najava--dve & {
+                padding-top: var(--razmak-2);
+                border-top: 1px solid var(--boja-najava-linija);
+            }
+        }
 
         &__najava-dugme {
             padding: var(--razmak-1) var(--razmak-3);
@@ -1730,15 +1791,25 @@ header:where(.zaglavlje-sajta) .navigation > ul {
         var(--pozadina-pretrage, none) center / cover no-repeat,
         var(--c-hero-podloga);
 
-    .z-zaglavlje__glavni,
-    .z-zaglavlje__navred {
-        background: transparent;
-        border-color: var(--c-hero-linija);
+    /* Navbar pun BEO (2026-10-13), kao na ostalim stranama C; fotografija
+       počinje ispod njega. Tokeni koje `--visoka` gore preusmerava na belo
+       slovo preko fotografije ovde se vraćaju na tamna slova bele trake. */
+    .z-zaglavlje__glavni {
+        --boja-traka-tekst:      var(--c-navbar-tekst);
+        --boja-traka-tekst-tiho: var(--c-navbar-tekst-tiho);
+        --boja-traka-linija:     var(--c-navbar-linija);
+        --boja-tekst:            var(--c-navbar-tekst);
+        --boja-tekst-tiho:       var(--c-navbar-tekst-tiho);
+        --boja-linija:           var(--c-navbar-linija);
+        --boja-podloga-tiha:     var(--c-navbar-linija);
+        --boja-veza:             var(--c-navbar-tekst);
+        --boja-fokus:            var(--c-navbar-tekst);
+        --boja-povrsina:         var(--c-navbar);
+
+        background: var(--c-navbar);
+        border-bottom: 1px solid var(--c-navbar-linija);
     }
 
-    // Beli znak preko fotografije (tema C inače nosi tamni).
-    .z-zaglavlje__logo .z-znak--tamni { display: none; }
-    .z-zaglavlje__logo .z-znak--svetli { display: block; }
 
     // Krupniji logo i natpis.
     .z-zaglavlje__logo svg,
@@ -1746,19 +1817,16 @@ header:where(.zaglavlje-sajta) .navigation > ul {
     .z-zaglavlje__natpis { font-size: var(--slovo-2xl); line-height: var(--red-2xl); }
 
     // Navigacija: udarno — krupno, debelo, razmaknuto.
-    .z-zaglavlje__navred .z-zaglavlje__sirina {
-        gap: var(--razmak-6);
-        padding-top: var(--razmak-3);
-        padding-bottom: var(--razmak-3);
+    @include desktop-i-vise {
+        .z-zaglavlje__meni { gap: var(--razmak-3); }
     }
 
-    .z-zaglavlje__navred .z-zaglavlje__stavka {
+    .z-zaglavlje__meni .z-zaglavlje__stavka {
         font-size: var(--slovo-xl);
         line-height: var(--red-xl);
         font-weight: var(--tezina-jaka);
         letter-spacing: .01em;
         padding: var(--razmak-2) var(--razmak-3);
-        text-shadow: 0 1px 2px rgba(0, 0, 0, .35);
     }
 
     .z-zaglavlje__traka-veza,
@@ -1786,8 +1854,26 @@ header:where(.zaglavlje-sajta) .navigation > ul {
         box-shadow: 0 12px 40px rgba(0, 0, 0, .35);
     }
 
+    /* 1024–1439: krupna navigacija C ne staje u red sa logom i radnjama
+       (na 1024 je zalazila 160px pod radnje) — ovde je za stepen sitnija. */
+    @include small-desktop {
+        .z-zaglavlje__logo svg,
+        .z-zaglavlje__logo img { height: calc(var(--razmak-6) + var(--razmak-1)); }
+        .z-zaglavlje__natpis { font-size: var(--slovo-lg); line-height: var(--red-lg); }
+        .z-zaglavlje__meni { gap: var(--razmak-1); }
+        .z-zaglavlje__meni .z-zaglavlje__stavka {
+            font-size: var(--slovo-md);
+            line-height: var(--red-md);
+            font-weight: var(--tezina-poludebela);
+            padding-left: var(--razmak-2);
+            padding-right: var(--razmak-2);
+        }
+        .z-zaglavlje__traka-veza,
+        .z-zaglavlje__korpa { font-size: var(--slovo-md); }
+    }
+
     @include mobile-tablet {
-        .z-zaglavlje__navred .z-zaglavlje__stavka {
+        .z-zaglavlje__meni .z-zaglavlje__stavka {
             font-size: var(--slovo-lg);
             text-shadow: none;
         }
@@ -1825,3 +1911,74 @@ header:where(.zaglavlje-sajta) .navigation > ul {
 
 // Dugme lupe više nije poslednje u polju — bez zaobljenja desno.
 .z-zaglavlje__pretraga--siroka .z-zaglavlje__trazi { border-radius: 0; }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   VELIKA PRETRAGA NA NASLOVNOJ (2026-10-13) — sva tri izgleda
+   ═══════════════════════════════════════════════════════════════════════════
+   Klijent traži da pretraga u naslovnom bloku bude „dosta veća i upadljiva".
+   Na A i B je pretraga jedino što naslovni blok sadrži, pa uvećana polja i
+   natpisi u njoj jesu i krupnija slova tog bloka; na C se dira samo
+   pretraga (navigacija preko fotografije ostaje kakva je).
+
+   Selektor ima dve klase zaglavlja da bi nadjačao i pravilo izgleda C
+   (`[data-tema="c"] .z-zaglavlje--visoka …`), koje stoji iznad. */
+.z-zaglavlje.z-zaglavlje--visoka .z-zaglavlje__pretraga--siroka {
+    // Bilo 720 × 48px.
+    max-width: 1120px;
+    min-height: calc(var(--visina-pretraga) + var(--razmak-6));
+    border-width: 2px;
+    box-shadow: var(--senka-prozor);
+
+    .z-zaglavlje__polje {
+        display: flex;
+        align-items: center;
+    }
+
+    .z-zaglavlje__unos {
+        padding: var(--razmak-3) var(--razmak-5);
+        font-size: var(--slovo-xl);
+        line-height: var(--red-xl);
+    }
+
+    .z-zaglavlje__vrsta-dugme {
+        padding: 0 var(--razmak-5);
+        font-size: var(--slovo-lg);
+        line-height: var(--red-lg);
+    }
+
+    .z-zaglavlje__trazi {
+        min-width: calc(var(--razmak-8) + var(--razmak-5));
+        svg { width: 28px; height: 28px; }
+    }
+
+    .z-zaglavlje__napredna--sa-natpisom {
+        padding: 0 var(--razmak-5);
+        svg { width: var(--razmak-5); height: var(--razmak-5); }
+        span { font-size: var(--slovo-md); line-height: var(--red-md); }
+    }
+
+    .prijedlozi li { font-size: var(--slovo-lg); }
+
+    @include mobile {
+        min-height: calc(var(--visina-pretraga) + var(--razmak-2));
+
+        .z-zaglavlje__unos {
+            padding: var(--razmak-2) var(--razmak-3);
+            font-size: var(--slovo-lg);
+            line-height: var(--red-lg);
+        }
+
+        .z-zaglavlje__vrsta-dugme {
+            padding: 0 var(--razmak-3);
+            font-size: var(--slovo-md);
+        }
+
+        .z-zaglavlje__trazi {
+            min-width: calc(var(--razmak-7) + var(--razmak-2));
+            svg { width: var(--razmak-5); height: var(--razmak-5); }
+        }
+
+        .z-zaglavlje__napredna--sa-natpisom { padding: 0 var(--razmak-3); }
+    }
+}

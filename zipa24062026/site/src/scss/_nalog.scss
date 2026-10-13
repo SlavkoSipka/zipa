@@ -11,6 +11,16 @@
 .z-nalog {
     padding: var(--razmak-6) 0 var(--razmak-8);
 
+    /* Nalog (profil, fotografije, dodavanje) od ivice do ivice ekrana
+       (2026-10-13), kao zaglavlje i galerije — ostaje samo bočni razmak. */
+    > .container {
+        @include desktop-i-vise {
+            max-width: none;
+            padding-left: var(--razmak-6);
+            padding-right: var(--razmak-6);
+        }
+    }
+
     &__raspored {
         display: grid;
         /* `minmax(0, 1fr)`, ne golo `1fr` — pravilo iz CLAUDE.md, i ovde se
@@ -74,29 +84,35 @@
         overflow-wrap: anywhere;
     }
 
-    /* Glavna radnja fotografa — „Dodaj fotografiju". Amber je površina, nikad
-       tekst; tekst na njemu ide iz `--boja-akcenat-tekst`. */
+    /* Glavna radnja fotografa — „Dodaj fotografiju": VELIKO CRVENO dugme
+       (2026-10-13), da se odmah vidi gde se postavljaju fotografije. */
     &__radnja {
-        display: block;
-        margin-bottom: var(--razmak-3);
-        padding: var(--razmak-2) var(--razmak-3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--razmak-2);
+        min-height: calc(var(--visina-radnja) + var(--razmak-2));
+        margin-bottom: var(--razmak-4);
+        padding: var(--razmak-3) var(--razmak-4);
 
         border-radius: var(--radijus-panel);
-        background: var(--boja-akcenat);
+        background: var(--boja-oznaka);
 
-        font-size: var(--slovo-sm);
-        line-height: var(--red-sm);
+        font-size: var(--slovo-lg);
+        line-height: var(--red-lg);
         font-weight: var(--tezina-jaka);
-        color: var(--boja-akcenat-tekst);
+        color: var(--boja-tekst-na-oznaci);
         text-align: center;
         text-decoration: none;
 
-        @include z-prelaz(background-color);
+        @include z-prelaz(opacity);
         @include z-fokus;
 
+        &::before { content: '+'; font-size: 1.3em; line-height: 1; }
+
         &:hover {
-            background: var(--boja-akcenat-jako);
-            color: var(--boja-akcenat-tekst);
+            opacity: .88;
+            color: var(--boja-tekst-na-oznaci);
             text-decoration: none;
         }
     }
@@ -740,5 +756,24 @@
         font-weight: var(--tezina-jaka);
         color: var(--boja-tekst);
         white-space: nowrap;
+    }
+}
+
+
+/* Dugme za postavljanje fotografija u galeriju (`fields/photos.js`) — veliko i
+   crveno, kao „Dodaj fotografiju" u meniju naloga (2026-10-13). */
+.z-dodaj-slike__dugme.z-dugme {
+    min-height: calc(var(--visina-radnja) + var(--razmak-3));
+    padding: var(--razmak-3) var(--razmak-6);
+    border-color: var(--boja-oznaka);
+    background: var(--boja-oznaka);
+    color: var(--boja-tekst-na-oznaci);
+    font-size: var(--slovo-lg);
+    font-weight: var(--tezina-jaka);
+
+    &:hover:not(:disabled) {
+        background: var(--boja-oznaka);
+        color: var(--boja-tekst-na-oznaci);
+        opacity: .88;
     }
 }

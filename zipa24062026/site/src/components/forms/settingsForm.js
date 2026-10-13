@@ -308,12 +308,14 @@ class form extends React.Component {
                     </Col>
 
                     <Col lg="6">
-                        {/* Slika iza velike pretrage na naslovnoj — predlog C.
-                            Bez nje ide prva fotografija najnovije galerije. */}
+                        {/* Hero fotografija naslovne — predlog C. Kad je
+                            izabrana, stoji UVEK; bez nje ide prva fotografija
+                            najnovije galerije. Čuva se i u R2 (`/upload`),
+                            pa ne nestaje posle restarta servera. */}
                         <Field
                             name="pozadinaPretrage"
                             component={renderImageField}
-                            label="Pozadina pretrage (predlog C)"
+                            label="Hero fotografija naslovne — izgled C (stoji uvek; prazno = najnovija galerija). JPG, širina oko 2400px, do 5 MB"
                         ></Field>
                     </Col>
 

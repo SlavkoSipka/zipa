@@ -273,46 +273,20 @@ class form extends React.Component {
                             label={'Pozicija'.translate(this.props.lang)}
                         ></Field>
 
-                        {/*
-                          * Ova dva polja čita SAMO predlog B naslovne. Predlog A
-                          * pokazuje prve četiri kategorije u kvadratnom indeksu,
-                          * a predlog C svaku kategoriju kao traku — kod njih
-                          * nema šta da se bira, pa im vrednost ništa ne menja.
-                          *
-                          * Zato obrazac kaže na čemu je: bez ovoga je izgledalo
-                          * da polje radi na svakoj naslovnoj. (Do 2026-08-27 se
-                          * uz to nije ni upisivalo — vidi `updateCategory()`.)
-                          */}
-                        {this.props.izgledNaslovne && this.props.izgledNaslovne !== 'b' ? (
-                            <p className="napomena-polja">
-                                {'Naredna dva podešavanja koristi samo Predlog B naslovne strane. Trenutno je izabran drugi izgled, pa se na sajtu neće vidjeti — vrijednost se svejedno pamti.'.translate(this.props.lang)}
-                            </p>
-                        ) : null}
-
+                        {/* Kategorija na početnoj (2026-10-13): isto na A, B i C —
+                            pet galerija u redu, jedan ili dva reda. */}
                         <Field
                             name="homeRows"
                             component={renderSelectField}
-                            label={'Redova na početnoj (Predlog B)'.translate(this.props.lang)}
+                            label={'Redova na početnoj'.translate(this.props.lang)}
                             placeholder={'Jedan red (5 galerija)'.translate(this.props.lang)}
                         >
                             <option value="1">{'Jedan red (5 galerija)'.translate(this.props.lang)}</option>
                             <option value="2">{'Dva reda (10 galerija)'.translate(this.props.lang)}</option>
                         </Field>
 
-                        {/*
-                          * Način prikaza na naslovnoj. Za Foto specijal i slične
-                          * grupe, da naslovna ne bude jednolična.
-                          */}
-                        <Field
-                            name="homeStyle"
-                            component={renderSelectField}
-                            label={'Način prikaza na početnoj (Predlog B)'.translate(this.props.lang)}
-                            placeholder={'Redovni — pet u redu'.translate(this.props.lang)}
-                        >
-                            <option value="redovni">{'Redovni — pet u redu'.translate(this.props.lang)}</option>
-                            <option value="krupni">{'Krupni — prva galerija preko dva mjesta'.translate(this.props.lang)}</option>
-                            <option value="traka">{'Traka — lista se u stranu'.translate(this.props.lang)}</option>
-                        </Field>
+                        {/* „Način prikaza" (krupni / traka) je ukinut 2026-10-13 —
+                            kategorije na početnoj izgledaju isto na svim izgledima. */}
 
 
                     </Col>

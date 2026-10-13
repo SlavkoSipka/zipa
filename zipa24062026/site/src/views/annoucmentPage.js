@@ -18,33 +18,11 @@ import { Container } from 'reactstrap';
  * koji sadrži JSON — `"{\"ba\": \"<p>…</p>\"}"`. Zbog toga je
  * `Object.translate(data, 'text', lang)` vraćao ništa i telo najave se nikad
  * nije iscrtavalo. Ovde se string prvo raspakuje; ako nije JSON, uzima se kao
- * običan tekst. Zapis u bazi nije diran.
+ * običan tekst. Zapis u bazi nije diran. Raspakivanje deli sa prozorom najave
+ * u zaglavlju (`components/prozorNajave.js`).
  */
+import { teloNajave, naslovNajave } from '../components/prozorNajave';
 
-const teloNajave = (data, l) => {
-    const sirovo = data && data.text;
-    if (!sirovo) return '';
-
-    // Već je objekat po jezicima — normalan slučaj za ostatak sajta.
-    if (typeof sirovo === 'object') {
-        return Object.translate(data, 'text', l) || '';
-    }
-
-    if (typeof sirovo === 'string') {
-        const s = sirovo.trim();
-        if (s.charAt(0) === '{') {
-            try {
-                const raspakovano = JSON.parse(s);
-                return raspakovano[l] || raspakovano.ba || '';
-            } catch (e) {
-                return sirovo;   // nije JSON — piše se kako stoji
-            }
-        }
-        return sirovo;
-    }
-
-    return '';
-};
 
 class AnnoucmentPage extends Component {
     constructor(props) {
@@ -87,7 +65,7 @@ class AnnoucmentPage extends Component {
         const l = this.props.lang;
         const najava = this.state.data || {};
 
-        const naslov = Object.translate(najava, 'content', l);
+        const naslov = naslovNajave(najava, l);
         const telo = teloNajave(najava, l);
 
         // `from` je početak najave; `published` je trenutak objave. Prvi je

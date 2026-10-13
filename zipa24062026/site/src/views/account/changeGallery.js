@@ -65,18 +65,24 @@ class ChangeGallery extends Component {
         }
 
 
+        /* Nova galerija nema šta da se dovuče — API za `new` vraća 404 bez
+           tela, pa je `res.json()` pucao bez obrade (2026-10-13; na lokalnom
+           sajtu je ta greška ostavljala nevidljiv prozor razvojnog servera
+           preko cele strane i nijedno dugme nije radilo). */
+        if (this.props[0].match.params.id === 'new') return;
+
         fetch(this.props[0].match.params.uid ? `${API_ENDPOINT}/gallery/photographer/fetch/${this.props[0].match.params.uid}/${this.props[0].match.params.id}` : `${API_ENDPOINT}/gallery/fetch/${this.props[0].match.params.id}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${localStorage.getItem('authToken')}`
             },
-        }).then(res => res.json()).then((result) => {
-
+        }).then(res => res.ok ? res.json() : null).then((result) => {
+            if (!result) return;
             this.setState({
                 initialValues: result
             })
-        })
+        }).catch(() => {})
 
 
     }

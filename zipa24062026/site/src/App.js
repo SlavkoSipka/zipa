@@ -450,12 +450,18 @@ class App extends Component {
             const spisak = Array.isArray(result) ? result : [];
             if (!spisak.length) return;
 
-            // Ako ih ima vise vazecih, ide poslednja objavljena.
-            const najnovija = spisak
+            /* Dva mesta u traci (2026-10-13): „Obaveštenje 1" levo i
+               „Obaveštenje 2" desno (polje `pozicija`; stare najave bez njega
+               su levo). Za svako mesto ide poslednja objavljena važeća. */
+            const poredjane = spisak
                 .slice()
-                .sort((a, b) => (b.published || 0) - (a.published || 0))[0];
+                .sort((a, b) => (b.published || 0) - (a.published || 0));
+            const najave = {
+                levo: poredjane.find((n) => n.pozicija !== 'desno') || null,
+                desno: poredjane.find((n) => n.pozicija === 'desno') || null,
+            };
 
-            this.setState({ najavaAdmin: najnovija });
+            this.setState({ najave });
         }).catch(() => {});
 
         fetch(`${API_ENDPOINT}/banners`, {

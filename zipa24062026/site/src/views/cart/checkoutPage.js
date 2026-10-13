@@ -118,7 +118,7 @@ class CheckoutPage extends Component {
                                                 return (
                                                     <div className="item">
                                                         <p className="name">{Object.translate(item, 'name', this.props.lang)}</p>
-                                                        <p className="price">${(item.price).formatPrice(2)}</p>
+                                                        <p className="price">{(item.price).formatPrice(2)} KM</p>
                                                     </div>
 
                                                 )

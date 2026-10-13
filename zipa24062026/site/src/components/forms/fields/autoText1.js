@@ -32,6 +32,26 @@ export default class Example extends React.Component {
         this.setState({value: newValue})
     };
 
+    /*
+     * Upisan tekst se primenjuje i BEZ izbora predloga (2026-10-13): na Enter
+     * ili dugmetom „Primeni". Ranije je filter reagovao samo na klik na
+     * predlog, pa grad koji nije bio u predlozima („Kraljevo") nije radio
+     * ništa. Ako je Enter izabrao predlog, primenjuje se taj predlog, ne
+     * ukucani deo — zato provera ide tek posle `onSuggestionSelected`.
+     */
+    primeni = () => {
+        this.props.onChange((this.state.value || '').trim());
+    };
+
+    naTaster = (e) => {
+        if (e.key !== 'Enter') return;
+        e.preventDefault();
+        this.izabranPredlog = false;
+        setTimeout(() => {
+            if (!this.izabranPredlog) this.primeni();
+        }, 0);
+    };
+
 
     componentDidMount() {
         this.setState({
@@ -70,7 +90,8 @@ export default class Example extends React.Component {
         const inputProps = {
             placeholder: this.props.placeholder,
             value: this.state.value,
-            onChange: this.onChange
+            onChange: this.onChange,
+            onKeyDown: this.naTaster
         };
 
         // Finally, render it!
@@ -84,6 +105,7 @@ export default class Example extends React.Component {
                     onSuggestionsClearRequested={this.onSuggestionsClearRequested}
                     getSuggestionValue={getSuggestionValue}
                     onSuggestionSelected={(event, {suggestion}) => {
+                        this.izabranPredlog = true;
                         this.props.onChange(suggestion)
                     }}
                     renderSuggestion={(suggestion) => {
@@ -95,6 +117,12 @@ export default class Example extends React.Component {
                     }}
                     inputProps={inputProps}
                 />
+                {this.props.dugme ?
+                    <button type="button" className="z-dugme z-dugme--glavno z-dugme--malo autotext-primeni"
+                            onClick={this.primeni}>
+                        {this.props.dugme}
+                    </button>
+                    : null}
             </div>
 
 

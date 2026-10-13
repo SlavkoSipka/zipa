@@ -66,6 +66,23 @@ const renderTagsField = ({
             {...input}
         />
     )
+const renderSelectField = ({
+    input,
+    placeholder,
+    label,
+    meta: { touched, error },
+    children
+}) => (
+
+        <Select
+            placeholder={placeholder}
+            label={label}
+            errorText={touched && error}
+            error={touched && error}
+            {...input}
+        >{children}</Select>
+    )
+
 const renderHtmlField = ({
     input,
     placeholder,
@@ -262,24 +279,44 @@ class form extends React.Component {
         return (
             <form onSubmit={handleSubmit} className="edit-account-form">
                 <Row>
+                    {/* Dve najave istovremeno (2026-10-13): Obaveštenje 1 stoji
+                        levo u traci, Obaveštenje 2 desno. Svaka ima svoje
+                        dugme koje otvara prozor sa punim naslovom i opisom. */}
                     <Col lg="6">
-
+                        <Field
+                            name="pozicija"
+                            component={renderSelectField}
+                            label={'Mesto u traci'.translate(this.props.lang)}
+                            placeholder={'Obaveštenje 1 — levo'.translate(this.props.lang)}
+                        >
+                            <option value="levo">{'Obaveštenje 1 — levo'.translate(this.props.lang)}</option>
+                            <option value="desno">{'Obaveštenje 2 — desno'.translate(this.props.lang)}</option>
+                        </Field>
+                    </Col>
+                    <Col lg="6">
                         <Field
                             name="content"
                             validate={[required]}
                             component={renderTextField}
-                            label={'Naslov *'.translate(this.props.lang)}
+                            label={'Natpis u traci (kratko) *'.translate(this.props.lang)}
                             multilang
                             lang={this.props.lang}
                         ></Field>
-
-
+                    </Col>
+                    <Col lg="6">
+                        <Field
+                            name="naslov"
+                            component={renderTextField}
+                            label={'Naslov u prozoru (prazno = natpis iz trake)'.translate(this.props.lang)}
+                            multilang
+                            lang={this.props.lang}
+                        ></Field>
                     </Col>
                     <Col lg="6">
                         <Field
                             name="link"
                             component={renderTextField}
-                            label={'Veza (npr. adresa galerije) — dugme u traci vodi tamo'.translate(this.props.lang)}
+                            label={'Veza (npr. adresa galerije) — dugme „Pogledaj" u prozoru'.translate(this.props.lang)}
                             placeholder="https://zipaphoto.net/galerija/..."
                         ></Field>
                     </Col>
@@ -313,7 +350,7 @@ class form extends React.Component {
                         <Field
                             name="text"
                             component={renderHtmlField}
-                            label={'Tekst'.translate(this.props.lang)}
+                            label={'Opis u prozoru'.translate(this.props.lang)}
                             type="text"
                             height={400}
                             multilang

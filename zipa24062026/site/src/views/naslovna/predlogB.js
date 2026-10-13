@@ -4,6 +4,8 @@ import { Container, Row, Col } from 'reactstrap';
 import Isvg from 'react-inlinesvg';
 
 import { PHOTOS_ENDPOINT } from '../../constants';
+import { Plocica } from '../../components/plocica';
+import KategorijeNaslovne from '../../components/kategorijeNaslovne';
 
 /**
  * Naslovna strana — predlog B.
@@ -218,11 +220,6 @@ class PredlogB extends Component {
         const lang = this.props.lang;
         const podesavanja = this.props.settings || {};
 
-        // Kategorije idu redom koji je administrator zadao u administraciji.
-        const kategorije = (this.props.homeCategories || [])
-            .filter((k) => (k.photosCount !== undefined ? k.photosCount : (k.photos && k.photos.length)))
-            .slice()
-            .sort((a, b) => (a.position || 0) - (b.position || 0));
 
         // Naslovni blok: šest najnovijih — jedna krupna, dve uz nju, tri ispod.
         const najnovije = (this.props.latest || []).slice(0, 6);
@@ -265,8 +262,8 @@ class PredlogB extends Component {
                 </section>
 
                 {/* ── Izdvojeno ─────────────────────────────────────────────
-                    Dve fotografije u dva reda, naslov naglašen; galerije se
-                    biraju ručno u administraciji (oznaka „Izdvojeno").     */}
+                    Četiri pločice u redu, kao na A i C; biraju se ručno u
+                    administraciji (oznaka „Izdvojeno").                     */}
                 {this.props.izdvojeno && this.props.izdvojeno.length ? (
                     <section className="odeljak izdvojeno">
                         <Container>
@@ -274,89 +271,32 @@ class PredlogB extends Component {
                                 <h3>{podesavanja.izdvojenoNaslov || 'Izdvajamo'}</h3>
                             </div>
 
-                            {/* Dve u redu, dva reda. Naslov i fotografija se
-                                biraju ručno u administraciji, a klik vodi na
-                                galeriju ili kategoriju koju ste odredili. */}
-                            <div className="mreza-izdvojeno">
-                                {this.props.izdvojeno.slice(0, 4).map((s, i) => {
-                                    const naslov = Object.translate(s, 'title', lang) || '';
-                                    return (
-                                        <Link key={i} to={odredisteIzdvojenog(s.link)} className="izdvojena">
-                                            <div className="slika">
-                                                {s.image ? <img src={slikaIzdvojenog(s.image)} alt={naslov} loading="lazy" /> : null}
-                                                <div className="preko-teksta">
-                                                    <h4>{naslov}</h4>
-                                                </div>
-                                            </div>
-                                        </Link>
-                                    );
-                                })}
+                            {/* Isto kao na A i C (2026-10-13): uvek ČETIRI pločice
+                                u jednom redu, pa se u administraciji uvek bira
+                                četiri. Ranije je ovde bilo drugačije. */}
+                            <div className="z-mozaik__mreza z-mozaik__mreza--cetiri">
+                                {this.props.izdvojeno.slice(0, 4).map((s, i) => (
+                                    <Plocica
+                                        key={s._id || i}
+                                        putanja={odredisteIzdvojenog(s.link)}
+                                        slika={slikaIzdvojenog(s.image)}
+                                        naslov={Object.translate(s, 'title', lang) || ''}
+                                        velika
+                                    />
+                                ))}
                             </div>
                         </Container>
                     </section>
                 ) : null}
 
-                {/* ── Odeljci po kategorijama ───────────────────────────────
-                    Pet galerija u redu; koliko redova ima kategorija zadaje
-                    se u administraciji (jedan ili dva).                    */}
-                {kategorije.map((k, idx) => {
-                    // Iz obrasca stiže kao tekst („1" ili „2"), iz baze kao broj.
-                    const redova = Number(k.homeRows) === 2 ? 2 : 1;
-
-                    /*
-                     * Način prikaza se bira po kategoriji, da naslovna ne bude
-                     * jednolična — traženo za Foto specijal i slične grupe.
-                     *
-                     *   redovni — pet u redu
-                     *   krupni  — prva galerija preko dva mesta, ostale uz nju
-                     *   traka   — lista se u stranu, staje ih više
-                     */
-                    const nacin = k.homeStyle || 'redovni';
-                    const koliko = nacin === 'traka' ? 10 : redova * 5;
-                    const galerije = (k.photos || []).slice(0, koliko);
-                    if (!galerije.length) return null;
-
-                    return (
-                        <React.Fragment key={k._id || idx}>
-                            <section className="odeljak">
-                                <Container>
-                                    <div className="naslov-odeljka">
-                                        <h3>{Object.translate(k, 'name', lang)}</h3>
-                                        <Link to={`/galerije?category=${k.alias && k.alias.ba}`}>
-                                            {'Sve'.translate(lang)} &rarr;
-                                        </Link>
-                                    </div>
-                                    <div className={`mreza-pet nacin-${nacin}`}>
-                                        {galerije.map((g, i) =>
-                                            // U krupnom prikazu prva galerija ide preko
-                                            // dva mesta, sa natpisom preko fotografije.
-                                            nacin === 'krupni' && i === 0
-                                                ? this.kartica(g, `${idx}-${i}`, 'preko', 'velika')
-                                                : this.kartica(g, `${idx}-${i}`)
-                                        )}
-                                    </div>
-                                </Container>
-                            </section>
-
-                            {/* Reklama posle svake druge kategorije. Širina je
-                                stalna, visina slobodna — kako je traženo. */}
-                            {idx % 2 === 1 && this.props.banners && this.props.banners[Math.floor(idx / 2)] ? (
-                                <section className="odeljak reklama">
-                                    <Container>
-                                        <div className="mesto-reklame">
-                                            {this.props.banners[Math.floor(idx / 2)].images.map((b, bi) => (
-                                                <a key={bi} href={b.link} target="_blank" rel="noopener noreferrer"
-                                                   onClick={() => this.props.bannerClick && this.props.bannerClick(b.link)}>
-                                                    <img src={b.image} alt="" />
-                                                </a>
-                                            ))}
-                                        </div>
-                                    </Container>
-                                </section>
-                            ) : null}
-                        </React.Fragment>
-                    );
-                })}
+                {/* ── Kategorije — isto na A, B i C (2026-10-13) ───────────
+                    Kategorije označene za početnu, posle „Izdvajamo". */}
+                <KategorijeNaslovne
+                    homeCategories={this.props.homeCategories}
+                    lang={lang}
+                    banners={this.props.banners}
+                    bannerClick={this.props.bannerClick}
+                />
 
                 {/* ── Video ────────────────────────────────────────────────
                     Na kraju strane, kako je traženo. Snimci se povlače sa
@@ -366,19 +306,23 @@ class PredlogB extends Component {
                         <Container>
                             <div className="naslov-odeljka">
                                 <h3>{'Video'.translate(lang)}</h3>
+                                <Link to="/video">{'Svi snimci'.translate(lang)} &rarr;</Link>
                             </div>
+                            {/* Do šest najnovijih, tri u redu, široki 16:9 kadrovi sa naslovom ispod —
+                                kao na strani /video (2026-10-13). Ranije su bila
+                                četiri sitna u redu. */}
                             <div className="mreza-video">
-                                {this.props.videos.slice(0, 4).map((v, i) => {
+                                {this.props.videos.slice(0, 6).map((v, i) => {
                                     // Naslov stiže u oba jezika, pa se mora prevesti
                                     // pre ispisa — inače React dobije objekat.
                                     const naslovVidea = Object.translate(v, 'title', lang) || '';
                                     return (
-                                        <a key={i} href={v.link} target="_blank" rel="noopener noreferrer" className="kartica">
+                                        <a key={i} href={v.link} target="_blank" rel="noopener noreferrer" className="video-kartica">
                                             <div className="slika">
                                                 {v.thumbnail ? <img src={v.thumbnail} alt={naslovVidea} loading="lazy" /> : null}
                                                 <span className="igraj">▶</span>
                                             </div>
-                                            <div className="telo"><h4>{naslovVidea}</h4></div>
+                                            <h4 className="naslov-videa">{naslovVidea}</h4>
                                         </a>
                                     );
                                 })}

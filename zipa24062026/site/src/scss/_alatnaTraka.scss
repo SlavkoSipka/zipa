@@ -449,7 +449,14 @@
             gap: var(--razmak-3);
             width: 100%;
             margin-left: 0;
+            /* „Po strani" (dodat 2026-10-10) + prekidač + prikaz traže ~415px
+               na 375 — red je izlazio 55px van ekrana. „Po strani" ide u svoj
+               red, prekidač i prikaz ispod. */
+            flex-wrap: wrap;
+            row-gap: var(--razmak-2);
         }
+
+        &__po-strani { flex: 1 1 100%; }
 
         &__prekidac { flex: 1 1 auto; }
         &__prekidac-dugme { flex: 1 1 0; }
@@ -591,4 +598,12 @@
     white-space: nowrap;
 
     @include mobile { display: none; }
+}
+
+/* Dugme „Primeni" u filteru „Grad" (2026-10-13) — upisan grad se primenjuje
+   i bez izbora predloga. */
+.z-alatna-traka__panel .autotext-primeni {
+    width: 100%;
+    justify-content: center;
+    margin-top: var(--razmak-2);
 }

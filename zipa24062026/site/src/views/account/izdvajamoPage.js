@@ -13,7 +13,7 @@ import { API_ENDPOINT, PHOTOS_ENDPOINT } from '../../constants';
  * izabrane galerije: naslov = naziv galerije, fotografija = prva iz nje,
  * veza = strana galerije. Redosled je `position`.
  *
- * Predlog B prikazuje prve četiri, A i C prve dve.
+ * Sva tri izgleda (A, B, C) prikazuju prve četiri (od 2026-10-13).
  */
 const zaglavlja = () => ({
     'Content-Type': 'application/json',
@@ -160,7 +160,7 @@ class IzdvajamoPage extends Component {
 
                 <div className="z-prijava-strana z-izdvajamo">
                     <p className="z-prijava-strana__uvod">
-                        {'Galerije u odeljku „Izdvajamo" na naslovnoj. Predlog B prikazuje prve četiri, A i C prve dvije.'.translate(l)}
+                        {'Galerije u odeljku „Izdvajamo" na naslovnoj. Na sva tri izgleda se prikazuju prve četiri — izaberite četiri.'.translate(l)}
                     </p>
 
                     {/* ── trenutni izbor ──────────────────────────────── */}

@@ -98,6 +98,9 @@ export const MENI = [
         grupa: 'SADRŽAJ',
         stavke: [
             { putanja: '/account/pages',         naziv: 'Stranice',          ikona: 'strana' },
+            // Fotografija desno na prijavi i registraciji — ranije dostupna samo
+            // preko dugmeta u „Stranicama" (2026-10-13).
+            { putanja: '/account/pages/prijava', naziv: 'Slika na prijavi',  ikona: 'galerija' },
             { putanja: '/account/announcements', naziv: 'Najave',            ikona: 'najava' },
             { putanja: '/account/banners',       naziv: 'Baneri',            ikona: 'baner' },
             { putanja: '/account/faq',           naziv: 'FAQ',               ikona: 'faq' },
@@ -249,7 +252,10 @@ class AdminOkvir extends Component {
 
         // Aktivna je stavka čija putanja tačno odgovara, ili je koren tekuće
         // (npr. `/account/banners/5` označava „Baneri").
-        const jeOvde = (p) => putanja === p || putanja.indexOf(p + '/') === 0;
+        // Izuzetak: „Slika na prijavi" (`/account/pages/prijava`) je svoja
+        // stavka, pa tada „Stranice" nisu označene.
+        const jeOvde = (p) => putanja === p
+            || (putanja.indexOf(p + '/') === 0 && !(p === '/account/pages' && putanja === '/account/pages/prijava'));
 
         /*
          * U „Podešavanjima sajta" polje `logoText` čuva HTML, ne čist tekst —

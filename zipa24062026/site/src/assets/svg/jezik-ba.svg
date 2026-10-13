@@ -12,12 +12,15 @@
 
     Svaka zastava se crta preko CELOG polja pa se isecanjem zadrzi njena
     strana — trobojka time ima pun odnos traka, umesto da bude stisnuta.
+
+    Izmedju dve strane stoji uzan providan prorez duz reza (2026-10-13):
+    trazeno je da se zastave razdvoje, a da ostanu kose i jedno dugme.
   -->
   <clipPath id="jezik-ba-levo">
-    <polygon points="0,0 18.0,0 32.0,30 0,30"/>
+    <polygon points="0,0 16.4,0 30.4,30 0,30"/>
   </clipPath>
   <clipPath id="jezik-ba-desno">
-    <polygon points="18.0,0 50,0 50,30 32.0,30"/>
+    <polygon points="19.6,0 50,0 50,30 33.6,30"/>
   </clipPath>
 
   <!-- Leva strana: srpska trobojka, bez grba. -->

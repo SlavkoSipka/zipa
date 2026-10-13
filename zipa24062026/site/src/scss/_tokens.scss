@@ -107,6 +107,8 @@
        izgleda: svaka tema (A, B, C) zadaje svoju vrednost ispod. Tekst na
        njoj je beo, a dugme „Pogledaj" nosi istu boju kao tekst na sebi. */
     --boja-najava-obavestenje: #D60006;   /* belo 5,25:1 */
+    /* Linija između dve najave kad na telefonu stoje jedna ispod druge. */
+    --boja-najava-linija:      rgba(255, 255, 255, .25);
 
     /* Tekst na PILULI KOJA STOJI NA TRACI (dugme „Prijava", dugme u traci
      * najave). Pilula je svetla, tekst uzima boju same trake — to je obrtanje
@@ -424,6 +426,16 @@
 [data-tema="c"] {
     --boja-najava-obavestenje:    #1F2937;   /* grafit radnje, belo 14,7:1 */
 
+    /* Navbar na naslovnoj C — pun BEO, ne providan, iznad fotografije
+       (2026-10-13; kratko je bio plav). Iste vrednosti kao bela traka C na
+       ostalim stranama (`--boja-traka*` niže), ali pod svojim imenima: na
+       naslovnoj `.z-zaglavlje--visoka` preusmerava trakine tokene na belo
+       slovo preko fotografije, pa red sa logom mora da ih vrati. */
+    --c-navbar:             #FFFFFF;
+    --c-navbar-tekst:       #1B1E24;
+    --c-navbar-tekst-tiho:  #5E636B;
+    --c-navbar-linija:      #E6E8EB;
+
     /* Naslovna C: fotografija preko celog prvog ekrana, zaglavlje belim
        slovima preko nje (2026-10-10). Zastor je dovoljno taman da belo
        ostane čitko i na svetloj fotografiji. */
@@ -484,7 +496,21 @@
  *   ivica kontrole #A8606B na traci ..  3,6:1  (traži se 3:1)
  */
 [data-tema="a"] {
-    --boja-najava-obavestenje:    #C8102E;   /* crvena radnje, belo 5,9:1 */
+    /* Obaveštenje iznad navbara — SVETLA crvena sa tamnocrvenim natpisom
+       (2026-10-13), da se odvoji od jake crvene trake ispod.
+       #7A0A1A na #FBE4E7 ≈ 9:1. Dugme na njoj je puna crvena radnje. */
+    --boja-najava-obavestenje:    #FBE4E7;
+    --a-najava-tekst:             #7A0A1A;
+    --boja-najava-linija:         #F3C3CA;
+
+    /* Navbar (SAMO zaglavlje) — jaka crvena (2026-10-13). Primenjuje se u
+       opsegu `.z-zaglavlje` (`_zaglavlje.scss`), pa podnožje, prozor
+       fotografije i ostale tamne površine ostaju bordo ispod.
+       Belo na #C8102E 5,9:1; tihi tekst #FFE3E7 4,8:1. */
+    --a-navbar:                   #C8102E;
+    --a-navbar-linija:            #A50D26;
+    --a-navbar-tekst-tiho:        #FFE3E7;
+    --a-navbar-kontrola:          #FFC7CE;
 
     --boja-traka:                 #3D0A12;
     --boja-traka-tekst:           #FFFFFF;

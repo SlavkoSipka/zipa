@@ -19,6 +19,8 @@ const sharp = require('sharp');
 const storage = require('./storage');
 
 const PODRAZUMEVANI = path.join(__dirname, 'zig', 'zig-zipa.png');
+// Ime pod kojim administracija vidi i bira žig iz repozitorijuma.
+const PODRAZUMEVANO_IME = 'podrazumevani';
 const kljucR2 = (ime) => `zig/${ime}`;
 const imeIzAdrese = (adresa) => (adresa ? String(adresa).split('/').pop() : null);
 
@@ -41,7 +43,20 @@ async function ucitajZig(adresa) {
     throw new Error('Žig nije pronađen — fotografija se ne objavljuje bez žiga.');
 }
 
-// Kopira žig u R2, da preživi deploy. Zove se pri uključivanju žiga.
+/*
+ * Žig za PRIKAZ u administraciji (`GET /zig/:ime`): isti redosled kao
+ * `ucitajZig` — lokalno, pa R2 — ali bez tihog pada na podrazumevani, da se
+ * u spisku ne bi pojavila tuđa slika. `podrazumevani` je žig iz repozitorijuma.
+ */
+async function zigZaPrikaz(ime) {
+    if (ime === PODRAZUMEVANO_IME) return fs.readFileSync(PODRAZUMEVANI);
+    const lokalno = path.join(__dirname, 'uploads', ime);
+    if (fs.existsSync(lokalno)) return fs.readFileSync(lokalno);
+    return storage.getBuffer(kljucR2(ime));
+}
+
+// Kopira žig u R2, da preživi deploy. Zove se pri postavljanju i pri
+// uključivanju žiga (2026-10-13: i pri postavljanju — fajl je tada svež).
 async function sacuvajZigUR2(adresa) {
     const ime = imeIzAdrese(adresa);
     if (!ime) return;
@@ -61,4 +76,4 @@ async function napraviPregled(original, sirina, zig) {
     return sharp(smanjena).composite([{ input: z, gravity: 'center' }]).jpeg({ quality: 100 }).toBuffer();
 }
 
-module.exports = { ucitajZig, sacuvajZigUR2, napraviPregled };
+module.exports = { ucitajZig, sacuvajZigUR2, napraviPregled, zigZaPrikaz, PODRAZUMEVANO_IME };

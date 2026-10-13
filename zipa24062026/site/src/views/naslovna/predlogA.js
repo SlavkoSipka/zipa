@@ -4,6 +4,7 @@ import { Container } from 'reactstrap';
 
 import { PHOTOS_ENDPOINT } from '../../constants';
 import { Plocica, PlocicaGalerije } from '../../components/plocica';
+import KategorijeNaslovne, { kategorijeZaNaslovnu } from '../../components/kategorijeNaslovne';
 
 /**
  * Naslovna strana — predlog A.
@@ -12,9 +13,11 @@ import { Plocica, PlocicaGalerije } from '../../components/plocica';
  *
  *   1. MOZAIK — devet najnovijih galerija, 3 × 3, preko celog ekrana, sa
  *      malim razmacima. Naslov i datum se pojave kad se mišem pređe preko.
- *   2. RED OD PET — sledeće galerije iz kategorija naslovne, isti izgled.
- *   3. IZDVAJAMO — ručni izbor, krupno, po četiri u redu.
+ *   2. IZDVAJAMO — ručni izbor, krupno, po četiri u redu.
+ *   3. KATEGORIJE izabrane za početnu (`components/kategorijeNaslovne.js`).
  *   4. VIDEO i 5. REKLAMA.
+ *
+ * Red od pet galerija ispod mozaika je izbačen (2026-10-13, na zahtev).
  *
  * „Arhiva po kategorijama" i „Dnevnik arhive" su izbačeni (2026-09-22).
  *
@@ -76,8 +79,8 @@ class PredlogA extends Component {
 
         /*
          * ── NIŠTA SE NE PONAVLJA ─────────────────────────────────────────
-         * Redom: mozaik (najnovije), ručni izbor, red od pet, dnevnik. Svaka
-         * galerija koja je već prikazana izlazi iz svih ispod.
+         * Redom: mozaik (najnovije), pa ručni izbor. Galerija koja je već
+         * prikazana u mozaiku ne ponavlja se ispod.
          */
         const prikazane = {};
         const oznaci = (id) => { if (id) prikazane[String(id)] = true; };
@@ -88,17 +91,6 @@ class PredlogA extends Component {
 
         const izbor = (this.props.izdvojeno || []).slice();
         izbor.forEach((s) => oznaci(idIzVeze(s.link)));
-
-        // Galerije iz kategorija naslovne, bez ponavljanja, najnovije prve.
-        const zaliha = [];
-        (this.props.homeCategories || []).forEach((k) => {
-            (k.photos || []).forEach((g) => {
-                if (slobodna(g)) { zaliha.push(g); oznaci(g._id); }
-            });
-        });
-        zaliha.sort((a, b) => (b.date || 0) - (a.date || 0));
-
-        const redPet = zaliha.slice(0, 5);
 
         return (
             <div className="naslovna-a">
@@ -112,16 +104,7 @@ class PredlogA extends Component {
                     </section>
                 ) : null}
 
-                {/* ── 2. RED OD PET ─────────────────────────────────────── */}
-                {redPet.length ? (
-                    <section className="z-mozaik z-mozaik--pet">
-                        <div className="z-mozaik__mreza z-mozaik__mreza--pet">
-                            {redPet.map((g, i) => <PlocicaGalerije key={g._id || i} g={g} lang={lang} />)}
-                        </div>
-                    </section>
-                ) : null}
-
-                {/* ── 3. IZDVAJAMO — krupno, četiri u redu ──────────────── */}
+                {/* ── 2. IZDVAJAMO — krupno, četiri u redu ──────────────── */}
                 {izbor.length ? (
                     <section className="odeljak z-izdvajamo-a">
                         <Container>
@@ -130,7 +113,8 @@ class PredlogA extends Component {
                                 <Link to="/galerije">{'Sve galerije'.translate(lang)} &rarr;</Link>
                             </div>
                             <div className="z-mozaik__mreza z-mozaik__mreza--cetiri">
-                                {izbor.map((s, i) => (
+                                {/* Uvek ČETIRI, isto na A, B i C (2026-10-13). */}
+                                {izbor.slice(0, 4).map((s, i) => (
                                     <Plocica
                                         key={s._id || i}
                                         putanja={odredisteIzdvojenog(s.link)}
@@ -144,7 +128,16 @@ class PredlogA extends Component {
                     </section>
                 ) : null}
 
-                {/* ── 4. VIDEO ─────────────────────────────────────────── */}
+                {/* ── Kategorije — isto na A, B i C (2026-10-13) ───────────
+                    Kategorije označene za početnu, posle „Izdvajamo". */}
+                <KategorijeNaslovne
+                    homeCategories={this.props.homeCategories}
+                    lang={lang}
+                    banners={this.props.banners}
+                    bannerClick={this.props.bannerClick}
+                />
+
+                {/* ── 3. VIDEO ─────────────────────────────────────────── */}
                 {this.props.videos && this.props.videos.length ? (
                     <section className="odeljak video">
                         <Container>
@@ -170,8 +163,11 @@ class PredlogA extends Component {
                     </section>
                 ) : null}
 
-                {/* ── 5. REKLAMA — poslednja, da ne preseca sadržaj ─────── */}
-                {this.props.banners && this.props.banners[0] && this.props.banners[0].images ? (
+                {/* ── 4. REKLAMA — poslednja, da ne preseca sadržaj ─────── */}
+                {/* Reklama posle druge kategorije je ista prva reklama — tada se
+                    ovde ne ponavlja. */}
+                {kategorijeZaNaslovnu(this.props.homeCategories).length < 2
+                    && this.props.banners && this.props.banners[0] && this.props.banners[0].images ? (
                     <section className="odeljak reklama">
                         <Container>
                             <div className="mesto-reklame">

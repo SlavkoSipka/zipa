@@ -232,6 +232,28 @@ class DetailPage extends Component {
     };
 
     componentDidUpdate(prevProps, prevState) {
+        /* Prelaz na DRUGU galeriju bez napuštanja strane (npr. klik na karticu
+           „Iz iste kategorije"): React ne montira stranu ponovo, pa se mora
+           sama isprazniti i učitati iznova. Bez ovoga se menjala samo adresa,
+           a na ekranu je ostajala stara galerija (prijavljeno 2026-10-13). */
+        const id = this.props[0] && this.props[0].match && this.props[0].match.params.id;
+        const prethodniId = prevProps[0] && prevProps[0].match && prevProps[0].match.params.id;
+        if (id && prethodniId && id !== prethodniId) {
+            this.srodneZa = null;
+            this.setState({
+                gallery: null,
+                galleryContent: null,
+                srodne: [],
+                modalOpen: false,
+                deljenjeOtvoreno: false,
+                stampaOtvorena: false,
+            }, () => {
+                window.scrollTo(0, 0);
+                this.init();
+            });
+            return;
+        }
+
         /* Kad se fotografija otvori ili promeni, za kupovinu je prvo izabrana
            NAJVEĆA rezolucija (traženo 2026-09-22); kupac može da izabere manju. */
         if (this.state.modalOpen

@@ -17,6 +17,16 @@
      #F4F6FA                  →  --boja-podloga-tiha
 */
 
+/* Prijava bez podnožja (2026-10-13, `defaultLayout.js`): strana je visoka
+   tačno koliko ekran, a obrazac i fotografija popune sve ispod zaglavlja. */
+.wrapper--samo-prijava {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+
+    > .z-prijava { flex: 1 1 auto; }
+}
+
 .z-prijava {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -521,6 +531,37 @@
         &:focus-visible {
             outline: 2px solid var(--boja-fokus);
             outline-offset: 2px;
+        }
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   REGISTRACIJA — polja levo i desno (2026-10-13)
+   ═══════════════════════════════════════════════════════════════════════════
+   Obrazac je bio jedna duga kolona (tip naloga, e-mail, ime, lozinka sa
+   uslovima, zemlja), pa je strana rasla nadole. Na širem ekranu se širi u
+   stranu: tip naloga levo, ostala polja desno, saglasnost i dugme ispod
+   preko cele širine — visina ostaje kao kod prijave. Fotografija stoji desno
+   kao i na prijavi; na telefonu je sve u jednoj koloni, kao ranije. */
+.z-prijava--registracija {
+    @include desktop-i-vise {
+        grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+
+        .z-prijava__strana { padding-top: var(--razmak-6); padding-bottom: var(--razmak-6); }
+        .z-prijava__okvir { max-width: 880px; }
+
+        .login-form {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            column-gap: var(--razmak-6);
+            align-items: start;
+
+            > .z-prijava__polje:first-child { grid-column: 1; grid-row: 1 / span 4; }
+            > .z-prijava__polje:not(:first-child) { grid-column: 2; }
+            > .z-prijava__saglasnost,
+            > .z-prijava__greska-polja,
+            > .z-prijava__dugme { grid-column: 1 / -1; }
         }
     }
 }

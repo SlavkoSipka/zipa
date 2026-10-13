@@ -44,6 +44,7 @@ import Check from '../components/forms/fields/check';
 import Select from '../components/forms/fields/select';
 import ReactPaginate from 'react-paginate';
 import Autotext from '../components/forms/fields/autoText1';
+import UcitajJos from '../components/ucitajJos';
 import {API_ENDPOINT, PHOTOS_ENDPOINT} from '../constants';
 
 class CategoryPage extends Component {
@@ -60,7 +61,10 @@ class CategoryPage extends Component {
             displayStyle: 'grid',
             showForms: false,
             // Koji filter u alatnoj traci ima otvoren padajući panel.
-            otvoreniFilter: null
+            otvoreniFilter: null,
+            // „Prikaži još": poslednja strana dodata ispod (null = samo ona iz adrese).
+            dodatoDoStrane: null,
+            ucitavaJos: false
         };
     }
 
@@ -130,6 +134,7 @@ class CategoryPage extends Component {
 
 
         if (prevProps[0].location.pathname != this.props[0].location.pathname || prevProps[0].location.search != this.props[0].location.search) {
+            this.setState({dodatoDoStrane: null, ucitavaJos: false});
 
             for (let i = 0; i < this.props.loadData.length; i++) {
                 this.props.loadData[i](window.fetch, this.props[0].match, this.props[0].location.pathname, this.getSearchParams(), this.props.lang).then((data) => {
@@ -146,6 +151,34 @@ class CategoryPage extends Component {
             }, 100)
         }
     }
+
+    // Strana iz adrese (0 = prva) i poslednja koja je dodata ispod nje.
+    trenutnaStrana = () => parseInt(this.getSearchParams().page, 10) || 0;
+    poslednjaStrana = () => (this.state.dodatoDoStrane !== null ? this.state.dodatoDoStrane : this.trenutnaStrana());
+
+    /*
+     * „Prikaži još" (2026-10-14): dovuče sledeću stranu istim pozivom kao i
+     * strana iz adrese i doda je ispod. Adresa se ne menja — ona i dalje
+     * pokazuje stranu od koje se krenulo.
+     */
+    ucitajJos = () => {
+        const sledeca = this.poslednjaStrana() + 1;
+        if (this.state.ucitavaJos || !this.state.total || sledeca >= this.state.total) return;
+        const adresa = this.props[0].location.search;
+        this.setState({ucitavaJos: true});
+        this.props.loadData[0](window.fetch, this.props[0].match, this.props[0].location.pathname,
+            Object.assign(this.getSearchParams(), {page: sledeca}), this.props.lang)
+            .then((rez) => {
+                // Za to vreme je promenjen filter ili strana — odgovor više ne važi.
+                if (this.props[0].location.search !== adresa) return;
+                this.setState({
+                    items: (this.state.items || []).concat((rez && rez.items) || []),
+                    dodatoDoStrane: sledeca,
+                    ucitavaJos: false
+                });
+            })
+            .catch(() => this.setState({ucitavaJos: false}));
+    };
 
     componentWillUnmount() {
         document.removeEventListener('mousedown', this.naKlikVanFiltera);
@@ -458,9 +491,12 @@ class CategoryPage extends Component {
                                                             <div className="z-alatna-traka__panel">
                                                                 <Autotext
                                                                     label={'Grad'.translate(this.props.lang)}
+                                                                    placeholder={'Upišite grad'.translate(this.props.lang)}
+                                                                    dugme={'Primeni'.translate(this.props.lang)}
                                                                     value={params['city'] ? params['city'] : ''}
                                                                     suggestions={this.state.cities}
                                                                     onChange={(val) => {
+                                                                        this.setState({ otvoreniFilter: null });
                                                                         this.props[0].history.push(this.generateSearchLink('city', val))
                                                                     }}/>
                                                             </div>
@@ -703,6 +739,14 @@ class CategoryPage extends Component {
                                                         </Row>
                                                         }
 
+                                                        <UcitajJos
+                                                            key={this.props[0].location.pathname + this.props[0].location.search}
+                                                            lang={this.props.lang}
+                                                            imaJos={!!this.state.total && this.poslednjaStrana() + 1 < this.state.total}
+                                                            ucitava={this.state.ucitavaJos}
+                                                            naUcitaj={this.ucitajJos}
+                                                        />
+
                                                         <Row>
                                                             <Col lg="12">
                                                                 {/* Broj po strani je sišao ovde, uz podelu na strane —
@@ -714,9 +758,12 @@ class CategoryPage extends Component {
                                                                         breakLabel={'...'}
                                                                         breakClassName={'break-me'}
                                                                         pageCount={this.state.total}
+                                                                        /* Označena je poslednja prikazana strana, i kad je dodata kroz „Prikaži još". */
+                                                                        forcePage={this.state.total ? Math.min(this.poslednjaStrana(), this.state.total - 1) : undefined}
                                                                         marginPagesDisplayed={1}
                                                                         pageRangeDisplayed={2}
                                                                         onPageChange={(page) => {
+                                                                            if (page.selected === this.poslednjaStrana()) return;
                                                                             this.props[0].history.push(this.generateSearchLink('page', page.selected));
                                                                             window.scrollTo(0, 0);
                                                                         }}

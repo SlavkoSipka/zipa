@@ -44,8 +44,13 @@ export const DefaultLayout = (Wrapped) => (props) => {
         return () => koren.classList.remove('z-bez-skrola');
     }, [props.detailSearch]);
 
+    /* Na prijavi i registraciji se vidi SAMO obrazac i fotografija pored —
+       bez podnožja i bez ičega ispod, na svakom ekranu (2026-10-13). */
+    const putanja = props[0] && props[0].location ? props[0].location.pathname : '';
+    const samoPrijava = putanja === '/login' || putanja === '/register';
+
     return (
-        <div className={"wrapper"}>
+        <div className={"wrapper" + (samoPrijava ? " wrapper--samo-prijava" : "")}>
             <Header {...props} />
 
             {/* ── GLAVNI BANER — u svojoj beloj traci, ispod celog zaglavlja
@@ -66,7 +71,7 @@ export const DefaultLayout = (Wrapped) => (props) => {
                 : null}
 
             <Wrapped {...props} />
-            <Footer {...props} />
+            {samoPrijava ? null : <Footer {...props} />}
 
             {/* Iskačuća reklama — samo na telefonu, i samo ako je uključena
                 u Podešavanjima sajta. */}

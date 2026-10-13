@@ -15,6 +15,7 @@ import znakZipaTamni from '../assets/svg/logo.svg';
 import ba from '../assets/svg/jezik-ba.svg';
 import en from '../assets/images/en.png';
 import PretragaSaPrijedlozima from './pretragaSaPrijedlozima';
+import ProzorNajave from './prozorNajave';
 import { AGENCIJA, USLUGE } from './agencijaStrane';
 import {PHOTOS_ENDPOINT} from '../constants';
 
@@ -58,7 +59,9 @@ class Header extends Component {
             // parametar koji `views/categoryPage.js` već čita.
             vrstaPretrage: 'galerije',
             meniOtvoren: false,
-            panel: null
+            panel: null,
+            // 'levo' | 'desno' — koja najava ima otvoren prozor.
+            otvorenaNajava: null
         };
     }
 
@@ -448,43 +451,21 @@ class Header extends Component {
         );
 
         /*
-         * TRAKA NA VRHU ZAGLAVLJA — dva izvora, jedan izgled.
+         * TRAKA NA VRHU ZAGLAVLJA — dve najave iz *Administracija → Najave*
+         * (2026-10-13): „Obaveštenje 1" levo, „Obaveštenje 2" desno. Svaka
+         * važi dok je današnji dan između njenih polja OD i DO (ruta
+         * `/announcements` sama filtrira), pa je taj prozor i prekidač.
+         * Bez ijedne važeće traka se ne prikazuje.
          *
-         *   1. Najava ili obavestenje iz *Administracija → Najave*. Ima
-         *      prednost. Vazi dok je danasnji dan izmedju polja OD i DO —
-         *      ruta `/announcements` sama filtrira po tome, pa je taj prozor
-         *      i prekidac: nema posebnog polja „prikazi u zaglavlju".
-         *   2. Kad nijedna najava nije vazeca, traka se ne prikazuje
-         *      (ranije je tu isla najnovija galerija; odluka 2026-09-21).
+         * U traci stoji kratak natpis (`content`); dugme otvara prozor sa
+         * punim naslovom i opisom (`components/prozorNajave.js`).
          */
-        const najavaAdmin = this.props.najavaAdmin;
-        const najava = najavaAdmin;
-
-        // Najava nosi natpis u `content`, galerija naziv u `name`.
-        const najavaNaslov = najava
-            ? (najavaAdmin
-                ? (Object.translate(najava, 'content', l) || '')
-                : (Object.translate(najava, 'name', l) || ''))
-            : '';
-
-        // Uvodna rec se menja uz izvor: obavestenje se cita, galerija gleda.
-        const najavaUvod = najavaAdmin
-            ? 'Obavještenje'.translate(l)
-            : 'Pogledajte novu galeriju'.translate(l);
-
-        const najavaDugme = najavaAdmin && !najavaAdmin.link
-            ? 'Pročitaj'.translate(l)
-            : 'Pogledaj'.translate(l);
-
-        /* Najava sa upisanom vezom (`link`, npr. galerija) vodi tamo, sa
-           dugmetom „Pogledaj"; bez veze vodi na svoju stranu `/najave/:id`. */
-        const najavaVeza = najavaAdmin && najavaAdmin.link ? najavaAdmin.link : null;
-
-        const najavaPutanja = najava && najava._id
-            ? (najavaAdmin
-                ? (najavaVeza || `/najave/${najava._id}`)
-                : `/galerija/${Object.translate(najava, 'alias', l) || najava.alias || 'galerija'}/${najava._id}`)
-            : null;
+        const najave = this.props.najave || {};
+        const mestaNajava = [
+            { kljuc: 'levo', najava: najave.levo, uvod: 'Obavještenje'.translate(l) },
+            { kljuc: 'desno', najava: najave.desno, uvod: 'Najava'.translate(l) },
+        ].filter((m) => m.najava);
+        const otvorenaNajava = mestaNajava.find((m) => m.kljuc === this.state.otvorenaNajava);
 
         // Pilula levo i dalje čeka polje u podešavanjima.
         const pilula = this.props.settings && this.props.settings.headerPill;
@@ -554,21 +535,38 @@ class Header extends Component {
 
 
                 {/* ── RED 1 — traka najave ─────────────────────────────
-                    Samo najava iz administracije; bez nje nema trake. */}
-                {najava ?
-                    <div className={'z-zaglavlje__najava' + (najavaAdmin ? ' z-zaglavlje__najava--obavestenje' : '')}>
+                    Jedna najava stoji u sredini; dve stoje levo i desno. */}
+                {mestaNajava.length ?
+                    <div className={'z-zaglavlje__najava z-zaglavlje__najava--obavestenje'
+                        + (mestaNajava.length > 1 ? ' z-zaglavlje__najava--dve' : '')}>
                         <div className="z-zaglavlje__sirina">
-                            <span className="z-zaglavlje__najava-tekst">
-                                {najavaUvod}
-                                {najavaNaslov ? <span className="z-zaglavlje__najava-naslov">{najavaNaslov}</span> : null}
-                            </span>
-                            {najavaPutanja ?
-                                <Link className="z-zaglavlje__najava-dugme" to={najavaPutanja}>
-                                    {najavaDugme}
-                                </Link>
-                                : null}
+                            {mestaNajava.map((m) => (
+                                <div key={m.kljuc}
+                                     className={'z-zaglavlje__najava-mesto z-zaglavlje__najava-mesto--' + m.kljuc}>
+                                    <span className="z-zaglavlje__najava-tekst">
+                                        {m.uvod}
+                                        <span className="z-zaglavlje__najava-naslov">
+                                            {Object.translate(m.najava, 'content', l) || ''}
+                                        </span>
+                                    </span>
+                                    <button type="button"
+                                            className="z-zaglavlje__najava-dugme"
+                                            aria-haspopup="dialog"
+                                            onClick={() => this.setState({ otvorenaNajava: m.kljuc })}>
+                                        {'Pročitaj'.translate(l)}
+                                    </button>
+                                </div>
+                            ))}
                         </div>
                     </div>
+                    : null}
+
+                {otvorenaNajava ?
+                    <ProzorNajave
+                        najava={otvorenaNajava.najava}
+                        oznaka={otvorenaNajava.uvod}
+                        lang={l}
+                        onZatvori={() => this.setState({ otvorenaNajava: null })}/>
                     : null}
 
 
@@ -603,82 +601,10 @@ class Header extends Component {
                             </Link>
                         </div>
 
-                        <div className="z-zaglavlje__desno">
-                            {imaCenovnik ?
-                                <div className={'z-zaglavlje__sa-panelom z-zaglavlje__u-fioku' + (this.state.panel === 'cjenovnik' ? ' z-zaglavlje__sa-panelom--otvoren' : '')}>
-                                    <button type="button"
-                                            className="z-zaglavlje__stavka z-zaglavlje__stavka--panel"
-                                            aria-expanded={this.state.panel === 'cjenovnik'}
-                                            onClick={() => this.prebaciPanel('cjenovnik')}>
-                                        {'Cjenovnik'.translate(l)}
-                                        <span className="z-zaglavlje__strelica" aria-hidden="true"/>
-                                    </button>
-                                    {this.state.panel === 'cjenovnik' ?
-                                        <div className="z-zaglavlje__panel z-zaglavlje__panel--usko">
-                                            <div className="z-zaglavlje__grupa">
-                                                <Link className="z-zaglavlje__stavka-panela" to="/page/cjenovnik">{'Cjenovnik'.translate(l)}</Link>
-                                                <Link className="z-zaglavlje__stavka-panela" to="/help">{'Pomoć'.translate(l)}</Link>
-                                            </div>
-                                        </div>
-                                        : null}
-                                </div>
-                                :
-                                <Link className="z-zaglavlje__traka-veza z-zaglavlje__u-fioku" to="/help">{'POMOĆ'.translate(l)}</Link>}
-
-                            {this.prekidacJezika(l, 'z-zaglavlje__u-fioku')}
-
-                            {imaKorpu ?
-                                <Link to="/cart" className="z-zaglavlje__korpa" aria-label={'Korpa'.translate(l)}>
-                                    <Isvg src={cart}/>
-                                    <span>{'Korpa'.translate(l)}</span>
-                                    {this.props.brojUKorpi > 0 ?
-                                        <em className="z-zaglavlje__korpa-broj">{this.props.brojUKorpi}</em>
-                                        : null}
-                                </Link>
-                                : null}
-
-                            {u ?
-                                <div className={'z-zaglavlje__sa-panelom z-zaglavlje__nalog' + (this.state.panel === 'nalog' ? ' z-zaglavlje__sa-panelom--otvoren' : '')}>
-                                    <button type="button"
-                                            className="z-zaglavlje__stavka z-zaglavlje__stavka--panel"
-                                            aria-expanded={this.state.panel === 'nalog'}
-                                            onClick={() => this.prebaciPanel('nalog')}>
-                                        {u.name || 'Nalog'.translate(l)}
-                                        <span className="z-zaglavlje__strelica" aria-hidden="true"/>
-                                    </button>
-                                    {this.state.panel === 'nalog' ?
-                                        <div className="z-zaglavlje__panel z-zaglavlje__panel--nalog">
-                                            <div className="z-zaglavlje__grupa">
-                                                {u.email ? <p className="z-zaglavlje__naslov-grupe">{u.email}</p> : null}
-                                                <Link className="z-zaglavlje__stavka-panela" to="/account/profile">{'Profil'.translate(l)}</Link>
-                                                <Link className="z-zaglavlje__stavka-panela" to="/account/downloads">{'Preuzimanja'.translate(l)}</Link>
-                                                {imaKorpu ?
-                                                    <Link className="z-zaglavlje__stavka-panela" to="/cart">{'Korpa'.translate(l)}</Link>
-                                                    : null}
-                                                <button type="button"
-                                                        className="z-zaglavlje__stavka-panela z-zaglavlje__odjava"
-                                                        onClick={() => {
-                                                            this.zatvoriSve();
-                                                            this.props.signOut();
-                                                            this.props[0].history.push('/');
-                                                            this.props.showInfoMessage('Hvala vam što ste koristili foto servis.');
-                                                        }}>{'Izloguj se'.translate(l)}</button>
-                                            </div>
-                                        </div>
-                                        : null}
-                                </div>
-                                :
-                                <Link className="z-zaglavlje__dugme-prijava" to="/login">{'Prijava'.translate(l)}</Link>
-                            }
-                        </div>
-                    </div>
-                </div>
-
-
-                {/* ── RED 3 — navigacija ───────────────────────────────── */}
-                {javniMeni ?
-                    <div className="z-zaglavlje__navred">
-                        <div className="z-zaglavlje__sirina">
+                        {/* Meni stoji u ISTOM redu sa logom i radnjama (2026-10-13),
+                            na svim izgledima — ranije je imao svoj red ispod.
+                            Na telefonu je isti <nav> fioka (`position: fixed`). */}
+                        {javniMeni ?
                             <nav
                                 id="glavni-meni"
                                 className="z-zaglavlje__meni"
@@ -752,13 +678,78 @@ class Header extends Component {
                                     {this.prekidacJezika(l, 'z-zaglavlje__jezici--fioka')}
                                 </div>
                             </nav>
+                            : null}
 
-                            {/* Uska pretraga u ovom redu je izbačena (2026-09-22):
-                                navbar mora da bude isti na svakoj strani, a na
-                                naslovnoj pretraga stoji ispod, u naslovnom bloku. */}
+                        <div className="z-zaglavlje__desno">
+                            {imaCenovnik ?
+                                <div className={'z-zaglavlje__sa-panelom z-zaglavlje__u-fioku' + (this.state.panel === 'cjenovnik' ? ' z-zaglavlje__sa-panelom--otvoren' : '')}>
+                                    <button type="button"
+                                            className="z-zaglavlje__stavka z-zaglavlje__stavka--panel"
+                                            aria-expanded={this.state.panel === 'cjenovnik'}
+                                            onClick={() => this.prebaciPanel('cjenovnik')}>
+                                        {'Cjenovnik'.translate(l)}
+                                        <span className="z-zaglavlje__strelica" aria-hidden="true"/>
+                                    </button>
+                                    {this.state.panel === 'cjenovnik' ?
+                                        <div className="z-zaglavlje__panel z-zaglavlje__panel--usko">
+                                            <div className="z-zaglavlje__grupa">
+                                                <Link className="z-zaglavlje__stavka-panela" to="/page/cjenovnik">{'Cjenovnik'.translate(l)}</Link>
+                                                <Link className="z-zaglavlje__stavka-panela" to="/help">{'Pomoć'.translate(l)}</Link>
+                                            </div>
+                                        </div>
+                                        : null}
+                                </div>
+                                :
+                                <Link className="z-zaglavlje__traka-veza z-zaglavlje__u-fioku" to="/help">{'POMOĆ'.translate(l)}</Link>}
+
+                            {this.prekidacJezika(l, 'z-zaglavlje__u-fioku')}
+
+                            {imaKorpu ?
+                                <Link to="/cart" className="z-zaglavlje__korpa" aria-label={'Korpa'.translate(l)}>
+                                    <Isvg src={cart}/>
+                                    <span>{'Korpa'.translate(l)}</span>
+                                    {this.props.brojUKorpi > 0 ?
+                                        <em className="z-zaglavlje__korpa-broj">{this.props.brojUKorpi}</em>
+                                        : null}
+                                </Link>
+                                : null}
+
+                            {u ?
+                                <div className={'z-zaglavlje__sa-panelom z-zaglavlje__nalog' + (this.state.panel === 'nalog' ? ' z-zaglavlje__sa-panelom--otvoren' : '')}>
+                                    <button type="button"
+                                            className="z-zaglavlje__stavka z-zaglavlje__stavka--panel"
+                                            aria-expanded={this.state.panel === 'nalog'}
+                                            onClick={() => this.prebaciPanel('nalog')}>
+                                        {u.name || 'Nalog'.translate(l)}
+                                        <span className="z-zaglavlje__strelica" aria-hidden="true"/>
+                                    </button>
+                                    {this.state.panel === 'nalog' ?
+                                        <div className="z-zaglavlje__panel z-zaglavlje__panel--nalog">
+                                            <div className="z-zaglavlje__grupa">
+                                                {u.email ? <p className="z-zaglavlje__naslov-grupe">{u.email}</p> : null}
+                                                <Link className="z-zaglavlje__stavka-panela" to="/account/profile">{'Profil'.translate(l)}</Link>
+                                                <Link className="z-zaglavlje__stavka-panela" to="/account/downloads">{'Preuzimanja'.translate(l)}</Link>
+                                                {imaKorpu ?
+                                                    <Link className="z-zaglavlje__stavka-panela" to="/cart">{'Korpa'.translate(l)}</Link>
+                                                    : null}
+                                                <button type="button"
+                                                        className="z-zaglavlje__stavka-panela z-zaglavlje__odjava"
+                                                        onClick={() => {
+                                                            this.zatvoriSve();
+                                                            this.props.signOut();
+                                                            this.props[0].history.push('/');
+                                                            this.props.showInfoMessage('Hvala vam što ste koristili foto servis.');
+                                                        }}>{'Izloguj se'.translate(l)}</button>
+                                            </div>
+                                        </div>
+                                        : null}
+                                </div>
+                                :
+                                <Link className="z-zaglavlje__dugme-prijava" to="/login">{'Prijava'.translate(l)}</Link>
+                            }
                         </div>
                     </div>
-                    : null}
+                </div>
 
 
                 {/* ── NASLOVNI BLOK — samo naslovna ──────────────────────

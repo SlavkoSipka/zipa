@@ -38,6 +38,25 @@
         color: var(--boja-tekst-tiho);
     }
 
+    /* ── broj snimaka i „Po strani" iznad mreže (2026-10-14) ──────────── */
+
+    &__alati {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--razmak-3);
+        margin-bottom: var(--razmak-5);
+    }
+
+    &__ukupno {
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        color: var(--boja-tekst-tiho);
+    }
+
+    .z-podela-dno { margin-top: var(--razmak-6); }
+
     /* ── mreža snimaka ────────────────────────────────────────────────── */
 
     &__mreza {

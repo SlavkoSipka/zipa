@@ -65,18 +65,18 @@
     }
 
     &__newsletter-naslov {
-        margin: 0 0 var(--razmak-1);
+        margin: 0 0 var(--razmak-2);
         font-family: var(--pismo-naslov);
-        font-size: var(--slovo-xl);
-        line-height: var(--red-xl);
+        font-size: var(--slovo-2xl);
+        line-height: var(--red-2xl);
         font-weight: var(--tezina-poludebela);
         color: var(--boja-traka-tekst);
     }
 
     &__newsletter-opis {
         margin: 0;
-        font-size: var(--slovo-sm);
-        line-height: var(--red-sm);
+        font-size: var(--slovo-lg);
+        line-height: var(--red-md);
         color: var(--boja-traka-tekst-tiho);
     }
 
@@ -153,22 +153,45 @@
 
     /* ── stupci ───────────────────────────────────────────────────────── */
 
+    /* Logo i tekst „o nama" stoje levo, kao i ranije; SAMO stupci
+       „Navigacija", „Pravno" i „Kontakt" su u sredini ekrana (2026-10-13).
+       Pet traka: dve jednake bočne (`1fr`) drže tri stupca veza tačno po
+       sredini, a „o nama" zauzima levu bočnu. Ranije su stupci delili celu
+       širinu (1.4fr 1fr 1fr 1.2fr) i stajali daleko jedan od drugog. */
     &__stupci {
         display: grid;
-        grid-template-columns: 1.4fr 1fr 1fr 1.2fr;
-        gap: var(--razmak-7);
+        /* Leva traka ima najmanje 400px, da tekst „o nama" i mreže ostanu
+           kao pre (na 1440 bi ih tačna sredina stisnula na 290px i mreže
+           prelomila u dva reda); tada su stupci malo desno od sredine. */
+        grid-template-columns: minmax(400px, 1fr) repeat(3, auto) minmax(0, 1fr);
+        column-gap: var(--razmak-8);
+        row-gap: var(--razmak-6);
+
+        > :nth-child(2) { grid-column: 2; }
+        > :nth-child(3) { grid-column: 3; }
+        > :nth-child(4) { grid-column: 4; }
+
+        // 1024–1439: levo nema mesta za „o nama" pored stupaca — ide u svoj
+        // red iznad, a stupci ostaju u sredini ispod.
+        @include small-desktop {
+            grid-template-columns: minmax(0, 1fr) repeat(3, auto) minmax(0, 1fr);
+            > :first-child { grid-column: 1 / -1; max-width: 720px; }
+        }
 
         @include mobile-tablet {
             // Na telefonu jedna ispod druge — bez harmonike.
-            grid-template-columns: 1fr;
+            grid-template-columns: minmax(0, 1fr);
             gap: var(--razmak-6);
+
+            > :nth-child(n) { grid-column: auto; }
         }
     }
 
+    // Krupnija slova u stupcima (2026-10-13) — bila su 12–14px.
     &__naslov-stupca {
-        margin: 0 0 var(--razmak-3);
-        font-size: var(--slovo-xs);
-        line-height: var(--red-xs);
+        margin: 0 0 var(--razmak-4);
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
         font-weight: var(--tezina-jaka);
         letter-spacing: .08em;
         text-transform: uppercase;
@@ -177,7 +200,7 @@
 
     &__o-nama {
         margin: 0 0 var(--razmak-4);
-        font-size: var(--slovo-sm);
+        font-size: var(--slovo-md);
         line-height: var(--red-md);
         color: var(--boja-traka-tekst-tiho);
     }
@@ -195,12 +218,12 @@
         padding: 0;
         list-style: none;
 
-        li + li { margin-top: var(--razmak-2); }
+        li + li { margin-top: var(--razmak-3); }
     }
 
     &__veza {
         @include z-veza-traka;
-        font-size: var(--slovo-sm);
+        font-size: var(--slovo-lg);
         line-height: var(--red-md);
         @include z-fokus;
     }
@@ -210,14 +233,14 @@
     &__kontakt-stavka {
         display: flex;
         align-items: flex-start;
-        gap: var(--razmak-2);
-        margin-bottom: var(--razmak-3);
+        gap: var(--razmak-3);
+        margin-bottom: var(--razmak-4);
 
-        font-size: var(--slovo-sm);
+        font-size: var(--slovo-lg);
         line-height: var(--red-md);
         color: var(--boja-traka-tekst-tiho);
 
-        svg { flex: 0 0 auto; width: 16px; height: 16px; margin-top: 3px; }
+        svg { flex: 0 0 auto; width: 20px; height: 20px; margin-top: 4px; }
         svg path, svg circle, svg rect { fill: var(--boja-traka-tekst-tiho); }
 
         p { margin: 0; }
@@ -225,31 +248,35 @@
 
     /* ── društvene mreže ──────────────────────────────────────────────── */
 
+    /* Krupnije i upečatljivije (2026-10-13): puna površina umesto obrisa,
+       veća ikonica i više vazduha; na prelaz mišem boja radnje izgleda. */
     &__mreze {
         display: flex;
         flex-wrap: wrap;
-        gap: var(--razmak-2);
-        margin-top: var(--razmak-4);
+        gap: var(--razmak-3);
+        margin-top: var(--razmak-5);
     }
 
     &__mreza {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 36px;
-        height: 36px;
+        width: 52px;
+        height: 52px;
 
-        border: 1px solid var(--boja-traka-linija);
+        border: 0;
         border-radius: var(--radijus-panel);
+        background: var(--boja-traka-linija);
 
-        @include z-prelaz(border-color, background-color);
+        @include z-prelaz(background-color, transform);
         &:hover {
-            border-color: var(--boja-traka-tekst-tiho);
-            background: var(--boja-traka-linija);
+            background: var(--boja-akcenat);
+            transform: translateY(-2px);
+            svg path, svg circle, svg rect { fill: var(--boja-akcenat-tekst); }
         }
         @include z-fokus;
 
-        svg { width: 16px; height: 16px; display: block; }
+        svg { width: 24px; height: 24px; display: block; }
         svg path, svg circle, svg rect { fill: var(--boja-traka-tekst); }
     }
 
@@ -325,7 +352,7 @@
 
         p {
             margin: 0;
-            font-size: var(--slovo-xs);
+            font-size: var(--slovo-sm);
             line-height: var(--red-sm);
             color: var(--boja-traka-tekst-tiho);
         }
