@@ -108,15 +108,15 @@ class CategoryPage extends Component {
                 'Authorization': `Bearer ${localStorage.getItem('authToken')}`
             },
             body: JSON.stringify(data)
-        }).then(res => res.json()).then((result) => {
-            if (result.error) {
-                this.setState({
-                    error: result.error
-                })
-            } else {
-                this.props[0].history.push('/account/announcements')
-            }
-        })
+        }).then((res) => res.json().then((result) => ({ ok: res.ok, result })))
+            .then(({ ok, result }) => {
+                if (!ok || (result && result.error)) {
+                    this.setState({ error: (result && result.error) || 'Izmjena nije sačuvana. Pokušajte ponovo.' });
+                } else {
+                    this.props[0].history.push('/account/announcements?sacuvano=1')
+                }
+            })
+            .catch(() => this.setState({ error: 'Izmjena nije sačuvana. Pokušajte ponovo.' }))
 
     }
 

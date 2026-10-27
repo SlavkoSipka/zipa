@@ -15,6 +15,7 @@ import DatePicker from './fields/date';
 import Toggle from './fields/toggleCheckbox';
 import Gallery from './fields/banners';
 import MultiCheckbox from './fields/multiCheckbox';
+import ProveraOdnosa from './fields/proveraOdnosa';
 
 import mail from '../../assets/svg/mail.svg';
 import lock from '../../assets/svg/lock.svg';
@@ -203,6 +204,9 @@ const renderSelectField = ({
     )
 
 
+// Mera hero fotografije naslovne C — tačna mera i provera postavljene slike.
+const renderProveraHero = ({ input }) => <ProveraOdnosa url={input.value} sirina={2400} visina={1350} />;
+
 const renderImageField = ({
     input,
     label,
@@ -315,8 +319,9 @@ class form extends React.Component {
                         <Field
                             name="pozadinaPretrage"
                             component={renderImageField}
-                            label="Hero fotografija naslovne — izgled C (stoji uvek; prazno = najnovija galerija). JPG, širina oko 2400px, do 5 MB"
+                            label="Hero fotografija naslovne — izgled C (stoji uvek; prazno = najnovija galerija)"
                         ></Field>
+                        <Field name="pozadinaPretrage" component={renderProveraHero}></Field>
                     </Col>
 
                     <Col lg="6">

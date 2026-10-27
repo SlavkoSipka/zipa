@@ -2,6 +2,28 @@ import React, { Component } from 'react';
 import { Container, Row, Col } from 'reactstrap';
 
 import Page from '../containers/page';
+import VelicinaBanera from '../components/forms/fields/velicinaBanera';
+
+// Izbor veličine širokog banera — isti deo kao u Administracija → Baneri,
+// ovde sa probnom slikom, da se vidi kako radi bez prijave (2026-10-27).
+class PrimerBanera extends Component {
+    constructor(props) {
+        super(props);
+        this.state = { sirina: '', visina: '' };
+    }
+
+    render() {
+        return (
+            <VelicinaBanera
+                sirina={this.state.sirina}
+                visina={this.state.visina}
+                slike={[{ image: 'https://zipa-photos.zipa-photo-agency.workers.dev/photos/700x/baneri/prestige-980-dbe592.jpg' }]}
+                onSirina={(sirina) => this.setState({ sirina })}
+                onVisina={(visina) => this.setState({ visina })}
+            />
+        );
+    }
+}
 
 /**
  * Strana sa sistemom stilova.
@@ -496,6 +518,16 @@ class StiloviPage extends Component {
                         </nav>
                     </section>
 
+
+                    {/* ── ŠIROKI BANER ─────────────────────────────────── */}
+                    <section className="stilovi__odeljak">
+                        <h2>Široki baner — izbor veličine</h2>
+                        <p className="stilovi__uvod">
+                            Isto kao u Administracija → Baneri. Probna slika je Prestige baner
+                            (980 × 140), pa se vidi i upozorenje kad mera ne odgovara.
+                        </p>
+                        <PrimerBanera />
+                    </section>
 
                     {/* ── PRAZNO STANJE ────────────────────────────────── */}
                     <section className="stilovi__odeljak">

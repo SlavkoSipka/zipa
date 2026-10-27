@@ -73,11 +73,15 @@ class UsersModule {
 
 
     async logVisit(uid, url) {
-        await db.collection('logs').insertOne({
+        /* Lokalni sajt (razvoj) piše u istu bazu kao pravi, pa su probe
+           ulazile u analitiku. Render postavlja `RENDER`; bez njega je poseta
+           lokalna i označava se — nadzorna ploča i izveštaji je preskaču
+           (2026-10-27). */
+        await db.collection('logs').insertOne(Object.assign({
             uid: uid ? ObjectID(uid) : null,
             url: url,
             timestamp: Math.floor(new Date().getTime() / 1000)
-        });
+        }, process.env.RENDER ? {} : { lokalno: true }));
         return {};
     }
 

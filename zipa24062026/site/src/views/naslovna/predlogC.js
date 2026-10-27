@@ -101,8 +101,9 @@ class PredlogC extends Component {
         const lang = this.props.lang;
         const podesavanja = this.props.settings || {};
 
-        // Red od pet pločica kao na A (2026-09-22) — pet najnovijih galerija.
-        const najnovije = (this.props.latest || []).slice(0, 5);
+        /* Najnovije (2026-10-27): levo jedna velika, desno tri kolone u dva
+           reda — sedam galerija, ivice se poklapaju. Ranije red od pet. */
+        const najnovije = (this.props.latest || []).slice(0, 7);
 
 
 
@@ -117,12 +118,16 @@ class PredlogC extends Component {
                     (`header.js`, naslovni blok); sliku bira administracija.
                     Ispod nje: pet najnovijih galerija kao pločice sa A. ── */}
                 {najnovije.length ? (
-                    <section className="z-mozaik z-mozaik--pet">
-                        <div className="z-mozaik__mreza z-mozaik__mreza--pet">
-                            {najnovije.map((g, i) => (
-                                <PlocicaGalerije key={g._id || i} g={g} lang={lang} />
-                            ))}
-                        </div>
+                    <section className="z-mozaik z-mozaik--vodeca">
+                        {/* U širini sadržaja, kao „Izdvajamo" ispod — ivice
+                            se poklapaju uspravno (2026-10-27). */}
+                        <Container>
+                            <div className="z-mozaik__mreza z-mozaik__mreza--vodeca">
+                                {najnovije.map((g, i) => (
+                                    <PlocicaGalerije key={g._id || i} g={g} lang={lang} velika={i === 0} />
+                                ))}
+                            </div>
+                        </Container>
                     </section>
                 ) : null}
 
@@ -130,8 +135,10 @@ class PredlogC extends Component {
                 {this.props.izdvojeno && this.props.izdvojeno.length ? (
                     <section className="odeljak izdvojeno">
                         <Container>
-                            <div className="naslov-odeljka">
+                            {/* Naslov kao na A (2026-10-27): krupan, crven, „Sve galerije →" desno. */}
+                            <div className="naslov-odeljka naslov-odeljka--kao-a">
                                 <h3>{podesavanja.izdvojenoNaslov || 'Izdvajamo'}</h3>
+                                <Link to="/galerije">{'Sve galerije'.translate(lang)} &rarr;</Link>
                             </div>
                             {/* Isto kao na A i C (2026-10-13): uvek ČETIRI pločice
                                 u jednom redu, pa se u administraciji uvek bira
@@ -158,35 +165,9 @@ class PredlogC extends Component {
                     lang={lang}
                     banners={this.props.banners}
                     bannerClick={this.props.bannerClick}
+                    videos={this.props.videos}
+                    settings={this.props.settings}
                 />
-
-                {/* ── Video ────────────────────────────────────────────── */}
-                {this.props.videos && this.props.videos.length ? (
-                    <section className="odeljak">
-                        <Container>
-                            <div className="naslov-odeljka">
-                                <h3>{'Video'.translate(lang)}</h3>
-                                <Link to="/video">{'Svi snimci'.translate(lang)} &rarr;</Link>
-                            </div>
-                        </Container>
-                        <Container>
-                            <div className="mreza-galerija">
-                                {this.props.videos.slice(0, 6).map((v, i) => {
-                                    const naslovVidea = Object.translate(v, 'title', lang) || '';
-                                    return (
-                                        <a key={i} href={v.link} target="_blank" rel="noopener noreferrer" className="kartica">
-                                            <div className="slika">
-                                                {v.thumbnail ? <img src={v.thumbnail} alt={naslovVidea} loading="lazy" /> : null}
-                                                <span className="igraj">&#9654;</span>
-                                            </div>
-                                            <div className="telo"><h4>{naslovVidea}</h4></div>
-                                        </a>
-                                    );
-                                })}
-                            </div>
-                        </Container>
-                    </section>
-                ) : null}
 
             </div>
         );

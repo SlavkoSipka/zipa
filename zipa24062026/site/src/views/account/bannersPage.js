@@ -134,6 +134,7 @@ class CategoriesPage extends Component {
                     kolone={[
                         { kljuc: 'naziv',    naziv: 'Naziv' },
                         { kljuc: 'mjesto',   naziv: 'Mjesto' },
+                        { kljuc: 'mera',     naziv: 'Mera' },
                         { kljuc: 'pozicija', naziv: 'Pozicija', broj: true },
                     ]}
                     redovi={this.state.items || []}
@@ -155,6 +156,23 @@ class CategoriesPage extends Component {
                             );
                         }
                         if (k.kljuc === 'pozicija') return r.position;
+
+                        /* Mera širokog banera (2026-10-27) — bira se na vrhu
+                           strane banera; ovde se vidi kome još nije izabrana. */
+                        if (k.kljuc === 'mera') {
+                            if (r.size && r.size !== 'siroki') return '—';
+                            const telefon = (r.images || []).some((sl) => sl && sl.mobilna);
+                            return r.sirina && r.visina ? (
+                                <span>
+                                    {r.sirina} × {r.visina} px
+                                    {telefon ? <span className="z-oznaka" style={{ marginLeft: 8 }}>{'+ telefon'.translate(l)}</span> : null}
+                                </span>
+                            ) : (
+                                <Link to={`/account/banners/${r._id}`} className="z-baner-izaberi-meru">
+                                    {'Izaberi meru'.translate(l)} &rarr;
+                                </Link>
+                            );
+                        }
 
                         /* „Mjesto" je izvedeno iz zastavica — do sada se nigde
                            nije videlo gde baner uopšte stoji. */

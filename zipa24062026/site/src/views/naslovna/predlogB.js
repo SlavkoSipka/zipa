@@ -296,40 +296,9 @@ class PredlogB extends Component {
                     lang={lang}
                     banners={this.props.banners}
                     bannerClick={this.props.bannerClick}
+                    videos={this.props.videos}
+                    settings={this.props.settings}
                 />
-
-                {/* ── Video ────────────────────────────────────────────────
-                    Na kraju strane, kako je traženo. Snimci se povlače sa
-                    YouTube kanala agencije.                               */}
-                {this.props.videos && this.props.videos.length ? (
-                    <section className="odeljak video">
-                        <Container>
-                            <div className="naslov-odeljka">
-                                <h3>{'Video'.translate(lang)}</h3>
-                                <Link to="/video">{'Svi snimci'.translate(lang)} &rarr;</Link>
-                            </div>
-                            {/* Do šest najnovijih, tri u redu, široki 16:9 kadrovi sa naslovom ispod —
-                                kao na strani /video (2026-10-13). Ranije su bila
-                                četiri sitna u redu. */}
-                            <div className="mreza-video">
-                                {this.props.videos.slice(0, 6).map((v, i) => {
-                                    // Naslov stiže u oba jezika, pa se mora prevesti
-                                    // pre ispisa — inače React dobije objekat.
-                                    const naslovVidea = Object.translate(v, 'title', lang) || '';
-                                    return (
-                                        <a key={i} href={v.link} target="_blank" rel="noopener noreferrer" className="video-kartica">
-                                            <div className="slika">
-                                                {v.thumbnail ? <img src={v.thumbnail} alt={naslovVidea} loading="lazy" /> : null}
-                                                <span className="igraj">▶</span>
-                                            </div>
-                                            <h4 className="naslov-videa">{naslovVidea}</h4>
-                                        </a>
-                                    );
-                                })}
-                            </div>
-                        </Container>
-                    </section>
-                ) : null}
 
             </div>
         );

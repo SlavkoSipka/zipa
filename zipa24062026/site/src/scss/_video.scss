@@ -393,3 +393,21 @@
 
 .z-video-admin__polja { display: grid; gap: var(--razmak-3); }
 .z-licence-admin__red--opis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+
+/* Video na početnoj — panel u administraciji (2026-10-27). */
+.z-video-admin__pocetna-naslov {
+    margin: 0 0 var(--razmak-2);
+    font-family: var(--pismo-naslov);
+    font-size: var(--slovo-lg);
+    line-height: var(--red-lg);
+    font-weight: var(--tezina-jaka);
+    color: var(--boja-tekst);
+}
+
+.z-video-admin__raspored {
+    margin: var(--razmak-3) 0 0;
+    font-size: var(--slovo-sm);
+    line-height: var(--red-sm);
+    color: var(--boja-tekst-tiho);
+}

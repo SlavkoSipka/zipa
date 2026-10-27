@@ -12,8 +12,13 @@ import { youtubeId } from '../../components/youtube';
  * Admin nalepi YouTube adresu (pun link ili goli ID), upiše naslov, opis,
  * grad i datum. Sličica se vuče sama iz adrese. Naslov i opis stoje na
  * strani /video direktno iznad snimka. Redosled je po DATUMU, najnoviji
- * prvi (2026-10-14); na naslovnoj idu šest najnovijih uključenih. Polje
+ * prvi (2026-10-14); na naslovnoj idu tri najnovija uključena. Polje
  * „Redosljed" je zato skinuto — `position` ostaje u bazi, ali se ne čita.
+ *
+ * Na naslovnoj je video odeljak kao kategorija (2026-10-27): ovde se bira da
+ * li se prikazuje i njegova „Pozicija" u nizu kategorija — isti broj kao
+ * polje „Pozicija" kod kategorija. Čuva se u podešavanjima sajta
+ * (`videoNaPocetnoj`, `videoPozicija`).
  */
 const zaglavlja = () => ({
     'Content-Type': 'application/json',
@@ -63,6 +68,33 @@ class VideoAdminPage extends Component {
             .then((res) => res.json())
             .then((rez) => this.setState({ stavke: Array.isArray(rez) ? rez : [], ucitavanje: false }))
             .catch(() => this.setState({ ucitavanje: false }));
+    };
+
+    // Dok administrator ne dira polja, ona prate podešavanja sajta (stižu kasnije).
+    naPocetnoj = () => (this.state.naPocetnoj !== undefined
+        ? this.state.naPocetnoj
+        : !(this.props.settings && this.props.settings.videoNaPocetnoj === false));
+
+    pozicija = () => {
+        if (this.state.pozicija !== undefined) return this.state.pozicija;
+        const p = this.props.settings && this.props.settings.videoPozicija;
+        return p === null || p === undefined ? '' : String(p);
+    };
+
+    sacuvajPocetnu = () => {
+        const l = this.props.lang;
+        const pozicija = this.pozicija();
+        fetch(`${API_ENDPOINT}/settings/update`, {
+            method: 'POST',
+            headers: zaglavlja(),
+            body: JSON.stringify({
+                videoNaPocetnoj: this.naPocetnoj(),
+                videoPozicija: pozicija === '' ? null : parseInt(pozicija, 10),
+            }),
+        }).then((res) => {
+            if (!res.ok) throw new Error(String(res.status));
+            this.poruke.dodaj('uspeh', 'Sačuvano. Početna strana prikazuje izmjenu posle osvježavanja.'.translate(l));
+        }).catch((e) => this.poruke.dodaj('greska', 'Izmjena nije sačuvana.'.translate(l) + ` (${e.message})`));
     };
 
     izmeni = (i, putanja, vrednost) => {
@@ -132,8 +164,44 @@ class VideoAdminPage extends Component {
 
                 <div className="z-licence-admin">
                     <p className="z-prijava-strana__uvod">
-                        {'Snimci za stranu Video i naslovnu. Nalepite YouTube adresu, upišite naslov, opis, grad i datum — naslov i opis stoje iznad snimka. Snimci idu po datumu, najnoviji prvi; na početnoj se vidi šest najnovijih.'.translate(l)}
+                        {'Snimci za stranu Video i naslovnu. Nalepite YouTube adresu, upišite naslov, opis, grad i datum — naslov i opis stoje iznad snimka. Snimci idu po datumu, najnoviji prvi; na početnoj se vide tri najnovija.'.translate(l)}
                     </p>
+
+                    {/* Video na početnoj — kao kategorija (2026-10-27). */}
+                    <div className="z-licence-admin__stavka z-video-admin__pocetna">
+                        <h3 className="z-video-admin__pocetna-naslov">{'Video na početnoj strani'.translate(l)}</h3>
+                        <p className="z-prijava-strana__uvod">
+                            {'Odeljak „Video" stoji među kategorijama na početnoj i prikazuje tri najnovija snimka. Pozicija radi isto kao kod kategorija: manji broj ide više. Kod iste pozicije video ide posle kategorije, a bez pozicije na kraj.'.translate(l)}
+                        </p>
+                        <div className="z-licence-admin__red">
+                            <label className="z-polje">
+                                <span className="z-polje__oznaka">{'Pozicija na početnoj'.translate(l)}</span>
+                                <input className="z-polje__unos" type="number" min="0" value={this.pozicija()}
+                                       onChange={(e) => this.setState({ pozicija: e.target.value })} />
+                            </label>
+                        </div>
+                        {(() => {
+                            const naPocetnoj = (this.props.categories || [])
+                                .filter((k) => k.isVisibleOnHome)
+                                .sort((a, b) => (a.position || 0) - (b.position || 0));
+                            return naPocetnoj.length ? (
+                                <p className="z-video-admin__raspored">
+                                    <b>{'Kategorije na početnoj:'.translate(l)}</b>{' '}
+                                    {naPocetnoj.map((k) => `${k.position || 0}. ${Object.translate(k, 'name', l)}`).join(' · ')}
+                                </p>
+                            ) : null;
+                        })()}
+                        <div className="z-licence-admin__radnje">
+                            <label className="z-licence-admin__aktivna">
+                                <input type="checkbox" checked={this.naPocetnoj()}
+                                       onChange={(e) => this.setState({ naPocetnoj: e.target.checked })} />
+                                {'Prikazuje se na početnoj'.translate(l)}
+                            </label>
+                            <button type="button" className="z-dugme z-dugme--glavno" onClick={this.sacuvajPocetnu}>
+                                {'Sačuvaj'.translate(l)}
+                            </button>
+                        </div>
+                    </div>
 
                     {this.state.ucitavanje ? <span className="z-kostur z-kostur--red" /> : null}
 

@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Field, reduxForm } from 'redux-form'
+import { Field, Fields, reduxForm } from 'redux-form'
 import { Link } from 'react-router-dom'
 
 import Text from './fields/text1';
@@ -15,6 +15,7 @@ import DatePicker from './fields/date';
 import Toggle from './fields/toggleCheckbox';
 import Gallery from './fields/banners';
 import MultiCheckbox from './fields/multiCheckbox';
+import VelicinaBanera from './fields/velicinaBanera';
 
 import mail from '../../assets/svg/mail.svg';
 import lock from '../../assets/svg/lock.svg';
@@ -222,6 +223,7 @@ const renderGalleryField = ({
     input,
     label,
     height,
+    mobilna,
     meta: { touched, error },
 }) => (
 
@@ -230,8 +232,23 @@ const renderGalleryField = ({
         errorText={touched && error}
         error={touched && error}
         height={height}
+        mobilna={mobilna}
         {...input}
     />
+)
+
+// Širina i visina širokog banera (2026-10-27) — samo za „Široki"; ostale
+// vrste imaju svoju stalnu meru.
+const renderVelicinaField = (polja) => (
+    polja.size.input.value && polja.size.input.value !== 'siroki' ? null : (
+        <VelicinaBanera
+            sirina={polja.sirina.input.value}
+            visina={polja.visina.input.value}
+            slike={Array.isArray(polja.images.input.value) ? polja.images.input.value : []}
+            onSirina={polja.sirina.input.onChange}
+            onVisina={polja.visina.input.onChange}
+        />
+    )
 )
 
 
@@ -251,6 +268,25 @@ class form extends React.Component {
         return (
             <form onSubmit={handleSubmit} className="edit-account-form">
                 <Row>
+                    {/* Vrsta i MERA banera stoje na vrhu (2026-10-27) — prvo se
+                        bira mera, pa se po njoj pravi i postavlja slika. */}
+                    <Col lg="12">
+                        <div className="z-baner-vrh">
+                            <Field
+                                name="size"
+                                component={renderSelectField}
+                                label={'Vrsta banera'.translate(this.props.lang)}
+                                placeholder={'Široki — širina i visina po izboru'.translate(this.props.lang)}
+                            >
+                                <option value="siroki">Široki — širina i visina po izboru</option>
+                                <option value="uspravni">Uspravni — 160 × 600</option>
+                                <option value="kvadratni">Kvadratni — 300 × 250</option>
+                                <option value="mobilni">Za telefon — 320 × 100</option>
+                            </Field>
+                            <Fields names={['sirina', 'visina', 'images', 'size']} component={renderVelicinaField} />
+                        </div>
+                    </Col>
+
                     <Col lg="12">
 
                         <Field
@@ -280,21 +316,6 @@ class form extends React.Component {
                             label={'Pozicija *'.translate(this.props.lang)}
                         ></Field>
 
-                        {/*
-                          * Unapred zadate veličine, da se banere priprema po
-                          * poznatoj mjeri umjesto da svaki bude svoje veličine.
-                          */}
-                        <Field
-                            name="size"
-                            component={renderSelectField}
-                            label={'Veličina banera'.translate(this.props.lang)}
-                            placeholder={'Široki — 980 × po potrebi'.translate(this.props.lang)}
-                        >
-                            <option value="siroki">Široki — 980 × po potrebi</option>
-                            <option value="uspravni">Uspravni — 160 × 600</option>
-                            <option value="kvadratni">Kvadratni — 300 × 250</option>
-                            <option value="mobilni">Za telefon — 320 × 100</option>
-                        </Field>
 
 
                     </Col>
@@ -384,15 +405,10 @@ class form extends React.Component {
                         <Field
                             name="images"
                             component={renderGalleryField}
+                            mobilna
                             label={'Fotografije'.translate(this.props.lang)}
                         ></Field>
 
-                    </Col>
-                    <Col lg="12">
-                        1 baner: 1110x200<br />
-2 banera: 540x160<br />
-3 banera: 350x160<br />
-4 banera: 255x120<br /><br /><br />
                     </Col>
 
 

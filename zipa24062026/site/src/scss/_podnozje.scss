@@ -296,17 +296,21 @@
     &__baner {
         --baneri-u-redu: 6;
 
+        /* Veći baneri, mali razmak (2026-10-27): svaki popuni svoju šestinu
+           reda (do svoje prave širine, 350px), razmak između njih je 8px. */
+        --baneri-razmak: var(--razmak-2);
+
         display: flex;
         flex-wrap: wrap;
         align-items: center;
         justify-content: center;
-        gap: var(--razmak-4) var(--razmak-5);
+        gap: var(--baneri-razmak);
 
         @include tablet { --baneri-u-redu: 3; }
         @include mobile { --baneri-u-redu: 2; }
 
         > a {
-            flex: 0 0 calc((100% - (var(--baneri-u-redu) - 1) * var(--razmak-5)) / var(--baneri-u-redu));
+            flex: 0 0 calc((100% - (var(--baneri-u-redu) - 1) * var(--baneri-razmak)) / var(--baneri-u-redu));
             display: flex;
             justify-content: center;
         }
@@ -322,18 +326,13 @@
 
         img {
             display: block;
-            // Zajednička visina drži traku mirnom; širina je ograničena da
-            // najširi baner ne pojede ceo red.
-            max-height: 64px;
-            max-width: 100%;
-            width: auto;
+            // Svi iste mere (35 : 12, kao baneri od 350 × 120), pa traka stoji
+            // mirno; baner drugačijeg oblika stane unutra bez sečenja.
+            width: 100%;
+            max-width: 350px;
             height: auto;
+            aspect-ratio: 35 / 12;
             object-fit: contain;
-        }
-
-        @include mobile {
-            gap: var(--razmak-3) var(--razmak-4);
-            img { max-height: 48px; }
         }
     }
 

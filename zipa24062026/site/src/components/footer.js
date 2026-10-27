@@ -21,6 +21,7 @@ import {
     Col
 } from 'reactstrap';
 import { API_ENDPOINT } from '../constants';
+import BanerSlika from './baner';
 
 /*
  * PODNOŽJE
@@ -273,14 +274,9 @@ class Footer extends Component {
                         {this.props.footerBanner ?
                             <div className="z-podnozje__baner">
                                 {
-                                    this.props.footerBanner.images.map((item, idx) => {
-                                        return (
-                                            <a key={idx} href={item.link} target="_blank" rel="noopener noreferrer"
-                                               onClick={() => this.props.bannerClick(item.link)}>
-                                                <img src={item.image} alt="" />
-                                            </a>
-                                        )
-                                    })
+                                    this.props.footerBanner.images.map((item, idx) => (
+                                        <BanerSlika key={idx} baner={this.props.footerBanner} slika={item} onClick={this.props.bannerClick} />
+                                    ))
                                 }
                             </div>
                             : null

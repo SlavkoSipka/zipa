@@ -12,6 +12,7 @@ import DocumentMeta from 'react-document-meta';
 import { Container, Row, Col } from 'reactstrap';
 import DetailSearchForm from '../components/forms/detailSearchForm';
 import IskacucaReklama from '../components/iskacucaReklama';
+import BanerSlika from '../components/baner';
 
 
 function generateSearchLink(params) {
@@ -61,10 +62,7 @@ export const DefaultLayout = (Wrapped) => (props) => {
                 <div className="z-zaglavlje__baner-traka">
                     <div className="z-zaglavlje__glavni-baner">
                         {props.adBanner.images.map((b, bi) => (
-                            <a key={bi} href={b.link} target="_blank" rel="noopener noreferrer"
-                               onClick={() => props.bannerClick && props.bannerClick(b.link)}>
-                                <img src={b.image} alt="" />
-                            </a>
+                            <BanerSlika key={bi} baner={props.adBanner} slika={b} onClick={props.bannerClick} />
                         ))}
                     </div>
                 </div>

@@ -47,6 +47,7 @@ import { API_ENDPOINT, PHOTOS_ENDPOINT} from "../constants";
 import download from "../assets/svg/download.svg";
 import cartIcon from "../assets/svg/cart.svg";
 import shareIcon from "../assets/svg/share.svg";
+import BanerSlika from '../components/baner';
 
 /*
  * MREŽA FOTOGRAFIJA — zašto ovako
@@ -1538,23 +1539,9 @@ class DetailPage extends Component {
                         <Row>
                             <Col lg="12" className="banners">
                                 {this.props.detailBanner
-                                    ? this.props.detailBanner.images.map(
-                                          (item, idx) => {
-                                              return (
-                                                  <a
-                                                      key={idx}
-                                                      href={item.link}
-                                                      target="_blank"
-                                                      rel="noopener noreferrer"
-                                                      onClick={() =>
-                                                          this.props.bannerClick(item.link)
-                                                      }
-                                                  >
-                                                      <img src={item.image} className="banner" alt="" />
-                                                  </a>
-                                              );
-                                          }
-                                      )
+                                    ? this.props.detailBanner.images.map((item, idx) => (
+                                          <BanerSlika key={idx} baner={this.props.detailBanner} slika={item} onClick={this.props.bannerClick} />
+                                      ))
                                     : null}
                             </Col>
                         </Row>

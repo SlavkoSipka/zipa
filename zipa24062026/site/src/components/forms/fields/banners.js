@@ -122,6 +122,31 @@ class Gallery extends Component {
         });
     };
 
+    /*
+     * Slika za telefon (2026-10-27) — samo u obrascu banera (`mobilna`).
+     * Uvek 640 × 200 px; na telefonu zamenjuje široku sliku (`components/baner.js`).
+     */
+    posaljiMobilnu = (e) => {
+        const fajl = e.target.files && e.target.files[0];
+        e.target.value = '';
+        if (!fajl) return;
+        const greska = proveriSliku(fajl, this.props.lang);
+        if (greska) { this.setState({ _greskaMobilne: greska }); return; }
+
+        const podaci = new FormData();
+        podaci.append('file', fajl);
+        this.setState({ _saljeMobilnu: true, _greskaMobilne: null });
+        fetch(`${API_ENDPOINT}/upload`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` },
+            body: podaci
+        }).then((res) => res.text().then((tekst) => {
+            if (!res.ok || tekst.indexOf('http') !== 0) throw new Error(tekst || 'Slanje nije uspjelo.');
+            const selectedImage = Object.assign({}, this.state.selectedImage, { mobilna: tekst });
+            this.setState({ selectedImage, _saljeMobilnu: false });
+        })).catch((g) => this.setState({ _saljeMobilnu: false, _greskaMobilne: g.message || 'Slanje nije uspjelo.' }));
+    };
+
     async onDrop(imageFiles) {
 
         let imagesLayout = [];
@@ -252,6 +277,8 @@ class Gallery extends Component {
                             <div className="image-wrap">
 
                                 <img src={this.state.files[i] && this.state.files[i].image} />
+                                {this.props.mobilna && this.state.files[i] && this.state.files[i].mobilna
+                                    ? <span className="z-baner-oznaka-telefon">+ telefon</span> : null}
                                 <div className={'delete'} onClick={() => this.removeImage(i)}>
                                     <Isvg src={deleteIcon} />
                                 </div>
@@ -352,6 +379,32 @@ class Gallery extends Component {
                                     <Col lg="6">
                                         <img src={this.state.selectedImage.image} />
                                     </Col>
+                                    {this.props.mobilna ? (
+                                        <Col lg="12">
+                                            <div className="z-baner-mobilna">
+                                                <div className="z-baner-mobilna__natpis">
+                                                    <b>Slika za telefon</b> — 640 × 200 px (neobavezno). Na telefonu
+                                                    se prikazuje umesto široke slike.
+                                                </div>
+                                                {this.state.selectedImage.mobilna ? (
+                                                    <img className="z-baner-mobilna__slika" src={this.state.selectedImage.mobilna} alt="" />
+                                                ) : null}
+                                                <div className="z-baner-mobilna__radnje">
+                                                    <label className="z-dugme z-dugme--sporedno">
+                                                        {this.state._saljeMobilnu ? 'Šaljem…' : (this.state.selectedImage.mobilna ? 'Zameni sliku za telefon' : 'Postavi sliku za telefon')}
+                                                        <input type="file" accept={ACCEPT} hidden disabled={this.state._saljeMobilnu} onChange={this.posaljiMobilnu} />
+                                                    </label>
+                                                    {this.state.selectedImage.mobilna ? (
+                                                        <button type="button" className="z-dugme z-dugme--tiho"
+                                                                onClick={() => this.setState({ selectedImage: Object.assign({}, this.state.selectedImage, { mobilna: null }) })}>
+                                                            Ukloni
+                                                        </button>
+                                                    ) : null}
+                                                </div>
+                                                {this.state._greskaMobilne ? <p className="greska-slike" role="alert">{this.state._greskaMobilne}</p> : null}
+                                            </div>
+                                        </Col>
+                                    ) : null}
                                     <Col lg="12" className="buttons">
                                         <button type="button" onClick={() => {
                                             let files = this.state.files;

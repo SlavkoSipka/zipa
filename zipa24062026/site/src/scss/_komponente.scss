@@ -1609,3 +1609,109 @@
         @include mobile { width: 100%; min-width: 0; }
     }
 }
+
+
+/* ── Video na naslovnoj (2026-10-27) ────────────────────────────────────────
+   `VideoNaslovne` u `components/kategorijeNaslovne.js` — isto na A, B i C,
+   u nizu kategorija. Tri široka 16:9 kadra u redu, naslov ispod. Vrh odeljka
+   (naziv + „Svi snimci") je isti kao kod kategorija. */
+.z-video-naslovne {
+    &__mreza {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: var(--razmak-5);
+
+        @include tablet { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        @include mobile { grid-template-columns: minmax(0, 1fr); }
+    }
+
+    &__kartica {
+        display: block;
+        min-width: 0;
+        color: inherit;
+        text-decoration: none;
+        @include z-fokus;
+
+        &:hover .z-video-naslovne__slika img { transform: scale(1.03); }
+    }
+
+    &__slika {
+        position: relative;
+        display: block;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        overflow: hidden;
+        border-radius: var(--radijus-panel);
+        background: var(--boja-podloga-tiha);
+
+        img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.4s ease;
+
+            @media (prefers-reduced-motion: reduce) { transition: none; }
+        }
+    }
+
+    &__igraj {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: 64px;
+        height: 64px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding-left: 4px;
+        border-radius: 50%;
+        background-color: var(--boja-zavesa);
+        color: var(--boja-povrsina);
+        font-size: var(--slovo-xl);
+    }
+
+    &__naslov {
+        display: block;
+        margin-top: var(--razmak-3);
+        font-family: var(--pismo-naslov);
+        font-size: var(--slovo-lg);
+        line-height: var(--red-lg);
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-tekst);
+        text-transform: uppercase;
+    }
+}
+
+
+/* ── Široki baner sa merom iz administracije (2026-10-27) ────────────────────
+   `components/baner.js`. Širina stoji u `style` na vezi (pobeđuje stara
+   ograničenja mesta reklame), a odnos stranica u `--baner-odnos`, da slika
+   zadrži tačno izabrani oblik i kad se smanji. Na telefonu, ako postoji slika
+   za telefon, oblik je njen: 640 × 200 = 16 : 5. */
+.z-baner {
+    picture { display: block; }
+
+    &--mera .z-baner__slika {
+        width: 100%;
+        max-width: 100%;
+        height: auto;
+        aspect-ratio: var(--baner-odnos);
+        object-fit: cover;
+    }
+
+    &--mobilna .z-baner__slika {
+        @include mobile { aspect-ratio: 16 / 5; }
+    }
+}
+
+/* Zaštita pregleda (2026-10-27) — uz zabranu desnog klika u `App.js`:
+   fotografija arhive se ne prevlači mišem, a na telefonu dug pritisak ne
+   otvara meni „Sačuvaj sliku". */
+img[src*="/photos/350x/"],
+img[src*="/photos/700x/"] {
+    -webkit-user-drag: none;
+    -webkit-touch-callout: none;
+    user-select: none;
+}

@@ -67,11 +67,11 @@ class Gallery extends Component {
         const cene = (this.state.selectedImage && this.state.selectedImage.cene) || {};
         const nasledjena = this.nasledjenaCena(kljuc);
         return (
-            <Col lg="3" md="6" key={kljuc}>
+            <div className="z-cene-mreza__polje" key={kljuc} title={natpis}>
                 <Text label={natpis} type="number" onChange={(e) => this.postaviCenu(kljuc, e)}
-                      placeholder={nasledjena !== null ? `iz galerije: ${nasledjena} KM` : 'iz galerije: na upit'}
+                      placeholder={nasledjena !== null ? `${nasledjena} KM` : 'na upit'}
                       value={cene[kljuc] === undefined || cene[kljuc] === null ? '' : String(cene[kljuc])} />
-            </Col>
+            </div>
         );
     }
 
@@ -634,14 +634,19 @@ class Gallery extends Component {
                                       * Sadržaj → Licence. Upisana cijena ima prednost.
                                       */}
                                     <Col lg="12">
-                                        <h4 className="z-cene-foto__naslov">Cijene za ovu fotografiju (KM) — prazno polje vuče cijenu iz galerije (siva oznaka)</h4>
+                                        <h4 className="z-cene-foto__naslov">Cijene za ovu fotografiju (KM) — prazno polje vuče cijenu iz galerije (siva vrijednost u polju)</h4>
                                     </Col>
-                                    {this.poljeCene('3000', 'Najveća (3000 px)')}
-                                    {this.poljeCene('1500', 'Srednja (1500 px)')}
-                                    {this.poljeCene('800', 'Mala (800 px)')}
-                                    {(this.state.licence || []).map((lic) =>
-                                        this.poljeCene(String(lic._id), (lic.naziv && lic.naziv.ba) || 'Licenca')
-                                    )}
+                                    {/* Mreža jednakih polja, natpis u jednom redu (2026-10-27). */}
+                                    <Col lg="12">
+                                        <div className="z-cene-mreza">
+                                            {this.poljeCene('3000', 'Najveća (3000 px)')}
+                                            {this.poljeCene('1500', 'Srednja (1500 px)')}
+                                            {this.poljeCene('800', 'Mala (800 px)')}
+                                            {(this.state.licence || []).map((lic) =>
+                                                this.poljeCene(String(lic._id), (lic.naziv && lic.naziv.ba) || 'Licenca')
+                                            )}
+                                        </div>
+                                    </Col>
 
                                     <Col lg="12" className="buttons">
                                         <button type="button" onClick={() => {

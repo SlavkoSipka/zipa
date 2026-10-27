@@ -784,14 +784,21 @@ body.u-administraciji {
     }
 
     /* Mreza galerija — nikad golo `1fr`, pravilo projekta. */
+    // Koliko god staje u red (2026-10-27) — na širokom ekranu i šest-sedam.
     &__mreza {
         display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
         gap: var(--razmak-3);
 
-        @include small-desktop { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-        @include tablet        { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-        @include mobile        { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        @include mobile { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    &__jos {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: var(--razmak-2);
+        margin-top: var(--razmak-5);
     }
 
     &__kostur {
@@ -1217,4 +1224,411 @@ body.u-administraciji {
     margin: var(--razmak-4) 0 var(--razmak-2);
     font-size: var(--slovo-md);
     font-weight: var(--tezina-jaka);
+}
+
+/* Polja cijena — galerija i „Izmjeni fotografiju" (2026-10-27).
+   Mreža jednakih polja: koliko god licenci ima, polja stoje u uređenim
+   redovima iste širine, a natpis je u jednom redu (ceo naziv u `title`). */
+.z-cene-mreza {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 0 var(--razmak-3);
+
+    @include mobile { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 var(--razmak-3); }
+
+    &__polje {
+        min-width: 0;
+
+        label {
+            display: block;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        input {
+            width: 100%;
+            min-width: 0;
+        }
+    }
+}
+
+
+/* ── Veličina širokog banera (2026-10-27) ───────────────────────────────────
+   `components/forms/fields/velicinaBanera.js`. */
+.z-velicina-banera {
+    margin: var(--razmak-4) 0 var(--razmak-6);
+    padding: var(--razmak-5);
+    border: 1px solid var(--boja-linija);
+    border-radius: var(--radijus-panel);
+    background: var(--boja-povrsina);
+
+    &__naslov {
+        margin: 0 0 var(--razmak-4);
+        font-size: var(--slovo-lg);
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-tekst);
+    }
+
+    &__korak {
+        margin: var(--razmak-4) 0 var(--razmak-2);
+        font-size: var(--slovo-sm);
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-tekst-tiho);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    &__visine {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: var(--razmak-3);
+    }
+
+    &__visina {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: var(--razmak-1);
+        padding: var(--razmak-3);
+        border: 2px solid var(--boja-linija);
+        border-radius: var(--radijus-panel);
+        background: var(--boja-povrsina);
+        color: var(--boja-tekst);
+        font-size: var(--slovo-md);
+        cursor: pointer;
+        @include z-fokus;
+
+        span:last-child { font-size: var(--slovo-sm); color: var(--boja-tekst-tiho); }
+
+        &--izabrana {
+            border-color: var(--boja-oznaka);
+            background: var(--boja-podloga-tiha);
+        }
+    }
+
+    &__visina-oblik {
+        display: block;
+        width: 100%;
+        max-width: 160px;
+        margin-bottom: var(--razmak-2);
+        border-radius: var(--radijus-mali);
+        background: var(--boja-linija);
+    }
+
+    &__visina--izabrana &__visina-oblik { background: var(--boja-oznaka); }
+
+    &__sirina {
+        display: flex;
+        align-items: center;
+        gap: var(--razmak-4);
+
+        input[type="range"] { flex: 1 1 auto; min-width: 0; accent-color: var(--boja-oznaka); }
+    }
+
+    &__broj {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--razmak-2);
+        margin: 0;
+
+        input {
+            width: 96px;
+            height: 40px;
+            padding: 0 var(--razmak-3);
+            border: 1px solid var(--boja-linija);
+            border-radius: var(--radijus-mali);
+            font-size: var(--slovo-md);
+        }
+    }
+
+    &__mera {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: var(--razmak-1) var(--razmak-3);
+        margin-top: var(--razmak-4);
+        padding: var(--razmak-4);
+        border-radius: var(--radijus-panel);
+        background: var(--boja-podloga-tiha);
+
+        b { font-size: var(--slovo-xl); color: var(--boja-oznaka-tekst); }
+    }
+
+    &__tiho {
+        flex: 1 1 100%;
+        margin: 0;
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        color: var(--boja-tekst-tiho);
+    }
+
+    &__pregledi {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 220px;
+        gap: var(--razmak-5);
+        align-items: start;
+
+        @include mobile { grid-template-columns: minmax(0, 1fr); }
+    }
+
+    // Širina strane — tačkasti okvir, baner u njemu u stvarnoj srazmeri.
+    &__strana {
+        padding: var(--razmak-3) 0;
+        border: 1px dashed var(--boja-linija);
+        border-radius: var(--radijus-mali);
+        background: var(--boja-podloga-tiha);
+    }
+
+    &__red {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    &__okvir {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        max-width: 100%;
+        overflow: hidden;
+        border-radius: var(--radijus-mali);
+        background: var(--boja-linija);
+        color: var(--boja-tekst-tiho);
+        font-size: var(--slovo-xs);
+        font-weight: var(--tezina-jaka);
+
+        img { display: block; width: 100%; height: 100%; object-fit: cover; }
+    }
+
+    // Telefon — 220px kao umanjen telefon od 375px.
+    &__telefon {
+        display: flex;
+        flex-direction: column;
+        gap: var(--razmak-2);
+        padding: var(--razmak-5) var(--razmak-2);
+        border: 6px solid var(--boja-tekst);
+        border-radius: 22px;
+        background: var(--boja-podloga-tiha);
+        min-height: 180px;
+
+        .z-velicina-banera__okvir { width: 100%; }
+    }
+
+    &__telefon-savet {
+        margin: var(--razmak-4) 0 0;
+        padding: var(--razmak-3) var(--razmak-4);
+        border-left: 4px solid var(--boja-oznaka);
+        border-radius: var(--radijus-mali);
+        background: var(--boja-podloga-tiha);
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+    }
+
+    &__upozorenje {
+        margin: var(--razmak-3) 0 0;
+        font-size: var(--slovo-sm);
+        color: var(--boja-oznaka-tekst);
+    }
+}
+
+/* Slika za telefon u prozoru „Izmjeni banner". */
+.z-baner-mobilna {
+    margin: var(--razmak-4) 0;
+    padding: var(--razmak-4);
+    border: 1px dashed var(--boja-linija);
+    border-radius: var(--radijus-panel);
+
+    &__natpis { margin-bottom: var(--razmak-3); font-size: var(--slovo-sm); }
+
+    &__slika {
+        display: block;
+        width: 100%;
+        max-width: 320px;
+        aspect-ratio: 16 / 5;
+        object-fit: cover;
+        margin-bottom: var(--razmak-3);
+        border-radius: var(--radijus-mali);
+    }
+
+    &__radnje { display: flex; flex-wrap: wrap; gap: var(--razmak-2); }
+}
+
+.z-baner-oznaka-telefon {
+    position: absolute;
+    left: 6px;
+    bottom: 6px;
+    padding: 2px 6px;
+    border-radius: var(--radijus-mali);
+    background: var(--boja-oznaka);
+    color: var(--boja-tekst-na-oznaci);
+    font-size: var(--slovo-xs);
+    font-weight: var(--tezina-jaka);
+}
+
+
+/* Vrh strane banera — vrsta i mera, istaknuto (2026-10-27). */
+.z-baner-vrh {
+    margin-bottom: var(--razmak-6);
+    padding: var(--razmak-5);
+    border: 2px solid var(--boja-oznaka);
+    border-radius: var(--radijus-panel);
+    background: var(--boja-podloga-tiha);
+
+    .z-velicina-banera { margin-bottom: 0; }
+}
+
+.z-baner-izaberi-meru {
+    color: var(--boja-oznaka-tekst);
+    font-weight: var(--tezina-jaka);
+    @include z-veza-meni;
+}
+
+
+/* Kome ide obaveštenje o novoj galeriji (2026-10-27) — dve kvačice. */
+.z-obavesti-grupe {
+    margin-top: var(--razmak-3);
+    padding: var(--razmak-4);
+    border: 1px solid var(--boja-linija);
+    border-radius: var(--radijus-panel);
+
+    &__naslov {
+        margin: 0 0 var(--razmak-2);
+        font-size: var(--slovo-md);
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-tekst);
+    }
+}
+
+
+/* Mera hero fotografije naslovne C (2026-10-27). */
+.z-provera-odnosa {
+    margin: calc(var(--razmak-4) * -1) 0 var(--razmak-5);
+    padding: var(--razmak-3) var(--razmak-4);
+    border-left: 4px solid var(--boja-linija);
+    border-radius: var(--radijus-mali);
+    background: var(--boja-podloga-tiha);
+    font-size: var(--slovo-sm);
+    line-height: var(--red-sm);
+
+    p { margin: 0; }
+    p + p { margin-top: var(--razmak-1); }
+
+    &__mera b { font-size: var(--slovo-lg); color: var(--boja-oznaka-tekst); }
+    &__tekst { color: var(--boja-tekst-tiho); }
+    &__nalaz { font-weight: var(--tezina-jaka); }
+
+    &--uspeh { border-left-color: var(--boja-uspeh); }
+    &--upozorenje { border-left-color: var(--boja-oznaka); }
+    &--upozorenje &__nalaz { color: var(--boja-oznaka-tekst); }
+}
+
+
+/* Brojevi arhive iznad spiska galerija i oznaka skrivene na ploči (2026-10-27). */
+.z-spisak-brojevi {
+    margin: 0 0 var(--razmak-4);
+    padding: var(--razmak-3) var(--razmak-4);
+    border-radius: var(--radijus-panel);
+    background: var(--boja-podloga-tiha);
+    font-size: var(--slovo-sm);
+    line-height: var(--red-sm);
+    color: var(--boja-tekst-tiho);
+
+    b { color: var(--boja-tekst); }
+}
+
+.z-ploca__skrivena { margin-left: var(--razmak-2); }
+
+.z-ploca__legenda { margin: calc(var(--razmak-2) * -1) 0 var(--razmak-5); }
+
+
+/* Nadzorna ploča: raspon od–do i mesečni izveštaji (2026-10-27). */
+.z-ploca__raspon {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--razmak-3);
+    margin: var(--razmak-2) 0 var(--razmak-4);
+}
+
+.z-ploca__datum {
+    display: flex;
+    flex-direction: column;
+    gap: var(--razmak-1);
+    margin: 0;
+    font-size: var(--slovo-sm);
+    color: var(--boja-tekst-tiho);
+
+    input {
+        height: 40px;
+        padding: 0 var(--razmak-3);
+        border: 1px solid var(--boja-linija);
+        border-radius: var(--radijus-mali);
+        font-size: var(--slovo-md);
+        color: var(--boja-tekst);
+        background: var(--boja-povrsina);
+    }
+}
+
+.z-ploca__raspon-opis {
+    flex: 1 1 100%;
+    font-size: var(--slovo-sm);
+    color: var(--boja-tekst-tiho);
+}
+
+.z-ploca__izvestaji .z-ploca__stavka { align-items: center; }
+
+
+/* Najave: šta sada stoji iznad navbara (2026-10-27). */
+.z-najave-traka {
+    margin-bottom: var(--razmak-5);
+    padding: var(--razmak-5);
+    border: 2px solid var(--boja-oznaka);
+    border-radius: var(--radijus-panel);
+    background: var(--boja-podloga-tiha);
+
+    &__naslov {
+        margin: 0 0 var(--razmak-3);
+        font-size: var(--slovo-lg);
+        font-weight: var(--tezina-jaka);
+    }
+
+    &__mesto {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--razmak-2) var(--razmak-4);
+        padding: var(--razmak-3) 0;
+        border-top: 1px solid var(--boja-linija);
+    }
+
+    &__oznaka {
+        flex: 0 0 190px;
+        font-size: var(--slovo-sm);
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-tekst-tiho);
+
+        @include mobile { flex-basis: 100%; }
+    }
+
+    &__natpis { flex: 1 1 240px; font-size: var(--slovo-md); }
+    &__do, &__prazno { font-size: var(--slovo-sm); color: var(--boja-tekst-tiho); }
+    &__prazno { flex: 1 1 auto; font-style: italic; }
+
+    &__savet {
+        margin: var(--razmak-3) 0 0;
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        color: var(--boja-tekst-tiho);
+    }
+
+    &__uspeh {
+        margin-bottom: var(--razmak-4);
+        padding: var(--razmak-3) var(--razmak-4);
+        border-left: 4px solid var(--boja-uspeh);
+        border-radius: var(--radijus-mali);
+        background: var(--boja-podloga-tiha);
+        font-weight: var(--tezina-jaka);
+    }
 }

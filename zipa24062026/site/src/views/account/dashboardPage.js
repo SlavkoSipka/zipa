@@ -15,7 +15,10 @@ import { API_ENDPOINT } from '../../constants';
  * Svi stižu iz `GET /admin/dashboard`, koji je namerno LAGANA ruta (~1,2 s),
  * odvojena od `/admin/statistics` (~2,4 s, vidi `docs/admin-popis.md` 3.2).
  *
- *   Galerija, Fotografija   → tabela `gallery` (count i zbir `photos`)
+ *   Galerija, Fotografija   → `brojeviArhive()` u `api/admin/admin.js` — ISTI
+ *                             izvor kao Statistika arhive i spisak Galerija:
+ *                             veliki broj je „na sajtu", ispod piše koliko je
+ *                             skrivenih i koliko ih je ukupno u bazi (2026-10-27)
  *   Korisnika, Fotografa    → tabela `users`
  *   Posjete danas / period  → tabela `logs`, polje `doc->>'timestamp'`
  *   Preuzimanja             → tabela `downloads`
@@ -124,6 +127,30 @@ class Broj extends Component {
     }
 }
 
+// Dan u obliku za `<input type="date">` (UTC, kao i grupisanje poseta po danu).
+const uDan = (t) => new Date(t * 1000).toISOString().slice(0, 10);
+const prikazDana = (dan) => (dan ? `${dan.slice(8, 10)}.${dan.slice(5, 7)}.${dan.slice(0, 4)}.` : '');
+
+/* Preuzimanje PDF-a sa prijavom: ruta traži token, pa obična veza ne može —
+   dovuče se kao blob i ponudi kao fajl. */
+function preuzmiPdf(adresa, ime) {
+    return fetch(adresa, { headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` } })
+        .then((res) => {
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return res.blob();
+        })
+        .then((blob) => {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = ime;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        });
+}
+
 function Kartica({ naziv, vrednost, uz, promena, prazno, lang }) {
     return (
         <div className="z-ploca__kartica">
@@ -151,21 +178,51 @@ class DashboardPage extends Component {
         super(props);
         this.state = {
             dana: 30,
+            // Izabrani raspon od–do (YYYY-MM-DD); kad je `dana` izabrano, puni se iz odgovora.
+            od: '',
+            do: '',
             podaci: null,
             ucitavanje: true,
             greska: null,
+            izvestaji: null,
+            izvestajiGreska: null,
+            preuzima: null,
         };
     }
 
     componentDidMount() {
         window.scrollTo(0, 0);
-        this.dovuci(this.state.dana);
+        this.dovuci({ dana: this.state.dana });
+        this.dovuciIzvestaje();
     }
 
-    dovuci(dana) {
-        this.setState({ ucitavanje: true, greska: null });
+    // Spisak mesečnih izveštaja; prvi poziv ume da potraje — server tada pravi one kojih nema.
+    dovuciIzvestaje() {
+        fetch(`${API_ENDPOINT}/admin/izvestaji`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` },
+        })
+            .then((res) => {
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                return res.json();
+            })
+            .then((izvestaji) => this.setState({ izvestaji: Array.isArray(izvestaji) ? izvestaji : [] }))
+            .catch(() => this.setState({ izvestaji: [], izvestajiGreska: true }));
+    }
 
-        fetch(`${API_ENDPOINT}/admin/dashboard?dana=${dana}`, {
+    preuzmi(kljuc, adresa, ime) {
+        this.setState({ preuzima: kljuc });
+        preuzmiPdf(adresa, ime)
+            .catch(() => window.alert('PDF se ne može preuzeti. Pokušajte ponovo.'))
+            .then(() => this.setState({ preuzima: null }));
+    }
+
+    dovuci(period) {
+        this.setState({ ucitavanje: true, greska: null });
+        const upit = period.od && period.do
+            ? `od=${period.od}&do=${period.do}`
+            : `dana=${period.dana}`;
+
+        fetch(`${API_ENDPOINT}/admin/dashboard?${upit}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -176,14 +233,28 @@ class DashboardPage extends Component {
                 if (!res.ok) throw new Error('HTTP ' + res.status);
                 return res.json();
             })
-            .then((podaci) => this.setState({ podaci, ucitavanje: false }))
+            .then((podaci) => this.setState({
+                podaci,
+                ucitavanje: false,
+                // Polja od–do uvek pokazuju period koji je stvarno prikazan.
+                od: uDan(podaci.od),
+                do: uDan(podaci.dokle - 86400),
+            }))
             .catch(() => this.setState({ ucitavanje: false, greska: true }));
     }
 
     promeniPeriod(dana) {
         this.setState({ dana });
-        this.dovuci(dana);
+        this.dovuci({ dana });
     }
+
+    prikaziRaspon = (e) => {
+        if (e) e.preventDefault();
+        const { od, do: dokle } = this.state;
+        if (!od || !dokle || dokle < od) return;
+        this.setState({ dana: null });
+        this.dovuci({ od, do: dokle });
+    };
 
     /*
      * Dani bez ijedne posete moraju da budu NULA, ne rupa — inače linija
@@ -198,18 +269,17 @@ class DashboardPage extends Component {
 
         const oznake = [];
         const vrednosti = [];
-        const danas = new Date();
 
-        for (let i = p.raspon - 1; i >= 0; i--) {
-            const d = new Date(danas);
-            d.setDate(d.getDate() - i);
+        // Od prvog dana izabranog perioda, dan po dan (UTC, kao i server).
+        for (let i = 0; i < p.raspon; i++) {
+            const d = new Date((Number(p.od) + i * 86400) * 1000);
             const kljuc = d.toISOString().slice(0, 10);
 
             // Na godinu dana se ne ispisuje svaki datum — bilo bi nečitko.
             oznake.push(
                 p.raspon > 60
-                    ? (d.getDate() === 1 ? d.toLocaleDateString('sr-RS', { month: 'short' }) : '')
-                    : d.getDate() + '.' + (d.getMonth() + 1) + '.'
+                    ? (d.getUTCDate() === 1 ? d.toLocaleDateString('sr-RS', { month: 'short', timeZone: 'UTC' }) : '')
+                    : d.getUTCDate() + '.' + (d.getUTCMonth() + 1) + '.'
             );
             vrednosti.push(poDanu[kljuc] || 0);
         }
@@ -249,6 +319,8 @@ class DashboardPage extends Component {
             : null;
 
         const ukupnoKategorija = p ? p.kategorije.reduce((z, k) => z + k.broj, 0) : 0;
+        const arh = p && p.arhiva;
+        const br = (n) => Number(n || 0).toLocaleString('sr-RS');
         const dovoljnoKategorija = ukupnoKategorija >= PRAG_KATEGORIJA;
 
         return (
@@ -272,14 +344,14 @@ class DashboardPage extends Component {
 
                 {/* ── 1. ključni brojevi ─────────────────────────────── */}
                 <div className="z-ploca__brojevi">
-                    <Kartica lang={l} naziv="Galerija" vrednost={p ? p.ukupno.galerija : 0}
-                             uz={p ? 'u arhivi'.translate(l) : null} />
+                    <Kartica lang={l} naziv="Galerija na sajtu" vrednost={p ? p.ukupno.galerija : 0}
+                             uz={arh ? `+ ${br(arh.galerija.skrivene)} ${'skrivenih'.translate(l)} · ${'ukupno u bazi'.translate(l)} ${br(arh.galerija.ukupno)}` : null} />
 
-                    <Kartica lang={l} naziv="Fotografija" vrednost={p ? p.ukupno.fotografija : 0}
-                             uz={p ? 'u arhivi'.translate(l) : null} />
+                    <Kartica lang={l} naziv="Fotografija na sajtu" vrednost={p ? p.ukupno.fotografija : 0}
+                             uz={arh ? `${'ukupno u bazi'.translate(l)} ${br(arh.fotografija.ukupno)}` : null} />
 
                     <Kartica lang={l} naziv="Korisnika" vrednost={p ? p.ukupno.korisnika : 0}
-                             uz={p ? p.ukupno.fotografa + ' ' + 'fotografa'.translate(l) : null} />
+                             uz={p ? p.ukupno.fotografa + ' ' + 'naloga fotografa'.translate(l) : null} />
 
                     <Kartica lang={l} naziv="Posjeta danas" vrednost={p ? p.posete.danas : 0}
                              uz={merenjeOd ? 'mjerenje od'.translate(l) + ' ' + merenjeOd : null} />
@@ -298,6 +370,15 @@ class DashboardPage extends Component {
                                  ? 'posljednje'.translate(l) + ' ' + poslednjePreuzimanje
                                  : null} />
                 </div>
+
+                {/* Šta koji broj znači — isto na ploči, u statistici arhive i u spisku galerija. */}
+                {arh ? (
+                    <p className="z-ploca__izvor z-ploca__legenda">
+                        {'„Na sajtu" = galerije koje posjetioci vide. „Skrivene" = isključene galerije i prazni nacrti'.translate(l)}
+                        {arh.galerija.prazne ? ` (${br(arh.galerija.prazne)} ${'praznih nacrta'.translate(l)})` : ''}
+                        {'. Isti brojevi stoje u Statistici arhive i u spisku Galerija.'.translate(l)}
+                    </p>
+                ) : null}
 
                 {/* ── 2. glavni grafikon ─────────────────────────────── */}
                 <section className="z-ploca__glavni">
@@ -324,6 +405,37 @@ class DashboardPage extends Component {
                             ))}
                         </div>
                     </header>
+
+                    {/* Tačan raspon od–do (2026-10-27): grafikon i svi brojevi
+                        poseta na ploči računaju se samo u tom rasponu. */}
+                    <form className="z-ploca__raspon" onSubmit={this.prikaziRaspon}>
+                        <label className="z-ploca__datum">
+                            <span>{'Od'.translate(l)}</span>
+                            <input type="date" value={this.state.od} max={this.state.do || undefined}
+                                   onChange={(e) => this.setState({ od: e.target.value })} />
+                        </label>
+                        <label className="z-ploca__datum">
+                            <span>{'Do'.translate(l)}</span>
+                            <input type="date" value={this.state.do} min={this.state.od || undefined}
+                                   onChange={(e) => this.setState({ do: e.target.value })} />
+                        </label>
+                        <button type="submit" className="z-dugme z-dugme--glavno"
+                                disabled={!this.state.od || !this.state.do || this.state.do < this.state.od}>
+                            {'Prikaži'.translate(l)}
+                        </button>
+                        <button type="button" className="z-dugme z-dugme--sporedno"
+                                disabled={!p || this.state.preuzima === 'period'}
+                                onClick={() => p && this.preuzmi('period',
+                                    `${API_ENDPOINT}/admin/izvestaj-period?od=${uDan(p.od)}&do=${uDan(p.dokle - 86400)}`,
+                                    `zipa-izvestaj-${uDan(p.od)}-${uDan(p.dokle - 86400)}.pdf`)}>
+                            {this.state.preuzima === 'period' ? 'Pravim PDF…'.translate(l) : 'PDF za ovaj period'.translate(l)}
+                        </button>
+                        {p ? (
+                            <span className="z-ploca__raspon-opis">
+                                {'Prikazano'.translate(l)}: {prikazDana(uDan(p.od))} – {prikazDana(uDan(p.dokle - 86400))} ({p.raspon} {'dana'.translate(l)})
+                            </span>
+                        ) : null}
+                    </form>
 
                     <div className="z-ploca__grafikon z-ploca__grafikon--veliki">
                         {this.state.ucitavanje ? (
@@ -357,7 +469,7 @@ class DashboardPage extends Component {
                     <section className="z-ploca__panel">
                         <h2 className="z-ploca__naslov">{'Najaktivniji fotografi'.translate(l)}</h2>
                         <p className="z-ploca__izvor">
-                            {'Izvor: arhiva — broj fotografija u galerijama.'.translate(l)}
+                            {'Izvor: galerije na sajtu — broj fotografija.'.translate(l)}
                         </p>
 
                         <div className="z-ploca__grafikon">
@@ -436,7 +548,7 @@ class DashboardPage extends Component {
                     <header className="z-ploca__zaglavlje">
                         <div>
                             <h2 className="z-ploca__naslov">{'Posljednje dodate galerije'.translate(l)}</h2>
-                            <p className="z-ploca__izvor">{'Izvor: arhiva — datum objave.'.translate(l)}</p>
+                            <p className="z-ploca__izvor">{'Izvor: sve galerije po datumu objave — i skrivene, označene. Klik otvara galeriju.'.translate(l)}</p>
                         </div>
                         <Link to="/account/galleries" className="z-ploca__veza">
                             {'Sve galerije'.translate(l)} &rarr;
@@ -453,9 +565,14 @@ class DashboardPage extends Component {
                         <ul className="z-ploca__spisak">
                             {p.poslednje.map((g) => (
                                 <li key={g._id} className="z-ploca__stavka">
-                                    <span className="z-ploca__stavka-naziv">
+                                    {/* Veza na izmenu galerije — da se zna koja je tačno. */}
+                                    <Link className="z-ploca__stavka-naziv"
+                                          to={g.uid && this.props.uData && String(g.uid) !== String(this.props.uData._id)
+                                              ? `/account/gallery-photographer/${g.uid}/${g._id}`
+                                              : `/account/gallery/${g._id}`}>
                                         {g.name && (g.name.ba || g.name.en) ? (g.name.ba || g.name.en) : '—'}
-                                    </span>
+                                        {g.naSajtu === false ? <span className="z-oznaka z-oznaka--upozorenje z-ploca__skrivena">{'skrivena'.translate(l)}</span> : null}
+                                    </Link>
                                     <span className="z-ploca__stavka-uz">
                                         {g.user || ''}
                                         {g.fotografija ? ' · ' + g.fotografija + ' ' + 'fotografija'.translate(l) : ''}
@@ -470,6 +587,40 @@ class DashboardPage extends Component {
                         </ul>
                     ) : (
                         <Prazno lang={l} naslov="Nema galerija" />
+                    )}
+                </section>
+
+                {/* ── 5. mesečni izveštaji (PDF) ─────────────────────── */}
+                <section className="z-ploca__panel">
+                    <header className="z-ploca__zaglavlje">
+                        <div>
+                            <h2 className="z-ploca__naslov">{'Mjesečni izvještaji'.translate(l)}</h2>
+                            <p className="z-ploca__izvor">
+                                {'Za svaki završeni mjesec sistem sam napravi izvještaj (A4, PDF) i čuva ga ovdje — posjete, najgledanije galerije, kategorije, pretrage, nove galerije, korisnici, baneri.'.translate(l)}
+                            </p>
+                        </div>
+                    </header>
+
+                    {this.state.izvestaji === null ? (
+                        <p className="z-ploca__izvor">{'Pripremam izvještaje…'.translate(l)}</p>
+                    ) : this.state.izvestaji.length ? (
+                        <ul className="z-ploca__spisak z-ploca__izvestaji">
+                            {this.state.izvestaji.map((iz) => (
+                                <li key={iz.mesec} className="z-ploca__stavka">
+                                    <span className="z-ploca__stavka-naziv">{iz.naziv}</span>
+                                    <span className="z-ploca__stavka-uz">PDF · {Math.max(1, Math.round((iz.velicina || 0) / 1024))} KB</span>
+                                    <button type="button" className="z-dugme z-dugme--sporedno z-dugme--malo"
+                                            disabled={this.state.preuzima === iz.mesec}
+                                            onClick={() => this.preuzmi(iz.mesec, `${API_ENDPOINT}/admin/izvestaji/${iz.mesec}`, `zipa-izvestaj-${iz.mesec}.pdf`)}>
+                                        {this.state.preuzima === iz.mesec ? 'Preuzimam…'.translate(l) : 'Preuzmi PDF'.translate(l)}
+                                    </button>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <Prazno lang={l}
+                                naslov={this.state.izvestajiGreska ? 'Izvještaji se ne mogu učitati' : 'Još nema završenog mjeseca'}
+                                tekst={this.state.izvestajiGreska ? 'Osvježite stranu.' : 'Prvi izvještaj se pravi prvog dana sljedećeg mjeseca.'} />
                     )}
                 </section>
                 </div>

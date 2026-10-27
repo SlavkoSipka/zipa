@@ -5,6 +5,7 @@ import { Container } from 'reactstrap';
 import { PHOTOS_ENDPOINT } from '../../constants';
 import { Plocica, PlocicaGalerije } from '../../components/plocica';
 import KategorijeNaslovne, { kategorijeZaNaslovnu } from '../../components/kategorijeNaslovne';
+import BanerSlika from '../../components/baner';
 
 /**
  * Naslovna strana — predlog A.
@@ -15,7 +16,8 @@ import KategorijeNaslovne, { kategorijeZaNaslovnu } from '../../components/kateg
  *      malim razmacima. Naslov i datum se pojave kad se mišem pređe preko.
  *   2. IZDVAJAMO — ručni izbor, krupno, po četiri u redu.
  *   3. KATEGORIJE izabrane za početnu (`components/kategorijeNaslovne.js`).
- *   4. VIDEO i 5. REKLAMA.
+ *      Video stoji u istom nizu, na poziciji iz administracije.
+ *   4. REKLAMA.
  *
  * Red od pet galerija ispod mozaika je izbačen (2026-10-13, na zahtev).
  *
@@ -135,33 +137,9 @@ class PredlogA extends Component {
                     lang={lang}
                     banners={this.props.banners}
                     bannerClick={this.props.bannerClick}
+                    videos={this.props.videos}
+                    settings={this.props.settings}
                 />
-
-                {/* ── 3. VIDEO ─────────────────────────────────────────── */}
-                {this.props.videos && this.props.videos.length ? (
-                    <section className="odeljak video">
-                        <Container>
-                            <div className="naslov-odeljka">
-                                <h3>{'Video'.translate(lang)}</h3>
-                                <Link to="/video">{'Svi snimci'.translate(lang)} &rarr;</Link>
-                            </div>
-                            <div className="mreza-video">
-                                {this.props.videos.slice(0, 2).map((v, i) => {
-                                    const naslovVidea = Object.translate(v, 'title', lang) || '';
-                                    return (
-                                        <a key={i} href={v.link} target="_blank" rel="noopener noreferrer" className="plocica">
-                                            <div className="slika">
-                                                {v.thumbnail ? <img src={v.thumbnail} alt={naslovVidea} loading="lazy" /> : null}
-                                                <span className="igraj">&#9654;</span>
-                                            </div>
-                                            <h4 className="naslov-videa">{naslovVidea}</h4>
-                                        </a>
-                                    );
-                                })}
-                            </div>
-                        </Container>
-                    </section>
-                ) : null}
 
                 {/* ── 4. REKLAMA — poslednja, da ne preseca sadržaj ─────── */}
                 {/* Reklama posle druge kategorije je ista prva reklama — tada se
@@ -172,10 +150,7 @@ class PredlogA extends Component {
                         <Container>
                             <div className="mesto-reklame">
                                 {this.props.banners[0].images.map((b, bi) => (
-                                    <a key={bi} href={b.link} target="_blank" rel="noopener noreferrer"
-                                       onClick={() => this.props.bannerClick && this.props.bannerClick(b.link)}>
-                                        <img src={b.image} alt="" />
-                                    </a>
+                                    <BanerSlika key={bi} baner={this.props.banners[0]} slika={b} onClick={this.props.bannerClick} />
                                 ))}
                             </div>
                         </Container>

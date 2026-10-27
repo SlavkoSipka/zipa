@@ -41,9 +41,9 @@ import PredlogA from './naslovna/predlogA';
 import PredlogC from './naslovna/predlogC';
 import PredlogB from './naslovna/predlogB';
 
-/* Na početnoj samo šest najnovijih snimaka (2026-10-14). `/videos/all` ih
+/* Na početnoj uvek tri najnovija snimka (2026-10-27; ranije šest). `/videos/all` ih
    već šalje poređane po datumu koji upiše administrator, najnoviji prvi. */
-const NAJVISE_VIDEA_NA_POCETNOJ = 6;
+const NAJVISE_VIDEA_NA_POCETNOJ = 3;
 const najnovijiVidei = (videi) => (videi || []).slice(0, NAJVISE_VIDEA_NA_POCETNOJ);
 
 class HomePage extends Component {

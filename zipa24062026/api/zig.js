@@ -66,14 +66,53 @@ async function sacuvajZigUR2(adresa) {
 }
 
 /*
- * Pregled: smanji na zadatu širinu pa nalepi žig preko sredine, širine 50%
- * slike — identično starom rasporedu (logoX 88/350, 175/700).
+ * Pregled: smanji na zadatu širinu pa nalepi žig preko sredine.
+ *
+ * Podrazumevani žig ide tačno kao i ranije — širine 50% slike (logoX 88/350,
+ * 175/700), isti JPEG. Pregledi sa njim se ne menjaju ni za bajt.
+ *
+ * Žig koji administrator sam postavi (2026-10-27) ide krupnije i oštrije:
+ *   - 70% širine slike, ali ne viši od 40% visine (da uspravan logo ne
+ *     prekrije pola fotografije). Klijentovi logotipi su široki i niski
+ *     (npr. 1193×234), pa su sa 50% na pregledu od 350px slova bila visoka
+ *     svega desetak piksela i izgledala mutno;
+ *   - posle smanjenja se blago izoštri (tanke konture slova se inače
+ *     razliju pri smanjenju 5–7 puta);
+ *   - JPEG bez poduzorkovanja boje (4:4:4). Podrazumevano 4:2:0 čuva boju u
+ *     pola razmere, pa su crvene ivice sitnih slova bile razmazane.
  */
+const UDEO_SIRINE = 0.5;
+const UDEO_SIRINE_SVOJ = 0.7;
+const NAJVISE_VISINE_SVOJ = 0.4;
+
+const JPEG = { quality: 100 };
+const JPEG_SVOJ = { quality: 100, chromaSubsampling: '4:4:4' };
+
+let podrazumevaniBuf = null;
+function jePodrazumevani(buf) {
+    if (!podrazumevaniBuf && fs.existsSync(PODRAZUMEVANI)) podrazumevaniBuf = fs.readFileSync(PODRAZUMEVANI);
+    return !!podrazumevaniBuf && Buffer.isBuffer(buf) && buf.equals(podrazumevaniBuf);
+}
+
 async function napraviPregled(original, sirina, zig) {
-    const smanjena = await sharp(original).rotate().resize({ width: sirina }).jpeg({ quality: 100 }).toBuffer();
+    if (jePodrazumevani(zig)) {
+        const smanjena = await sharp(original).rotate().resize({ width: sirina }).jpeg(JPEG).toBuffer();
+        const meta = await sharp(smanjena).metadata();
+        const z = await sharp(zig).resize({ width: Math.round(meta.width * UDEO_SIRINE) }).toBuffer();
+        return sharp(smanjena).composite([{ input: z, gravity: 'center' }]).jpeg(JPEG).toBuffer();
+    }
+
+    const smanjena = await sharp(original).rotate().resize({ width: sirina }).jpeg(JPEG_SVOJ).toBuffer();
     const meta = await sharp(smanjena).metadata();
-    const z = await sharp(zig).resize({ width: Math.round(meta.width / 2) }).toBuffer();
-    return sharp(smanjena).composite([{ input: z, gravity: 'center' }]).jpeg({ quality: 100 }).toBuffer();
+    const zm = await sharp(zig).metadata();
+
+    let sirinaZiga = Math.round(meta.width * UDEO_SIRINE_SVOJ);
+    if (sirinaZiga * zm.height / zm.width > meta.height * NAJVISE_VISINE_SVOJ) {
+        sirinaZiga = Math.round(meta.height * NAJVISE_VISINE_SVOJ * zm.width / zm.height);
+    }
+
+    const z = await sharp(zig).resize({ width: sirinaZiga }).sharpen({ sigma: 0.6 }).png().toBuffer();
+    return sharp(smanjena).composite([{ input: z, gravity: 'center' }]).jpeg(JPEG_SVOJ).toBuffer();
 }
 
 module.exports = { ucitajZig, sacuvajZigUR2, napraviPregled, zigZaPrikaz, PODRAZUMEVANO_IME };

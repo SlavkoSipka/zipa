@@ -114,9 +114,44 @@ class CategoriesPage extends Component {
         });
     }
 
+    /*
+     * Šta SADA stoji iznad navbara (2026-10-27) — isti izbor kao u `App.js`:
+     * za svako mesto poslednja objavljena najava čiji period traje. Ranije se
+     * iz spiska nije videlo koja je od više važećih stvarno u traci.
+     */
+    uTraci() {
+        const sada = Math.floor(Date.now() / 1000);
+        const vazece = (this.state.items || [])
+            .filter((n) => n.from && n.to && Number(n.from) <= sada && Number(n.to) >= sada)
+            .sort((a, b) => (Number(b.published) || 0) - (Number(a.published) || 0));
+        return {
+            levo: vazece.find((n) => n.pozicija !== 'desno') || null,
+            desno: vazece.find((n) => n.pozicija === 'desno') || null,
+        };
+    }
+
     render() {
         const l = this.props.lang;
         const b = this.state.zaBrisanje;
+        const traka = this.uTraci();
+        const mesto = (naziv, n) => (
+            <div className="z-najave-traka__mesto">
+                <span className="z-najave-traka__oznaka">{naziv.translate(l)}</span>
+                {n ? (
+                    <>
+                        <strong className="z-najave-traka__natpis">{Object.translate(n, 'content', l) || '—'}</strong>
+                        <span className="z-najave-traka__do">
+                            {'do'.translate(l)} {new Date(Number(n.to) * 1000).toLocaleDateString('sr-RS')}
+                        </span>
+                        <Link to={`/account/announcements/${n._id}`} className="z-dugme z-dugme--glavno z-dugme--malo">
+                            {'Izmijeni'.translate(l)}
+                        </Link>
+                    </>
+                ) : (
+                    <span className="z-najave-traka__prazno">{'Prazno — ovo mjesto se ne prikazuje'.translate(l)}</span>
+                )}
+            </div>
+        );
 
         return (
             <AdminOkvir
@@ -128,6 +163,23 @@ class CategoriesPage extends Component {
                 naslov={'Najave'.translate(l)}
                 radnja={<Link to="/account/announcements/new" className="z-adminokvir__radnja">{'Dodaj najavu'.translate(l)}</Link>}
             >
+                {/* Sada iznad navbara — obe najave, sa izmenom jednim klikom. */}
+                {!this.state.ucitavanje ? (
+                    <div className="z-najave-traka">
+                        <h2 className="z-najave-traka__naslov">{'Sada iznad navbara'.translate(l)}</h2>
+                        {mesto('Obaveštenje 1 — levo', traka.levo)}
+                        {mesto('Obaveštenje 2 — desno', traka.desno)}
+                        <p className="z-najave-traka__savet">
+                            {'Prikazuje se najava čiji period (OD–DO) traje; ako ih je više na istom mjestu, ide posljednja dodata. U izmjeni se vidi i mijenja tekst koji trenutno piše.'.translate(l)}
+                        </p>
+                    </div>
+                ) : null}
+
+                {/* Uspešno sačuvano — strana izmene vraća ovde sa `?sacuvano=1`. */}
+                {this.props[0] && this.props[0].location && /sacuvano=1/.test(this.props[0].location.search) ? (
+                    <div className="z-najave-traka__uspeh" role="status">{'Najava je sačuvana.'.translate(l)}</div>
+                ) : null}
+
                 <Tabela
                     lang={l}
                     ucitavanje={this.state.ucitavanje}

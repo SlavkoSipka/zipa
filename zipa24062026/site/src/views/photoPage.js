@@ -22,6 +22,7 @@ import {
     WhatsappIcon,
 } from "react-share";
 import { API_ENDPOINT, PHOTOS_ENDPOINT } from "../constants";
+import BanerSlika from '../components/baner';
 
 /*
  * JEDNA FOTOGRAFIJA — /galerija/:alias/:id/:photo
@@ -414,15 +415,7 @@ class PhotoPage extends Component {
                     {this.props.detailBanner && this.props.detailBanner.images.length ? (
                         <div className="z-fotografija__reklame">
                             {this.props.detailBanner.images.map((item, i) => (
-                                <a
-                                    href={item.link}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    key={i}
-                                    onClick={() => this.props.bannerClick(item.link)}
-                                >
-                                    <img src={item.image} alt="" loading="lazy" />
-                                </a>
+                                <BanerSlika key={i} baner={this.props.detailBanner} slika={item} onClick={this.props.bannerClick} />
                             ))}
                         </div>
                     ) : null}

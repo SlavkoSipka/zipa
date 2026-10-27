@@ -35,6 +35,25 @@ class HtmlImage extends Component {
         }
     }
 
+    /*
+     * Vrednost po jezicima. Stari zapisi (npr. opis najave) stizali su kao
+     * JSON u stringu — tada uređivač nije pokazivao tekst, a upis jezika u
+     * string je obarao izmenu. Ovde se string raspakuje (2026-10-27).
+     */
+    poJezicima() {
+        const v = this.props.value;
+        if (!v) return {};
+        if (typeof v === 'string') {
+            try {
+                const o = JSON.parse(v);
+                return o && typeof o === 'object' ? o : { [this.props.lang]: v };
+            } catch (e) {
+                return { [this.props.lang]: v };
+            }
+        }
+        return v;
+    }
+
     render() {
         return (
             <div className="input-wrap">
@@ -59,16 +78,12 @@ class HtmlImage extends Component {
                         skin_url: '/tinymce/skins/ui/oxide',
                         content_css: '/tinymce/skins/content/default/content.min.css'
                     }}
-                    value={this.props.multilang ? (this.props.value && this.props.value[this.props.lang]) ? this.props.value[this.props.lang] : '' : this.props.value}
+                    value={this.props.multilang ? (this.poJezicima()[this.props.lang] || '') : this.props.value}
                     onEditorChange={(val) => {
 
                         if (this.props.multilang) {
-                            let value = this.props.value;
-                            if (!value) {
-                                value = {};
-                            }
-                            value[this.props.lang] = val;
-
+                            // Nov objekat, ne izmena postojećeg — i kad je stigao string (2026-10-27).
+                            const value = Object.assign({}, this.poJezicima(), { [this.props.lang]: val });
                             this.props.onChange(value);
                         } else {
 

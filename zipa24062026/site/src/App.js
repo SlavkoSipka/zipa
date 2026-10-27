@@ -357,7 +357,24 @@ class App extends Component {
         }).catch(() => {});
     };
 
+    /*
+     * Zaštita pregleda od preuzimanja (2026-10-27): na fotografijama arhive
+     * (350x i 700x) nema menija desnog klika ni prevlačenja na radnu površinu.
+     * Ostale slike (logo, baneri) rade kao i do sada. Ovo samo otežava
+     * preuzimanje običnom posetiocu; snimak ekrana se ne može sprečiti, zato
+     * pravu zaštitu i dalje nosi žig i mala mera pregleda.
+     */
+    zastitaPregleda = (e) => {
+        const t = e.target;
+        if (t && t.tagName === 'IMG' && /\/photos\/(350x|700x)\//.test(t.currentSrc || t.src || '')) {
+            e.preventDefault();
+        }
+    };
+
     componentDidMount() {
+        document.addEventListener('contextmenu', this.zastitaPregleda);
+        document.addEventListener('dragstart', this.zastitaPregleda);
+
         // Brojač korpe prati i promene iz drugih kartica pregledača.
         window.addEventListener('storage', this.osveziKorpu);
 

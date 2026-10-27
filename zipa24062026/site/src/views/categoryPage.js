@@ -45,6 +45,7 @@ import Select from '../components/forms/fields/select';
 import ReactPaginate from 'react-paginate';
 import Autotext from '../components/forms/fields/autoText1';
 import UcitajJos from '../components/ucitajJos';
+import BanerSlika from '../components/baner';
 import {API_ENDPOINT, PHOTOS_ENDPOINT} from '../constants';
 
 class CategoryPage extends Component {
@@ -812,14 +813,9 @@ class CategoryPage extends Component {
                                     <Row>
                                         <Col lg="12" className="banners">
                                             {
-                                                this.props.banners && this.props.banners[1] && this.props.banners[1].images.map((item, idx) => {
-                                                    return (
-                                                        <a href={item.link} target="_blank"
-                                                           onClick={() => this.props.bannerClick(item.link)}>
-                                                            <img src={item.image} className="banner"/>
-                                                        </a>
-                                                    )
-                                                })
+                                                this.props.banners && this.props.banners[1] && this.props.banners[1].images.map((item, idx) => (
+                                                    <BanerSlika key={idx} baner={this.props.banners[1]} slika={item} onClick={this.props.bannerClick} />
+                                                ))
                                             }
 
                                         </Col>

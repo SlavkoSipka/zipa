@@ -16,7 +16,7 @@ import { API_ENDPOINT } from '../../constants';
 class ArchiveStats extends Component {
     constructor(props) {
         super(props);
-        this.state = { godine: [], ukupno: {}, fotografi: [], ucitava: true, greska: null };
+        this.state = { godine: [], ukupno: {}, arhiva: null, fotografi: [], ucitava: true, greska: null };
     }
 
     componentDidMount() {
@@ -41,6 +41,7 @@ class ArchiveStats extends Component {
             .then((r) => this.setState({
                 godine: r.godine || [],
                 ukupno: r.ukupno || {},
+                arhiva: r.arhiva || null,
                 fotografi: r.fotografi || [],
                 ucitava: false
             }))
@@ -57,7 +58,7 @@ class ArchiveStats extends Component {
     }
 
     render() {
-        const { godine, ukupno, fotografi, ucitava, greska } = this.state;
+        const { godine, ukupno, arhiva, fotografi, ucitava, greska } = this.state;
 
         const grafikon = {
             labels: godine.map((g) => g.godina),
@@ -106,17 +107,29 @@ class ArchiveStats extends Component {
                                     <div className="zbir">
                                         <div className="stavka">
                                             <span className="broj">{this.broj(ukupno.galerija)}</span>
-                                            <span className="opis">galerija</span>
+                                            <span className="opis">galerija na sajtu</span>
                                         </div>
                                         <div className="stavka">
                                             <span className="broj">{this.broj(ukupno.fotografija)}</span>
-                                            <span className="opis">fotografija</span>
+                                            <span className="opis">fotografija na sajtu</span>
                                         </div>
                                         <div className="stavka">
                                             <span className="broj">{this.broj(ukupno.fotografa)}</span>
-                                            <span className="opis">fotografa</span>
+                                            <span className="opis">fotografa sa galerijama na sajtu</span>
                                         </div>
                                     </div>
+
+                                    {/* Isti brojevi kao na nadzornoj ploči (2026-10-27). */}
+                                    {arhiva ? (
+                                        <p className="uvod">
+                                            Brojevi su isti kao na nadzornoj ploči: „na sajtu" su galerije koje posetioci
+                                            vide. U bazi je ukupno <b>{this.broj(arhiva.galerija.ukupno)}</b> galerija
+                                            i <b>{this.broj(arhiva.fotografija.ukupno)}</b> fotografija — još{' '}
+                                            <b>{this.broj(arhiva.galerija.skrivene)}</b> skrivenih galerija
+                                            {arhiva.galerija.prazne ? <>, od toga <b>{this.broj(arhiva.galerija.prazne)}</b> praznih nacrta</> : null}.
+                                            Tabele ispod broje samo galerije na sajtu.
+                                        </p>
+                                    ) : null}
 
                                     <div className="napomena">
                                         <b>O posetama:</b> evidencija poseta nije se nalazila u bazi

@@ -134,9 +134,16 @@ function servePreview(size) {
             return;
         }
         try {
-            const obj = await storage.getStream(storage.previewKey(size, image));
+            // WebP kad ga pregledač prihvata i kad postoji (`storage.js`), inače JPG.
+            const kljuc = storage.previewKey(size, image);
+            let obj = null;
+            if (/image\/webp/.test(req.headers.accept || '')) {
+                try { obj = await storage.getStream(storage.webpKey(kljuc)); } catch (e) { obj = null; }
+            }
+            if (!obj) obj = await storage.getStream(kljuc);
             res.set({
                 'Content-Type': obj.contentType,
+                'Vary': 'Accept',
                 // Dan, ne godinu: pregled ume da se napravi iznova (`popravi-zig.js`).
                 'Cache-Control': 'public, max-age=86400',
                 ...(obj.contentLength ? { 'Content-Length': obj.contentLength } : {}),
@@ -945,7 +952,52 @@ app.delete('/watermarks/delete/:id', permissionMiddleware('*'), async (req, res)
  * traje ~2 s i vraća paket od kog ploča koristi mali deo.
  */
 app.get('/admin/dashboard', permissionMiddleware('*'), async (req, res) => {
-    res.send(await adminModule.dashboard(req.query.dana));
+    res.send(await adminModule.dashboard(req.query.dana, req.query.od, req.query.do));
+});
+
+/*
+ * Izveštaji sajta u PDF-u (2026-10-27) — `izvestaji.js`. Mesečni se prave
+ * sami za svaki završeni mesec i čuvaju u R2; za proizvoljan period PDF se
+ * pravi na zahtev i ne čuva se.
+ */
+const izvestaji = require('./izvestaji');
+
+app.get('/admin/izvestaji', permissionMiddleware('*'), async (req, res) => {
+    try {
+        await izvestaji.osigurajMesecne();
+        res.send(await izvestaji.spisak());
+    } catch (e) {
+        res.status(500).send({ error: e.message });
+    }
+});
+
+app.get('/admin/izvestaji/:mesec', permissionMiddleware('*'), async (req, res) => {
+    try {
+        const pdf = await izvestaji.mesecni(req.params.mesec);
+        res.set({ 'Content-Type': 'application/pdf', 'Content-Disposition': `attachment; filename="zipa-izvestaj-${req.params.mesec}.pdf"` });
+        res.send(pdf);
+    } catch (e) {
+        res.status(404).send({ error: 'Izveštaj ne postoji.' });
+    }
+});
+
+app.get('/admin/izvestaj-period', permissionMiddleware('*'), async (req, res) => {
+    try {
+        const pdf = await izvestaji.zaPeriod(req.query.od, req.query.do);
+        res.set({ 'Content-Type': 'application/pdf', 'Content-Disposition': `attachment; filename="zipa-izvestaj-${req.query.od}-${req.query.do}.pdf"` });
+        res.send(pdf);
+    } catch (e) {
+        res.status(400).send({ error: e.message });
+    }
+});
+
+// Mesečni izveštaji se proveravaju minut posle pokretanja i zatim na šest sati.
+setTimeout(() => izvestaji.osigurajMesecne(), 60 * 1000);
+setInterval(() => izvestaji.osigurajMesecne(), 6 * 60 * 60 * 1000);
+
+// Broj galerija i fotografija — isti na svim stranama administracije (2026-10-27).
+app.get('/admin/brojevi-arhive', permissionMiddleware('*'), async (req, res) => {
+    res.send(await adminModule.brojeviArhive());
 });
 
 // Pregled arhive od početka rada — po godinama, i najplodniji fotografi.

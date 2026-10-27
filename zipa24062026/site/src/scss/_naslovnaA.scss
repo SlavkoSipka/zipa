@@ -695,6 +695,9 @@
     .z-mozaik {
         padding: var(--razmak-1);
 
+        // Vodeća + šest stoji u `Container`-u — bez svog ruba, sa vazduhom gore.
+        &--vodeca { padding: var(--razmak-6) 0 0; }
+
         & + .z-mozaik { padding-top: 0; }
         & + .odeljak { margin-top: var(--razmak-6); }
     }
@@ -718,6 +721,49 @@
             @include tablet { grid-template-columns: repeat(2, minmax(0, 1fr)); }
             @include mobile { grid-template-columns: minmax(0, 1fr); }
         }
+
+        /* Vodeća + šest (naslovna C, 2026-10-27): prva galerija zauzima dve
+           kolone i dva reda, desno su tri kolone u dva reda. Male pločice su
+           3 : 2, pa je i velika (dve širine + razmak, dve visine + razmak)
+           praktično 3 : 2 — ivice se poklapaju. */
+        &--vodeca {
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            // Isti razmak kao „Izdvajamo" ispod, da i unutrašnje ivice prate.
+            gap: var(--razmak-2);
+
+            > .z-plocica { border-radius: var(--radijus-mali); }
+
+            > .z-plocica:first-child {
+                grid-column: span 2;
+                grid-row: span 2;
+                aspect-ratio: auto;
+                height: 100%;
+            }
+
+            > .z-plocica:nth-child(n + 8) { display: none; }
+
+            // Tablet: velika preko cele širine, ispod dva reda po tri.
+            @include tablet {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                > .z-plocica:first-child { grid-column: span 3; grid-row: auto; aspect-ratio: 3 / 2; }
+            }
+
+            // Telefon: velika preko cele širine, ispod tri reda po dve.
+            @include mobile {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                > .z-plocica:first-child { grid-column: span 2; grid-row: auto; aspect-ratio: 3 / 2; }
+            }
+        }
+    }
+
+    // Velika pločica vodeće galerije: krupniji naslov.
+    .z-mozaik__mreza--vodeca > .z-plocica:first-child .z-plocica__naslov {
+        font-size: var(--slovo-preko-naslov);
+        line-height: var(--red-preko-naslov);
+    }
+    .z-mozaik__mreza--vodeca > .z-plocica:not(:first-child) .z-plocica__naslov {
+        font-size: var(--slovo-lg);
+        line-height: var(--red-lg);
     }
 
     .z-plocica {
@@ -807,5 +853,40 @@
             line-height: var(--red-sm);
             -webkit-line-clamp: 2;
         }
+    }
+}
+
+/* „Izdvajamo" na naslovnoj (2026-10-27): naslov odeljka crven, ista crvena
+   kao „Iz iste kategorije" u galeriji. Isto na A, B i C. */
+/* `.odeljak.` uz klasu odeljka nadjačava `.naslovna-b .odeljak .naslov-odeljka h3`
+   iz `_naslovnaB.scss`, koji se uvozi posle ovog fajla. */
+.naslovna-a .odeljak.z-izdvajamo-a .naslov-odeljka h3,
+.naslovna-b .odeljak.izdvojeno .naslov-odeljka h3,
+.naslovna-c .odeljak.izdvojeno .naslov-odeljka h3 {
+    color: var(--boja-oznaka-tekst);
+}
+
+
+/* „Izdvajamo" na C kao na A (2026-10-27): isti krupan naslov i „Sve galerije →"
+   desno. C ima svoj, sitniji `.naslov-odeljka`, pa se ovde vraća mera sa A. */
+.naslovna-c .odeljak .naslov-odeljka.naslov-odeljka--kao-a {
+    justify-content: space-between;
+    gap: var(--razmak-4);
+    margin-bottom: var(--razmak-5);
+
+    h3 {
+        font-family: var(--pismo-naslov);
+        font-size: var(--slovo-xl);
+        line-height: var(--red-xl);
+        font-weight: var(--tezina-jaka);
+        letter-spacing: 0;
+    }
+
+    a {
+        flex: 0 0 auto;
+        font-size: var(--slovo-sm);
+        font-weight: var(--tezina-srednja);
+        color: var(--boja-tekst-tiho);
+        @include z-veza-meni;
     }
 }

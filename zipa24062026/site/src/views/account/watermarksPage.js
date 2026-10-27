@@ -153,9 +153,10 @@ class WatermarksPage extends Component {
 
                             <div className="napomena">
                                 <b>Kako pripremiti:</b> PNG sa providnom pozadinom, širine
-                                najmanje 700 a najbolje oko 1000 tačaka. Žig se sam smanjuje
-                                na polovinu širine fotografije i staje u sredinu, pa najbolje
-                                radi širok i nizak oblik.
+                                najmanje 1000 tačaka. Postavljeni žig staje u sredinu i zauzima
+                                oko 70% širine fotografije (ali ne više od 40% visine), pa
+                                najbolje radi širok i nizak oblik. Važi za galerije postavljene
+                                od uključivanja žiga.
                             </div>
 
                             {greska ? <div className="napomena upozorenje">{greska}</div> : null}

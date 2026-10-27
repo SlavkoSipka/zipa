@@ -23,6 +23,8 @@ import { API_ENDPOINT, PHOTOS_ENDPOINT } from '../../constants';
  * fotografija se NE prepisuju ovdje, nego se svaki put čitaju iz same
  * galerije, da izmjena galerije odmah bude vidljiva i na prijavi.
  */
+const PO_STRANI = 30;
+
 class PrijavaStranaPage extends Component {
     constructor(props) {
         super(props);
@@ -33,6 +35,10 @@ class PrijavaStranaPage extends Component {
             rezultati: [],
             ucitavanje: true,
             trazim: false,
+            // „Učitaj još galerija" (2026-10-27): poslednja dovučena strana i koliko ih ima.
+            strana: 0,
+            strana_ukupno: 0,
+            ucitavaJos: false,
             izabrana: null,     // { id, alias, naziv, slika } ili { fotografija, potpis }
             poruke: [],
         };
@@ -67,19 +73,43 @@ class PrijavaStranaPage extends Component {
         this.trazi('');
     }
 
-    trazi = (pojam) => {
-        this.setState({ trazim: true });
+    /*
+     * Galerije za izbor — 30 po strani (2026-10-27; ranije 12), a ispod
+     * dugme „Učitaj još galerija" dodaje sledećih 30, koliko god treba.
+     */
+    dovuciStranu = (pojam, strana) => fetch(`${API_ENDPOINT}/gallery/search/ba`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: { search: pojam || undefined, ipp: PO_STRANI, page: strana } }),
+    }).then((res) => res.json());
 
-        fetch(`${API_ENDPOINT}/gallery/search/ba`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ query: { search: pojam || undefined, ipp: 12, page: 0 } }),
-        }).then((res) => res.json()).then((result) => {
+    trazi = (pojam) => {
+        this.setState({ trazim: true, trazeniPojam: pojam });
+
+        this.dovuciStranu(pojam, 0).then((result) => {
             this.setState({
                 rezultati: (result && result.items ? result.items : []),
+                strana: 0,
+                strana_ukupno: (result && result.total) || 0,
                 trazim: false,
             });
         }).catch(() => this.setState({ trazim: false }));
+    };
+
+    ucitajJos = () => {
+        const sledeca = this.state.strana + 1;
+        this.setState({ ucitavaJos: true });
+        this.dovuciStranu(this.state.trazeniPojam, sledeca).then((result) => {
+            const nove = (result && result.items) || [];
+            const vec = {};
+            this.state.rezultati.forEach((g) => { vec[g._id] = 1; });
+            this.setState({
+                rezultati: this.state.rezultati.concat(nove.filter((g) => !vec[g._id])),
+                strana: sledeca,
+                strana_ukupno: (result && result.total) || this.state.strana_ukupno,
+                ucitavaJos: false,
+            });
+        }).catch(() => this.setState({ ucitavaJos: false }));
     };
 
     /*
@@ -308,6 +338,18 @@ class PrijavaStranaPage extends Component {
                                 );
                             })}
                     </div>
+
+                    {!this.state.trazim && this.state.strana + 1 < this.state.strana_ukupno ? (
+                        <div className="z-prijava-strana__jos">
+                            <button type="button" className="z-dugme z-dugme--sporedno z-dugme--veliko"
+                                    disabled={this.state.ucitavaJos} onClick={this.ucitajJos}>
+                                {this.state.ucitavaJos ? 'Učitavanje…'.translate(l) : 'Učitaj još galerija'.translate(l)}
+                            </button>
+                            <span className="z-prijava-strana__napomena">
+                                {'Prikazano'.translate(l)} {this.state.rezultati.length}
+                            </span>
+                        </div>
+                    ) : null}
 
                     {!this.state.trazim && !(this.state.rezultati || []).length ? (
                         <p className="z-prijava-strana__prazno">

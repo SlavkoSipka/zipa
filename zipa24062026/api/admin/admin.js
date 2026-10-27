@@ -354,23 +354,70 @@ class Admin {
      *
      * `dana` bira period: 7, 30 ili 365.
      */
-    async dashboard(dana = 30) {
-        const raspon = [7, 30, 365].indexOf(Number(dana)) !== -1 ? Number(dana) : 30;
-        const sada = Math.floor(Date.now() / 1000);
-        const od = sada - raspon * 86400;
+    /*
+     * BROJEVI ARHIVE — JEDAN IZVOR ZA SVE STRANE ADMINISTRACIJE (2026-10-27).
+     *
+     * Do sada je svaka strana brojala svoje: nadzorna ploča SVE redove tabele
+     * (10.181, i skrivene i prazne nacrte), statistika arhive samo one sa
+     * datumom (10.115), a na sajtu se vidi 9.910. Isti pojam „galerija" je
+     * davao tri broja. Sada sve strane uzimaju ovo i pišu šta koji broj znači:
+     *
+     *   naSajtu   — uključena galerija fotografa čiji nalog nije isključen;
+     *               tačno one koje posetilac vidi (isti uslov kao `/galerije`).
+     *   skrivene  — ostatak: isključene galerije i prazni nacrti.
+     *   prazne    — galerije bez ijedne fotografije (nacrti), deo skrivenih.
+     */
+    async brojeviArhive() {
+        const r = await db.query(
+            `select count(*)::int                                                         as ukupno,
+                    count(*) filter (where "isActive" and coalesce("userDisabled", false) = false)::int                               as "naSajtu",
+                    count(*) filter (where jsonb_array_length(coalesce("photos", '[]'::jsonb)) = 0)::int as prazne,
+                    coalesce(sum(jsonb_array_length(coalesce("photos", '[]'::jsonb))), 0)::int as "fotoUkupno",
+                    coalesce(sum(jsonb_array_length(coalesce("photos", '[]'::jsonb)))
+                        filter (where "isActive" and coalesce("userDisabled", false) = false), 0)::int                                 as "fotoNaSajtu",
+                    count(distinct "user") filter (where "isActive" and coalesce("userDisabled", false) = false
+                        and "user" is not null and "user" <> '')::int                       as fotografa
+               from gallery`
+        );
+        const b = r.rows[0];
+        return {
+            galerija: { ukupno: b.ukupno, naSajtu: b.naSajtu, skrivene: b.ukupno - b.naSajtu, prazne: b.prazne },
+            fotografija: { ukupno: b.fotoUkupno, naSajtu: b.fotoNaSajtu },
+            fotografa: b.fotografa,
+        };
+    }
+
+    /*
+     * Period (2026-10-27): ili `dana` (7, 30, 365 — do sada), ili tačan raspon
+     * `od` i `doDana` (YYYY-MM-DD, oba dana uključena), po UTC danima — isto
+     * kako se posete i grupišu po danu. Sve posete na ploči (grafikon, zbir,
+     * kategorije) računaju se samo u tom rasponu.
+     */
+    async dashboard(dana = 30, odDan = null, doDan = null) {
+        let od, dokle, raspon;
+        const odT = odDan ? Date.parse(odDan + 'T00:00:00Z') / 1000 : NaN;
+        const doT = doDan ? Date.parse(doDan + 'T00:00:00Z') / 1000 + 86400 : NaN;
+        if (!isNaN(odT) && !isNaN(doT) && doT > odT && doT - odT <= 400 * 86400) {
+            od = odT;
+            dokle = doT;
+            raspon = Math.round((dokle - od) / 86400);
+        } else {
+            raspon = [7, 30, 365].indexOf(Number(dana)) !== -1 ? Number(dana) : 30;
+            const danas = new Date();
+            dokle = Date.UTC(danas.getUTCFullYear(), danas.getUTCMonth(), danas.getUTCDate() + 1) / 1000;
+            od = dokle - raspon * 86400;
+        }
         const odPrethodnog = od - raspon * 86400;   // isti tako dug period pre ovog
+        // Lokalne (razvojne) posete se ne broje — `users.js`, `logVisit`.
+        const prave = `coalesce(doc->>'lokalno', '') <> 'true'`;
 
         /* ── ključni brojevi ──────────────────────────────────────────────
          * Izvor: tabela `gallery` (9.965 redova) i `users`. Dva `count`-a i
          * jedan `sum` nad `jsonb_array_length` — isti upit koji već radi
          * `archiveStats()`, pa je poznato da traje ispod sekunde.
          */
-        const arhiva = await db.query(
-            `select count(*)::int                                        as galerija,
-                    coalesce(sum(jsonb_array_length(
-                        coalesce("photos", '[]'::jsonb)))::int, 0)       as fotografija
-               from gallery`
-        );
+        // Galerije i fotografije — isti brojevi kao na svim stranama (`brojeviArhive`).
+        const brojevi = await this.brojeviArhive();
 
         const korisnici = await db.query(
             `select count(*)::int as ukupno,
@@ -386,26 +433,28 @@ class Admin {
             `select to_char(to_timestamp((doc->>'timestamp')::bigint), 'YYYY-MM-DD') as dan,
                     count(*)::int                                                    as broj
                from logs
-              where (doc->>'timestamp')::bigint >= $1
+              where (doc->>'timestamp')::bigint >= $1 and (doc->>'timestamp')::bigint < $2 and ${prave}
               group by 1
               order by 1`,
-            [od]
+            [od, dokle]
         );
 
         // Za poređenje sa prethodnim jednako dugim periodom.
         const posetePoredjenje = await db.query(
-            `select count(*) filter (where (doc->>'timestamp')::bigint >= $1)::int                                as sada,
+            `select count(*) filter (where (doc->>'timestamp')::bigint >= $1
+                                       and (doc->>'timestamp')::bigint <  $3)::int                                as sada,
                     count(*) filter (where (doc->>'timestamp')::bigint >= $2
                                        and (doc->>'timestamp')::bigint <  $1)::int                                as prethodno,
                     min((doc->>'timestamp')::bigint)::bigint                                                      as najstarije
-               from logs`,
-            [od, odPrethodnog]
+               from logs
+              where ${prave}`,
+            [od, odPrethodnog, dokle]
         );
 
         // Posete danas — od ponoći po serverskom vremenu.
         const ponoc = Math.floor(new Date(new Date().setHours(0, 0, 0, 0)).getTime() / 1000);
         const danas = await db.query(
-            `select count(*)::int as broj from logs where (doc->>'timestamp')::bigint >= $1`,
+            `select count(*)::int as broj from logs where (doc->>'timestamp')::bigint >= $1 and ${prave}`,
             [ponoc]
         );
 
@@ -416,11 +465,11 @@ class Admin {
          */
         const preuzimanja = await db.query(
             `select count(*)::int                                                   as ukupno,
-                    count(*) filter (where "timestamp" >= $1)::int                  as "uPeriodu",
+                    count(*) filter (where "timestamp" >= $1 and "timestamp" < $3)::int as "uPeriodu",
                     count(*) filter (where "timestamp" >= $2 and "timestamp" < $1)::int as prethodno,
                     max("timestamp")::bigint                                        as najnovije
                from downloads`,
-            [od, odPrethodnog]
+            [od, odPrethodnog, dokle]
         );
 
         /* ── kategorije po posetama ───────────────────────────────────────
@@ -433,12 +482,12 @@ class Admin {
                     count(*)::int                                  as broj
                from logs
               where doc->>'url' like '%category=%'
-                and (doc->>'timestamp')::bigint >= $1
+                and (doc->>'timestamp')::bigint >= $1 and (doc->>'timestamp')::bigint < $2 and ${prave}
               group by 1
               having substring(doc->>'url' from 'category=([^&]+)') is not null
               order by broj desc
               limit 8`,
-            [od]
+            [od, dokle]
         );
 
         /* ── najaktivniji fotografi ───────────────────────────────────────
@@ -452,6 +501,7 @@ class Admin {
                         coalesce(g."photos", '[]'::jsonb)))::int, 0)     as fotografija
                from gallery g
               where g."user" is not null and g."user" <> ''
+                and g."isActive" and coalesce(g."userDisabled", false) = false
               group by 1
               order by fotografija desc
               limit 8`
@@ -460,8 +510,10 @@ class Admin {
         /* ── poslednje dodate galerije ────────────────────────────────────
          * Izvor: `gallery."published"`. Poslednja u arhivi je iz maja 2026.
          */
+        // Uz svaku i da li je na sajtu, da se zna koja je tačno (2026-10-27).
         const poslednje = await db.query(
-            `select "_id", "name", "user", "published",
+            `select "_id", "uid", "name", "alias", "user", "published",
+                    ("isActive" and coalesce("userDisabled", false) = false)                                         as "naSajtu",
                     jsonb_array_length(coalesce("photos", '[]'::jsonb))::int as fotografija
                from gallery
               where "published" is not null
@@ -471,12 +523,15 @@ class Admin {
 
         return {
             raspon,
+            od,
+            dokle,
             ukupno: {
-                galerija:    arhiva.rows[0].galerija,
-                fotografija: arhiva.rows[0].fotografija,
+                galerija:    brojevi.galerija.naSajtu,
+                fotografija: brojevi.fotografija.naSajtu,
                 korisnika:   korisnici.rows[0].ukupno,
                 fotografa:   korisnici.rows[0].fotografa,
             },
+            arhiva: brojevi,
             posete: {
                 poDanima:   posete.rows,
                 uPeriodu:   posetePoredjenje.rows[0].sada,
@@ -513,19 +568,19 @@ class Admin {
                from gallery g
               where g."date" is not null and g."date" > 0
                 and to_timestamp(g."date") <= now()
+                and g."isActive" and coalesce(g."userDisabled", false) = false
               group by 1
               order by 1`
         );
 
-        const ukupno = await db.query(
-            `select count(*)::int                                    as galerija,
-                    coalesce(sum(jsonb_array_length(
-                        coalesce("photos", '[]'::jsonb)))::int, 0)   as fotografija,
-                    count(distinct "user")::int                      as fotografa,
-                    to_char(to_timestamp(min("date")), 'DD.MM.YYYY.') as prva,
+        // Zbir je isti kao na nadzornoj ploči (`brojeviArhive`); ovde još
+        // samo prva i poslednja galerija na sajtu.
+        const brojevi = await this.brojeviArhive();
+        const raspon = await db.query(
+            `select to_char(to_timestamp(min("date")), 'DD.MM.YYYY.') as prva,
                     to_char(to_timestamp(max("date")), 'DD.MM.YYYY.') as poslednja
                from gallery
-              where "date" is not null and "date" > 0`
+              where "date" is not null and "date" > 0 and "isActive" and coalesce("userDisabled", false) = false`
         );
 
         const fotografi = await db.query(
@@ -535,6 +590,7 @@ class Admin {
                         coalesce(g."photos", '[]'::jsonb)))::int, 0) as fotografija
                from gallery g
               where g."user" is not null and g."user" <> ''
+                and g."isActive" and coalesce(g."userDisabled", false) = false
               group by 1
               order by fotografija desc
               limit 15`
@@ -542,7 +598,12 @@ class Admin {
 
         return {
             godine: godine.rows,
-            ukupno: ukupno.rows[0] || {},
+            ukupno: Object.assign({
+                galerija: brojevi.galerija.naSajtu,
+                fotografija: brojevi.fotografija.naSajtu,
+                fotografa: brojevi.fotografa,
+            }, raspon.rows[0] || {}),
+            arhiva: brojevi,
             fotografi: fotografi.rows
         };
     }
@@ -1676,9 +1737,18 @@ class Admin {
             console.error('[odjava] oznacavanje nije proslo:', e.message);
         }
 
+        /*
+         * Adrese nema na spisku — to je medijska kuca, kojoj obavestenje
+         * stize zbog vrste naloga (2026-10-27). Upisuje se kao odjavljena, da
+         * je slanje preskoci; bez ovoga veza za odjavu ne bi nista uradila.
+         */
         if (!oznaceno) {
-            console.warn('[odjava] kolona `unsubscribedAt` ne postoji — brisem zapis, kao ranije');
-            await db.collection('subscribers').deleteMany({ email: adresa });
+            try {
+                const sad = Math.floor(new Date().getTime() / 1000);
+                await db.collection('subscribers').insertOne({ email: adresa, timestamp: sad, unsubscribedAt: sad });
+            } catch (e) {
+                console.error('[odjava] upis odjave nije prosao:', e.message);
+            }
         }
 
         return { response: { ok: true }, status: 200 };
@@ -1912,10 +1982,34 @@ class Admin {
 
 
 
+    /*
+     * NAJAVA ZA ČITANJE (2026-10-27).
+     *
+     * Kolona `text` je tipa TEXT, pa se opis po jezicima ({ba, en}) u njoj
+     * čuva kao JSON u stringu. Obrazac za izmenu je dobijao taj STRING, pa
+     * uređivač nije prikazivao trenutni opis, a izmena je pucala (upis
+     * jezika u string). Sada svaka ruta vraća `text` kao objekat, a datume
+     * kao brojeve — i obrazac, i traka, i strana najave dobijaju isto.
+     */
+    static najavaZaCitanje(n) {
+        if (!n || typeof n !== 'object') return n;
+        const izlaz = Object.assign({}, n);
+        if (typeof izlaz.text === 'string') {
+            try {
+                const o = JSON.parse(izlaz.text);
+                izlaz.text = o && typeof o === 'object' ? o : { ba: izlaz.text };
+            } catch (e) {
+                izlaz.text = { ba: izlaz.text };
+            }
+        }
+        ['from', 'to', 'published'].forEach((k) => { if (izlaz[k] !== null && izlaz[k] !== undefined) izlaz[k] = Number(izlaz[k]); });
+        return izlaz;
+    }
+
     async fetchAnnouncement(id) {
         let cat = await db.collection('announcements').find({ _id: ObjectID(id) }).toArray();
         if (cat.length) {
-            return cat[0]
+            return Admin.najavaZaCitanje(cat[0])
         } else {
             return {}
         }
@@ -1949,7 +2043,8 @@ class Admin {
         const polja = {
             content: obj.content,
             naslov: obj.naslov || null,
-            text: obj.text,
+            // Kolona je TEXT — opis po jezicima ide kao JSON (čita ga `najavaZaCitanje`).
+            text: obj.text && typeof obj.text === 'object' ? JSON.stringify(obj.text) : (obj.text || null),
             link: Admin.vezaNajave(obj.link),
             pozicija: Admin.pozicijaNajave(obj.pozicija),
             from: parseInt(obj.from),
@@ -1979,13 +2074,13 @@ class Admin {
         let items = await db.collection('announcements').find({
             from: { $lte: Math.floor(new Date().getTime() / 1000) }, to: { $gte: Math.floor(new Date().getTime() / 1000) },
         }).toArray();
-        return items;
+        return items.map(Admin.najavaZaCitanje);
 
     }
 
     async allAnnouncements() {
         let items = await db.collection('announcements').find().toArray();
-        return items;
+        return items.map(Admin.najavaZaCitanje);
     }
 
 
@@ -2083,6 +2178,10 @@ class Admin {
                 hidden: obj.hidden ? true : false,
                 // Unapred zadata veličina, da se baneri pripremaju po mjeri.
                 size: obj.size || 'siroki',
+                // Širina i visina širokog banera u px (2026-10-27) — bira ih
+                // administrator; prazno = stari način (do 980px, visina slike).
+                sirina: obj.sirina ? parseInt(obj.sirina) : null,
+                visina: obj.visina ? parseInt(obj.visina) : null,
                 mobilePopup: obj.mobilePopup ? true : false,
                 mobileOnly: obj.mobileOnly ? true : false,
                 published: Math.floor(new Date().getTime() / 1000)
@@ -2102,6 +2201,8 @@ class Admin {
                     ad: obj.ad ? true : false,
                     hidden: obj.hidden ? true : false,
                     size: obj.size || 'siroki',
+                    sirina: obj.sirina ? parseInt(obj.sirina) : null,
+                    visina: obj.visina ? parseInt(obj.visina) : null,
                     mobilePopup: obj.mobilePopup ? true : false,
                     mobileOnly: obj.mobileOnly ? true : false,
                     position: parseInt(obj.position),

@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { formValueSelector } from 'redux-form';
-import { Row, Col } from 'reactstrap';
 
 import { API_ENDPOINT } from '../../../constants';
 
@@ -58,20 +57,19 @@ class CeneGalerije extends Component {
     polje(kljuc, naziv) {
         const cene = this.props.value || {};
         const opsta = opstaCena(kljuc, this.props.cenaGalerije, this.state.licence);
+        // Natpis u jednom redu (ceo naziv u `title`), da sva polja stoje u istoj liniji.
         return (
-            <Col lg="2" md="4" xs="6" key={kljuc}>
-                <div className="input-wrap">
-                    <label>{naziv}</label>
-                    <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={ima(cene[kljuc]) ? String(cene[kljuc]) : ''}
-                        placeholder={opsta !== null ? `${opsta} KM` : 'Na upit'}
-                        onChange={(e) => this.postavi(kljuc, e.target.value)}
-                    />
-                </div>
-            </Col>
+            <div className="form-field z-cene-mreza__polje" key={kljuc}>
+                <label title={naziv}>{naziv}</label>
+                <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={ima(cene[kljuc]) ? String(cene[kljuc]) : ''}
+                    placeholder={opsta !== null ? `${opsta} KM` : 'Na upit'}
+                    onChange={(e) => this.postavi(kljuc, e.target.value)}
+                />
+            </div>
         );
     }
 
@@ -81,10 +79,12 @@ class CeneGalerije extends Component {
                 <h4 className="z-cene-foto__naslov">
                     Cijene za cijelu galeriju (KM) — svaka fotografija ih vuče; pojedinačnu mijenjate u „Izmjeni fotografiju"
                 </h4>
-                <Row>
+                {/* Mreža jednakih polja umesto stubaca (2026-10-27) — ranije su se
+                    natpisi prelamali u dva reda i polja su skakala. */}
+                <div className="z-cene-mreza">
                     {VELICINE.map((v) => this.polje(v.kljuc, v.naziv))}
                     {this.state.licence.map((l) => this.polje(String(l._id), (l.naziv && l.naziv.ba) || 'Licenca'))}
-                </Row>
+                </div>
             </div>
         );
     }

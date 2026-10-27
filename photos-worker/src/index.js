@@ -60,16 +60,25 @@ export default {
          *   2 — 2026-10-10, „31. Sajam knjige" je bio keširan bez žiga.
          *   3 — 2026-10-11, provera cele arhive (`api/skeniraj-zig.js`).
          *   4 — 2026-10-11, keš skraćen na dan.
+         *
+         * WEBP (2026-10-27): uz svaki pregled u bucketu stoji i `<ključ>.webp`
+         * (`api/storage.js`). Pregledač koji u `Accept` navodi `image/webp`
+         * dobija njega (oko 58% manji), ostali JPG. Vrsta je deo ključa keša,
+         * pa se dve verzije nikad ne pomešaju; `Vary: Accept` isto kaže
+         * pregledaču. Ako WebP za neku fotografiju još ne postoji, ide JPG.
          */
         const VERZIJA_KESA = '4';
+        const hoceWebp = /image\/webp/.test(request.headers.get('Accept') || '');
         const cache = caches.default;
         const kljucKesa = new URL(url.toString());
         kljucKesa.searchParams.set('__k', VERZIJA_KESA);
+        kljucKesa.searchParams.set('__f', hoceWebp ? 'webp' : 'jpg');
         const cacheKey = new Request(kljucKesa.toString(), request);
         const cached = await cache.match(cacheKey);
         if (cached) return cached;
 
-        const object = await env.BUCKET.get(key);
+        let object = hoceWebp ? await env.BUCKET.get(`${key}.webp`) : null;
+        if (!object) object = await env.BUCKET.get(key);
         if (!object) {
             return new Response('Not found', { status: 404 });
         }
@@ -79,6 +88,7 @@ export default {
         headers.set('etag', object.httpEtag);
         headers.set('Content-Type', object.httpMetadata?.contentType || 'image/jpeg');
         headers.set('Cache-Control', 'public, max-age=86400');
+        headers.set('Vary', 'Accept');
         headers.set('Access-Control-Allow-Origin', '*');
 
         const response = new Response(object.body, { headers });

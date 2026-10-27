@@ -17,6 +17,27 @@ import en from '../assets/images/en.png';
 import PretragaSaPrijedlozima from './pretragaSaPrijedlozima';
 import ProzorNajave from './prozorNajave';
 import { AGENCIJA, USLUGE } from './agencijaStrane';
+
+/* Ikonice naslova u padajućim menijima (2026-10-27) — obrisi 24×24, boji ih
+   crvena oznake. Isti jezik kao u panelu „Agencija". */
+const IKONE = {
+    galerije: 'M7 3h14a1 1 0 011 1v12a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1zm1 2v8.2l3-3 3 3 2-2 3 3V5H8zM2 7h2v13h13v2H3a1 1 0 01-1-1V7zm13 1.5a1.5 1.5 0 110-3 1.5 1.5 0 010 3z',
+    osnovne: 'M3 3h8v8H3V3zm2 2v4h4V5H5zm8-2h8v8h-8V3zm2 2v4h4V5h-4zM3 13h8v8H3v-8zm2 2v4h4v-4H5zm8-2h8v8h-8v-8zm2 2v4h4v-4h-4z',
+    preporucene: 'M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1L12 2zm0 4.5l-1.8 3.7-4.1.6 3 2.9-.7 4.1 3.6-1.9 3.6 1.9-.7-4.1 3-2.9-4.1-.6L12 6.5z',
+    specijal: 'M6 2h12a1 1 0 011 1v19l-7-4-7 4V3a1 1 0 011-1zm1 2v14.6l5-2.9 5 2.9V4H7z',
+    cjenovnik: 'M3 3h8.6l9.7 9.7a1 1 0 010 1.4l-7.2 7.2a1 1 0 01-1.4 0L3 11.6V3zm2 2v5.8l8.4 8.4 5.8-5.8L10.8 5H5zm3.5 4a1.5 1.5 0 110-3 1.5 1.5 0 010 3z',
+    nalog: 'M12 12a5 5 0 110-10 5 5 0 010 10zm0-2a3 3 0 100-6 3 3 0 000 6zM4 22a8 8 0 0116 0h-2a6 6 0 00-12 0H4z',
+};
+
+const GALERIJE = [
+    { putanja: '/galerije', naziv: 'Sve galerije', opis: 'Cijela arhiva, od 1995. do danas' },
+    { putanja: '/galerije?view=photos', naziv: 'Fotografije', opis: 'Pretraga po pojedinačnim fotografijama' },
+];
+
+const CJENOVNIK = [
+    { putanja: '/page/cjenovnik', naziv: 'Cjenovnik', opis: 'Cijene fotografija i licenci' },
+    { putanja: '/help', naziv: 'Pomoć', opis: 'Uputstva i česta pitanja' },
+];
 import {PHOTOS_ENDPOINT} from '../constants';
 
 /*
@@ -334,45 +355,78 @@ class Header extends Component {
      * `/galerije` (App.js → `${API_ENDPOINT}/categories`). Ništa se ne
      * izmišlja i ništa se ne filtrira, da panel i strana pokazuju isto.
      * Veza je ista kao ranije: `?category=<alias>&detailSearch=true`.
+     *
+     * Tri grupe, svaka u svom redu, jedna ispod druge (2026-10-27): osnovne,
+     * preporučene, specijal — iste zastavice iz baze (`isRecommended`,
+     * `isSpecial`) i ista podela kao u obrascu galerije (`galleryForm.js`).
      */
     panelKategorija() {
         const kategorije = this.props.categories || [];
         if (!kategorije.length) return null;
+        const l = this.props.lang;
+
+        const grupe = [
+            { naziv: 'Osnovne kategorije', ikona: IKONE.osnovne, spisak: kategorije.filter((k) => !k.isRecommended && !k.isSpecial) },
+            { naziv: 'Preporučene kategorije', ikona: IKONE.preporucene, spisak: kategorije.filter((k) => k.isRecommended && !k.isSpecial) },
+            { naziv: 'Specijal', ikona: IKONE.specijal, spisak: kategorije.filter((k) => k.isSpecial) },
+        ].filter((g) => g.spisak.length);
 
         return (
-            <div className="z-zaglavlje__panel z-zaglavlje__panel--kategorije">
-                <div className="z-zaglavlje__stubovi">
-                    {kategorije.map((k, idx) => (
-                        <Link
-                            key={idx}
-                            className="z-zaglavlje__stavka-panela"
-                            to={`/galerije?category=${Object.translate(k, 'alias', this.props.lang)}&detailSearch=true`}>
-                            <span>{Object.translate(k, 'name', this.props.lang)}</span>
-                        </Link>
-                    ))}
-                </div>
+            <div className="z-zaglavlje__panel z-zaglavlje__panel--kategorije z-mega">
+                {grupe.map((g) => (
+                    <div key={g.naziv} className="z-mega__red">
+                        {this.naslovPanela(g.naziv.translate(l), g.ikona, g.spisak.length)}
+                        <div className="z-mega__stubovi">
+                            {g.spisak.map((k, idx) => (
+                                <Link
+                                    key={k._id || idx}
+                                    className="z-mega__veza"
+                                    to={`/galerije?category=${Object.translate(k, 'alias', l)}&detailSearch=true`}>
+                                    {Object.translate(k, 'name', l)}
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+                ))}
             </div>
         );
     }
 
     /*
-     * Panel „Agencija".
+     * Panel „Agencija" — po uzoru na padajući meni mts.rs (2026-10-27).
      *
-     * Ranije je ovde bio podmeni u podmeniju: Agencija → Usluge →
-     * Fotografisanje. Sada su „Usluge" i „Fotografi" naslovi grupa unutar
-     * istog panela — jedan klik manje i ništa se ne krije iza drugog klika.
+     * Beo panel i na tamnoj ili crvenoj traci: svaka grupa je kolona sa
+     * crvenom ikonicom i podebljanim naslovom, ispod obične veze. Fotografi
+     * su u svom delu ispod linije, u četiri stupca. Ranije su Agencija i
+     * Usluge bile tamne pločice u boji trake — klijentu previše tamno.
      */
-    plocicaAgencije(p, l) {
+    // Naslov grupe u padajućem meniju: crvena ikonica, podebljan naziv, broj.
+    naslovPanela(naziv, ikona, broj) {
         return (
-            <Link key={p.putanja} className="z-zaglavlje__plocica-agencije" to={p.putanja}>
-                <span className="z-zaglavlje__plocica-ikona" aria-hidden="true">
-                    <svg viewBox="0 0 24 24"><path d={p.ikona} /></svg>
-                </span>
-                <span className="z-zaglavlje__plocica-tekst">
-                    <strong>{p.naziv.translate(l)}</strong>
-                    <span>{p.opis.translate(l)}</span>
-                </span>
-            </Link>
+            <p className="z-mega__naslov">
+                <svg className="z-mega__ikona" viewBox="0 0 24 24" aria-hidden="true"><path d={ikona} /></svg>
+                {naziv}
+                {broj !== undefined ? <em>{broj}</em> : null}
+            </p>
+        );
+    }
+
+    // Kolona: naslov sa ikonicom, ispod veze sa kratkim opisom.
+    grupaPanela(naziv, ikona, stavke, l) {
+        return (
+            <div className="z-mega__kolona">
+                {this.naslovPanela(naziv.translate(l), ikona)}
+                <ul className="z-mega__spisak">
+                    {stavke.map((p) => (
+                        <li key={p.putanja}>
+                            <Link className="z-mega__veza" to={p.putanja}>
+                                {p.naziv.translate(l)}
+                                <span>{p.opis.translate(l)}</span>
+                            </Link>
+                        </li>
+                    ))}
+                </ul>
+            </div>
         );
     }
 
@@ -381,31 +435,18 @@ class Header extends Component {
         const fotografi = this.props.photographers || [];
 
         return (
-            <div className="z-zaglavlje__panel z-zaglavlje__panel--agencija">
-                {/* Agencija i Usluge kao pločice sa ikonicom i kratkim opisom
-                    (2026-10-10) — umesto dva gola spiska veza. */}
-                <div className="z-zaglavlje__grupa z-zaglavlje__grupa--plocice">
-                    <p className="z-zaglavlje__naslov-grupe">{'Agencija'.translate(l)}</p>
-                    <div className="z-zaglavlje__plocice">
-                        {AGENCIJA.map((p) => this.plocicaAgencije(p, l))}
-                    </div>
-                </div>
-
-                <div className="z-zaglavlje__grupa z-zaglavlje__grupa--plocice z-zaglavlje__grupa--usluge">
-                    <p className="z-zaglavlje__naslov-grupe">{'Usluge'.translate(l)}</p>
-                    <div className="z-zaglavlje__plocice">
-                        {USLUGE.map((p) => this.plocicaAgencije(p, l))}
-                    </div>
+            <div className="z-zaglavlje__panel z-zaglavlje__panel--agencija z-mega">
+                <div className="z-mega__kolone">
+                    {this.grupaPanela('Agencija', AGENCIJA[0].ikona, AGENCIJA, l)}
+                    {this.grupaPanela('Usluge', USLUGE[0].ikona, USLUGE, l)}
                 </div>
 
                 {fotografi.length ?
-                    <div className="z-zaglavlje__grupa z-zaglavlje__grupa--fotografi">
-                        <p className="z-zaglavlje__naslov-grupe">
-                            {'Fotografi'.translate(l)} <em>{fotografi.length}</em>
-                        </p>
-                        <div className="z-zaglavlje__spisak-fotografa">
+                    <div className="z-mega__dno">
+                        {this.naslovPanela('Fotografi'.translate(l), AGENCIJA[4].ikona, fotografi.length)}
+                        <div className="z-mega__fotografi">
                             {fotografi.map((f, idx) => (
-                                <Link key={idx} className="z-zaglavlje__stavka-panela"
+                                <Link key={idx} className="z-mega__veza z-mega__veza--ime"
                                       to={`/fotograf/${f.userAlias}`}>{f.name}</Link>
                             ))}
                         </div>
@@ -619,11 +660,8 @@ class Header extends Component {
                                         <span className="z-zaglavlje__strelica" aria-hidden="true"/>
                                     </button>
                                     {this.state.panel === 'galerije' ?
-                                        <div className="z-zaglavlje__panel z-zaglavlje__panel--usko">
-                                            <div className="z-zaglavlje__grupa">
-                                                <Link className="z-zaglavlje__stavka-panela" to="/galerije">{'Sve galerije'.translate(l)}</Link>
-                                                <Link className="z-zaglavlje__stavka-panela" to="/galerije?view=photos">{'Fotografije'.translate(l)}</Link>
-                                            </div>
+                                        <div className="z-zaglavlje__panel z-zaglavlje__panel--usko z-mega">
+                                            {this.grupaPanela('Galerije', IKONE.galerije, GALERIJE, l)}
                                         </div>
                                         : null}
                                 </div>
@@ -691,11 +729,8 @@ class Header extends Component {
                                         <span className="z-zaglavlje__strelica" aria-hidden="true"/>
                                     </button>
                                     {this.state.panel === 'cjenovnik' ?
-                                        <div className="z-zaglavlje__panel z-zaglavlje__panel--usko">
-                                            <div className="z-zaglavlje__grupa">
-                                                <Link className="z-zaglavlje__stavka-panela" to="/page/cjenovnik">{'Cjenovnik'.translate(l)}</Link>
-                                                <Link className="z-zaglavlje__stavka-panela" to="/help">{'Pomoć'.translate(l)}</Link>
-                                            </div>
+                                        <div className="z-zaglavlje__panel z-zaglavlje__panel--usko z-mega">
+                                            {this.grupaPanela('Cjenovnik', IKONE.cjenovnik, CJENOVNIK, l)}
                                         </div>
                                         : null}
                                 </div>
@@ -724,22 +759,27 @@ class Header extends Component {
                                         <span className="z-zaglavlje__strelica" aria-hidden="true"/>
                                     </button>
                                     {this.state.panel === 'nalog' ?
-                                        <div className="z-zaglavlje__panel z-zaglavlje__panel--nalog">
-                                            <div className="z-zaglavlje__grupa">
-                                                {u.email ? <p className="z-zaglavlje__naslov-grupe">{u.email}</p> : null}
-                                                <Link className="z-zaglavlje__stavka-panela" to="/account/profile">{'Profil'.translate(l)}</Link>
-                                                <Link className="z-zaglavlje__stavka-panela" to="/account/downloads">{'Preuzimanja'.translate(l)}</Link>
-                                                {imaKorpu ?
-                                                    <Link className="z-zaglavlje__stavka-panela" to="/cart">{'Korpa'.translate(l)}</Link>
-                                                    : null}
-                                                <button type="button"
-                                                        className="z-zaglavlje__stavka-panela z-zaglavlje__odjava"
-                                                        onClick={() => {
-                                                            this.zatvoriSve();
-                                                            this.props.signOut();
-                                                            this.props[0].history.push('/');
-                                                            this.props.showInfoMessage('Hvala vam što ste koristili foto servis.');
-                                                        }}>{'Izloguj se'.translate(l)}</button>
+                                        <div className="z-zaglavlje__panel z-zaglavlje__panel--nalog z-mega">
+                                            <div className="z-mega__kolona">
+                                                {this.naslovPanela(u.name || 'Nalog'.translate(l), IKONE.nalog)}
+                                                {u.email ? <p className="z-mega__podnaslov">{u.email}</p> : null}
+                                                <ul className="z-mega__spisak">
+                                                    <li><Link className="z-mega__veza" to="/account/profile">{'Profil'.translate(l)}</Link></li>
+                                                    <li><Link className="z-mega__veza" to="/account/downloads">{'Preuzimanja'.translate(l)}</Link></li>
+                                                    {imaKorpu ?
+                                                        <li><Link className="z-mega__veza" to="/cart">{'Korpa'.translate(l)}</Link></li>
+                                                        : null}
+                                                </ul>
+                                                <div className="z-mega__dno z-mega__dno--tesno">
+                                                    <button type="button"
+                                                            className="z-mega__veza z-mega__veza--odjava"
+                                                            onClick={() => {
+                                                                this.zatvoriSve();
+                                                                this.props.signOut();
+                                                                this.props[0].history.push('/');
+                                                                this.props.showInfoMessage('Hvala vam što ste koristili foto servis.');
+                                                            }}>{'Izloguj se'.translate(l)}</button>
+                                                </div>
                                             </div>
                                         </div>
                                         : null}

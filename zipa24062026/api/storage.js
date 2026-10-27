@@ -82,11 +82,44 @@ async function getStream(key) {
     };
 }
 
+/*
+ * WEBP PREGLEDI (2026-10-27).
+ *
+ * Uz svaki JPG pregled (350x i 700x) u bucketu stoji i WebP pod istim
+ * imenom sa dodatkom `.webp` (`700x/<fotograf>/<fajl>.jpg.webp`). Worker i
+ * API ga isporuče pregledaču koji ga prihvata; JPG ostaje za ostale i za
+ * proveru žiga. Na 35 fotografija sa naslovne: 2269 KB → 958 KB (−58%),
+ * kvalitet 80 je na uvećanju neodvojiv od JPG-a.
+ *
+ * WebP se pravi SAM pri svakom upisu pregleda (`put`), pa ga dobija i
+ * svaka skripta koja pregled pravi iznova (popravka žiga i slično) — nema
+ * starog WebP-a uz novi JPG. Postojeće preglede prebacuje `webp-pregledi.js`.
+ */
+const WEBP_KVALITET = 80;
+const jePregled = (key) => /^(350x|700x)\//.test(key) && !/\.webp$/i.test(key);
+const webpKey = (key) => `${key}.webp`;
+
+async function napraviWebp(jpg) {
+    const sharp = require('sharp');
+    return sharp(jpg).webp({ quality: WEBP_KVALITET, effort: 4 }).toBuffer();
+}
+
 /** Upload objekta (koristi se pri uploadu novih fotografija) */
 async function put(key, body, contentType = 'image/jpeg') {
     await client.send(new PutObjectCommand({
         Bucket: R2.bucket, Key: key, Body: body, ContentType: contentType,
     }));
+
+    // Pregled dobija i WebP. Neuspeh ne obara upis — ostaje JPG.
+    if (jePregled(key) && /jpe?g/i.test(contentType)) {
+        try {
+            await client.send(new PutObjectCommand({
+                Bucket: R2.bucket, Key: webpKey(key), Body: await napraviWebp(body), ContentType: 'image/webp',
+            }));
+        } catch (e) {
+            console.error('[storage] WebP nije napravljen za', key, '-', e.message);
+        }
+    }
 }
 
 // Pomoćne funkcije za putanje — jedino mesto koje zna raspored foldera
@@ -115,4 +148,5 @@ const originalExists = (image) => exists(originalKey(image));
 module.exports = {
     exists, getBuffer, getStream, put,
     originalKey, previewKey, originalExists, resizedOriginalDataUri, R2,
+    webpKey, napraviWebp, client,
 };

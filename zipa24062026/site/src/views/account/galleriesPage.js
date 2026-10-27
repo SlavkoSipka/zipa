@@ -100,6 +100,15 @@ class GalleriesPage extends Component {
         window.scrollTo(0, 0);
         this.init()
 
+        // Administrator: isti brojevi kao na nadzornoj ploči (`/admin/brojevi-arhive`).
+        if (this.props.uData && this.props.uData.userRole === 'admin') {
+            fetch(`${API_ENDPOINT}/admin/brojevi-arhive`, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` },
+            }).then((res) => (res.ok ? res.json() : null))
+                .then((brojeviArhive) => { if (brojeviArhive && brojeviArhive.galerija) this.setState({ brojeviArhive }); })
+                .catch(() => {});
+        }
+
     }
 
     componentDidUpdate(prevProps) {
@@ -155,6 +164,21 @@ class GalleriesPage extends Component {
                               * ostaje deljiva i osvežavanje je pamti; strana
                               * na promenu adrese vec sama dovlaci ispocetka.
                               */}
+                            {/* Isti brojevi kao na nadzornoj ploči (2026-10-27). */}
+                            {this.state.brojeviArhive ? (
+                                <Col lg="12">
+                                    <p className="z-spisak-brojevi">
+                                        {'U bazi'.translate(this.props.lang)} <b>{Number(this.state.brojeviArhive.galerija.ukupno).toLocaleString('sr-RS')}</b> {'galerija'.translate(this.props.lang)}:{' '}
+                                        <b>{Number(this.state.brojeviArhive.galerija.naSajtu).toLocaleString('sr-RS')}</b> {'na sajtu'.translate(this.props.lang)},{' '}
+                                        <b>{Number(this.state.brojeviArhive.galerija.skrivene).toLocaleString('sr-RS')}</b> {'skrivenih'.translate(this.props.lang)}
+                                        {this.state.brojeviArhive.galerija.prazne
+                                            ? <> ({'od toga'.translate(this.props.lang)} {this.state.brojeviArhive.galerija.prazne} {'praznih nacrta'.translate(this.props.lang)})</>
+                                            : null}.
+                                        {' '}{'Spisak pokazuje sve, najnovije prve; skrivene su označene.'.translate(this.props.lang)}
+                                    </p>
+                                </Col>
+                            ) : null}
+
                             <Col lg="12">
                                 <form
                                     className="z-spisak-pretraga"
@@ -201,7 +225,13 @@ class GalleriesPage extends Component {
                                                     return (
                                                         <tr>
                                                             <td><img src={`${PHOTOS_ENDPOINT}/photos/350x/` + Object.get(item, `photos[0].image`)} /></td>
-                                                            <td>{Object.translate(item, 'name', this.props.lang)}</td>
+                                                            <td>
+                                                                {Object.translate(item, 'name', this.props.lang)}
+                                                                {/* Skrivena = ne vidi se na sajtu (isti uslov kao na nadzornoj ploči). */}
+                                                                {item.isActive === false || item.userDisabled
+                                                                    ? <span className="z-oznaka z-oznaka--upozorenje" style={{ marginLeft: 8 }}>{'skrivena'.translate(this.props.lang)}</span>
+                                                                    : null}
+                                                            </td>
                                                             <td>{item.location}</td>
                                                             <td>{item.price.formatPrice(2)} KM</td>
 

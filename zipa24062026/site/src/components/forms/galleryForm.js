@@ -397,12 +397,22 @@ class form extends React.Component {
                               * sedamsto galerija godišnje dobijali po dva
                               * pisma dnevno.
                               */}
+                            {/* Dve grupe primalaca (2026-10-27): pošta ide svakoj
+                                grupi koja je označena; ko je u obe, dobije jednom. */}
                             <Col lg="12">
-                                <Field
-                                    name="notifySubscribers"
-                                    component={renderCheckField}
-                                    label={'Obavijesti pretplatnike o ovoj galeriji'.translate(this.props.lang)}
-                                ></Field>
+                                <div className="z-obavesti-grupe">
+                                    <p className="z-obavesti-grupe__naslov">{'Obavijesti o ovoj galeriji'.translate(this.props.lang)}</p>
+                                    <Field
+                                        name="obavestiMedije"
+                                        component={renderCheckField}
+                                        label={'Medijske kuće (registrovani mediji)'.translate(this.props.lang)}
+                                    ></Field>
+                                    <Field
+                                        name="notifySubscribers"
+                                        component={renderCheckField}
+                                        label={'Svakodnevni korisnici (prijavljeni na newsletter)'.translate(this.props.lang)}
+                                    ></Field>
+                                </div>
                             </Col>
                         </Row>
 

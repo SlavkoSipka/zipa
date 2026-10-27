@@ -706,17 +706,34 @@ class ProductsModule {
             .slice(0, 20);
     }
 
-    async posaljiObavestenjeOGaleriji(galleryId) {
+    /*
+     * Primaoci (2026-10-27) — dve grupe, bira se kvačicom u obrascu galerije:
+     *   - `mediji`:    registrovani korisnici sa vrstom naloga „Mediji"
+     *                  (`userRole: 'agency'`), sa uključenim nalogom;
+     *   - `korisnici`: prijavljeni na newsletter (`subscribers`).
+     * Ko se odjavio (`unsubscribedAt`) ne dobija ništa ni u jednoj grupi —
+     * ranije se taj uslov ovde nije proveravao, pa je i odjavljenima stizalo.
+     * Ista adresa iz obe grupe dobije jednu poruku.
+     */
+    async posaljiObavestenjeOGaleriji(galleryId, kome) {
+        const grupe = kome || { korisnici: true };
         const galerija = await db.collection('gallery').findOne({ _id: ObjectID(galleryId) });
         if (!galerija || !galerija.isActive) return;
 
         const pretplatnici = await db.collection('subscribers').find().toArray();
-        if (!pretplatnici.length) return;
+        const odjavljeni = {};
+        pretplatnici.forEach((p) => { if (p.email && p.unsubscribedAt) odjavljeni[String(p.email).toLowerCase()] = 1; });
 
-        // ista adresa upisana više puta ne sme da dobije više poruka
-        const adrese = Object.keys(
-            pretplatnici.reduce((z, p) => { if (p.email) z[String(p.email).toLowerCase()] = 1; return z; }, {})
-        );
+        const skup = {};
+        if (grupe.korisnici) {
+            pretplatnici.forEach((p) => { if (p.email && !p.unsubscribedAt) skup[String(p.email).toLowerCase()] = 1; });
+        }
+        if (grupe.mediji) {
+            const mediji = await db.collection('users').find({ userRole: 'agency', accountEnabled: true }).toArray();
+            mediji.forEach((u) => { if (u.email) skup[String(u.email).toLowerCase()] = 1; });
+        }
+        const adrese = Object.keys(skup).filter((a) => !odjavljeni[a]);
+        if (!adrese.length) return;
 
         const naslov = (galerija.name && (galerija.name.ba || galerija.name.en)) || 'Nova galerija';
         const opis = (galerija.description && (galerija.description.ba || galerija.description.en)) || '';
@@ -916,8 +933,9 @@ class ProductsModule {
          * Ne čeka se ishod slanja: fotograf ne treba da gleda u prazan ekran
          * dok pošta odlazi, a neuspeh slanja ne sme da obori snimanje galerije.
          */
-        if (obj.notifySubscribers && (obj.isActive ? true : false)) {
-            this.posaljiObavestenjeOGaleriji(obj._id || id).catch((e) =>
+        const kome = { mediji: !!obj.obavestiMedije, korisnici: !!obj.notifySubscribers };
+        if ((kome.mediji || kome.korisnici) && (obj.isActive ? true : false)) {
+            this.posaljiObavestenjeOGaleriji(obj._id || id, kome).catch((e) =>
                 console.error('[obavestenje] neuspelo:', e.message)
             );
         }

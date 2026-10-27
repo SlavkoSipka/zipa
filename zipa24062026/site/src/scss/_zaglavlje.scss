@@ -455,6 +455,9 @@
         min-width: 0;
     }
 
+    // Kategorije: tri grupe jedna ispod druge (osnovne, preporučene, specijal).
+    &__grupa--kategorije + &__grupa--kategorije { margin-top: var(--razmak-5); }
+
     // Svoj red, preko cele širine panela — ispod „Agencije" i „Usluga".
     &__grupa--fotografi {
         flex: 1 0 100%;
@@ -1332,8 +1335,7 @@
             background: var(--boja-povrsina);
         }
 
-        &__stubovi,
-        &__spisak-fotografa { column-count: 1; max-height: none; }
+        &__stubovi { column-count: 1; max-height: none; }
 
         &__grupa + .z-zaglavlje__grupa { margin-top: var(--razmak-4); }
 
@@ -1678,86 +1680,179 @@ header:where(.zaglavlje-sajta) .navigation > ul {
     }
 }
 
-/* ── Panel „Agencija": pločice umesto golih spiskova (2026-10-10) ──────────
-   Agencija (5 stavki, tri u redu) i Usluge (2 stavke, jedna ispod druge)
-   stoje jedna pored druge, iste visine. Svaka stavka je pločica: ikonica u
-   boji glavne radnje teme (A crvena, B plava, C grafit), naziv i kratak
-   opis. Spisak fotografa ispod je nepromenjen. */
-.z-zaglavlje {
-    &__grupa--plocice { flex: 3 1 0; min-width: 0; }
-    &__grupa--usluge  { flex: 1 1 0; }
-
-    &__plocice {
+/* ── Panel „Agencija" po uzoru na mts.rs (2026-10-27) ──────────────────────
+   `panelAgencije()` u `header.js`. Na računaru je panel BEO bez obzira na
+   boju trake (A crvena, B tamnoplava): tokeni se vraćaju na svetle, isto
+   kao u naslovnom bloku. Kolone sa crvenom ikonicom i podebljanim naslovom,
+   ispod obične veze sa kratkim opisom; fotografi u svom delu ispod linije.
+   U fioci na telefonu panel ostaje u boji fioke — tamo nema lebdenja. */
+.z-mega {
+    &__kolone {
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: var(--razmak-2);
-
-        .z-zaglavlje__grupa--usluge & { grid-template-columns: minmax(0, 1fr); }
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--razmak-5) var(--razmak-7);
+        width: 100%;
     }
 
-    &__plocica-agencije {
+    /* Veća i deblja slova (2026-10-27) — naslov 18px/700, veza 16px/600,
+       opis 14px. Na 14px i običnoj težini meni je bio pretanak. */
+    &__naslov {
         display: flex;
-        align-items: flex-start;
-        gap: var(--razmak-3);
-        padding: var(--razmak-3);
-        border-radius: var(--radijus-panel);
-        background: var(--boja-traka-povrsina);
-        color: var(--boja-traka-tekst);
-        text-decoration: none;
-
-        @include z-prelaz(background-color, transform);
-        &:hover {
-            background: var(--boja-traka-linija);
-            color: var(--boja-traka-tekst);
-            text-decoration: none;
-            transform: translateY(-1px);
-        }
-        @include z-fokus;
-    }
-
-    &__plocica-ikona {
-        flex: 0 0 auto;
-        display: inline-flex;
         align-items: center;
-        justify-content: center;
-        width: var(--razmak-6);
-        height: var(--razmak-6);
-        border-radius: var(--radijus-mali);
-        background: var(--boja-akcenat);
+        gap: var(--razmak-2);
+        margin: 0 0 var(--razmak-3);
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-lg);
+        line-height: var(--red-lg);
+        font-weight: var(--tezina-preko);
+        color: var(--boja-tekst);
 
-        svg { width: var(--razmak-4); height: var(--razmak-4); display: block; }
-        path { fill: var(--boja-akcenat-tekst); }
+        em {
+            font-style: normal;
+            font-weight: var(--tezina-srednja);
+            color: var(--boja-tekst-tiho);
+        }
     }
 
-    &__plocica-tekst {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-        min-width: 0;
+    &__ikona {
+        flex: 0 0 auto;
+        width: 24px;
+        height: 24px;
+        path { fill: var(--boja-oznaka); fill-rule: evenodd; }
+    }
 
-        strong {
-            font-size: var(--slovo-sm);
-            line-height: var(--red-sm);
-            font-weight: var(--tezina-jaka);
-        }
+    &__podnaslov {
+        margin: calc(var(--razmak-2) * -1) 0 var(--razmak-3) 32px;
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        color: var(--boja-tekst-tiho);
+        overflow-wrap: anywhere;
+    }
+
+    // Kategorije: tri grupe jedna ispod druge, odvojene linijom.
+    &__red + &__red {
+        margin-top: var(--razmak-4);
+        padding-top: var(--razmak-4);
+        border-top: 1px solid var(--boja-linija);
+    }
+
+    &__stubovi {
+        column-count: 3;
+        column-gap: var(--razmak-5);
+        padding-left: 32px;
+
+        .z-mega__veza { break-inside: avoid; padding: var(--razmak-1) 0; }
+
+        @include mobile-tablet { column-count: 1; padding-left: 0; }
+    }
+
+    &__spisak {
+        margin: 0;
+        padding: 0 0 0 32px;   // poravnato sa tekstom naslova, posle ikonice
+        list-style: none;
+
+        li + li { margin-top: var(--razmak-1); }
+    }
+
+    &__veza {
+        display: block;
+        padding: var(--razmak-1) 0;
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-tekst);
+        text-decoration: none;
+        @include z-prelaz(color);
 
         span {
-            font-size: var(--slovo-xs);
-            line-height: var(--red-xs);
-            color: var(--boja-traka-tekst-tiho);
+            display: block;
+            font-size: var(--slovo-sm);
+            line-height: var(--red-sm);
+            font-weight: var(--tezina-obicna);
+            color: var(--boja-tekst-tiho);
+        }
+
+        &:hover,
+        &:focus-visible {
+            color: var(--boja-oznaka);
+            text-decoration: none;
+        }
+        @include z-fokus;
+
+        &--ime { padding: var(--razmak-1) 0; font-weight: var(--tezina-srednja); }
+
+        // Dugme „Izloguj se" izgleda kao veza.
+        &--odjava {
+            width: 100%;
+            border: 0;
+            background: transparent;
+            text-align: left;
+            cursor: pointer;
+            color: var(--boja-oznaka);
         }
     }
 
-    // Telefon i uži ekran: jedna kolona pločica, grupe jedna ispod druge.
-    @include mobile-tablet {
-        &__grupa--plocice,
-        &__grupa--usluge { flex: 1 0 100%; }
-        &__plocice { grid-template-columns: minmax(0, 1fr); }
+    &__dno {
+        width: 100%;
+        margin-top: var(--razmak-5);
+        padding-top: var(--razmak-4);
+        border-top: 1px solid var(--boja-linija);
+
+        &--tesno { margin-top: var(--razmak-3); padding-top: var(--razmak-2); }
     }
 
-    @include small-desktop {
-        &__plocice { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    &__fotografi {
+        column-count: 4;
+        column-gap: var(--razmak-5);
+        padding-left: 32px;
+
+        .z-mega__veza { break-inside: avoid; }
+
+        @include small-desktop { column-count: 3; }
+        @include mobile-tablet { column-count: 2; padding-left: 0; }
+        @include telefon-mali  { column-count: 1; }
     }
+}
+
+// Na računaru su SVI padajući meniji beli, i na tamnoj i na crvenoj traci
+// (2026-10-27: prvo „Agencija", pa po želji klijenta i ostali). Nalog
+// lebdi i na telefonu, pa je beo na svakoj širini.
+.z-zaglavlje .z-zaglavlje__panel--nalog.z-mega {
+    --boja-povrsina:     var(--svetlo-povrsina);
+    --boja-podloga-tiha: var(--svetlo-podloga-tiha);
+    --boja-tekst:        var(--svetlo-tekst);
+    --boja-tekst-tiho:   var(--svetlo-tekst-tiho);
+    --boja-linija:       var(--svetlo-linija);
+    --boja-veza:         var(--svetlo-veza);
+    --boja-fokus:        var(--svetlo-fokus);
+    padding: var(--razmak-5);
+    border-radius: 16px;
+}
+
+@include desktop-i-vise {
+    .z-zaglavlje .z-zaglavlje__panel.z-mega {
+        --boja-povrsina:     var(--svetlo-povrsina);
+        --boja-podloga-tiha: var(--svetlo-podloga-tiha);
+        --boja-tekst:        var(--svetlo-tekst);
+        --boja-tekst-tiho:   var(--svetlo-tekst-tiho);
+        --boja-linija:       var(--svetlo-linija);
+        --boja-veza:         var(--svetlo-veza);
+        --boja-fokus:        var(--svetlo-fokus);
+
+        display: block;
+        padding: var(--razmak-6);
+        border-radius: 16px;
+    }
+}
+
+// Uski paneli (Galerije, Cjenovnik) — dovoljno široki za opis ispod veze.
+.z-zaglavlje .z-zaglavlje__panel--usko.z-mega { min-width: 300px; }
+
+@include mobile-tablet {
+    .z-mega__kolone { grid-template-columns: minmax(0, 1fr); }
+    .z-mega__spisak { padding-left: 0; }
+    .z-zaglavlje .z-zaglavlje__panel--usko.z-mega { min-width: 0; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -1784,12 +1879,9 @@ header:where(.zaglavlje-sajta) .navigation > ul {
 
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
     border-bottom: 0;
-    background:
-        linear-gradient(180deg, var(--c-hero-zastor-gore) 0%, var(--c-hero-zastor-sredina) 45%, var(--c-hero-zastor-dole) 100%),
-        var(--pozadina-pretrage, none) center / cover no-repeat,
-        var(--c-hero-podloga);
+    // Fotografija je samo u naslovnom bloku ispod navbara (2026-10-27).
+    background: var(--c-hero-podloga);
 
     /* Navbar pun BEO (2026-10-13), kao na ostalim stranama C; fotografija
        počinje ispod njega. Tokeni koje `--visoka` gore preusmerava na belo
@@ -1832,18 +1924,44 @@ header:where(.zaglavlje-sajta) .navigation > ul {
     .z-zaglavlje__traka-veza,
     .z-zaglavlje__korpa { font-size: var(--slovo-lg); font-weight: var(--tezina-jaka); }
 
-    // Pretraga u sredini preostalog prostora.
+    /*
+     * HERO BEZ SEČENJA (2026-10-27). Blok ispod navbara ima STALAN odnos
+     * 16 : 9 — isti kao fotografija koju administracija traži (2400 × 1350,
+     * `fields/proveraOdnosa.js`) — pa se takva slika vidi cela, istovetna, na
+     * svakom ekranu. Bez zatamnjenja: preko nje stoji samo belo polje
+     * pretrage sa senkom. Ranije je slika bila „cover" preko celog prvog
+     * ekrana, čiji se odnos menja sa ekranom, pa se uvek negde sekla.
+     */
     .z-zaglavlje__naslovni {
-        flex: 1 1 auto;
+        flex: 0 0 auto;
         display: flex;
         align-items: center;
-        background: none;
+        aspect-ratio: 16 / 9;
+        background: var(--pozadina-pretrage, none) center / cover no-repeat, var(--c-hero-podloga);
         border-top: 0;
 
         .z-zaglavlje__naslovni-red {
             width: 100%;
-            padding-top: var(--razmak-7);
-            padding-bottom: var(--razmak-8);
+            padding-top: var(--razmak-4);
+            padding-bottom: var(--razmak-4);
+        }
+
+        /* Telefon: 16 : 9 je tu niska traka (oko 210px) i pretraga sa
+           prekidačem u nju ne staje — slika stoji cela iznad, a pretraga
+           ispod nje, na tamnoj podlozi. */
+        @include mobile {
+            display: block;
+            aspect-ratio: auto;
+            background: var(--c-hero-podloga);
+
+            &::before {
+                content: '';
+                display: block;
+                aspect-ratio: 16 / 9;
+                background: var(--pozadina-pretrage, none) center / cover no-repeat;
+            }
+
+            .z-zaglavlje__naslovni-red { padding: var(--razmak-4) var(--razmak-4) var(--razmak-5); }
         }
     }
 

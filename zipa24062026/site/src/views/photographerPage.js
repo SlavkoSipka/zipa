@@ -7,6 +7,7 @@ import { Container } from 'reactstrap';
 import Article from '../components/articles/article';
 import userPhoto from '../assets/images/user.png';
 import { API_ENDPOINT, PHOTOS_ENDPOINT } from '../constants';
+import BanerSlika from '../components/baner';
 
 /*
  * PROFIL FOTOGRAFA
@@ -354,15 +355,7 @@ class PhotographerPage extends Component {
                     {this.props.banners && this.props.banners[1] && this.props.banners[1].images.length ? (
                         <div className="z-fotograf__reklame">
                             {this.props.banners[1].images.map((item, idx) => (
-                                <a
-                                    href={item.link}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    key={idx}
-                                    onClick={() => this.props.bannerClick(item.link)}
-                                >
-                                    <img src={item.image} alt="" loading="lazy" />
-                                </a>
+                                <BanerSlika key={idx} baner={this.props.banners[1]} slika={item} onClick={this.props.bannerClick} />
                             ))}
                         </div>
                     ) : null}
