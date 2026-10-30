@@ -1,5 +1,6 @@
 const fs = require('fs');
 const ObjectID = require('../objectid');
+const prevod = require('../prevod');
 const slike = require('../admin/slike');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -773,6 +774,19 @@ class ProductsModule {
     }
 
     async updateGallery(uid, id, obj) {
+        /*
+         * Engleski naziv i opis se popunjavaju sami (2026-10-30), i to SAMO
+         * kad su prazni — svaka ručna izmena ostaje. Prevod ne sme da obori
+         * čuvanje, pa se greška samo zapisuje; `alias` se pravi posle toga,
+         * da engleska adresa galerije odgovara prevedenom nazivu.
+         */
+        try {
+            await prevod.dopuniEngleski(obj.name);
+            await prevod.dopuniEngleski(obj.description);
+        } catch (e) {
+            console.error('[galerija] prevod nije uspeo:', e.message);
+        }
+
         //obj.alias = generateAlias(obj.name);
         if (obj.name) {
             obj.alias = {};
@@ -1495,13 +1509,20 @@ class ProductsModule {
         // Redosled rezultata. Bez pojma pretrage — najnovije prvo.
         let poredak = `p.date desc nulls last, p."galleryId", p.idx`;
 
-        if (query.search && query.search.trim()) {
+        /*
+         * Pojam stiže kao `search` (polje u zaglavlju) ili kao `name`
+         * („Događaj" iz napredne pretrage — tamo isto polje traži galerije po
+         * nazivu). Ovde oba znače isto: tekst koji se traži.
+         */
+        const pojam = (query.search && query.search.trim()) || (query.name && String(query.name).trim()) || '';
+
+        if (pojam) {
             /*
              * Poslednja reč se traži i kao početak reči, da bi pretraga radila
              * dok se još kuca („niksi" nalazi „Nikšić"). Ostale reči se traže
              * cele. Znaci koji imaju značenje u upitu se uklanjaju.
              */
-            const rijeci = query.search.trim().toLowerCase()
+            const rijeci = pojam.toLowerCase()
                 .replace(/[&|!():*'"\\]/g, ' ')
                 .split(/\s+/).filter(Boolean);
 
@@ -1543,12 +1564,27 @@ class ProductsModule {
             uslovi.push(`(g.keywords->'ba') ?| $${par.length}::text[]`);
         }
 
-        // Pretraga sa naslovne: samo fotografije kojima su ključne reči upisane
-        // na samoj fotografiji. `photo_index` ih ne drži, pa se čitaju iz
-        // `gallery.photos` na mestu `idx`. `@> '[]'` je istina samo za niz.
+        /*
+         * „Samo ključne reči" — izbor iz napredne pretrage i iz prekidača u
+         * zaglavlju. Uzimaju se samo fotografije koje IMAJU svoje ključne
+         * reči, a kad je upisan pojam, on se traži baš u njima (ne u opisu
+         * ni u podacima galerije). `photo_index` ključne reči ne drži u svojoj
+         * koloni, pa se čitaju iz `gallery.photos` na mestu `idx`; uslov nad
+         * `tsv` iznad ostaje i dalje radi brzine — ključne reči su u njemu,
+         * pa je ovo samo precizno sužavanje.
+         */
         if (query.kljucne) {
             uslovi.push(`(g.photos->p.idx->'keywords') @> '[]'::jsonb`
                 + ` and (g.photos->p.idx->'keywords') <> '[]'::jsonb`);
+
+            if (pojam) {
+                par.push(pojam);
+                uslovi.push(`exists (
+                    select 1
+                      from jsonb_array_elements_text(g.photos->p.idx->'keywords') kw
+                     where unaccent(lower(kw)) like '%' || unaccent(lower($${par.length})) || '%'
+                )`);
+            }
         }
 
         if (query.city) {

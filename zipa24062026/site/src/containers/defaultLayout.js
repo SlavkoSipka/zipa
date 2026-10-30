@@ -18,6 +18,18 @@ import BanerSlika from '../components/baner';
 function generateSearchLink(params) {
     params.detailSearch = true;
 
+    /*
+     * Izbor „šta tražite" iz napredne pretrage (2026-10-30) prevodi se u
+     * parametre koje strana već razume; sam izbor ne ide u adresu.
+     */
+    if (params.staSeTrazi === 'fotografije') {
+        params.view = 'photos';
+    } else if (params.staSeTrazi === 'kljucne') {
+        params.view = 'photos';
+        params.kljucne = 1;
+    }
+    delete params.staSeTrazi;
+
     let paramsGroup = [];
     for (var key in params) {
         if (params.hasOwnProperty(key) && params[key]) {

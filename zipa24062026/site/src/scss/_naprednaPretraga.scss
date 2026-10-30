@@ -164,6 +164,64 @@ html.z-bez-skrola body { overflow: hidden; }
         @include mobile-tablet { grid-template-columns: minmax(0, 1fr); }
     }
 
+    /* ── šta se pretražuje (2026-10-30) ───────────────────────────────
+       Tri izbora jedan ispod drugog: galerije, pojedinačne fotografije,
+       samo ključne reči. Izabrani nosi amber traku uz levu ivicu, isto kao
+       izabrana rezolucija u prozoru fotografije. */
+    &__vrsta {
+        display: grid;
+        gap: var(--razmak-2);
+        margin-bottom: var(--razmak-5);
+    }
+
+    &__vrsta-dugme {
+        position: relative;
+        display: block;
+        width: 100%;
+        padding: var(--razmak-3) var(--razmak-4);
+        text-align: left;
+
+        border: 1px solid var(--boja-linija);
+        border-radius: var(--radijus-panel);
+        background: var(--boja-povrsina);
+        cursor: pointer;
+
+        @include z-prelaz(border-color, background-color);
+        &:hover { border-color: var(--boja-tekst-tiho); }
+        @include z-fokus;
+
+        &--izabrano {
+            border-color: var(--boja-akcenat);
+            background: var(--boja-podloga-tiha);
+
+            &::before {
+                content: '';
+                position: absolute;
+                left: 0; top: 0; bottom: 0;
+                width: 3px;
+                border-radius: var(--radijus-panel) 0 0 var(--radijus-panel);
+                background: var(--boja-akcenat);
+            }
+        }
+    }
+
+    &__vrsta-naziv {
+        display: block;
+        font-family: var(--pismo-tekst);
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-tekst);
+    }
+
+    &__vrsta-opis {
+        display: block;
+        margin-top: 2px;
+        font-size: var(--slovo-sm);
+        line-height: var(--red-sm);
+        color: var(--boja-tekst-tiho);
+    }
+
     /* ── prečice za datum ─────────────────────────────────────────────── */
 
     &__precice {

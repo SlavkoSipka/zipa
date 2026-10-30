@@ -285,6 +285,45 @@ const renderOrijentacija = ({ input, oblik, naziv }) => (
     </button>
 );
 
+/*
+ * ŠTA SE PRETRAŽUJE (2026-10-30).
+ *
+ * Tri izbora, jedan po jedan:
+ *
+ *   galerije    — kao i do sada, spisak galerija (bez parametra `view`)
+ *   fotografije — pojedinačne fotografije (`view=photos`)
+ *   kljucne     — pojedinačne fotografije, ali se pojam traži SAMO u
+ *                 ključnim rečima same fotografije (`view=photos&kljucne=1`)
+ *
+ * Ime parametra `view` i njegova vrednost `photos` se NE diraju —
+ * `views/categoryPage.js` i `routesList.js` ih već čitaju.
+ */
+const STA_SE_TRAZI = [
+    { vrednost: 'galerije',    naziv: 'Galerije',                 opis: 'spisak galerija' },
+    { vrednost: 'fotografije', naziv: 'Pojedinačne fotografije',  opis: 'svaka fotografija posebno' },
+    { vrednost: 'kljucne',     naziv: 'Samo ključne riječi',      opis: 'pojam se traži samo u ključnim riječima fotografije' },
+];
+
+const renderStaSeTrazi = ({ input }) => (
+    <div className="z-pretraga-prozor__vrsta" role="radiogroup">
+        {STA_SE_TRAZI.map((s) => {
+            const izabrano = (input.value || 'galerije') === s.vrednost;
+            return (
+                <button type="button"
+                        key={s.vrednost}
+                        role="radio"
+                        aria-checked={izabrano ? 'true' : 'false'}
+                        className={'z-pretraga-prozor__vrsta-dugme'
+                            + (izabrano ? ' z-pretraga-prozor__vrsta-dugme--izabrano' : '')}
+                        onClick={() => input.onChange(s.vrednost)}>
+                    <span className="z-pretraga-prozor__vrsta-naziv">{s.naziv}</span>
+                    <span className="z-pretraga-prozor__vrsta-opis">{s.opis}</span>
+                </button>
+            );
+        })}
+    </div>
+);
+
 // Prečice za datum — vraćaju [od, do] u sekundama, isto kao birač datuma.
 const PRECICE = {
     dana7: () => {
@@ -383,6 +422,11 @@ class form extends React.Component {
                     {/* ── šta se traži ─────────────────────────────────── */}
                     <div className="z-pretraga-prozor__grupa">
                         <h3 className="z-pretraga-prozor__naslov-grupe">{'Šta tražite'.translate(l)}</h3>
+
+                        <Field
+                            name="staSeTrazi"
+                            component={renderStaSeTrazi}
+                        ></Field>
 
                         {/* Ključne riječi, Događaj i Grad su PRAZNA polja, bez
                             primera u sebi („npr. Banja Luka"…) — traženo 2026-10-13. */}

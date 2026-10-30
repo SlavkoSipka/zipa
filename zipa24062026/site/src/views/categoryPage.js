@@ -682,7 +682,12 @@ class CategoryPage extends Component {
                                                                                 <div className="photo-result-image">
                                                                                     <img
                                                                                         src={`${PHOTOS_ENDPOINT}/photos/350x/${foto.image}`}
-                                                                                        alt={podaci.description || foto.name}/>
+                                                                                        /* Opis je dvojezičan objekat, ali ume da bude i
+                                                                                           prazan (null) — tada `Object.translate` puca,
+                                                                                           pa se prvo proverava. */
+                                                                                        alt={(podaci.description && typeof podaci.description === 'object'
+                                                                                            ? Object.translate(podaci, 'description', this.props.lang)
+                                                                                            : podaci.description) || foto.name}/>
                                                                                 </div>
                                                                                 <div className="photo-result-info">
                                                                                     <h4>{podaci.description || foto.galleryName}</h4>

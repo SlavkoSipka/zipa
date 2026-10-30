@@ -47,6 +47,10 @@ services:
         value: noreply@zipaphoto.net
       - key: SMTP_PASSWORD
         sync: false
+      # Prevod naziva i opisa novih galerija na engleski. Bez ključa radi
+      # preko besplatnog MyMemory servisa, sa ključem preko DeepL-a.
+      - key: DEEPL_API_KEY
+        sync: false
       - key: API_ENDPOINT          # javni URL ovog servisa (posle prvog deploya)
         sync: false
       # Javni URL SAJTA. Ulazi u svaku poslatu poruku — veza za potvrdu

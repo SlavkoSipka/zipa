@@ -546,10 +546,19 @@
    kao i na prijavi; na telefonu je sve u jednoj koloni, kao ranije. */
 .z-prijava--registracija {
     @include desktop-i-vise {
-        grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
-
+        /* Fotografija je ISTA kao na prijavi (2026-10-30): stupci ostaju
+           jednaki (`1fr 1fr` iz `.z-prijava`), a obrazac se mesto za sebe
+           pravi tiše — sitnijim poljima i manjim razmacima, ne oduzimanjem
+           od slike. Ranije je ovde stajalo `1.5fr 1fr`, pa je slika na
+           registraciji bila uža (574px prema 718px na prijavi). */
         .z-prijava__strana { padding-top: var(--razmak-6); padding-bottom: var(--razmak-6); }
-        .z-prijava__okvir { max-width: 880px; }
+        .z-prijava__okvir { max-width: 640px; }
+
+        // Polja su na registraciji zbijenija — ista visina strane, ista slika.
+        .z-prijava__polje { margin-bottom: var(--razmak-3); }
+        .z-prijava__unos { min-height: 40px; }
+        .z-prijava__oznaka { font-size: var(--slovo-xs); line-height: var(--red-xs); }
+        .z-prijava__saglasnost { margin-bottom: var(--razmak-4); }
 
         .login-form {
             display: grid;
