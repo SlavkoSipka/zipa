@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 
 import Text from './fields/text1';
 import Textarea from './fields/textarea';
+import Html from './fields/html';
 import Tags from './fields/tags';
 
 import Name from './fields/name';
@@ -235,6 +236,38 @@ const renderGalleryField = ({
         )
     
 
+/*
+ * Odgovor je HTML, ne običan tekst — stari odgovori u bazi nose veze, boje i
+ * prelome redova. U običnom polju su se videle gole oznake, a čuvanje ih je
+ * lomilo. Isti uređivač koji nose i sadržajne strane (2026-10-30).
+ */
+const renderHtmlField = ({
+    input,
+    placeholder,
+    label,
+    icon,
+    type,
+    height,
+    meta: { touched, error },
+    multilang,
+    lang
+}) => (
+
+        <Html
+            placeholder={placeholder}
+            label={label}
+            icon={icon}
+            errorText={touched && error}
+            error={touched && error}
+            type={type}
+            height={height}
+            multilang={multilang}
+            lang={lang}
+            {...input}
+        />
+    )
+
+
 class form extends React.Component {
 
     constructor(props) {
@@ -267,8 +300,10 @@ class form extends React.Component {
                     <Col lg="6">
                         <Field
                             name="category"
+                            validate={[required]}
                             component={renderSelectField}
-                            label="Kategorija"
+                            label="Kategorija *"
+                            placeholder="Izaberite kategoriju"
                         >
                             {
                                 this.props.categories.map((item, idx) => {
@@ -286,8 +321,9 @@ class form extends React.Component {
                         <Field
                             name="content"
                             validate={[required]}
-                            component={renderTextareaField}
+                            component={renderHtmlField}
                             label="Odgovor *"
+                            height={320}
                             lang={this.props.lang}
                             multilang
                         ></Field>
@@ -316,6 +352,19 @@ class form extends React.Component {
     }
 }
 
+/*
+ * `enableReinitialize` je OBAVEZAN (2026-10-30).
+ *
+ * Strane administracije dovlače vrednosti tek u `componentDidMount`, dakle
+ * POSLE prvog iscrtavanja obrasca. Bez ovoga redux-form zadržava prazno
+ * početno stanje i kasnije vrednosti ignoriše — izmena se otvarala praznih
+ * polja, a čuvanje je brisalo ono što je ranije bilo upisano.
+ *
+ * Ime obrasca mora da bude JEDINSTVENO: desetak obrazaca je delilo isto
+ * (`editAccountForm`), pa su vrednosti umele da procure sa jednog ekrana na
+ * drugi.
+ */
 export default reduxForm({
-    form: 'editAccountForm'  // a unique identifier for this form
+    form: 'faqForm',
+    enableReinitialize: true,
 })(form)

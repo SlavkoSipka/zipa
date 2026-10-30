@@ -256,6 +256,19 @@ class form extends React.Component {
     }
 }
 
+/*
+ * `enableReinitialize` je OBAVEZAN (2026-10-30).
+ *
+ * Strane administracije dovlače vrednosti tek u `componentDidMount`, dakle
+ * POSLE prvog iscrtavanja obrasca. Bez ovoga redux-form zadržava prazno
+ * početno stanje i kasnije vrednosti ignoriše — izmena se otvarala praznih
+ * polja, a čuvanje je brisalo ono što je ranije bilo upisano.
+ *
+ * Ime obrasca mora da bude JEDINSTVENO: desetak obrazaca je delilo isto
+ * (`editAccountForm`), pa su vrednosti umele da procure sa jednog ekrana na
+ * drugi.
+ */
 export default reduxForm({
-    form: 'form'  // a unique identifier for this form
+    form: 'blogForm',
+    enableReinitialize: true,
 })(form)

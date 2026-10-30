@@ -472,5 +472,7 @@ const izabrano = formValueSelector('agencySettingsForm');
 export default connect((state) => ({
     naPretplati: izabrano(state, 'naPretplati'),
 }))(reduxForm({
-    form: 'agencySettingsForm'
+    form: 'agencySettingsForm',
+    // Vrednosti stižu posle montiranja — vidi napomenu u `faqForm.js`.
+    enableReinitialize: true,
 })(form))
