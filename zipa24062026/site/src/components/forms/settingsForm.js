@@ -205,7 +205,7 @@ const renderSelectField = ({
 
 
 // Mera hero fotografije naslovne C — tačna mera i provera postavljene slike.
-const renderProveraHero = ({ input }) => <ProveraOdnosa url={input.value} sirina={2400} visina={1350} />;
+const renderProveraHero = ({ input }) => <ProveraOdnosa url={input.value} sirina={2400} visina={1200} />;
 
 const renderImageField = ({
     input,
@@ -319,7 +319,7 @@ class form extends React.Component {
                         <Field
                             name="pozadinaPretrage"
                             component={renderImageField}
-                            label="Hero fotografija naslovne — izgled C (stoji uvek; prazno = najnovija galerija)"
+                            label="Hero fotografija naslovne — izgled C, 2400 × 1200 px (stoji uvek; prazno = najnovija galerija)"
                         ></Field>
                         <Field name="pozadinaPretrage" component={renderProveraHero}></Field>
                     </Col>

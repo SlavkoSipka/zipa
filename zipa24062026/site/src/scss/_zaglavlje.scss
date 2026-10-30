@@ -1074,24 +1074,6 @@
     /* Predlog C (2026-09-22): iza pretrage stoji slika koju bira
        administracija (`--pozadina-pretrage`, postavlja je `header.js`), pod
        tamnim zastorom da polje pretrage ostane glavno. */
-    [data-tema="c"] &__naslovni {
-        background:
-            linear-gradient(var(--boja-preko-zastor), var(--boja-preko-zastor)),
-            var(--pozadina-pretrage, none) center / cover no-repeat,
-            var(--boja-traka);
-
-        // Visok blok, da se slika vidi (povećano 2026-09-22).
-        .z-zaglavlje__naslovni-red {
-            padding-top: calc(var(--razmak-8) * 3.5);
-            padding-bottom: calc(var(--razmak-8) * 3.5);
-
-            @include mobile-tablet {
-                padding-top: calc(var(--razmak-8) * 2);
-                padding-bottom: calc(var(--razmak-8) * 2);
-            }
-        }
-    }
-
     &__naslovni-red {
         display: flex;
         align-items: center;
@@ -1883,6 +1865,12 @@ header:where(.zaglavlje-sajta) .navigation > ul {
     // Fotografija je samo u naslovnom bloku ispod navbara (2026-10-27).
     background: var(--c-hero-podloga);
 
+    /* Tačno jedan ekran (2026-10-30): zaglavlje i fotografija staju između
+       vrha strane i donje ivice prozora, pa prvi pokret točkića počinje
+       sledeći odeljak. Na telefonu ostaje po meri sadržaja — tamo slika
+       stoji iznad pretrage, a ne iza nje. */
+    @include tablet-i-vise { min-height: 100vh; }
+
     /* Navbar pun BEO (2026-10-13), kao na ostalim stranama C; fotografija
        počinje ispod njega. Tokeni koje `--visoka` gore preusmerava na belo
        slovo preko fotografije ovde se vraćaju na tamna slova bele trake. */
@@ -1932,11 +1920,21 @@ header:where(.zaglavlje-sajta) .navigation > ul {
      * pretrage sa senkom. Ranije je slika bila „cover" preko celog prvog
      * ekrana, čiji se odnos menja sa ekranom, pa se uvek negde sekla.
      */
+    /*
+     * Visinu daje EKRAN, ne odnos stranica (izmena 2026-10-30).
+     *
+     * Do sada je blok imao stalan odnos 16 : 9: na širokim ekranima je bio
+     * viši od prozora, pa je donji deo fotografije padao ispod ivice i
+     * skrolovanje je prvo pomeralo sliku umesto da otvori sledeći odeljak.
+     * Sada ispuni tačno ono što ostane ispod navbara; administracija zato
+     * traži sliku 2400 × 1200 (`fields/proveraOdnosa.js`), što je odnos
+     * prostora koji ostaje na uobičajenim ekranima.
+     */
     .z-zaglavlje__naslovni {
-        flex: 0 0 auto;
+        flex: 1 1 auto;
+        min-height: 0;
         display: flex;
         align-items: center;
-        aspect-ratio: 16 / 9;
         background: var(--pozadina-pretrage, none) center / cover no-repeat, var(--c-hero-podloga);
         border-top: 0;
 
@@ -1951,7 +1949,7 @@ header:where(.zaglavlje-sajta) .navigation > ul {
            ispod nje, na tamnoj podlozi. */
         @include mobile {
             display: block;
-            aspect-ratio: auto;
+            flex: 0 0 auto;
             background: var(--c-hero-podloga);
 
             &::before {
