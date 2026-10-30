@@ -17,6 +17,25 @@ tako da svi postojeći pozivi i reference (`uid`, `galleryId`, `category[]`...) 
 | cart / downloads | 12 / 10 | |
 | pages / banners / slides / settings / ostalo | malo | |
 | transactions | 0 | prazan (kolone napravljene po kodu) |
+| logs / photoVisits / loginHistory | stara analitika | posete, otvaranja fotografija i prijave |
+
+### Stara analitika — dodato 2026-10-30
+
+Prva migracija **nije** prenela `logs`, `photoVisits` i `loginHistory`, pa je u
+administraciji ostala samo analitika koju je novi sajt sam napravio (od jula
+2026). Sve starije posete i otvaranja fotografija i dalje su u dumpu.
+
+Te tri kolekcije su u bazi `doc`-tabele (`_id` + cela stavka kao `jsonb`),
+kako ih upisuje i sam API, pa se prenose istom skriptom:
+
+```bash
+export DATABASE_URL='postgresql://…'
+./venv/bin/python migrate.py --only logs,photoVisits,loginHistory
+```
+
+Skripta je idempotentna (`on conflict do nothing`) i pravi tabelu ako je nema,
+pa sme da se pokrene i više puta. Posle toga ekrani statistike u administraciji
+vide i stare periode — opseg se bira poljima OD i DO.
 
 ## Koraci
 

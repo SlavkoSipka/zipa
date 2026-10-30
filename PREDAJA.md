@@ -162,6 +162,19 @@ Dok se ne pusti, način naplate u *Podešavanjima agencije* i pamćenje odjava
 sa newslettera ne rade; ostatak sajta radi normalno. Ne upisivati u bazu
 skriptama sa računara — ALTER pušta vlasnik.
 
+**Stara analitika (2026-10-30).** U administraciji se vide samo posete od
+jula 2026. — prva migracija nije prenela `logs`, `photoVisits` i
+`loginHistory` iz Mongo dumpa. `migration/migrate.py` ih sada prenosi:
+
+```bash
+export DATABASE_URL='postgresql://…'
+./venv/bin/python migrate.py --only logs,photoVisits,loginHistory
+```
+
+Za to je potreban **dump `zipa_db_2026/`** (157 MB, nije na gitu) sa starog
+računara. Ostalo već radi: klikovi na banere iz 2020. i preuzimanja se vide
+kad se u poljima OD i DO izabere taj period.
+
 **Ponuđeno, nije traženo:** ikona pretrage u zaglavlju na telefonu (uska
 pretraga je sakrivena, na `/galerije` postoji svoja).
 

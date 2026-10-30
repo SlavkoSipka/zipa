@@ -126,6 +126,16 @@ TABLES = {
     "gallerySettings": dict(
         cols=["_id", "uid", "galleryId", "status"],
     ),
+
+    # ── STARA ANALITIKA (dodato 2026-10-30) ──────────────────────────────
+    #
+    # Ove tri kolekcije nisu bile u prvoj migraciji, pa je u Supabase-u
+    # ostala samo analitika koju je novi sajt sam napravio — posete starije
+    # od jula 2026. nisu postojale nigde. U bazi su `doc`-tabele
+    # (`_id` + cela stavka kao jsonb), kako ih novi API i upisuje.
+    "logs": dict(doc=True),           # posete stranama (`url`, `timestamp`, `uid`)
+    "photoVisits": dict(doc=True),    # otvaranja pojedinačnih fotografija
+    "loginHistory": dict(doc=True),   # prijave korisnika
 }
 
 BATCH = 500
@@ -187,6 +197,46 @@ def convert_row(doc, spec):
     return tuple(row)
 
 
+def migrate_doc_table(conn, path, table, dry_run=False):
+    """Kolekcije koje `api/db.js` drži kao (_id text, doc jsonb).
+
+    Tabela se pravi ako je nema — isto kao što je pravi sam API pri prvom
+    upisu — pa migracija radi i na bazi u kojoj te tabele još ne postoje.
+    """
+    insert_sql = (
+        f'insert into "{table}" ("_id", "doc") values (%s, %s) '
+        f'on conflict ("_id") do nothing'
+    )
+
+    total = 0
+    batch = []
+    with conn.cursor() as cur:
+        if not dry_run:
+            cur.execute(
+                f'create table if not exists "{table}" '
+                f'("_id" text primary key, "doc" jsonb not null default \'{{}}\'::jsonb)'
+            )
+        with open(path, "rb") as f:
+            for doc in bson.decode_file_iter(f):
+                stavka = clean(doc)
+                _id = str(stavka.pop("_id", "")) or None
+                if not _id:
+                    continue
+                batch.append((_id, Jsonb(stavka)))
+                if len(batch) >= BATCH:
+                    if not dry_run:
+                        cur.executemany(insert_sql, batch)
+                    total += len(batch)
+                    batch = []
+                    print(f"  {table}: {total}...", end="\r")
+            if batch:
+                if not dry_run:
+                    cur.executemany(insert_sql, batch)
+                total += len(batch)
+    conn.commit()
+    print(f"  ✓ {table}: {total} redova" + (" (dry-run)" if dry_run else ""))
+
+
 def migrate_table(conn, dump_dir, table, spec, dry_run=False):
     path = os.path.join(dump_dir, f"{table}.bson")
     if not os.path.exists(path):
@@ -194,6 +244,11 @@ def migrate_table(conn, dump_dir, table, spec, dry_run=False):
         return
     if os.path.getsize(path) == 0:
         print(f"  - {table}: prazan dump, preskačem")
+        return
+
+    # `doc`-tabele: cela stavka ide u jednu jsonb kolonu, bez popisa kolona.
+    if spec.get("doc"):
+        migrate_doc_table(conn, path, table, dry_run)
         return
 
     cols = spec["cols"]
@@ -227,8 +282,12 @@ def verify(conn):
     print("\nProvera broja redova:")
     with conn.cursor() as cur:
         for table in TABLES:
-            cur.execute(f'select count(*) from "{table}"')
-            print(f"  {table}: {cur.fetchone()[0]}")
+            try:
+                cur.execute(f'select count(*) from "{table}"')
+                print(f"  {table}: {cur.fetchone()[0]}")
+            except psycopg.errors.UndefinedTable:
+                conn.rollback()
+                print(f"  {table}: tabela ne postoji")
 
 
 def main():
