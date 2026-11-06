@@ -48,6 +48,7 @@ import download from "../assets/svg/download.svg";
 import cartIcon from "../assets/svg/cart.svg";
 import shareIcon from "../assets/svg/share.svg";
 import BanerSlika from '../components/baner';
+import OriginalNedostupan from '../components/originalNedostupan';
 
 /*
  * MREŽA FOTOGRAFIJA — zašto ovako
@@ -1003,12 +1004,13 @@ class DetailPage extends Component {
 
                                         {!selectedImage.originalIsOnServer &&
                                         galleryContent.price !== 0 ? (
-                                            <p className="z-prozor__napomena">
-                                                {"Za kupovinu ili preuzimanje ove fotografije molimo Vas kontaktirajte nas putem telefona +387.66.00.11.22 ili na e-mail "}
-                                                <a href="mailto:info@zipaphoto.net">
-                                                    info@zipaphoto.net
-                                                </a>
-                                            </p>
+                                            <OriginalNedostupan
+                                                className="z-prozor__napomena"
+                                                settings={this.props.settings}
+                                                galerija={Object.translate(galleryContent, 'name', this.props.lang)}
+                                                fotografija={selectedImage.name}
+                                                lang={this.props.lang}
+                                            />
                                         ) : null}
 
                                         <a ref={(node) => (this.aTag = node)}></a>

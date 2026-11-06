@@ -294,7 +294,8 @@ app.get('/user/downloads/:page/:sort', permissionMiddleware(), async (req, res) 
 
 app.post('/user/gallery', roleAndPermissionMiddleware('photographer', 'change-gallery'), async (req, res) => {
     // `search` je strana slala od pocetka, a ruta ga nije prosledjivala.
-    res.send(await usersModule.userGallery(res.locals.uid, req.body.page, req.body.search));
+    // `od` i `do` (YYYY-MM-DD) — pretraga po datumu galerije (2026-11-06).
+    res.send(await usersModule.userGallery(res.locals.uid, req.body.page, req.body.search, req.body.od, req.body.do, req.body.skrivene));
 });
 
 
@@ -704,6 +705,49 @@ app.get('/gallery/fetch/:id', roleAndPermissionMiddleware('photographer', 'chang
     let result = await productsModule.fetchGallery(res.locals.uid, req.params.id);
     res.status(result.status).send(result.response);
 })
+// Čuvanje originala — `originali.js` (2026-11-06).
+const originali = require('./originali');
+
+app.get('/admin/originali', permissionMiddleware('*'), async (req, res) => {
+    const [s] = (await (await require('./db')()).query(`select "originaliMeseci", "originaliPotvrda" from settings limit 1`)).rows;
+    const meseci = s && s.originaliMeseci ? Number(s.originaliMeseci) : 0;
+    res.send({ meseci, potvrda: s && s.originaliPotvrda ? Number(s.originaliPotvrda) : null, pregled: await originali.pregled(meseci) });
+});
+
+app.get('/admin/originali/pregled', permissionMiddleware('*'), async (req, res) => {
+    res.send(await originali.pregled(parseInt(req.query.meseci, 10) || 0));
+});
+
+app.post('/admin/originali', permissionMiddleware('*'), async (req, res) => {
+    const meseci = Math.max(0, Math.min(600, parseInt(req.body.meseci, 10) || 0));
+    const db = await require('./db')();
+    const [s] = (await db.query(`select "originaliMeseci", "originaliPotvrda" from settings limit 1`)).rows;
+    // Novi (ili promenjen) broj meseci se uključuje samo uz upisanu potvrdu.
+    const isto = s && Number(s.originaliMeseci || 0) === meseci && s.originaliPotvrda;
+    if (meseci > 0 && !isto && String(req.body.potvrda || '').trim().toUpperCase() !== 'OBRIŠI') {
+        res.status(400).send({ error: 'Za brisanje originala upišite OBRIŠI.' });
+        return;
+    }
+    const potvrda = meseci > 0 ? (isto ? s.originaliPotvrda : Math.floor(Date.now() / 1000)) : null;
+    await db.query(`update settings set "originaliMeseci" = $1, "originaliPotvrda" = $2`, [meseci || null, potvrda]);
+    if (meseci > 0) originali.prolaz();
+    res.send({ meseci, potvrda: potvrda ? Number(potvrda) : null, pregled: await originali.pregled(meseci) });
+});
+
+// Prvi prolaz dva minuta posle pokretanja, zatim jednom dnevno.
+setTimeout(() => originali.prolaz(), 2 * 60 * 1000);
+setInterval(() => originali.prolaz(), 24 * 60 * 60 * 1000);
+
+// Redaktor: samo engleski prevod naziva i opisa galerija (2026-11-06).
+app.get('/prevodi/galerije', permissionMiddleware('prevod'), async (req, res) => {
+    res.send(await productsModule.galerijeZaPrevod(req.query.strana, req.query.pretraga, req.query.neproverene === '1'));
+});
+
+app.post('/prevodi/galerija/:id', permissionMiddleware('prevod'), async (req, res) => {
+    const r = await productsModule.sacuvajPrevod(req.params.id, req.body || {});
+    res.status(r.status).send(r.response);
+});
+
 app.get('/gallery/latest', async (req, res) => {
     res.status(200).send(await productsModule.fethcNewestGalleries());
 })
@@ -995,6 +1039,10 @@ app.get('/admin/izvestaj-period', permissionMiddleware('*'), async (req, res) =>
 setTimeout(() => izvestaji.osigurajMesecne(), 60 * 1000);
 setInterval(() => izvestaji.osigurajMesecne(), 6 * 60 * 60 * 1000);
 
+app.post('/admin/galerije/obrisi-prazne', permissionMiddleware('*'), async (req, res) => {
+    res.send(await adminModule.obrisiPrazneNacrte());
+});
+
 // Broj galerija i fotografija — isti na svim stranama administracije (2026-10-27).
 app.get('/admin/brojevi-arhive', permissionMiddleware('*'), async (req, res) => {
     res.send(await adminModule.brojeviArhive());
@@ -1003,6 +1051,22 @@ app.get('/admin/brojevi-arhive', permissionMiddleware('*'), async (req, res) => 
 // Pregled arhive od početka rada — po godinama, i najplodniji fotografi.
 app.get('/admin/archive-stats', permissionMiddleware('*'), async (req, res) => {
     res.send(await adminModule.archiveStats());
+});
+
+// Statistika fotografa — cela arhiva ili galerije objavljene od–do (2026-11-06).
+app.get('/admin/statistika-fotografa', permissionMiddleware('*'), async (req, res) => {
+    const od = req.query.od ? Date.parse(String(req.query.od) + 'T00:00:00Z') / 1000 : null;
+    const dokle = req.query.do ? Date.parse(String(req.query.do) + 'T00:00:00Z') / 1000 + 86400 : null;
+    const imaPeriod = od !== null && dokle !== null && !isNaN(od) && !isNaN(dokle);
+    res.send(await adminModule.photographerUploadStats(imaPeriod ? od : null, imaPeriod ? dokle : null));
+});
+
+// Statistika galerija za period od–do (YYYY-MM-DD, oba dana) — laka ruta (2026-11-06).
+app.get('/admin/statistika-galerija', permissionMiddleware('*'), async (req, res) => {
+    const od = Date.parse(String(req.query.od) + 'T00:00:00Z') / 1000;
+    const dokle = Date.parse(String(req.query.do) + 'T00:00:00Z') / 1000 + 86400 - 1;
+    if (isNaN(od) || isNaN(dokle) || dokle < od) { res.status(400).send({ error: 'Neispravan period.' }); return; }
+    res.send(await adminModule.galleryVisitStats(od, dokle));
 });
 
 app.get('/admin/statistics', permissionMiddleware('*'), async (req, res) => {

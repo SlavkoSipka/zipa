@@ -1,26 +1,29 @@
 /*
- * PREVOD NA ENGLESKI (2026-10-30)
+ * PREVOD NA ENGLESKI (2026-10-30, dorađeno 2026-11-06)
  *
  * Nove galerije dobijaju engleski naziv i opis same, da agencija ne mora da
- * ih kuca dvaput. Prevod je SAMO ISPOMOĆ: upisuje se jedino kad je englesko
- * polje prazno, pa svaka ručna izmena ostaje netaknuta i uvek se može
- * ispraviti u administraciji.
+ * ih kuca dvaput. Upisuje se kad je englesko polje „prazno" — a prazno je i
+ * kad je u njemu samo kopija srpskog teksta ili samo potpis „(ZIPAPHOTO…)".
+ * Ranije se ta dva slučaja nisu računala, pa se naslov nikad nije prevodio
+ * (strana je kopirala srpski naslov u engleski), a opis samo ponekad. Ručno
+ * upisan engleski tekst se ne dira.
  *
- * Dva izvora, redom:
- *
- *   1. DeepL, ako u okolini stoji `DEEPL_API_KEY` (besplatan nalog daje
- *      500.000 znakova mesečno i daleko bolji prevod).
- *   2. MyMemory, bez ključa — rezerva da prevod radi i dok ključa nema.
- *      Besplatno je oko 5.000 znakova dnevno po adresi, pa se koristi samo
- *      za kratke tekstove.
- *
- * Ako nijedan ne odgovori na vreme, vraća se `null` i čuvanje galerije teče
- * dalje — prevod nikad ne sme da obori upis.
+ * Izvori, redom:
+ *   1. Claude (`ANTHROPIC_API_KEY`) — najbolji prevod: zna da je reč o
+ *      agenciji za fotografije, čuva imena, mesta i ćirilicu/latinicu.
+ *   2. DeepL (`DEEPL_API_KEY`).
+ *   3. MyMemory, bez ključa — samo rezerva (oko 5.000 znakova dnevno).
+ * Ako nijedan ne uspe, engleski dobija srpski tekst, da engleska verzija
+ * sajta ne ostane prazna; pri sledećem čuvanju prevod se pokušava ponovo.
+ * Prevod nikad ne obara čuvanje galerije.
  */
 const fetch = require('node-fetch');
 
 const NAJDUZE = 4500;      // znakova po pozivu
-const ROK = 8000;          // ms — posle toga se odustaje
+const ROK = 20000;         // ms — posle toga se odustaje od tog izvora
+
+// Potpis na kraju opisa, npr. „(ZIPAPHOTO/Borislav Zdrinja)" — ne prevodi se.
+const POTPIS = /\s*\(\s*ZIPA\s*PHOTO[^)]*\)\s*$/i;
 
 async function saRokom(obecanje, rok = ROK) {
     let merac;
@@ -32,6 +35,42 @@ async function saRokom(obecanje, rok = ROK) {
     } finally {
         clearTimeout(merac);
     }
+}
+
+let claude = null;
+function klijentClaude() {
+    if (!process.env.ANTHROPIC_API_KEY) return null;
+    if (!claude) {
+        const Anthropic = require('@anthropic-ai/sdk');
+        claude = new (Anthropic.default || Anthropic)();
+    }
+    return claude;
+}
+
+const UPUTSTVO = [
+    'You translate texts for ZIPA PHOTO, a press photo agency from Banja Luka (Republika Srpska, Bosnia and Herzegovina).',
+    'Translate the user text from Serbian (Latin or Cyrillic script) into natural, concise British news English, as a photo agency caption or gallery title would read.',
+    'Keep personal names, organisation names and place names correct (e.g. Banja Luka, Republika Srpska, Vidovdan); transliterate Cyrillic names to Latin with diacritics.',
+    'Keep line breaks. If the input is a short title in capital letters, return the title in capital letters too.',
+    'Reply with the translation only: no quotes, no notes, no explanations.',
+].join(' ');
+
+async function prekoClaude(tekst) {
+    const c = klijentClaude();
+    if (!c) return null;
+    const odgovor = await c.beta.messages.create({
+        model: 'claude-opus-5-5',
+        max_tokens: 4000,
+        output_config: { effort: 'low' },
+        betas: ['server-side-fallback-2026-07-01'],
+        fallbacks: 'default',
+        system: UPUTSTVO,
+        messages: [{ role: 'user', content: tekst }],
+    });
+    if (odgovor.stop_reason === 'refusal') return null;
+    const deo = odgovor.content.find((b) => b.type === 'text');
+    const prevod = deo && deo.text ? deo.text.trim() : '';
+    return prevod || null;
 }
 
 async function prekoDeepL(tekst) {
@@ -46,7 +85,7 @@ async function prekoDeepL(tekst) {
             'Authorization': `DeepL-Auth-Key ${kljuc}`,
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ text: [tekst], source_lang: 'SR', target_lang: 'EN-US' }),
+        body: JSON.stringify({ text: [tekst], target_lang: 'EN-GB' }),
     });
 
     if (!odgovor.ok) throw new Error(`DeepL ${odgovor.status}`);
@@ -77,35 +116,46 @@ async function prevediNaEngleski(tekst) {
 
     const kratko = t.length > NAJDUZE ? t.slice(0, NAJDUZE) : t;
 
-    try {
-        const deepl = await saRokom(prekoDeepL(kratko));
-        if (deepl) return deepl;
-    } catch (e) {
-        console.error('[prevod] DeepL nije uspeo:', e.message);
+    for (const [ime, izvor] of [['Claude', prekoClaude], ['DeepL', prekoDeepL], ['MyMemory', prekoMyMemory]]) {
+        try {
+            const prevod = await saRokom(izvor(kratko));
+            if (prevod) return prevod;
+        } catch (e) {
+            console.error(`[prevod] ${ime} nije uspeo:`, e.message);
+        }
     }
+    return null;
+}
 
-    try {
-        return await saRokom(prekoMyMemory(kratko));
-    } catch (e) {
-        console.error('[prevod] MyMemory nije uspeo:', e.message);
-        return null;
-    }
+// Englesko polje se popunjava kad je prazno, kopija srpskog ili samo potpis.
+function trebaPrevod(polje) {
+    const ba = String(polje.ba || '').trim();
+    const en = String(polje.en || '').trim();
+    if (!en) return true;
+    if (en === ba) return true;
+    return en.replace(POTPIS, '').trim() === '';
 }
 
 /**
  * Dopuni englesku vrednost dvojezičnog polja ({ba, en}).
  *
- * Menja SAMO prazno englesko polje; ako je neko već uneo engleski tekst,
- * ostaje kako jeste. Vraća isti objekat radi lakšeg nizanja.
+ * Potpis „(ZIPAPHOTO/…)" sa kraja srpskog teksta se ne prevodi nego se
+ * prepisuje na kraj prevoda. Vraća isti objekat radi lakšeg nizanja.
  */
 async function dopuniEngleski(polje) {
     if (!polje || typeof polje !== 'object') return polje;
     if (!polje.ba || String(polje.ba).trim() === '') return polje;
-    if (polje.en && String(polje.en).trim() !== '') return polje;
+    if (!trebaPrevod(polje)) return polje;
 
-    const prevod = await prevediNaEngleski(polje.ba);
-    if (prevod) polje.en = prevod;
+    const ba = String(polje.ba);
+    const potpis = (ba.match(POTPIS) || [''])[0];
+    const telo = potpis ? ba.slice(0, ba.length - potpis.length) : ba;
+
+    const prevod = telo.trim() ? await prevediNaEngleski(telo) : '';
+    polje.en = prevod !== null
+        ? (prevod + (potpis ? '\n\n' + potpis.trim() : '')).trim()
+        : ba;    // bez prevoda: srpski tekst, pokušava se opet pri sledećem čuvanju
     return polje;
 }
 
-module.exports = { prevediNaEngleski, dopuniEngleski };
+module.exports = { prevediNaEngleski, dopuniEngleski, trebaPrevod };

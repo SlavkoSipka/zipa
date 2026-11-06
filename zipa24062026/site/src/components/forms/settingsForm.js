@@ -533,7 +533,7 @@ class form extends React.Component {
                         <Field
                             name="showSlider"
                             component={renderCheckField}
-                            label="Prikaži slajder umjesto pretrage"
+                            label="Prikaži slajder umjesto pretrage (samo izgled „Trenutni”; na A, B i C slajdera nema)"
                         ></Field>
 
 

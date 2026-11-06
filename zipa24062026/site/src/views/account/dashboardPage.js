@@ -151,6 +151,24 @@ function preuzmiPdf(adresa, ime) {
         });
 }
 
+/* Prikaz PDF-a u novoj kartici (2026-11-06) — odatle se štampa ili preuzima.
+   Prozor se otvara ODMAH na klik (inače ga pregledač blokira kao iskačući),
+   a PDF se upiše u njega kad stigne. */
+function prikaziPdf(adresa) {
+    const prozor = window.open('', '_blank');
+    if (prozor) prozor.document.write('<p style="font-family:sans-serif;padding:24px">Učitavam izvještaj…</p>');
+    return fetch(adresa, { headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` } })
+        .then((res) => {
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return res.blob();
+        })
+        .then((blob) => {
+            const url = URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+            if (prozor) prozor.location.href = url; else window.location.href = url;
+        })
+        .catch((e) => { if (prozor) prozor.close(); throw e; });
+}
+
 function Kartica({ naziv, vrednost, uz, promena, prazno, lang }) {
     return (
         <div className="z-ploca__kartica">
@@ -207,6 +225,13 @@ class DashboardPage extends Component {
             })
             .then((izvestaji) => this.setState({ izvestaji: Array.isArray(izvestaji) ? izvestaji : [] }))
             .catch(() => this.setState({ izvestaji: [], izvestajiGreska: true }));
+    }
+
+    prikazi(kljuc, adresa) {
+        this.setState({ prikazuje: kljuc });
+        prikaziPdf(adresa)
+            .catch(() => window.alert('PDF se ne može otvoriti. Pokušajte ponovo.'))
+            .then(() => this.setState({ prikazuje: null }));
     }
 
     preuzmi(kljuc, adresa, ime) {
@@ -424,6 +449,12 @@ class DashboardPage extends Component {
                             {'Prikaži'.translate(l)}
                         </button>
                         <button type="button" className="z-dugme z-dugme--sporedno"
+                                disabled={!p || this.state.prikazuje === 'period'}
+                                onClick={() => p && this.prikazi('period',
+                                    `${API_ENDPOINT}/admin/izvestaj-period?od=${uDan(p.od)}&do=${uDan(p.dokle - 86400)}`)}>
+                            {this.state.prikazuje === 'period' ? 'Otvaram…'.translate(l) : 'Prikaži PDF za ovaj period'.translate(l)}
+                        </button>
+                        <button type="button" className="z-dugme z-dugme--sporedno"
                                 disabled={!p || this.state.preuzima === 'period'}
                                 onClick={() => p && this.preuzmi('period',
                                     `${API_ENDPOINT}/admin/izvestaj-period?od=${uDan(p.od)}&do=${uDan(p.dokle - 86400)}`,
@@ -609,6 +640,11 @@ class DashboardPage extends Component {
                                 <li key={iz.mesec} className="z-ploca__stavka">
                                     <span className="z-ploca__stavka-naziv">{iz.naziv}</span>
                                     <span className="z-ploca__stavka-uz">PDF · {Math.max(1, Math.round((iz.velicina || 0) / 1024))} KB</span>
+                                    <button type="button" className="z-dugme z-dugme--glavno z-dugme--malo"
+                                            disabled={this.state.prikazuje === iz.mesec}
+                                            onClick={() => this.prikazi(iz.mesec, `${API_ENDPOINT}/admin/izvestaji/${iz.mesec}`)}>
+                                        {this.state.prikazuje === iz.mesec ? 'Otvaram…'.translate(l) : 'Prikaži'.translate(l)}
+                                    </button>
                                     <button type="button" className="z-dugme z-dugme--sporedno z-dugme--malo"
                                             disabled={this.state.preuzima === iz.mesec}
                                             onClick={() => this.preuzmi(iz.mesec, `${API_ENDPOINT}/admin/izvestaji/${iz.mesec}`, `zipa-izvestaj-${iz.mesec}.pdf`)}>

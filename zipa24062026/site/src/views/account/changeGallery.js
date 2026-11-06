@@ -88,13 +88,10 @@ class ChangeGallery extends Component {
     }
 
     submit(data) {
+        /* Engleski naziv i opis više se NE kopiraju sa srpskog (2026-11-06):
+           server ih prevodi sam (`api/prevod.js`). Kopija je činila da se
+           naslov nikad ne prevede, jer je engleski izgledao popunjeno. */
         let dataForm = data
-        if (!dataForm.name.en) {
-            dataForm.name.en = dataForm.name.ba;
-        }
-        if (dataForm.description.en === "\n\n(ZIPAPHOTO Test Fotograf)") {
-            dataForm.description.en = dataForm.description.ba;
-        }
         this.setState({
             _loading: true
         })
@@ -184,19 +181,38 @@ class ChangeGallery extends Component {
                             </Col>
 
                             <Col lg="12">
-                                <Form loading={this.state._loading} initialValues={this.state.initialValues} onSubmit={this.submit} categories={this.props.categories} lang={this.props.lang} uploadHandler={(formData, callback) => {
+                                <Form loading={this.state._loading} initialValues={this.state.initialValues} onSubmit={this.submit} categories={this.props.categories} lang={this.props.lang} jeAdmin={this.props.uData && this.props.uData.userRole === 'admin'} uploadHandler={(formData, callback) => {
 
+                                    /*
+                                     * Slanje UVEK završi (2026-11-06): uspeh → `callback(img)`,
+                                     * greška → `callback(null, poruka, ponoviti)`. Ranije je greška
+                                     * servera stizala kao tekst, `res.json()` je pucao i `callback`
+                                     * se nikad nije pozvao — „Slanje u toku…" je ostajalo zauvek
+                                     * (kod klijenta: 19 od 22, 86%). Posle 4 minuta bez odgovora
+                                     * slanje se prekida i javlja kao greška.
+                                     */
+                                    const prekid = typeof AbortController !== 'undefined' ? new AbortController() : null;
+                                    const sat = setTimeout(() => prekid && prekid.abort(), 4 * 60 * 1000);
                                     fetch(this.props[0].match.params.uid ? `${API_ENDPOINT}/gallery/photographer/photos/upload/${this.props[0].match.params.uid}` : `${API_ENDPOINT}/gallery/photos/upload`, {
                                         method: 'POST',
                                         headers: {
                                             Accept: 'application/json',
-                                            //'Content-Type': 'multipart/form-data',
                                             'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-
                                         },
-                                        body: formData
-                                    }).then((res) => res.json()).then((img) => {
-                                        callback(img);
+                                        body: formData,
+                                        signal: prekid ? prekid.signal : undefined,
+                                    }).then((res) => res.text().then((tekst) => {
+                                        clearTimeout(sat);
+                                        let img = null;
+                                        try { img = JSON.parse(tekst); } catch (e) { img = null; }
+                                        if (res.ok && img && img.image) { callback(img); return; }
+                                        // 4xx je odluka servera (nije JPG, prevelika) — ne ponavlja se samo.
+                                        callback(null, (img && img.error) || tekst || ('Greška ' + res.status), res.status >= 500);
+                                    })).catch((e) => {
+                                        clearTimeout(sat);
+                                        callback(null, e && e.name === 'AbortError'
+                                            ? 'Server nije odgovorio 4 minuta.'
+                                            : 'Veza sa serverom je prekinuta.', true);
                                     });
 
                                 }} />

@@ -56,7 +56,14 @@ const STAVKE_FOTOGRAF = [
     { putanja: '/account/change-password', naziv: 'Promjena lozinke' },
 ];
 
+// Redaktor (2026-11-06): samo prevodi i lozinka — ništa drugo ne uređuje.
+const STAVKE_REDAKTOR = [
+    { putanja: '/account/prevodi',         naziv: 'Prevodi' },
+    { putanja: '/account/change-password', naziv: 'Promjena lozinke' },
+];
+
 function stavkeZa(u) {
+    if (u && u.userRole === 'redaktor') return STAVKE_REDAKTOR;
     if (!u || u.userRole !== 'photographer') return STAVKE;
 
     const svaPrava = !!(u.permissions && u.permissions.indexOf('*') !== -1);

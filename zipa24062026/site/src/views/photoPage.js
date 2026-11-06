@@ -23,6 +23,7 @@ import {
 } from "react-share";
 import { API_ENDPOINT, PHOTOS_ENDPOINT } from "../constants";
 import BanerSlika from '../components/baner';
+import OriginalNedostupan from '../components/originalNedostupan';
 
 /*
  * JEDNA FOTOGRAFIJA — /galerija/:alias/:id/:photo
@@ -317,10 +318,13 @@ class PhotoPage extends Component {
                                     )}
                                 </>
                             ) : (
-                                <p className="z-fotografija__nedostupno">
-                                    {"Za kupovinu ili preuzimanje ove fotografije javite nam se na +387 66 00 11 22 ili na".translate(l)}{" "}
-                                    <a href="mailto:info@zipaphoto.net">info@zipaphoto.net</a>
-                                </p>
+                                <OriginalNedostupan
+                                    className="z-fotografija__nedostupno"
+                                    settings={this.props.settings}
+                                    galerija={Object.translate(gallery, 'name', l)}
+                                    fotografija={foto.name}
+                                    lang={l}
+                                />
                             )}
 
                             {/* ── podaci ─────────────────────────────── */}

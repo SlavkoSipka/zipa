@@ -1580,7 +1580,15 @@
         @include mobile        { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
         .z-kartica-galerije { margin-bottom: 0; }
+
+        /* Ujednačen razmak (2026-11-06): naslov uvek zauzme dva reda, pa
+           mesto i datum stoje u istoj liniji kod svih kartica u redu, i
+           kad naslov stane u jedan red. */
+        .z-kartica-galerije__naslov { min-height: 2.68em; }
     }
+
+    /* Poslednja sekcija ne sme da se lepi za podnožje (newsletter). */
+    &:last-of-type { padding-bottom: var(--razmak-7); }
 }
 
 
@@ -1714,4 +1722,30 @@ img[src*="/photos/700x/"] {
     -webkit-user-drag: none;
     -webkit-touch-callout: none;
     user-select: none;
+}
+
+
+/* Original nije više na sajtu — poruka kupcu (2026-11-06). */
+.z-original-nedostupan {
+    display: flex;
+    flex-direction: column;
+    gap: var(--razmak-1);
+    padding: var(--razmak-3) var(--razmak-4);
+    border-left: 4px solid var(--boja-oznaka);
+    border-radius: var(--radijus-mali);
+    background: var(--boja-podloga-tiha);
+    font-size: var(--slovo-sm);
+    line-height: var(--red-sm);
+    color: var(--boja-tekst);
+
+    strong { font-size: var(--slovo-md); }
+
+    &__veze {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--razmak-2) var(--razmak-4);
+        margin-top: var(--razmak-1);
+
+        a { font-weight: var(--tezina-jaka); @include z-veza; }
+    }
 }

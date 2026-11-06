@@ -110,15 +110,15 @@ async function put(key, body, contentType = 'image/jpeg') {
         Bucket: R2.bucket, Key: key, Body: body, ContentType: contentType,
     }));
 
-    // Pregled dobija i WebP. Neuspeh ne obara upis — ostaje JPG.
+    /* Pregled dobija i WebP — U POZADINI (2026-11-06): slanje fotografije
+       ne čeka na njega, pa je odgovor brži. Dok WebP ne stigne, isporučuje
+       se JPG. Neuspeh ne obara upis. */
     if (jePregled(key) && /jpe?g/i.test(contentType)) {
-        try {
-            await client.send(new PutObjectCommand({
-                Bucket: R2.bucket, Key: webpKey(key), Body: await napraviWebp(body), ContentType: 'image/webp',
-            }));
-        } catch (e) {
-            console.error('[storage] WebP nije napravljen za', key, '-', e.message);
-        }
+        napraviWebp(body)
+            .then((webp) => client.send(new PutObjectCommand({
+                Bucket: R2.bucket, Key: webpKey(key), Body: webp, ContentType: 'image/webp',
+            })))
+            .catch((e) => console.error('[storage] WebP nije napravljen za', key, '-', e.message));
     }
 }
 

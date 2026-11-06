@@ -30,8 +30,8 @@ const IKONE = {
 };
 
 const GALERIJE = [
-    { putanja: '/galerije', naziv: 'Sve galerije', opis: 'Cijela arhiva, od 1995. do danas' },
-    { putanja: '/galerije?view=photos', naziv: 'Fotografije', opis: 'Pretraga po pojedinačnim fotografijama' },
+    { putanja: '/galerije', naziv: 'Sve galerije', opis: 'Pregled fotografija po događajima' },
+    { putanja: '/galerije?view=photos', naziv: 'Fotografije', opis: 'Pregled po pojedinačnim fotografijama' },
 ];
 
 const CJENOVNIK = [

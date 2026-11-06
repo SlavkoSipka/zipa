@@ -1,337 +1,127 @@
-import React, {Component} from 'react';
-import {Link} from 'react-router-dom'
-import Isvg from 'react-inlinesvg';
+import React, { Component } from 'react';
 import Page from '../../containers/page';
 import AdminOkvir from '../../components/adminOkvir';
+import ZaglavljeStampe, { stampaj } from '../../components/zaglavljeStampe';
 
+import { API_ENDPOINT } from '../../constants';
 
-import {
-    Container,
-    Row,
-    Col,
-    DropdownItem,
-    DropdownMenu,
-    DropdownToggle,
-    UncontrolledDropdown
-} from 'reactstrap';
+/*
+ * STATISTIKA FOTOGRAFA (prekrojeno 2026-11-06) — izveštaj za štampu.
+ *
+ * Tabela: redni broj, ime i prezime, broj postavljenih galerija i
+ * fotografija, sa zbirom na dnu. Bez perioda važi za celu arhivu; sa
+ * periodom broji galerije OBJAVLJENE u njemu. Svi nalozi fotografa su na
+ * spisku, i oni bez ijedne galerije. Izvor: `/admin/statistika-fotografa`
+ * (`photographerUploadStats` u `api/admin/admin.js`).
+ */
+const prikazDana = (s) => (s ? `${s.slice(8, 10)}.${s.slice(5, 7)}.${s.slice(0, 4)}.` : '');
+const br = (n) => Number(n || 0).toLocaleString('sr-RS');
 
-import Image from '../../components/image';
-
-
-import infoIcon from '../../assets/svg/account-info.svg';
-import statIcon from '../../assets/svg/stat-icon.svg';
-import {Line, Bar} from 'react-chartjs-2';
-
-import lock from '../../assets/svg/lock.svg';
-import userPhoto from '../../assets/images/user.png';
-
-import backup from '../../assets/svg/backup.svg';
-import trash from '../../assets/svg/orders-trash.svg';
-import moment from 'moment';
-
-import FromToForm from '../../components/forms/fromToForm';
-import trashIcon from '../../assets/svg/orders-trash.svg';
-import FromToForm1 from '../../components/forms/fromToForm1';
-import {API_ENDPOINT} from '../../constants';
-import Loader from "../../components/loader";
-import {reset} from "redux-form";
-
-const data = {
-    labels: ['02 Jan', '03 Jan', '04 Jan', '05 Jan', '06 Jan', '07 Jan'],
-    datasets: [
-        {
-            label: 'PREGLED ARTIKALA PO DANIMA',
-            fill: false,
-            lineTension: 0.4,
-            backgroundColor: '#F4F5FB',
-            borderColor: '#2F629C',
-            borderCapStyle: 'butt',
-            borderDash: [],
-            borderDashOffset: 0.0,
-            borderJoinStyle: 'miter',
-            pointBorderColor: '#2F629C',
-            pointBackgroundColor: '#fff',
-            pointBorderWidth: 1,
-            pointHoverRadius: 5,
-            pointHoverBackgroundColor: '#2F629C',
-            pointHoverBorderColor: 'rgba(220,220,220,1)',
-            pointHoverBorderWidth: 2,
-            pointRadius: 1,
-            pointHitRadius: 10,
-            data: [65, 59, 80, 81, 56, 55]
-        }
-    ]
-};
-
-
-class ProfilePage extends Component {
+class PhotographerStats extends Component {
     constructor(props) {
         super(props);
-
-        this.state = {
-            ...props.initialData,
-            announcements: [],
-            adminStatistics: {
-                photosCount: 0,
-                photographersCount: 0,
-                todayEarnings: 0,
-                yesterdayEarnings: 0,
-                prevMonthEarnings: 0,
-                currentMonthEarnings: 0,
-                totalDownloads: 0,
-                todayDownloads: 0,
-                visitsPerDay: [],
-                todayVisits: [],
-                lastTransactions: [],
-                loadingData: true,
-                sameTimestamp: false,
-                showForm: false,
-            },
-            photographerStatistics: []
-
-        };
-    }
-
-    adminStatistics = () => {
-        const {timeData} = this.state;
-        this.setState({
-            photosCount: 0,
-            photographersCount: 0,
-            todayEarnings: 0,
-            yesterdayEarnings: 0,
-            prevMonthEarnings: 0,
-            currentMonthEarnings: 0,
-            totalDownloads: 0,
-            todayDownloads: 0,
-            visitsPerDay: [],
-            todayVisits: [],
-            lastTransactions: [],
-            loadingData: true,
-            sameTimestamp: false,
-        }, () => {
-            if (timeData) {
-                let from = timeData.from;
-                let to = timeData.to;
-                if (timeData.from === timeData.to) {
-                    this.setState({
-                        sameTimestamp: true
-                    })
-                }
-                fetch(`${API_ENDPOINT}/admin/statistics`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-                    },
-                    body: JSON.stringify({from, to})
-                }).then(res => res.json()).then((result) => {
-                    this.setState({
-                        adminStatistics: result,
-                        loadingData: false,
-                        sameTimestamp: false
-                    })
-                }).catch(error => {
-                    console.error('Error fetching statistics:', error);
-                })
-
-            } else {
-                fetch(`${API_ENDPOINT}/admin/statistics`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-                    },
-                }).then(res => res.json()).then((result) => {
-                    this.setState({
-                        adminStatistics: result,
-                        loadingData: false,
-                        sameTimestamp: false
-                    })
-                }).catch(error => {
-                    console.error('Error fetching statistics:', error);
-                })
-            }
-        })
+        this.state = { od: '', do: '', redovi: null, ucitava: true, greska: null, prikazano: null };
     }
 
     componentDidMount() {
         window.scrollTo(0, 0);
-        setTimeout(() => {
-            this.setState({showForm: true})
-        }, 500)
-
-        for (let i = 0; i < this.props.loadData.length; i++) {
-            this.props.loadData[i](window.fetch, this.props[0].match).then((data) => {
-                this.setState({
-                    ...data
-                }, () => {
-                    this.props.updateMeta(this.props.generateSeoTags(this.state));
-                })
-            })
-        }
-
-        fetch(`${API_ENDPOINT}/announcements`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-            },
-        }).then(res => res.json()).then((result) => {
-            this.setState({
-                announcements: result
-            })
-        })
-
-        if (this.props.uData.userRole == 'admin') {
-            this.adminStatistics();
-        }
-
-
-        if (this.props.uData.userRole == 'photographer') {
-            fetch(`${API_ENDPOINT}/photographer/statistics`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-                },
-            }).then(res => res.json()).then((result) => {
-                this.setState({
-                    photographerStatistics: result
-                })
-            })
-
-        }
-
+        this.dovuci();
     }
 
+    dovuci = (e) => {
+        if (e) e.preventDefault();
+        const { od, do: dokle } = this.state;
+        if ((od && !dokle) || (!od && dokle) || (od && dokle && dokle < od)) return;
+        this.setState({ ucitava: true, greska: null });
+        const upit = od && dokle ? `?od=${od}&do=${dokle}` : '';
+        fetch(`${API_ENDPOINT}/admin/statistika-fotografa${upit}`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` },
+        })
+            .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+            .then((redovi) => this.setState({ redovi, ucitava: false, prikazano: od && dokle ? { od, do: dokle } : null }))
+            .catch(() => this.setState({ ucitava: false, greska: true }));
+    };
 
     render() {
-
-
-        let totalVisits = 0;
-        for (let i = 0; i < this.state.photographerStatistics.length; i++) {
-            totalVisits += this.state.photographerStatistics[i].count;
-        }
+        const l = this.props.lang;
+        const redovi = this.state.redovi || [];
+        const p = this.state.prikazano;
+        const podnaslov = p
+            ? `Galerije objavljene od ${prikazDana(p.od)} do ${prikazDana(p.do)}`
+            : 'Cijela arhiva';
+        const zbirG = redovi.reduce((z, r) => z + (r.uploadedGalleryCount || 0), 0);
+        const zbirF = redovi.reduce((z, r) => z + (r.uploadedPhotosCount || 0), 0);
 
         return (
             <AdminOkvir
-                lang={this.props.lang}
+                lang={l}
                 uData={this.props.uData}
                 settings={this.props.settings}
                 putanja={this.props[0] && this.props[0].location ? this.props[0].location.pathname : ''}
                 signOut={this.props.signOut}
-                naslov={'Statistika fotografa'.translate(this.props.lang)}
+                naslov={'Statistika fotografa'.translate(l)}
             >
-                <div className="account-wrap">
-                <a ref={(node) => this.aTag = node}></a>
-                <a ref={(node) => this.aTag1 = node}></a>
+                <form className="z-stat-alati" onSubmit={this.dovuci}>
+                    <label className="z-ploca__datum">
+                        <span>{'Od'.translate(l)}</span>
+                        <input type="date" value={this.state.od} max={this.state.do || undefined}
+                               onChange={(e) => this.setState({ od: e.target.value })} />
+                    </label>
+                    <label className="z-ploca__datum">
+                        <span>{'Do'.translate(l)}</span>
+                        <input type="date" value={this.state.do} min={this.state.od || undefined}
+                               onChange={(e) => this.setState({ do: e.target.value })} />
+                    </label>
+                    <button type="submit" className="z-dugme z-dugme--glavno">{'Prikaži'.translate(l)}</button>
+                    {p ? (
+                        <button type="button" className="z-dugme z-dugme--tiho"
+                                onClick={() => this.setState({ od: '', do: '' }, () => this.dovuci())}>
+                            {'Cijela arhiva'.translate(l)}
+                        </button>
+                    ) : null}
+                    <button type="button" className="z-dugme z-dugme--sporedno" disabled={!redovi.length} onClick={stampaj}>
+                        {'Štampaj'.translate(l)}
+                    </button>
+                </form>
 
-                <section className="section-profile">
-                    <Container>
-                        <Row>
-                            <Col lg="12" className="page-top-wrapper">
-                                <h2>{'Statistika fotografa'.translate(this.props.lang)}</h2>
+                <div className="z-stampa">
+                    <ZaglavljeStampe naslov="Statistika fotografa" podnaslov={podnaslov} />
 
-
-                                <ul>
-                                    <li><Link to='/'>{'Početna'.translate(this.props.lang)}</Link></li>
-                                    <li><Link to='/account/profile'>{'Profil'.translate(this.props.lang)}</Link></li>
-                                    <li><Link
-                                        to='/account/photographer-stats'>{'Statistika fotografa'.translate(this.props.lang)}</Link>
-                                    </li>
-
-                                </ul>
-
-                            </Col>
-
-
-                            {
-                                this.props.uData && this.props.uData.userRole == 'admin' ?
-                                    (
-                                        <>
-                                            <Col lg="8">
-                                                {
-                                                    this.state.showForm ?
-                                                        (
-                                                            <div className="admin-date-picker">
-                                                                <FromToForm1
-                                                                    onSubmit={(data) => this.setState({timeData: data}, this.adminStatistics)}></FromToForm1>
-                                                            </div>
-                                                        )
-                                                        :
-                                                        null
-                                                }
-                                            </Col>
-                                            <Col lg="12">
-                                                {
-                                                    this.state.sameTimestamp ?
-                                                        (
-                                                            <div style={{
-                                                                backgroundColor: '#F4F5FB',
-                                                                padding: '20px',
-                                                                borderRadius: '11px'
-                                                            }}>
-                                                                <h1>{'sameTime'.translate(this.props.lang)}</h1>
-                                                            </div>
-                                                        )
-                                                        :
-                                                        (
-                                                            this.state.loadingData ?
-                                                                (
-                                                                    <div style={{backgroundColor: '#F4F5FB'}}><Loader/>
-                                                                    </div>
-                                                                )
-                                                                :
-                                                                (
-                                                                    <div className="table">
-                                                                        <div>
-                                                                            <table>
-                                                                                <tr>
-                                                                                    <th>{'Korisnik'.translate(this.props.lang)}</th>
-                                                                                    <th>{'Broj uploadovanih galerija'.translate(this.props.lang)}</th>
-                                                                                    <th>{'Broj uploadovanih slika'.translate(this.props.lang)}</th>
-                                                                                </tr>
-                                                                                {
-                                                                                    /*
-                                                                                     * SVI registrovani fotografi, i oni bez ijedne
-                                                                                     * galerije — kod njih stoji 0.
-                                                                                     *
-                                                                                     * Ovde je stajalo `if (item.uploadedGalleryCount)`,
-                                                                                     * pa je pogled odbacivao red iako podatak stiže:
-                                                                                     * upit u `admin.js` je `left join` i vraća svih 70
-                                                                                     * fotografa, od kojih 22 nemaju nijednu galeriju.
-                                                                                     * Spisak je zato izgledao kraći nego što jeste.
-                                                                                     */
-                                                                                    this.state.adminStatistics.photographers && this.state.adminStatistics.photographers.map((item, idx) => {
-                                                                                        return (
-                                                                                            <tr key={item._id || idx}>
-                                                                                                <td>{item.name ? item.name : '/'}</td>
-                                                                                                <td>{item.uploadedGalleryCount || 0}</td>
-                                                                                                <td>{item.uploadedPhotosCount || 0}</td>
-                                                                                            </tr>
-                                                                                        )
-                                                                                    })
-                                                                                }
-                                                                            </table>
-                                                                        </div>
-                                                                    </div>
-                                                                )
-
-                                                        )
-                                                }
-                                            </Col>
-                                        </>
-                                    )
-                                    :
-                                    null
-                            }
-                        </Row>
-                    </Container>
-                </section>
+                    {this.state.greska ? <p className="z-stat-objasnjenje">Podaci se ne mogu učitati. Osvježite stranu.</p> : null}
+                    {this.state.ucitava ? <p className="z-stat-objasnjenje">Učitavam…</p> : (
+                        <table className="z-stat-tabela">
+                            <thead>
+                                <tr>
+                                    <th className="z-stat-tabela__br">Red. br.</th>
+                                    <th>Ime i prezime fotografa</th>
+                                    <th className="z-stat-tabela__broj">Broj uploadovanih galerija</th>
+                                    <th className="z-stat-tabela__broj">Broj uploadovanih fotografija</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {redovi.map((r, i) => (
+                                    <tr key={r._id || i}>
+                                        <td className="z-stat-tabela__br">{i + 1}.</td>
+                                        <td>{r.name || r.userAlias || '—'}</td>
+                                        <td className="z-stat-tabela__broj">{br(r.uploadedGalleryCount)}</td>
+                                        <td className="z-stat-tabela__broj">{br(r.uploadedPhotosCount)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td />
+                                    <td>Ukupno ({redovi.length} fotografa)</td>
+                                    <td className="z-stat-tabela__broj">{br(zbirG)}</td>
+                                    <td className="z-stat-tabela__broj">{br(zbirF)}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    )}
                 </div>
             </AdminOkvir>
         );
     }
 }
 
-export default Page(ProfilePage);
+export default Page(PhotographerStats);

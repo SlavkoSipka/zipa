@@ -92,6 +92,8 @@ export const MENI = [
             { putanja: '/account/galleries',  naziv: 'Galerije',   ikona: 'galerija' },
             { putanja: '/account/categories', naziv: 'Kategorije', ikona: 'kategorija' },
             { putanja: '/account/watermarks', naziv: 'Žigovi',     ikona: 'zig' },
+            // Koliko dugo se čuvaju originali (2026-11-06).
+            { putanja: '/account/originali',  naziv: 'Originali',  ikona: 'galerija' },
         ],
     },
     {
@@ -107,8 +109,12 @@ export const MENI = [
             { putanja: '/account/faqCategories', naziv: 'Kategorije pitanja', ikona: 'kategorija' },
             { putanja: '/account/featured',      naziv: 'Izdvajamo',         ikona: 'galerija' },
             { putanja: '/account/licence',       naziv: 'Licence',           ikona: 'strana' },
+            // Engleski prevodi galerija — isto što radi redaktor (2026-11-06).
+            { putanja: '/account/prevodi',       naziv: 'Prevodi',           ikona: 'strana' },
             { putanja: '/account/videos',        naziv: 'Video',             ikona: 'slajder' },
-            { putanja: '/account/slides',        naziv: 'Slajder',           ikona: 'slajder' },
+            // Slajder postoji samo na starom izgledu „Trenutni" (2026-11-06) — na
+            // A, B i C se ne prikazuje, pa se tada ni ne nudi u meniju.
+            { putanja: '/account/slides',        naziv: 'Slajder',           ikona: 'slajder', samoTrenutni: true },
         ],
     },
     {
@@ -298,7 +304,10 @@ class AdminOkvir extends Component {
                     </div>
 
                     <div className="z-adminokvir__grupe">
-                        {MENI.map((g) => {
+                        {MENI.map((grupa) => {
+                            const stariIzgled = !this.props.settings || !this.props.settings.homepageLayout
+                                || this.props.settings.homepageLayout === 'trenutni';
+                            const g = Object.assign({}, grupa, { stavke: grupa.stavke.filter((s) => !s.samoTrenutni || stariIzgled) });
                             /*
                              * Grupa se sklapa samo ako ima šta da sakrije — više
                              * od jedne stavke ili stavku sa podstavkama. Grupa sa

@@ -167,11 +167,16 @@ class ArchiveStats extends Component {
                                         </table>
                                     </div>
 
-                                    <h2>Fotografi po broju fotografija</h2>
+                                    <h2>Svi fotografi ({fotografi.length})</h2>
+                                    <p className="uvod">
+                                        Svi aktivni nalozi fotografa, poređani po broju fotografija na sajtu, i oni koji
+                                        još nemaju nijednu objavljenu galeriju.
+                                    </p>
                                     <div className="tabela-okvir">
                                         <table className="tabela">
                                             <thead>
                                                 <tr>
+                                                    <th className="d">Red. br.</th>
                                                     <th>Fotograf</th>
                                                     <th className="d">Galerija</th>
                                                     <th className="d">Fotografija</th>
@@ -180,6 +185,7 @@ class ArchiveStats extends Component {
                                             <tbody>
                                                 {fotografi.map((f, i) => (
                                                     <tr key={i}>
+                                                        <td className="d">{i + 1}.</td>
                                                         <td>{f.ime}</td>
                                                         <td className="d">{this.broj(f.galerija)}</td>
                                                         <td className="d">{this.broj(f.fotografija)}</td>

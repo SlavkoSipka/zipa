@@ -10,6 +10,9 @@
  * traka — nje više nema.
  */
 export const posleprijave = (uData) =>
-    uData && uData.userRole === 'admin' ? '/account/dashboard' : '/account/profile';
+    uData && uData.userRole === 'admin' ? '/account/dashboard'
+        // Redaktor ima samo prevode (2026-11-06).
+        : uData && uData.userRole === 'redaktor' ? '/account/prevodi'
+        : '/account/profile';
 
 export default posleprijave;

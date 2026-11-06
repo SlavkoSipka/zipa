@@ -127,3 +127,27 @@
         display: block !important;
     }
 }
+
+
+/* Štampa izveštaja iz administracije (2026-11-06) — samo `.z-stampa`, A4,
+   bez menija; kartice se ne seku preko strane. Uključuje je `stampaj()`. */
+@media print {
+    @page { size: A4; margin: 12mm; }
+
+    body.stampa-izvestaja * { visibility: hidden !important; }
+    body.stampa-izvestaja .z-stampa,
+    body.stampa-izvestaja .z-stampa * { visibility: visible !important; }
+    body.stampa-izvestaja .z-stampa {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+    body.stampa-izvestaja .z-stat-galerije { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 6px !important; }
+    body.stampa-izvestaja .z-stat-brojevi { grid-template-columns: 2fr 1fr 1fr !important; }
+    body.stampa-izvestaja .z-stat-galerija { padding: 6px !important; }
+    body.stampa-izvestaja .z-stampa img { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body.stampa-izvestaja .z-stat-tabela { font-size: 11pt; }
+    body.stampa-izvestaja .z-stat-tabela thead { display: table-header-group; }   /* zaglavlje kolona na svakoj strani */
+    body.stampa-izvestaja .z-stat-tabela tbody tr:nth-child(even) td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}

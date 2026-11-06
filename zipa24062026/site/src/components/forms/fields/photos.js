@@ -37,6 +37,9 @@ class Gallery extends Component {
             files: [],
             imagesLayout: [],
             _uploading: [],
+            // Neuspela slanja po mestu u galeriji: { datoteka, poruka } (2026-11-06).
+            _greske: {},
+            neuspelo: 0,
             licence: [],
         };
     }
@@ -185,96 +188,118 @@ class Gallery extends Component {
     }
 
 
-    async onDrop(imageFiles) {
+    /*
+     * SLANJE FOTOGRAFIJA (2026-11-06).
+     *
+     * Ranije su sve izabrane fotografije išle na server ODJEDNOM, a greška
+     * se nigde nije hvatala: server je istovremeno obrađivao 59 slika (žig,
+     * dve veličine pregleda, WebP), poneka bi pala, i „Slanje u toku…" je
+     * ostajalo zauvek. Sada:
+     *   - idu po tri istovremeno (`ODJEDNOM`), ostale čekaju red;
+     *   - svaka završi uspehom ILI greškom — neuspela ostaje na svom mestu
+     *     sa porukom i dugmetom „Pokušaj ponovo";
+     *   - kad server ne odgovori ili je zagušen, pokuša se još jednom sam;
+     *   - dok traje, piše koliko je poslato, koliko je ostalo i otprilike
+     *     koliko još treba.
+     */
+    posaljiJednu(datoteka, mesto, pokusaj = 1) {
+        return new Promise((gotovo) => {
+            const formData = new FormData();
+            formData.append('file', datoteka);
+            this.props.uploadHandler(formData, (img, greska, ponoviti) => {
+                if (!img && ponoviti && pokusaj < 2) {
+                    this.posaljiJednu(datoteka, mesto, pokusaj + 1).then(gotovo);
+                    return;
+                }
+                gotovo({ img, greska });
+            });
+        });
+    }
 
-        let imagesLayout = [];
-        let images = [];
-        let _uploading = [];
+    primiRezultat(mesto, datoteka, { img, greska }) {
+        const _greske = Object.assign({}, this.state._greske);
+        const files = this.state.files.slice();
+        const _uploading = this.state._uploading.slice();
+        _uploading[mesto] = null;
 
+        if (img) {
+            delete _greske[mesto];
+            files[mesto] = img;
+
+            if (!this.props.formName && img.galleryName) this.props.changeName({ ba: img.galleryName });
+            if (img.description) this.props.changeDescription({ ba: img.description });
+            if (!this.props.formDate && img.date) this.props.changeDate(img.date);
+            if (img.location) this.props.changeLocation(img.location);
+        } else {
+            _greske[mesto] = { datoteka, poruka: greska || 'Slanje nije uspjelo.' };
+        }
 
         this.setState({
-            uploading: true,
-            imagesCount: imageFiles.length,
-            imagesUploaded: 0
+            files, _uploading, _greske,
+            imagesUploaded: this.state.imagesUploaded + (img ? 1 : 0),
+            neuspelo: Object.keys(_greske).length,
         }, () => {
+            // Galerija dobija samo fotografije koje su stvarno poslate.
+            this.props.onChange(this.state.imagesLayout.map((i) => this.state.files[i]).filter(Boolean));
+        });
+    }
 
-            // Mesto na koje se nadovezuju nove fotografije. Bez ovoga se pri
-            // svakom sledećem dodavanju kretalo od nule, pa su se u galeriji
-            // ponavljale prve fotografije umesto da se dodaju nove.
-            const startIndex = this.state.files.length;
+    async posaljiRed(poslovi) {
+        const ODJEDNOM = 3;
+        let sledeci = 0;
+        const pocetak = Date.now();
+        this.setState({ uploading: true, pocetakSlanja: pocetak });
 
-            for (let i = 0; i < imageFiles.length; i++) {
-                let formData = new FormData();
-                formData.append('file', imageFiles[i]);
-                let name = startIndex + i;
-
-                this.props.uploadHandler(formData, (img) => {
-
-
-                    this.props.onChange(img);
-
-                    if (!this.props.formName && img.galleryName) {
-                        this.props.changeName({ ba: img.galleryName });
-                    }
-
-                    if (img.description) {
-                        this.props.changeDescription({ ba: img.description });
-                    }
-
-                    if (!this.props.formDate && img.date) {
-                        this.props.changeDate(img.date);
-                    }
-                    if (img.location) {
-                        this.props.changeLocation(img.location);
-                    }
-
-                    if (this.state.imagesUploaded + 1 >= this.state.imagesCount) {
-                        this.props.enableSave();
-                    }
-                    this.setState({
-                        _loading: null,
-                        uploading: this.state.imagesUploaded + 1 >= this.state.imagesCount ? false : true,
-                        imagesUploaded: this.state.imagesUploaded + 1
-                    })
-
-                    let files = this.state.files;
-                    let _uploading = this.state._uploading;
-                    files[name] = img;
-                    _uploading[name] = null;
-
-                    this.setState({
-                        _uploading: _uploading,
-                        files: files
-                    }, () => {
-                        this.props.onChange(this.state.files);
-                    })
-
-                })
-
-
-                images.push(null);
-                imagesLayout.push(startIndex + i);
-                _uploading.push(true);
+        const radnik = async () => {
+            while (sledeci < poslovi.length) {
+                const { datoteka, mesto } = poslovi[sledeci++];
+                const rez = await this.posaljiJednu(datoteka, mesto);
+                this.primiRezultat(mesto, datoteka, rez);
             }
+        };
+        await Promise.all(Array.from({ length: Math.min(ODJEDNOM, poslovi.length) }, radnik));
 
-            this.setState({
-                files: this.state.files.concat(images),
-                imagesLayout: this.state.imagesLayout.concat(imagesLayout),
-                _uploading: this.state._uploading.concat(_uploading)
-            }, () => {
-                let files = [];
-                for (let i = 0; i < this.state.imagesLayout.length; i++) {
-                    files.push(this.state.files[this.state.imagesLayout[i]]);
-                }
+        this.setState({ uploading: false });
+        if (this.props.enableSave) this.props.enableSave();
+    }
 
-                this.props.onChange(files);
-            });
-        })
+    async onDrop(imageFiles) {
+        if (this.state.uploading) return;
+        const startIndex = this.state.files.length;
+        const poslovi = imageFiles.map((datoteka, i) => ({ datoteka, mesto: startIndex + i }));
 
+        this.setState({
+            imagesCount: imageFiles.length,
+            imagesUploaded: 0,
+            files: this.state.files.concat(imageFiles.map(() => null)),
+            imagesLayout: this.state.imagesLayout.concat(poslovi.map((p) => p.mesto)),
+            _uploading: this.state._uploading.concat(imageFiles.map(() => true)),
+        }, () => this.posaljiRed(poslovi));
+    }
 
+    // Ponovo pošalji sve koje nisu uspele (ili jednu).
+    ponoviNeuspele(samoMesto) {
+        if (this.state.uploading) return;
+        const poslovi = Object.keys(this.state._greske)
+            .map(Number)
+            .filter((m) => samoMesto === undefined || m === samoMesto)
+            .map((mesto) => ({ datoteka: this.state._greske[mesto].datoteka, mesto }));
+        if (!poslovi.length) return;
+        const _greske = Object.assign({}, this.state._greske);
+        poslovi.forEach((p) => delete _greske[p.mesto]);
+        this.setState({ imagesCount: poslovi.length, imagesUploaded: 0, _greske, neuspelo: Object.keys(_greske).length },
+            () => this.posaljiRed(poslovi));
+    }
 
-
-
+    // Neuspela fotografija se uklanja iz galerije (mesto ostaje prazno, ne pomera ostale).
+    ukloniNeuspelu(mesto) {
+        const _greske = Object.assign({}, this.state._greske);
+        delete _greske[mesto];
+        this.setState({
+            _greske,
+            neuspelo: Object.keys(_greske).length,
+            imagesLayout: this.state.imagesLayout.filter((i) => i !== mesto),
+        }, () => this.props.onChange(this.state.imagesLayout.map((i) => this.state.files[i]).filter(Boolean)));
     }
 
 
@@ -324,7 +349,21 @@ class Gallery extends Component {
 
                             <div className="image-wrap">
 
-                                <img src={this.state.files[i] && `${PHOTOS_ENDPOINT}/photos/350x/${encodeURI(this.state.files[i].image || '')}`} alt="" />
+                                {this.state._greske[i] ? (
+                                    <div className="z-slika-greska" onMouseDown={(e) => e.stopPropagation()}>
+                                        <strong>{'Nije poslato'.translate(this.props.lang)}</strong>
+                                        <span title={this.state._greske[i].poruka}>{this.state._greske[i].datoteka && this.state._greske[i].datoteka.name}: {this.state._greske[i].poruka}</span>
+                                        <span className="z-slika-greska__radnje">
+                                            <button type="button" disabled={this.state.uploading}
+                                                    onClick={(e) => { e.preventDefault(); this.ponoviNeuspele(i); }}>{'Pokušaj ponovo'.translate(this.props.lang)}</button>
+                                            <button type="button" onClick={(e) => { e.preventDefault(); this.ukloniNeuspelu(i); }}>{'Ukloni'.translate(this.props.lang)}</button>
+                                        </span>
+                                    </div>
+                                ) : this.state.files[i] ? (
+                                    <img src={`${PHOTOS_ENDPOINT}/photos/350x/${encodeURI(this.state.files[i].image || '')}`} alt="" />
+                                ) : (
+                                    <div className="z-slika-ceka">{'Obrađuje se…'.translate(this.props.lang)}</div>
+                                )}
 
                                 {/*
                                   * RADNJE NAD FOTOGRAFIJOM
@@ -396,7 +435,8 @@ class Gallery extends Component {
 
 
         const jezik = this.props.lang;
-        const koliko = this.state.files ? this.state.files.length : 0;
+        // Broje se samo stvarno poslate fotografije, ne mesta koja čekaju ili nisu uspela.
+        const koliko = this.state.files ? this.state.files.filter(Boolean).length : 0;
 
         return (
             <div className="input-wrap gallery-input-wrap">
@@ -451,6 +491,21 @@ class Gallery extends Component {
                     </button>
                 </div>
 
+                {this.state.uploading ? (
+                    <p className="z-slanje-poruka" role="status">
+                        {'Fotografije se šalju i obrađuju na serveru (žig, pregledi, WebP) — oko 5 do 10 sekundi po fotografiji, po tri istovremeno. Ne zatvarajte stranu dok slanje ne završi.'.translate(jezik)}
+                    </p>
+                ) : null}
+                {!this.state.uploading && this.state.neuspelo ? (
+                    <div className="z-slanje-poruka z-slanje-poruka--greska" role="alert">
+                        {'Nije poslato fotografija:'.translate(jezik)} <b>{this.state.neuspelo}</b> {'— označene su crveno u galeriji.'.translate(jezik)}{' '}
+                        <button type="button" className="z-dugme z-dugme--glavno z-dugme--malo" onClick={() => this.ponoviNeuspele()}>
+                            {'Pokušaj ponovo sve'.translate(jezik)}
+                        </button>
+                        <span> {'Ostale možete sačuvati odmah.'.translate(jezik)}</span>
+                    </div>
+                ) : null}
+
                 <div className="file-drop" ref={(ref) => this.dropzone = ref}>
 
                     <Dropzone
@@ -471,17 +526,21 @@ class Gallery extends Component {
                         <p><span>{'Izaberite datoteke'.translate(jezik)}</span> {'ili ih prevucite ovdje'.translate(jezik)}</p>
                     </div>
 
-                    {this.state.uploading ?
-                        <div className="progress-wrap">
-                            <div>
-                                <div style={{ width: `${((this.state.imagesUploaded * 100) / this.state.imagesCount)}%` }}></div>
+                    {this.state.uploading ? (() => {
+                        const gotovo = this.state.imagesUploaded + this.state.neuspelo;
+                        const ukupno = this.state.imagesCount || 1;
+                        const sek = (Date.now() - (this.state.pocetakSlanja || Date.now())) / 1000;
+                        const ostalo = gotovo > 0 ? Math.ceil((sek / gotovo) * (ukupno - gotovo) / 60) : null;
+                        return (
+                            <div className="progress-wrap">
+                                <div>
+                                    <div style={{ width: `${(gotovo * 100) / ukupno}%` }}></div>
+                                </div>
+                                <p>{'Poslato'.translate(jezik)} {this.state.imagesUploaded} {'od'.translate(jezik)} {ukupno}
+                                    {ostalo ? ` · ${'još oko'.translate(jezik)} ${ostalo} min` : ''}</p>
                             </div>
-                            <p>{((this.state.imagesUploaded * 100) / this.state.imagesCount).toFixed(2)}%</p>
-                        </div>
-
-                        :
-                        null
-                    }
+                        );
+                    })() : null}
 
                     <GridLayout
                         className="grid-layout"

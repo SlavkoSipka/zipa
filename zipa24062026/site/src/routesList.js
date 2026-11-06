@@ -39,6 +39,8 @@ import PhotographerStats from './views/account/photographerStats';
 import BannerStats from './views/account/bannerStats';
 
 import AccountSlidesPage from './views/account/slidesPage';
+import PrevodiPage from './views/account/prevodiPage';
+import OriginaliPage from './views/account/originaliPage';
 import AccountSlidePage from './views/account/slidePage';
 import AccountEditAdminUserPage from './views/account/editAdminUser';
 
@@ -634,6 +636,24 @@ export const routes = [
         ]
     },
 
+    {
+        path: "/account/originali",
+        exact: true,
+        loginNeeded: true,
+        preAuthComponent: LoginPage,
+        component: OriginaliPage,
+        generateSeoTags: () => ({ title: 'Originali' }),
+        loadData: []
+    },
+    {
+        path: "/account/prevodi",
+        exact: true,
+        loginNeeded: true,
+        preAuthComponent: LoginPage,
+        component: PrevodiPage,
+        generateSeoTags: () => ({ title: 'Prevodi' }),
+        loadData: []
+    },
     {
         path: "/account/edit",
         exact: true,
@@ -1378,7 +1398,10 @@ export const routes = [
                     },
                     body: JSON.stringify({
                         page: query.page ? query.page : 0,
-                        search: query.search ? query.search : null
+                        search: query.search ? query.search : null,
+                        od: query.od || null,
+                        do: query.do || null,
+                        skrivene: query.skrivene || null
                     })
                 }).then(res => res.json()).then((result) => {
                     return {

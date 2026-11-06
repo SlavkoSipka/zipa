@@ -777,3 +777,186 @@
         opacity: .88;
     }
 }
+
+
+/* Redaktor — prevodi galerija (2026-11-06). Levo srpski (samo čitanje),
+   desno engleski koji se ispravlja. */
+.z-prevodi {
+    &__alati {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--razmak-3);
+        margin-bottom: var(--razmak-5);
+
+        input[type="search"] {
+            flex: 1 1 260px;
+            height: 44px;
+            padding: 0 var(--razmak-3);
+            border: 1px solid var(--boja-linija);
+            border-radius: var(--radijus-mali);
+            font-size: var(--slovo-md);
+        }
+
+        label { display: inline-flex; align-items: center; gap: var(--razmak-2); margin: 0; font-size: var(--slovo-sm); }
+    }
+
+    &__ukupno { font-size: var(--slovo-sm); color: var(--boja-tekst-tiho); }
+
+    &__galerija {
+        margin-bottom: var(--razmak-5);
+        padding: var(--razmak-4);
+        border: 1px solid var(--boja-linija);
+        border-radius: var(--radijus-panel);
+        background: var(--boja-povrsina);
+    }
+
+    &__vrh {
+        display: flex;
+        align-items: center;
+        gap: var(--razmak-3);
+        margin-bottom: var(--razmak-3);
+
+        img { width: 96px; height: 64px; object-fit: cover; border-radius: var(--radijus-mali); flex: 0 0 auto; }
+    }
+
+    &__podaci { font-size: var(--slovo-sm); color: var(--boja-tekst-tiho); }
+
+    &__oznaka {
+        margin-left: auto;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: var(--slovo-xs);
+        font-weight: var(--tezina-jaka);
+        background: var(--boja-podloga-tiha);
+        color: var(--boja-tekst-tiho);
+
+        &--provereno { background: var(--boja-uspeh); color: var(--boja-tekst-na-oznaci); }
+    }
+
+    &__kolone {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--razmak-4);
+
+        @include mobile { grid-template-columns: minmax(0, 1fr); }
+    }
+
+    &__jezik {
+        margin: 0 0 var(--razmak-2);
+        font-size: var(--slovo-xs);
+        font-weight: var(--tezina-jaka);
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        color: var(--boja-tekst-tiho);
+    }
+
+    &__citaj {
+        padding: var(--razmak-3);
+        border-radius: var(--radijus-mali);
+        background: var(--boja-podloga-tiha);
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
+        white-space: pre-wrap;
+        color: var(--boja-tekst);
+
+        & + & { margin-top: var(--razmak-2); }
+        &--naslov { font-weight: var(--tezina-jaka); }
+    }
+
+    &__unos {
+        width: 100%;
+        padding: var(--razmak-3);
+        border: 1px solid var(--boja-linija);
+        border-radius: var(--radijus-mali);
+        font-family: inherit;
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
+        color: var(--boja-tekst);
+        background: var(--boja-povrsina);
+
+        & + & { margin-top: var(--razmak-2); }
+        &--naslov { font-weight: var(--tezina-jaka); }
+    }
+
+    &__radnje {
+        display: flex;
+        align-items: center;
+        gap: var(--razmak-3);
+        margin-top: var(--razmak-3);
+        font-size: var(--slovo-sm);
+    }
+
+    &__poruka--greska { color: var(--boja-oznaka-tekst); }
+    &__jos { display: flex; justify-content: center; margin-top: var(--razmak-4); }
+}
+
+
+/* Galerije fotografa kao mreža (2026-11-06), kao /galerije?view=photos. */
+.z-moje-galerije__prikaz {
+    display: inline-flex;
+    gap: var(--razmak-1);
+    margin-bottom: var(--razmak-4);
+    padding: 3px;
+    border-radius: var(--radijus-panel);
+    background: var(--boja-podloga-tiha);
+}
+
+.z-moje-galerije {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: var(--razmak-5) var(--razmak-4);
+    margin-bottom: var(--razmak-5);
+
+    &__slika {
+        position: relative;
+        display: block;
+        aspect-ratio: 3 / 2;
+        overflow: hidden;
+        border-radius: var(--radijus-mali);
+        background: var(--boja-podloga-tiha);
+        @include z-fokus;
+
+        img { width: 100%; height: 100%; object-fit: cover; transition: transform .35s ease; }
+        &:hover img { transform: scale(1.05); }
+    }
+
+    &__broj {
+        position: absolute;
+        right: 6px;
+        bottom: 6px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: var(--boja-zavesa);
+        color: var(--boja-povrsina);
+        font-size: var(--slovo-xs);
+        font-weight: var(--tezina-jaka);
+    }
+
+    &__skrivena { position: absolute; left: 6px; top: 6px; }
+
+    &__naziv {
+        margin: var(--razmak-2) 0 var(--razmak-1);
+        font-size: var(--slovo-md);
+        line-height: var(--red-md);
+        font-weight: var(--tezina-jaka);
+        color: var(--boja-tekst);
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    &__podaci {
+        margin: 0;
+        font-size: var(--slovo-sm);
+        color: var(--boja-tekst-tiho);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+
+        span:not(:last-child)::after { content: '·'; margin: 0 6px; }
+    }
+
+    &__radnje { display: flex; flex-wrap: wrap; gap: var(--razmak-2); margin-top: var(--razmak-2); }
+}

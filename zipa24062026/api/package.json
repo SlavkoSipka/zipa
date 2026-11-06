@@ -10,6 +10,7 @@
   "author": "Milan Stanojevic",
   "license": "ISC",
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.6.0",
     "@aws-sdk/client-s3": "^3.1095.0",
     "archiver": "^4.0.2",
     "bcryptjs": "^2.4.3",

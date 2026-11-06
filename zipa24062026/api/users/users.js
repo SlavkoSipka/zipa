@@ -1802,7 +1802,7 @@ class UsersModule {
      *  - broj strana je bio `total / 20` — necio broj, pa je poslednja strana
      *    umela da nedostaje. Sada se zaokruzuje navise.
      */
-    async userGallery(uid, page = 0, search = null) {
+    async userGallery(uid, page = 0, search = null, odDan = null, doDan = null, skrivene = null) {
         const korisnik = await db.collection('users').find({ _id: ObjectID(uid) }).toArray();
         const jeAdmin = korisnik.length && (
             korisnik[0].userRole === 'admin'
@@ -1822,6 +1822,19 @@ class UsersModule {
                 { user: izraz },
             ];
         }
+
+        /* Pretraga po datumu galerije (2026-11-06): od–do, oba dana uključena.
+           Datum galerije je dan snimanja (`date`), isti koji piše na sajtu. */
+        const odT = odDan ? Date.parse(odDan + 'T00:00:00Z') / 1000 : NaN;
+        const doT = doDan ? Date.parse(doDan + 'T00:00:00Z') / 1000 + 86400 : NaN;
+        if (!isNaN(odT) || !isNaN(doT)) {
+            upit.date = {};
+            if (!isNaN(odT)) upit.date.$gte = odT - 43200;   // pola dana zbog vremenskih zona
+            if (!isNaN(doT)) upit.date.$lt = doT + 43200;
+        }
+
+        // Samo skrivene (isključen „Status") — da ih administrator pregleda (2026-11-06).
+        if (skrivene === '1' || skrivene === true) upit.isActive = false;
 
         const total = await db.collection('gallery').find(upit).count();
         const items = await db.collection('gallery')

@@ -1,350 +1,141 @@
-import React, {Component} from 'react';
-import {Link} from 'react-router-dom'
-import Isvg from 'react-inlinesvg';
+import React, { Component } from 'react';
 import Page from '../../containers/page';
 import AdminOkvir from '../../components/adminOkvir';
+import ZaglavljeStampe, { stampaj } from '../../components/zaglavljeStampe';
 
+import { API_ENDPOINT, PHOTOS_ENDPOINT } from '../../constants';
 
-import {
-    Container,
-    Row,
-    Col,
-    DropdownItem,
-    DropdownMenu,
-    DropdownToggle,
-    UncontrolledDropdown
-} from 'reactstrap';
+/*
+ * STATISTIKA GALERIJA (prekrojeno 2026-11-06).
+ *
+ * Za izabrani period: koliko puta su otvarane fotografije, po galerijama.
+ * Izvor je `photoVisits` (svako otvaranje fotografije u galeriji), ruta
+ * `/admin/statistika-galerija`. Svaka GRUPA je jedna galerija: krupan broj
+ * je zbir pregleda svih njenih fotografija, ispod su najgledanije.
+ *
+ * Ranije: kalendar je ispadao iz okvira, naziv galerije je bio isključen pa
+ * se nije znalo šta su grupe, a štampa je izlazila sa menijem administracije.
+ */
+const dan = (d) => d.toISOString().slice(0, 10);
+const prikazDana = (s) => (s ? `${s.slice(8, 10)}.${s.slice(5, 7)}.${s.slice(0, 4)}.` : '');
+const br = (n) => Number(n || 0).toLocaleString('sr-RS');
 
-import Image from '../../components/image';
-
-
-import infoIcon from '../../assets/svg/account-info.svg';
-import statIcon from '../../assets/svg/stat-icon.svg';
-import {Line, Bar} from 'react-chartjs-2';
-
-import lock from '../../assets/svg/lock.svg';
-import userPhoto from '../../assets/images/user.png';
-
-import backup from '../../assets/svg/backup.svg';
-import trash from '../../assets/svg/orders-trash.svg';
-import moment from 'moment';
-
-import FromToForm from '../../components/forms/fromToForm';
-import trashIcon from '../../assets/svg/orders-trash.svg';
-import FromToForm1 from '../../components/forms/fromToForm1';
-import {API_ENDPOINT, PHOTOS_ENDPOINT} from '../../constants';
-import Loader from "../../components/loader";
-import {reset} from "redux-form";
-
-const data = {
-    labels: ['02 Jan', '03 Jan', '04 Jan', '05 Jan', '06 Jan', '07 Jan'],
-    datasets: [
-        {
-            label: 'PREGLED ARTIKALA PO DANIMA',
-            fill: false,
-            lineTension: 0.4,
-            backgroundColor: '#F4F5FB',
-            borderColor: '#2F629C',
-            borderCapStyle: 'butt',
-            borderDash: [],
-            borderDashOffset: 0.0,
-            borderJoinStyle: 'miter',
-            pointBorderColor: '#2F629C',
-            pointBackgroundColor: '#fff',
-            pointBorderWidth: 1,
-            pointHoverRadius: 5,
-            pointHoverBackgroundColor: '#2F629C',
-            pointHoverBorderColor: 'rgba(220,220,220,1)',
-            pointHoverBorderWidth: 2,
-            pointRadius: 1,
-            pointHitRadius: 10,
-            data: [65, 59, 80, 81, 56, 55]
-        }
-    ]
-};
-
-
-class ProfilePage extends Component {
+class GalleryStats extends Component {
     constructor(props) {
         super(props);
-
-        this.state = {
-            ...props.initialData,
-            announcements: [],
-            adminStatistics: {
-                photosCount: 0,
-                photographersCount: 0,
-                todayEarnings: 0,
-                yesterdayEarnings: 0,
-                prevMonthEarnings: 0,
-                currentMonthEarnings: 0,
-                totalDownloads: 0,
-                todayDownloads: 0,
-                visitsPerDay: [],
-                todayVisits: [],
-                lastTransactions: [],
-                loadingData: true,
-                sameTimestamp: false,
-                showForm: false,
-            },
-            photographerStatistics: []
-
-        };
-    }
-
-    adminStatistics = () => {
-        const {timeData} = this.state;
-        this.setState({
-            photosCount: 0,
-            photographersCount: 0,
-            todayEarnings: 0,
-            yesterdayEarnings: 0,
-            prevMonthEarnings: 0,
-            currentMonthEarnings: 0,
-            totalDownloads: 0,
-            todayDownloads: 0,
-            visitsPerDay: [],
-            todayVisits: [],
-            lastTransactions: [],
-            loadingData: true,
-            sameTimestamp: false
-        }, () => {
-            if (timeData) {
-                let from = timeData.from;
-                let to = timeData.to;
-                if (timeData.from === timeData.to) {
-                    this.setState({
-                        sameTimestamp: true
-                    })
-                }
-                
-                fetch(`${API_ENDPOINT}/admin/statistics`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-                    },
-                    body: JSON.stringify({from, to})
-                }).then(res => res.json()).then((result) => {
-                    this.setState({
-                        adminStatistics: result,
-                        loadingData: false,
-                        sameTimestamp: false
-                    })
-                }).catch(error => {
-                    console.error('Error fetching statistics:', error);
-                })
-            } else {
-                fetch(`${API_ENDPOINT}/admin/statistics`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-                    },
-                }).then(res => res.json()).then((result) => {
-                    this.setState({
-                        adminStatistics: result,
-                        loadingData: false,
-                        sameTimestamp: false
-                    })
-                }).catch(error => {
-                    console.error('Error fetching statistics:', error);
-                })
-            }
-        });
+        const danas = new Date();
+        const pre30 = new Date(Date.now() - 29 * 86400000);
+        this.state = { od: dan(pre30), do: dan(danas), galerije: null, ucitava: true, greska: null, prikazano: null };
     }
 
     componentDidMount() {
         window.scrollTo(0, 0);
-        setTimeout(() => {
-            this.setState({showForm: true});
-        }, 500);
-
-        for (let i = 0; i < this.props.loadData.length; i++) {
-            this.props.loadData[i](window.fetch, this.props[0].match).then((data) => {
-                this.setState({
-                    ...data
-                }, () => {
-                    this.props.updateMeta(this.props.generateSeoTags(this.state));
-                })
-            })
-        }
-
-        fetch(`${API_ENDPOINT}/announcements`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-            },
-        }).then(res => res.json()).then((result) => {
-            this.setState({
-                announcements: result
-            })
-        })
-
-        if (this.props.uData.userRole == 'admin') {
-            this.adminStatistics();
-        }
-
-
-        if (this.props.uData.userRole == 'photographer') {
-            fetch(`${API_ENDPOINT}/photographer/statistics`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-                },
-            }).then(res => res.json()).then((result) => {
-                this.setState({
-                    photographerStatistics: result
-                })
-            })
-
-        }
-
+        this.dovuci();
     }
 
+    dovuci = (e) => {
+        if (e) e.preventDefault();
+        const { od, do: dokle } = this.state;
+        if (!od || !dokle || dokle < od) return;
+        this.setState({ ucitava: true, greska: null });
+        fetch(`${API_ENDPOINT}/admin/statistika-galerija?od=${od}&do=${dokle}`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` },
+        })
+            .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+            .then((galerije) => this.setState({ galerije, ucitava: false, prikazano: { od, do: dokle } }))
+            .catch(() => this.setState({ ucitava: false, greska: true }));
+    };
+
     render() {
+        const l = this.props.lang;
+        const galerije = this.state.galerije || [];
+        const ukupno = galerije.reduce((z, g) => z + (g.visits || 0), 0);
+        const fotografija = galerije.reduce((z, g) => z + ((g.photos && g.photos.length) || 0), 0);
+        const p = this.state.prikazano;
+        const period = p ? `${prikazDana(p.od)} – ${prikazDana(p.do)}` : '';
 
-
-        let totalVisits = 0;
-        for (let i = 0; i < this.state.photographerStatistics.length; i++) {
-            totalVisits += this.state.photographerStatistics[i].count;
-        }
         return (
             <AdminOkvir
-                lang={this.props.lang}
+                lang={l}
                 uData={this.props.uData}
                 settings={this.props.settings}
                 putanja={this.props[0] && this.props[0].location ? this.props[0].location.pathname : ''}
                 signOut={this.props.signOut}
-                naslov={'Statistika galerija'.translate(this.props.lang)}
+                naslov={'Statistika galerija'.translate(l)}
             >
-                <div className="account-wrap">
-                <a ref={(node) => this.aTag = node}></a>
-                <a ref={(node) => this.aTag1 = node}></a>
+                <form className="z-stat-alati" onSubmit={this.dovuci}>
+                    <label className="z-ploca__datum">
+                        <span>{'Od'.translate(l)}</span>
+                        <input type="date" value={this.state.od} max={this.state.do}
+                               onChange={(e) => this.setState({ od: e.target.value })} />
+                    </label>
+                    <label className="z-ploca__datum">
+                        <span>{'Do'.translate(l)}</span>
+                        <input type="date" value={this.state.do} min={this.state.od}
+                               onChange={(e) => this.setState({ do: e.target.value })} />
+                    </label>
+                    <button type="submit" className="z-dugme z-dugme--glavno">{'Prikaži'.translate(l)}</button>
+                    <button type="button" className="z-dugme z-dugme--sporedno" disabled={!galerije.length} onClick={stampaj}>
+                        {'Štampaj'.translate(l)}
+                    </button>
+                </form>
 
-                <section className="section-profile">
-                    <Container>
-                        <Row>
-                            <Col lg="12" className="page-top-wrapper">
-                                <h2>{'Statistika galerija'.translate(this.props.lang)}</h2>
+                <div className="z-stampa">
+                    <ZaglavljeStampe naslov="Statistika posjeta galerija" podnaslov={period ? `Za period ${period}` : null} />
 
+                    <div className="z-stat-brojevi">
+                        <div className="z-stat-broj z-stat-broj--glavni">
+                            <span className="z-stat-broj__vrednost">{this.state.ucitava ? '—' : br(ukupno)}</span>
+                            <span className="z-stat-broj__naziv">pregleda fotografija</span>
+                        </div>
+                        <div className="z-stat-broj">
+                            <span className="z-stat-broj__vrednost">{this.state.ucitava ? '—' : br(galerije.length)}</span>
+                            <span className="z-stat-broj__naziv">galerija sa pregledima</span>
+                        </div>
+                        <div className="z-stat-broj">
+                            <span className="z-stat-broj__vrednost">{this.state.ucitava ? '—' : br(fotografija)}</span>
+                            <span className="z-stat-broj__naziv">pregledanih fotografija</span>
+                        </div>
+                    </div>
 
-                                <ul>
-                                    <li><Link to='/'>{'Početna'.translate(this.props.lang)}</Link></li>
-                                    <li><Link to='/account/profile'>{'Profil'.translate(this.props.lang)}</Link></li>
-                                    <li><Link
-                                        to='/account/gallery-stats'>{'Statistika galerija'.translate(this.props.lang)}</Link>
-                                    </li>
+                    <p className="z-stat-objasnjenje">
+                        <b>Kako se čita:</b> svaka kartica je <b>jedna galerija</b>. Krupan broj je koliko su puta u ovom periodu
+                        otvarane njene fotografije (zbir za sve fotografije galerije). Ispod su njene najgledanije fotografije
+                        sa brojem otvaranja. Galerije su poređane od najgledanije.
+                    </p>
 
+                    {this.state.greska ? <p className="z-stat-objasnjenje">Podaci se ne mogu učitati. Osvježite stranu.</p> : null}
+                    {!this.state.ucitava && !this.state.greska && !galerije.length ? (
+                        <p className="z-stat-objasnjenje">U ovom periodu nije zabilježeno nijedno otvaranje fotografije.</p>
+                    ) : null}
+
+                    <div className="z-stat-galerije">
+                        {galerije.map((g, i) => (
+                            <section key={g._id || i} className="z-stat-galerija">
+                                <div className="z-stat-galerija__vrh">
+                                    <span className="z-stat-galerija__mesto">{i + 1}.</span>
+                                    <h3 className="z-stat-galerija__naziv">{g.name || '(galerija obrisana)'}</h3>
+                                </div>
+                                <div className="z-stat-galerija__broj">{br(g.visits)} <small>pregleda</small></div>
+                                <ul className="z-stat-galerija__foto">
+                                    {(g.photos || []).slice(0, 4).map((f, j) => (
+                                        <li key={j}>
+                                            {f.image ? <img src={`${PHOTOS_ENDPOINT}/photos/350x/${encodeURI(f.image)}`} alt="" loading="lazy" /> : <span />}
+                                            <span className="z-stat-galerija__ime" title={f.name}>{f.name}</span>
+                                            <b>{br(f.visits)}</b>
+                                        </li>
+                                    ))}
                                 </ul>
-
-                            </Col>
-                            {
-                                this.props.uData && this.props.uData.userRole == 'admin' ?
-                                    <>
-                                        { /*
-                                        <Col lg="12" className="photographers-statistics">
-                                            <h6>{'Statistika fotografa'.translate(this.props.lang)}</h6>
-
-                                            <ul>
-                                                {this.state.adminStatistics.photographers && this.state.adminStatistics.photographers.map((item, idx) => {
-                                                    if (item.uploadedGalleryCount)
-                                                        return (
-                                                            <li>
-                                                                <h3>{item.name}</h3>
-                                                                <p>{'Broj uploadovanih galerija: '.translate(this.props.lang)} {item.uploadedGalleryCount}</p>
-                                                                <p>{'Broj uploadovanih slika: '.translate(this.props.lang)} {item.uploadedPhotosCount}</p>
-
-                                                            </li>
-
-                                                        )
-                                                })
-                                                }
-                                            </ul>
-                                        </Col>
-                                            */}
-                                        <Col lg="8">
-                                            {this.state.showForm ?
-                                                (
-                                                    <div className="admin-date-picker">
-                                                        <FromToForm1
-                                                            onSubmit={(data) => this.setState({timeData: data}, this.adminStatistics)}>
-                                                        </FromToForm1>
-                                                    </div>
-                                                )
-                                                :
-                                                null
-                                            }
-                                        </Col>
-                                        <Col lg="12" className="gallery-statistics">
-                                            <h6>{'Statistika galerija'.translate(this.props.lang)}</h6>
-                                            {
-                                                this.state.sameTimestamp
-                                                    ?
-                                                    (
-                                                        <div style={{
-                                                            backgroundColor: '#F4F5FB',
-                                                            padding: '20px',
-                                                            borderRadius: '11px'
-                                                        }}>
-                                                            <h1>{'sameTime'.translate(this.props.lang)}</h1>
-                                                        </div>
-                                                    )
-                                                    :
-                                                    (
-                                                        this.state.loadingData ? (
-                                                            <div style={{backgroundColor: '#F4F5FB'}}><Loader/>
-                                                            </div>
-                                                        ) : (
-                                                            <ul>
-                                                                {this.state.adminStatistics.galleryVisits && this.state.adminStatistics.galleryVisits.map((item, idx) => {
-                                                                    return (
-                                                                        <li>
-                                                                            {/*<h3>{Object.translate(item, 'name', this.props.lang)}</h3>*/}
-                                                                            <p>{'Ukupan pregled slika: '.translate(this.props.lang)} {item.visits}</p>
-                                                                            <ul>
-                                                                                {
-                                                                                    item.photos.map((photo) => {
-                                                                                        return (
-                                                                                            <li>
-                                                                                                <img
-                                                                                                    src={`${PHOTOS_ENDPOINT}/photos/350x/` + photo.image}/>
-                                                                                                <span
-                                                                                                    className="name">{photo.name}</span>
-                                                                                                <span
-                                                                                                    className="count">{photo.visits}</span>
-                                                                                            </li>
-                                                                                        )
-                                                                                    })
-                                                                                }
-                                                                            </ul>
-                                                                        </li>
-
-                                                                    )
-                                                                })
-                                                                }
-                                                            </ul>
-                                                        )
-                                                    )
-                                            }
-                                        </Col>
-
-                                    </>
-                                    :
-                                    null
-                            }
-                        </Row>
-                    </Container>
-
-                </section>
-
-
+                                {g.photos && g.photos.length > 4 ? (
+                                    <p className="z-stat-galerija__jos">+ još {g.photos.length - 4} fotografija sa pregledima</p>
+                                ) : null}
+                            </section>
+                        ))}
+                    </div>
                 </div>
             </AdminOkvir>
         );
     }
 }
 
-export default Page(ProfilePage);
+export default Page(GalleryStats);

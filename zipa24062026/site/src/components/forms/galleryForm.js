@@ -397,6 +397,17 @@ class form extends React.Component {
                               * sedamsto galerija godišnje dobijali po dva
                               * pisma dnevno.
                               */}
+                            {/* Originali (2026-11-06): administrator štiti galeriju od
+                                automatskog brisanja originala (Administracija → Originali). */}
+                            {this.props.jeAdmin ? (
+                                <Col lg="12">
+                                    <Field
+                                        name="zadrziOriginal"
+                                        component={renderCheckField}
+                                        label={'Uvijek čuvaj original ove galerije (ne briše se ni kad je starija od roka za originale)'.translate(this.props.lang)}
+                                    ></Field>
+                                </Col>
+                            ) : null}
                             {/* Dve grupe primalaca (2026-10-27): pošta ide svakoj
                                 grupi koja je označena; ko je u obe, dobije jednom. */}
                             <Col lg="12">

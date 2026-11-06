@@ -112,7 +112,7 @@ class Admin {
               from users u
               left join gallery g
                      on g."uid" = u."_id" and g."photos" is not null${periodCondition}
-             where u."userRole" = 'photographer'
+             where u."userRole" = 'photographer' and coalesce(u."accountEnabled", true)
              group by u."_id", u."userAlias", u."name"
              order by "uploadedPhotosCount" desc, u."name" asc
         `, params);
@@ -393,6 +393,22 @@ class Admin {
      * kako se posete i grupišu po danu. Sve posete na ploči (grafikon, zbir,
      * kategorije) računaju se samo u tom rasponu.
      */
+    /*
+     * PRAZNI NACRTI (2026-11-06): galerije bez ijedne fotografije koje nikad
+     * nisu objavljene — otvorene pa napuštene („temp value", „test arhiva").
+     * Briše se samo red u bazi; fotografija nema, pa se u skladištu ništa ne
+     * dira. Skrivene galerije SA fotografijama se ne diraju nikad.
+     */
+    async obrisiPrazneNacrte() {
+        const r = await db.query(
+            `delete from gallery
+              where jsonb_array_length(coalesce("photos", '[]'::jsonb)) = 0
+                and coalesce("isActive", false) = false
+             returning "_id"`
+        );
+        return { obrisano: r.rows.length };
+    }
+
     async dashboard(dana = 30, odDan = null, doDan = null) {
         let od, dokle, raspon;
         const odT = odDan ? Date.parse(odDan + 'T00:00:00Z') / 1000 : NaN;
@@ -583,17 +599,28 @@ class Admin {
               where "date" is not null and "date" > 0 and "isActive" and coalesce("userDisabled", false) = false`
         );
 
+        // Svi aktivni nalozi fotografa (2026-11-06), i oni bez ijedne
+        // galerije na sajtu; plus autori galerija koje nemaju nalog.
         const fotografi = await db.query(
-            `select g."user"                                         as ime,
-                    count(*)::int                                    as galerija,
+            `select coalesce(nullif(u."name", ''), u."userAlias")   as ime,
+                    count(g."_id")::int                              as galerija,
                     coalesce(sum(jsonb_array_length(
                         coalesce(g."photos", '[]'::jsonb)))::int, 0) as fotografija
+               from users u
+               left join gallery g
+                      on g."uid" = u."_id"
+                     and g."isActive" and coalesce(g."userDisabled", false) = false
+              where u."userRole" = 'photographer' and coalesce(u."accountEnabled", true)
+              group by u."_id", 1
+             union all
+             select g."user", count(*)::int,
+                    coalesce(sum(jsonb_array_length(coalesce(g."photos", '[]'::jsonb)))::int, 0)
                from gallery g
               where g."user" is not null and g."user" <> ''
                 and g."isActive" and coalesce(g."userDisabled", false) = false
+                and not exists (select 1 from users u where u."_id" = g."uid")
               group by 1
-              order by fotografija desc
-              limit 15`
+              order by fotografija desc, ime asc`
         );
 
         return {

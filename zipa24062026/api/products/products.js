@@ -773,6 +773,53 @@ class ProductsModule {
         }
     }
 
+    /*
+     * REDAKTOR — PREVODI (2026-11-06).
+     *
+     * Uloga `redaktor` (dozvola `prevod`) vidi galerije sa sajta, srpski
+     * naziv i opis samo čita, a engleski (automatski prevod) ispravlja.
+     * Upis menja ISKLJUČIVO `name.en`, `description.en`, `alias.en` i oznaku
+     * `prevodProveren` — šta god da stigne u zahtevu, srpski tekst se ne dira.
+     */
+    async galerijeZaPrevod(strana = 0, pretraga = null, samoNeproverene = false) {
+        const PO_STRANI = 20;
+        const uslovi = [`"isActive"`, `coalesce("userDisabled", false) = false`];
+        const parametri = [];
+        if (samoNeproverene) uslovi.push(`coalesce("prevodProveren", false) = false`);
+        if (pretraga) {
+            parametri.push('%' + String(pretraga).trim() + '%');
+            uslovi.push(`(name->>'ba' ilike $${parametri.length} or name->>'en' ilike $${parametri.length})`);
+        }
+        const gde = uslovi.join(' and ');
+        const ukupno = await db.query(`select count(*)::int as n from gallery where ${gde}`, parametri);
+        parametri.push(PO_STRANI, Math.max(0, parseInt(strana, 10) || 0) * PO_STRANI);
+        const redovi = await db.query(
+            `select "_id", name, description, alias, "published", "date", "user",
+                    coalesce("prevodProveren", false) as "prevodProveren",
+                    photos->0->>'image' as slika
+               from gallery where ${gde}
+              order by "published" desc nulls last
+              limit $${parametri.length - 1} offset $${parametri.length}`,
+            parametri
+        );
+        return { ukupno: ukupno.rows[0].n, poStrani: PO_STRANI, items: redovi.rows };
+    }
+
+    async sacuvajPrevod(id, podaci) {
+        const g = await db.collection('gallery').findOne({ _id: ObjectID(id) });
+        if (!g) return { response: { error: 'Galerija ne postoji.' }, status: 404 };
+
+        const tekst = (v, max) => String(v === undefined || v === null ? '' : v).slice(0, max);
+        const name = Object.assign({}, g.name || {}, { en: tekst(podaci.naziv, 500).trim() });
+        const description = Object.assign({}, g.description || {}, { en: tekst(podaci.opis, 20000) });
+        const alias = Object.assign({}, g.alias || {}, { en: generateAlias(name.en || (g.name && g.name.ba) || '') });
+
+        await db.collection('gallery').updateOne({ _id: ObjectID(id) }, {
+            $set: { name, description, alias, prevodProveren: true }
+        });
+        return { response: { ok: true, alias: alias.en }, status: 200 };
+    }
+
     async updateGallery(uid, id, obj) {
         /*
          * Engleski naziv i opis se popunjavaju sami (2026-10-30), i to SAMO
@@ -875,6 +922,7 @@ class ProductsModule {
                 photos: obj.photos,
                 category: obj.category,
                 location: obj.location,
+                zadrziOriginal: obj.zadrziOriginal ? true : null,
                 date: obj.date,
                 forcedDate: obj.forcedDate,
                 requiredDate: obj.requiredDate,
@@ -903,6 +951,8 @@ class ProductsModule {
                     photos: obj.photos,
                     category: obj.category,
                     location: obj.location,
+                    // Kvačicu vidi i šalje samo administrator; bez nje se ne dira (2026-11-06).
+                    ...(obj.zadrziOriginal !== undefined ? { zadrziOriginal: obj.zadrziOriginal ? true : null } : {}),
                     date: obj.date,
                     forcedDate: obj.forcedDate,
                     requiredDate: obj.requiredDate,

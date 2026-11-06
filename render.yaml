@@ -47,8 +47,10 @@ services:
         value: noreply@zipaphoto.net
       - key: SMTP_PASSWORD
         sync: false
-      # Prevod naziva i opisa novih galerija na engleski. Bez ključa radi
-      # preko besplatnog MyMemory servisa, sa ključem preko DeepL-a.
+      # Prevod naziva i opisa novih galerija na engleski (`api/prevod.js`):
+      # prvo Claude (najbolji), pa DeepL, pa besplatni MyMemory kao rezerva.
+      - key: ANTHROPIC_API_KEY
+        sync: false
       - key: DEEPL_API_KEY
         sync: false
       - key: API_ENDPOINT          # javni URL ovog servisa (posle prvog deploya)

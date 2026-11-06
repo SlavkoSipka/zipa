@@ -26,7 +26,7 @@ const USLOVI_LOZINKE = [
     { kljuc: 'duzina', tekst: 'od 6 do 16 znakova', vazi: (v) => v.length >= 6 && v.length <= 16 },
     { kljuc: 'malo',   tekst: 'malo slovo',        vazi: (v) => /[a-z]/.test(v) },
     { kljuc: 'veliko', tekst: 'veliko slovo',      vazi: (v) => /[A-Z]/.test(v) },
-    { kljuc: 'cifra',  tekst: 'cifra',             vazi: (v) => /\d/.test(v) },
+    { kljuc: 'cifra',  tekst: 'broj',              vazi: (v) => /\d/.test(v) },
     { kljuc: 'znak',   tekst: 'specijalan znak',   vazi: (v) => /[^a-zA-Z0-9]/.test(v) },
     { kljuc: 'razmak', tekst: 'bez razmaka',       vazi: (v) => v.length > 0 && !/\s/.test(v) },
 ];
